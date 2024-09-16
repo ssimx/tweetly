@@ -2,7 +2,7 @@
     "compilerOptions": {
         /* Visit https://aka.ms/tsconfig to read more about this file */
         "sourceMap": true,
-        "outDir": "dist",
+        "outDir": "./dist",
         "strict": true,
         "lib": ["esnext"],
         "esModuleInterop": true
