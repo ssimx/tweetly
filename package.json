@@ -1,0 +1,12 @@
+{
+  "name": "tweetly",
+  "version": "1.0.0",
+  "description": "Twitter clone app for The Odin Project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
