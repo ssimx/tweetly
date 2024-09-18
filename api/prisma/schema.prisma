@@ -14,29 +14,25 @@ datasource db {
 }
 
 model User {
-    id                 Int               @id @default(autoincrement())
-    createdAt          DateTime          @default(now())
-    updatedAt          DateTime          @updatedAt
-    username           String            @unique @db.VarChar(15)
-    email              String            @unique @db.VarChar(254)
-    password           String
-    dateOfBirth        DateTime          @db.Date()
-    role               UserRole          @default(USER)
-    profile            Profile?
-    tweets             Tweet[]
-    comments           Comment[]
-    likedTweets        TweetLike[]
-    retweetedTweets    TweetRetweet[]
-    bookmarkedTweets   TweetBookmark[]
-    likedComments      CommentLike[]
-    retweetedComments  CommentRetweet[]
-    bookmarkedComments CommentBookmark[]
-    followers          Follow[]          @relation("followee")
-    following          Follow[]          @relation("follower")
-    messagesReceived   Message[]         @relation("receiver")
-    messagesSent       Message[]         @relation("messeger")
-    blockedBy          Block[]           @relation("blocked")
-    blockedUsers       Block[]           @relation("blocker")
+    id               Int             @id @default(autoincrement())
+    createdAt        DateTime        @default(now())
+    updatedAt        DateTime        @updatedAt
+    username         String          @unique @db.VarChar(15)
+    email            String          @unique @db.VarChar(254)
+    password         String
+    dateOfBirth      DateTime        @db.Date()
+    role             UserRole        @default(USER)
+    profile          Profile?
+    tweets           Tweet[]
+    likedTweets      TweetLike[]
+    retweetedTweets  TweetRetweet[]
+    bookmarkedTweets TweetBookmark[]
+    followers        Follow[]        @relation("followee")
+    following        Follow[]        @relation("follower")
+    messagesReceived Message[]       @relation("receiver")
+    messagesSent     Message[]       @relation("messeger")
+    blockedBy        Block[]         @relation("blocked")
+    blockedUsers     Block[]         @relation("blocker")
 }
 
 enum UserRole {
@@ -61,109 +57,74 @@ model Profile {
 model Tweet {
     id        Int             @id @default(autoincrement())
     content   String          @db.VarChar(280)
+    createdAt DateTime        @default(now())
+    updatedAt DateTime        @updatedAt
     author    User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
     authorId  Int
-    comments  Comment[]
+    replyTo   Tweet?          @relation("reply", fields: [replyToId], references: [id], onDelete: Cascade)
+    replyToId Int?
+    replies   Tweet[]         @relation("reply")
     likes     TweetLike[]
     retweets  TweetRetweet[]
     bookmarks TweetBookmark[]
 }
 
-model Comment {
-    id        Int               @id @default(autoincrement())
-    content   String            @db.VarChar(280)
-    author    User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
-    authorId  Int
-    tweet     Tweet             @relation(fields: [tweetId], references: [id], onDelete: Cascade)
-    tweetId   Int
-    // ADD LATER
-    // comment can have zero or more parent comments
-    // comment can have zero or more child comments
-    // comment   Comment?          @relation("CommentComments", fields: [commentId], references: [id])
-    // commentId Int?
-    // comments  Comment[]         @relation("CommentComments")
-    likes     CommentLike[]
-    retweets  CommentRetweet[]
-    bookmarks CommentBookmark[]
-}
-
 model TweetLike {
-    tweetId Int
-    userId  Int
-    tweet   Tweet @relation(fields: [tweetId], references: [id], onDelete: Cascade)
-    user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+    tweetId   Int
+    userId    Int
+    createdAt DateTime @default(now())
+    tweet     Tweet    @relation(fields: [tweetId], references: [id], onDelete: Cascade)
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@id(name: "tweetLikeId", [tweetId, userId])
 }
 
 model TweetRetweet {
-    tweetId Int
-    userId  Int
-    tweet   Tweet @relation(fields: [tweetId], references: [id], onDelete: Cascade)
-    user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+    tweetId   Int
+    userId    Int
+    createdAt DateTime @default(now())
+    tweet     Tweet    @relation(fields: [tweetId], references: [id], onDelete: Cascade)
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@id(name: "tweetRetweetId", [tweetId, userId])
 }
 
-model CommentLike {
-    commentId Int
-    userId    Int
-    comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
-    user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-    @@id(name: "commentLikeId", [commentId, userId])
-}
-
-model CommentRetweet {
-    commentId Int
-    userId    Int
-    comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
-    user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-    @@id(name: "commentRetweetId", [commentId, userId])
-}
-
 model TweetBookmark {
-    userId  Int
-    tweetId Int
-    user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-    tweet   Tweet @relation(fields: [tweetId], references: [id], onDelete: Cascade)
+    userId    Int
+    tweetId   Int
+    createdAt DateTime @default(now())
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    tweet     Tweet    @relation(fields: [tweetId], references: [id], onDelete: Cascade)
 
     @@id(name: "tweetBookmarkId", [userId, tweetId])
-}
-
-model CommentBookmark {
-    userId    Int
-    commentId Int
-    user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-    comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
-
-    @@id(name: "commentBookmarkId", [userId, commentId])
 }
 
 model Follow {
     followerId Int
     followeeId Int
-    follower   User @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
-    followee   User @relation("followee", fields: [followeeId], references: [id], onDelete: Cascade)
+    createdAt  DateTime @default(now())
+    follower   User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+    followee   User     @relation("followee", fields: [followeeId], references: [id], onDelete: Cascade)
 
     @@id(name: "followId", [followerId, followeeId])
 }
 
 model Message {
-    id         Int    @id @default(autoincrement())
-    content    String @db.VarChar(10000)
-    author     User   @relation("messeger", fields: [authorId], references: [id], onDelete: Cascade)
+    id         Int      @id @default(autoincrement())
+    content    String   @db.VarChar(10000)
+    createdAt  DateTime @default(now())
+    author     User     @relation("messeger", fields: [authorId], references: [id], onDelete: Cascade)
     authorId   Int
-    receiver   User   @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+    receiver   User     @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
     receiverId Int
 }
 
 model Block {
     blockerId Int
     blockedId Int
-    blocker   User @relation("blocker", fields: [blockerId], references: [id], onDelete: Cascade)
-    blocked   User @relation("blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+    createdAt DateTime @default(now())
+    blocker   User     @relation("blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+    blocked   User     @relation("blocked", fields: [blockedId], references: [id], onDelete: Cascade)
 
     @@id(name: "blockId", [blockerId, blockedId])
 }
