@@ -1,8 +1,10 @@
 
 const LogIn = () => {
-  return (
-    <div>LogIn</div>
-  )
+    return (
+        <div>
+            <h1>Happening now</h1> 
+        </div>
+    )
 }
 
 export default LogIn

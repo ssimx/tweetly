@@ -1,39 +1,42 @@
 'use client';
 
+
+import { signUpSchema } from "@/lib/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-const signUpSchema = z.object({
-    username: z.string()
-        .min(2, "Username must contain at least 2 characters")
-        .max(15, "Username must contain less than 15 characters"),
-    email: z.string().email(),
-    dateOfBirth: z.string().date(),
-    password: z.string()
-        .min(8, "Password must contain at least 8 characters"),
-    confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-});
+type FormData = z.infer<typeof signUpSchema>;
 
-type SignUpProps = z.infer<typeof signUpSchema>;
-
-const SignUp = () => {
-    const { register,
+export default function SignUp() {
+    const {
+        register,
         handleSubmit,
         reset,
         formState: { errors, isSubmitting },
-        setError,
-    } = useForm<SignUpProps>({
-        resolver: zodResolver(signUpSchema),
-    });
+    } = useForm<FormData>({ resolver: zodResolver(signUpSchema) });
 
-    const onSubmit = async (data: SignUpProps) => {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+    const onSubmit = async (data: FormData) => {
+        if (isSubmitting) return;
 
-        reset();
+        try {
+            const response = await fetch('/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData);
+            }
+
+        } catch (error) {
+            console.error('Error: ', error);
+            reset();
+        }
     };
 
     return (
@@ -52,12 +55,21 @@ const SignUp = () => {
                 )}
                 <label>Email</label>
                 <input {...register("email")} />
+                {errors.email && (
+                    <p>{`${errors.email.message}`}</p>
+                )}
                 <label>Date Of Birth</label>
                 <input {...register("dateOfBirth")} />
+                {errors.dateOfBirth && (
+                    <p>{`${errors.dateOfBirth.message}`}</p>
+                )}
                 <label>Password</label>
-                <input {...register("password")} />
+                <input {...register("password")} type="password" />
+                {errors.password && (
+                    <p>{`${errors.password.message}`}</p>
+                )}
                 <label>Confirm Password</label>
-                <input {...register("confirmPassword")} />
+                <input {...register("confirmPassword")} type="password" />
                 {errors.confirmPassword && (
                     <p>{`${errors.confirmPassword.message}`}</p>
                 )}
@@ -68,5 +80,3 @@ const SignUp = () => {
         </div>
     )
 }
-
-export default SignUp;
