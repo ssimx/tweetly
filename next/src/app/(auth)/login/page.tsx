@@ -4,7 +4,6 @@ import { logInSchema } from "@/lib/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import Cookies from 'js-cookie';
 import { useRouter } from "next/navigation";
 
 type FormData = z.infer<typeof logInSchema>;
@@ -38,9 +37,6 @@ export default function LogIn() {
                 throw new Error(errorData.error);
             }
 
-            const result: { token: string } = await response.json();
-            Cookies.set('token', result.token, { expires: 30 });
-            console.log('Login successful', result);
             router.push('/');
         } catch (error) {
             if (error instanceof Error) {

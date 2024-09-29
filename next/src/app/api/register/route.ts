@@ -1,4 +1,5 @@
 import { signUpSchema } from '@/lib/schemas';
+import { createSession } from '@/lib/session';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -26,6 +27,8 @@ export async function POST(req: Request) {
             // Handle the response from your Express backend
             if (response.ok) {
                 const data = await response.json();
+                await createSession(data.token);
+                console.log('Login successful', data);
                 return NextResponse.json(data);
             } else {
                 const errorData = await response.json();
