@@ -17,6 +17,7 @@ export default function SignUp() {
         handleSubmit,
         reset,
         formState: { errors, isSubmitting },
+        setError,
     } = useForm<FormData>({ resolver: zodResolver(signUpSchema) });
 
     const onSubmit = async (data: FormData) => {
@@ -33,7 +34,8 @@ export default function SignUp() {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData);
+                console.log(errorData);
+                throw new Error(errorData.error);
             }
 
             const result: { token: string } = await response.json();
@@ -42,8 +44,16 @@ export default function SignUp() {
 
             router.push('/');
         } catch (error) {
-            console.error('Error: ', error);
-            reset();
+            if (error instanceof Error) {
+                if (error.message === 'username') {
+                    setError("username", { type: "manual", message: 'Username already exists' });
+                } else if (error.message === 'email') {
+                    setError("email", { type: "manual", message: 'Email already in use' });
+                } else {
+                    console.error(error);
+                    reset();
+                }
+            }
         }
     };
 

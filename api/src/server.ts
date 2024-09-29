@@ -16,11 +16,7 @@ app.use(cors());
 // Passport configuration
 configurePassport(passport);
 
-app.get('/api/v1/home', (req: Request, res: Response) => {
-    res.send('Hello, World!');
-});
-
-app.use('/api/v1/', authRouter);
+app.use('/api/v1/auth', authRouter);
 
 app.listen(port, () => {
     console.log(`[server]: Server is running at http://localhost:${port}`);

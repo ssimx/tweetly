@@ -23,7 +23,9 @@ export const signUpSchema = z.object({
 
 export const logInSchema = z.object({
     username: z
-        .string(),
+        .string()
+        .min(1, "Please enter username"),
     password: z
-        .string(),
+        .string()
+        .min(1, "Please enter password"),
 });

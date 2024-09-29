@@ -11,8 +11,7 @@ export async function POST(req: Request) {
 
             // Send a POST request to your Express backend
             const apiUrl = process.env.EXPRESS_API_URL;
-            console.log('API URL:', process.env.EXPRESS_API_URL);
-            const response = await fetch(`${apiUrl}/login`, {
+            const response = await fetch(`${apiUrl}/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -26,7 +25,7 @@ export async function POST(req: Request) {
                 return NextResponse.json(data);
             } else {
                 const errorData = await response.json();
-                return NextResponse.json({ error: errorData.message }, { status: response.status });
+                return NextResponse.json({ error: errorData.error }, { status: response.status });
             }
         } catch (error) {
             // Handle validation errors

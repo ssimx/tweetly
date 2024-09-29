@@ -17,6 +17,8 @@ export default function LogIn() {
         handleSubmit,
         reset,
         formState: { errors, isSubmitting },
+        setError,
+        resetField,
     } = useForm<FormData>({ resolver: zodResolver(logInSchema) });
 
     const onSubmit = async (data: FormData) => {
@@ -33,17 +35,25 @@ export default function LogIn() {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData);
+                throw new Error(errorData.error);
             }
 
             const result: { token: string } = await response.json();
             Cookies.set('token', result.token, { expires: 30 });
             console.log('Login successful', result);
-            
             router.push('/');
         } catch (error) {
-            console.error('Error: ', error);
-            reset();
+            if (error instanceof Error) {
+                if (error.message === 'User not found') {
+                    setError("username", { type: "manual", message: error.message });
+                } else if (error.message === 'Incorrect password') {
+                    setError("password", { type: "manual", message: error.message });
+                    resetField("password", { keepError: true });
+                } else {
+                    console.error(error);
+                    reset();
+                }
+            }
         }
     };
 
