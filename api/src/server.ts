@@ -1,14 +1,20 @@
 import express, { type Express, type Request, type Response } from 'express';
-const cors = require('cors');
 import dotenv from 'dotenv';
 import authRouter from './routes/authRoutes';
+import { configurePassport } from './middleware/passport';
+const passport = require('passport');
+const cors = require('cors');
 
 dotenv.config();
 const app: Express = express();
 const port = process.env.PORT || 3001;
 
 app.use(express.json());
+app.use(passport.initialize());
 app.use(cors());
+
+// Passport configuration
+configurePassport(passport);
 
 app.get('/api/v1/home', (req: Request, res: Response) => {
     res.send('Hello, World!');

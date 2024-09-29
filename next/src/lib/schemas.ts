@@ -20,3 +20,10 @@ export const signUpSchema = z.object({
     message: 'Passwords do not match',
     path: ['confirmPassword'],
 });
+
+export const logInSchema = z.object({
+    username: z
+        .string(),
+    password: z
+        .string(),
+});

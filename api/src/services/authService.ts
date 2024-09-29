@@ -36,3 +36,9 @@ export const createUserAndProfile = async (userData: userDataProps) => {
         return { user, profile };
     });
 };
+
+export const getUser = async (username: string) => {
+    return await prisma.user.findUnique({
+        where: { username },
+    });
+};
