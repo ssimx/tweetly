@@ -1,3 +1,6 @@
-// helper functions for manipulating data
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
 
-export const deepClone = (value: object) => structuredClone(value);
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}

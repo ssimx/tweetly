@@ -27,7 +27,16 @@ export async function POST(req: Request) {
 
             // Remove confirmPassword from the object
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { confirmPassword, ...data } = validatedData;
+            const { confirmPassword, year, day, month, ...data } = validatedData;
+
+            const dateOfBirth = `${year}-${('0' + month).slice(-2)}-${('0' + day).slice(-2) }`;
+
+            console.log(dateOfBirth);
+            
+            const userData = {
+                ...data,
+                dateOfBirth
+            };
 
             // Send a POST request to your Express backend
             const apiUrl = process.env.EXPRESS_API_URL;
@@ -36,7 +45,7 @@ export async function POST(req: Request) {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(data),
+                body: JSON.stringify(userData),
             });
 
             // Handle the response from your Express backend

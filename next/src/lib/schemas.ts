@@ -8,9 +8,15 @@ export const signUpSchema = z.object({
     email: z
         .string()
         .email(),
-    dateOfBirth: z
+    year: z
         .string()
-        .date(),
+        .min(4, "Year is required"),
+    month: z
+        .string()
+        .min(1, "Month is required"),
+    day: z
+        .string()
+        .min(1, "Day is required"),
     password: z
         .string()
         .min(8, "Password must contain at least 8 characters"),

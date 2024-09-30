@@ -5,6 +5,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
+import { Apple, Loader2, Mail } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import { DateOfBirthSelect } from "@/components/DateOfBirthSelect";
+
 
 type FormData = z.infer<typeof signUpSchema>;
 
@@ -17,6 +23,7 @@ export default function SignUp() {
         reset,
         formState: { errors, isSubmitting },
         setError,
+        setValue,
     } = useForm<FormData>({ resolver: zodResolver(signUpSchema) });
 
     const onSubmit = async (data: FormData) => {
@@ -53,43 +60,53 @@ export default function SignUp() {
     };
 
     return (
-        <div>
-            <h1>
-                Happening now
+        <div className='flex flex-col justify-between gap-8 w-3/4 min-w-[300px] md:w-1/2'>
+            <h1 className='text-30 font-bold text-center'>
+                Create your account
             </h1>
+            <div className='flex flex-col justify-between items-center gap-8'>
+                <div className='flex flex-col gap-4 w-3/5'>
+                    <Button className='social-media-connect-btn'>
+                        <Mail className="mr-2 h-4 w-4" /> Sign up with Email
+                    </Button>
+                    <Button className='social-media-connect-btn'>
+                        <Apple className="mr-2 h-4 w-4" /> Sign up with Apple
+                    </Button>
+                </div>
 
-            <h2>Join today.</h2>
+            <p>Or</p>
 
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <label>Username</label>
-                <input {...register("username")} />
+            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
+                <Input {...register("username")} placeholder="username" />
                 {errors.username && (
-                    <p>{`${errors.username.message}`}</p>
+                    <p className="error-msg">{`${errors.username.message}`}</p>
                 )}
-                <label>Email</label>
-                <input {...register("email")} />
+                <Input {...register("email")} placeholder="email" />
                 {errors.email && (
-                    <p>{`${errors.email.message}`}</p>
+                    <p className="error-msg">{`${errors.email.message}`}</p>
                 )}
-                <label>Date Of Birth</label>
-                <input {...register("dateOfBirth")} />
-                {errors.dateOfBirth && (
-                    <p>{`${errors.dateOfBirth.message}`}</p>
-                )}
-                <label>Password</label>
-                <input {...register("password")} type="password" />
+                
+                <DateOfBirthSelect register={register} setValue={setValue} errors={errors} />
+
+                <Input {...register("password")} type="password" placeholder="password" />
                 {errors.password && (
-                    <p>{`${errors.password.message}`}</p>
+                    <p className="error-msg">{`${errors.password.message}`}</p>
                 )}
-                <label>Confirm Password</label>
-                <input {...register("confirmPassword")} type="password" />
+                <Input {...register("confirmPassword")} type="password" placeholder="confirm password" />
                 {errors.confirmPassword && (
-                    <p>{`${errors.confirmPassword.message}`}</p>
+                    <p className="error-msg">{`${errors.confirmPassword.message}`}</p>
                 )}
-                <button disabled={isSubmitting}>
-                    Submit
-                </button>
+
+                {isSubmitting
+                    ? <Button disabled>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Signing up
+                    </Button>
+                    : <Button className='bg-primary font-bold'>Sign up</Button>
+                }
             </form>
+                <p>Already have an account? <Link href='/login' className='font-bold hover:text-primary'>Log in</Link></p>
+            </div>
         </div>
     )
 }
