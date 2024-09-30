@@ -1,6 +1,6 @@
 import 'server-only';
 import { cookies } from 'next/headers';
-import { RequestCookie } from 'next/dist/compiled/@edge-runtime/cookies';
+import { jwtVerify } from 'jose';
 
 export async function createSession(token: string) {
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
@@ -14,10 +14,30 @@ export async function createSession(token: string) {
     })
 };
 
-export async function getSession(): Promise<RequestCookie | undefined> {
-    const cookieStore = cookies();
-    const token = cookieStore.get('access-token');
-    return token;
+const secretKey = process.env.JWT_SECRET;
+const encodedKey = new TextEncoder().encode(secretKey);
+
+export async function decryptSession(session: string | undefined = '') {
+    try {
+        const { payload } = await jwtVerify(session, encodedKey, {
+            algorithms: ['HS256'],
+        })
+        return payload;
+    } catch (error) {
+        console.log('Failed to verify session');
+        return;
+    }
+};
+
+export const verifySession = async () => {
+    const cookie = cookies().get('access-token')?.value;
+    const session = await decryptSession(cookie);
+
+    if (!session?.id) {
+        return { isAuth: false };
+    }
+
+    return { isAuth: true };
 };
 
 export async function hasSession(): Promise<boolean> {
@@ -29,3 +49,4 @@ export async function hasSession(): Promise<boolean> {
 export async function removeSession(): Promise<void> {
     cookies().delete('access-token');
 };
+

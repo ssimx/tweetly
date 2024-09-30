@@ -1,10 +1,25 @@
 import { signUpSchema } from '@/lib/schemas';
-import { createSession } from '@/lib/session';
+import { createSession, hasSession, removeSession, verifySession } from '@/lib/session';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 export async function POST(req: Request) {
     if (req.method === 'POST') {
+        // Check for an existing session
+        const token = await hasSession();
+
+        if (token) {
+            const isValid = await verifySession();
+
+            if (isValid.isAuth) {
+                // User is already logged in, return an appropriate response
+                return NextResponse.json({ message: 'Already logged in!' }, { status: 400 });
+            } else {
+                // Remove invalid session if the session is not valid
+                await removeSession();
+            }
+        }
+
         try {
             // Validate incoming data
             const body: z.infer<typeof signUpSchema> = await req.json();
@@ -28,7 +43,6 @@ export async function POST(req: Request) {
             if (response.ok) {
                 const data = await response.json();
                 await createSession(data.token);
-                console.log('Login successful', data);
                 return NextResponse.json(data);
             } else {
                 const errorData = await response.json();
