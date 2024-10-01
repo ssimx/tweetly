@@ -5,7 +5,8 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-    provider = "prisma-client-js"
+    provider        = "prisma-client-js"
+    previewFeatures = ["omitApi"]
 }
 
 datasource db {
@@ -14,25 +15,25 @@ datasource db {
 }
 
 model User {
-    id               Int             @id @default(autoincrement())
-    createdAt        DateTime        @default(now())
-    updatedAt        DateTime        @updatedAt
-    username         String          @unique @db.VarChar(15)
-    email            String          @unique @db.VarChar(254)
+    id               Int            @id @default(autoincrement())
+    createdAt        DateTime       @default(now())
+    updatedAt        DateTime       @updatedAt
+    username         String         @unique @db.VarChar(15)
+    email            String         @unique @db.VarChar(254)
     password         String
-    dateOfBirth      DateTime        @db.Date()
-    role             UserRole        @default(USER)
+    dateOfBirth      DateTime       @db.Date()
+    role             UserRole       @default(USER)
     profile          Profile?
-    tweets           Tweet[]
-    likedTweets      TweetLike[]
-    retweetedTweets  TweetRetweet[]
-    bookmarkedTweets TweetBookmark[]
-    followers        Follow[]        @relation("followee")
-    following        Follow[]        @relation("follower")
-    messagesReceived Message[]       @relation("receiver")
-    messagesSent     Message[]       @relation("messeger")
-    blockedBy        Block[]         @relation("blocked")
-    blockedUsers     Block[]         @relation("blocker")
+    posts            Post[]
+    likedPosts       PostLike[]
+    repostedPosts    PostRepost[]
+    bookmarkedPosts  PostBookmark[]
+    followers        Follow[]       @relation("followee")
+    following        Follow[]       @relation("follower")
+    messagesReceived Message[]      @relation("receiver")
+    messagesSent     Message[]      @relation("messeger")
+    blockedBy        Block[]        @relation("blocked")
+    blockedUsers     Block[]        @relation("blocker")
 }
 
 enum UserRole {
@@ -54,49 +55,49 @@ model Profile {
     userId         Int      @unique
 }
 
-model Tweet {
-    id        Int             @id @default(autoincrement())
-    content   String          @db.VarChar(280)
-    createdAt DateTime        @default(now())
-    updatedAt DateTime        @updatedAt
-    author    User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+model Post {
+    id        Int            @id @default(autoincrement())
+    content   String         @db.VarChar(280)
+    createdAt DateTime       @default(now())
+    updatedAt DateTime       @updatedAt
+    author    User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
     authorId  Int
-    replyTo   Tweet?          @relation("reply", fields: [replyToId], references: [id], onDelete: Cascade)
+    replyTo   Post?          @relation("reply", fields: [replyToId], references: [id], onDelete: Cascade)
     replyToId Int?
-    replies   Tweet[]         @relation("reply")
-    likes     TweetLike[]
-    retweets  TweetRetweet[]
-    bookmarks TweetBookmark[]
+    replies   Post[]         @relation("reply")
+    likes     PostLike[]
+    reposts   PostRepost[]
+    bookmarks PostBookmark[]
 }
 
-model TweetLike {
-    tweetId   Int
+model PostLike {
+    postId    Int
     userId    Int
     createdAt DateTime @default(now())
-    tweet     Tweet    @relation(fields: [tweetId], references: [id], onDelete: Cascade)
+    post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
     user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    @@id(name: "tweetLikeId", [tweetId, userId])
+    @@id(name: "postLikeId", [postId, userId])
 }
 
-model TweetRetweet {
-    tweetId   Int
+model PostRepost {
+    postId    Int
     userId    Int
     createdAt DateTime @default(now())
-    tweet     Tweet    @relation(fields: [tweetId], references: [id], onDelete: Cascade)
+    post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
     user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    @@id(name: "tweetRetweetId", [tweetId, userId])
+    @@id(name: "postRepostId", [postId, userId])
 }
 
-model TweetBookmark {
+model PostBookmark {
     userId    Int
-    tweetId   Int
+    postId    Int
     createdAt DateTime @default(now())
     user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-    tweet     Tweet    @relation(fields: [tweetId], references: [id], onDelete: Cascade)
+    post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-    @@id(name: "tweetBookmarkId", [userId, tweetId])
+    @@id(name: "postBookmarkId", [userId, postId])
 }
 
 model Follow {

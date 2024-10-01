@@ -46,7 +46,10 @@ export async function hasSession(): Promise<boolean> {
     return hasToken;
 };
 
+export async function getToken() {
+    return cookies().get('access-token')?.value;
+}
+
 export async function removeSession(): Promise<void> {
     cookies().delete('access-token');
 };
-

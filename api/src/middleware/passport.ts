@@ -1,7 +1,14 @@
 import { PrismaClient } from '@prisma/client';
 import { Strategy, ExtractJwt, StrategyOptions, VerifiedCallback } from 'passport-jwt';
 import { PassportStatic } from 'passport';
-const prisma = new PrismaClient();
+import { UserProps } from '../lib/types';
+const prisma = new PrismaClient({
+    omit: {
+        user: {
+            password: true
+        }
+    }
+});
 
 const SECRET_KEY = process.env.JWT_SECRET || 'tweetly';
 
@@ -21,9 +28,10 @@ const strategy = new Strategy(options, async (payload: { id: number, email: stri
         if (user) {
             return done(null, user);
         } else {
-            return done(null, false);
+            return done(null, false, { message: 'User not found'} );
         }
     } catch (error) {
+        console.error('Error during JWT verification:', error);
         return done(error, false);
     }
 });

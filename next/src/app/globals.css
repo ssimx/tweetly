@@ -114,6 +114,75 @@ body {
     .error-msg-date {
         @apply text-red-500 -mt-2 ml-1 text-14;
     }
+
+    /* Root layout */
+    .root-phone {
+        @apply w-screen h-screen grid grid-cols-1 grid-rows-root-phone-layout;
+    }
+
+    .root-desktop {
+        @apply 
+            hidden px-2
+            xs:w-full xs:max-w-[700px] xs:grid xs:mx-auto xs:grid-rows-1 xs:grid-cols-root-desktop-layout-xs xs:gap-8
+            lg:w-[1024px] lg:max-w-none lg:grid-cols-root-desktop-layout-lg
+            xl:w-[1280px] xl:grid-cols-root-desktop-layout-xl xl:px-4;
+    }
+
+    /* Left sidebar */
+    .left-sidebar {
+        @apply
+            hidden
+            xs:flex xs:flex-col xs:items-center xs:gap-12 xs:pb-12 xs:[&_p]:hidden xs:[&_span]:hidden
+            xl:items-start xl:[&_p]:block xl:[&_span]:flex;
+    }
+
+    .left-sidebar-links {
+        @apply
+            flex flex-col gap-6
+            xl:ml-4
+    }
+
+    .icon {
+        @apply
+            xs:w-8 xs:h-8;
+    }
+
+    .post-btn {
+        @apply
+            flex-center h-[60px] w-[60px] rounded-[50%] bg-[hsl(var(--primary))] text-white-1 font-bold 
+            xl:w-full xl:rounded-[30px]
+    }
+
+    .feather-icon {
+        @apply xl:hidden
+    }
+
+    .user-btn {
+        @apply
+            w-[45px] h-[45px] mt-auto relative [&_svg]:hidden
+            xl:w-full xl:[&_svg]:block;
+    }
+
+    .user-menu {
+        @apply
+            shadow-menu
+            absolute w-[200px] h-fit rounded-[20px] p-[20px] mb-2 translate-y-[-125%]
+            xl:w-[110%] xl:translate-x-[-5%];
+    }
+
+    /* Right sidebar */
+
+    .right-sidebar {
+        @apply 
+            hidden
+            lg:block;
+    }
+
+    /* Header */
+
+    .header {
+        @apply xs:hidden;
+    }
 }
 
 @layer base {

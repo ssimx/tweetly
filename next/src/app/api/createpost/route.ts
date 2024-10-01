@@ -1,44 +1,48 @@
-import { logInSchema } from '@/lib/schemas';
-import { createSession, hasSession, removeSession, verifySession } from '@/lib/session';
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
+import { newPostSchema } from "@/lib/schemas";
+import { getToken, hasSession, removeSession, verifySession } from "@/lib/session";
+import { Post } from "@/lib/types";
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     if (req.method === 'POST') {
         // Check for an existing session
         const token = await hasSession();
 
         if (token) {
+            // Check for session validity
             const isValid = await verifySession();
 
-            if (isValid.isAuth) {
-                // User is already logged in, return an appropriate response
-                return NextResponse.json({ message: 'Already logged in!' }, { status: 400 });
-            } else {
-                // Remove invalid session if the session is not valid
-                await removeSession();
+            if (!isValid.isAuth) {
+                removeSession();
+                return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 401 });
             }
+        } else {
+            return NextResponse.json({ message: 'Not logged in, please log in first' }, { status: 401 });
         }
 
         try {
-            // Validate incoming data
-            const body: z.infer<typeof logInSchema> = await req.json();
-            const validatedData = logInSchema.parse(body);
+            // validate the data
+            const body: z.infer<typeof newPostSchema> = await req.json();
+            const validatedData = newPostSchema.parse(body);
 
-            // Send a POST request to the backend
+            // send POST request to the backend
             const apiUrl = process.env.EXPRESS_API_URL;
-            const response = await fetch(`${apiUrl}/auth/login`, {
+            const token = await getToken();
+            
+            const response = await fetch(`${apiUrl}/post/createpost`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
                 },
                 body: JSON.stringify(validatedData),
             });
 
             if (response.ok) {
                 const data = await response.json();
-                await createSession(data.token);
-                return NextResponse.json(data);
+
+                return NextResponse.json(data.response.post as Post);
             } else {
                 const errorData = await response.json();
                 return NextResponse.json({ error: errorData.error }, { status: response.status });

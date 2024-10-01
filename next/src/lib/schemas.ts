@@ -35,3 +35,13 @@ export const logInSchema = z.object({
         .string()
         .min(1, "Please enter password"),
 });
+
+export const newPostSchema = z.object({
+    text: z
+        .string()
+        .min(1, 'Please enter the post content')
+        .max(280, "Post can't exceed 280 characters"),
+    replyToId: z
+        .number()
+        .optional()
+})
