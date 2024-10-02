@@ -1,7 +1,7 @@
 import { removeSession } from '@/lib/session';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function DELETE(req: Request) {
+export async function DELETE(req: NextRequest) {
     if (req.method === 'DELETE') {
         try {
             await removeSession();

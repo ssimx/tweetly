@@ -1,9 +1,9 @@
 import { logInSchema } from '@/lib/schemas';
 import { createSession, hasSession, removeSession, verifySession } from '@/lib/session';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     if (req.method === 'POST') {
         // Check for an existing session
         const token = await hasSession();
