@@ -14,3 +14,17 @@ export interface Post {
     authorId: number,
     replyToId: number | null,
 };
+
+export interface UserInfo {
+    username: string;
+    email: string;
+    dateOfBirth: Date;
+    profile: {
+        name: string;
+        bio: string;
+        location: string;
+        websiteUrl: string;
+        profilePicture: string;
+        bannerPicture: string;
+    },
+};

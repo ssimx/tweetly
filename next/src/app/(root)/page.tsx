@@ -6,8 +6,8 @@ export default async function Feed() {
     if (!session.isAuth) redirect('/login');
 
     return (
-        <div>
+        <section className='feed-desktop'>
             Feed
-        </div>
+        </section>
     )
 }

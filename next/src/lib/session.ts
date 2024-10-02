@@ -17,9 +17,16 @@ export async function createSession(token: string) {
 const secretKey = process.env.JWT_SECRET;
 const encodedKey = new TextEncoder().encode(secretKey);
 
-export async function decryptSession(session: string | undefined = '') {
+export async function decryptSession() {
+    const cookie = cookies().get('access-token')?.value;
+
+    if (!cookie) {
+        console.error('No session found');
+        return;
+    }
+
     try {
-        const { payload } = await jwtVerify(session, encodedKey, {
+        const { payload } = await jwtVerify(cookie, encodedKey, {
             algorithms: ['HS256'],
         })
         return payload;
@@ -30,8 +37,7 @@ export async function decryptSession(session: string | undefined = '') {
 };
 
 export const verifySession = async () => {
-    const cookie = cookies().get('access-token')?.value;
-    const session = await decryptSession(cookie);
+    const session = await decryptSession();
 
     if (!session?.id) {
         return { isAuth: false };
