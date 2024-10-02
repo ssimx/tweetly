@@ -1,4 +1,5 @@
-import { Prisma, PrismaClient, Profile, User } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
+import { UserProps } from '../lib/types';
 const prisma = new PrismaClient();
 
 // ---------------------------------------------------------------------------------------------------------
@@ -11,7 +12,7 @@ interface userDataProps {
 };
 
 type UserProfileResponse =
-    | { user: User }
+    | { user: UserProps }
     | { error: string; fields?: string[] };
 
 export const createUserAndProfile = async (userData: userDataProps): Promise<UserProfileResponse> => {
@@ -57,7 +58,7 @@ export const createUserAndProfile = async (userData: userDataProps): Promise<Use
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getUser = async (username: string) => {
+export const getUserLogin = async (username: string) => {
     return await prisma.user.findUnique({
         where: { username },
     });

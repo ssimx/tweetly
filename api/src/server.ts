@@ -2,6 +2,7 @@ import express, { type Express, type Request, type Response, type NextFunction }
 import dotenv from 'dotenv';
 import authRouter from './routes/authRoutes';
 import postRouter from './routes/postRoutes';
+import userRouter from './routes/userRoutes';
 
 import { configurePassport } from './middleware/passport';
 import { User } from '@prisma/client';
@@ -43,6 +44,8 @@ app.use(
 
 // JWT protected routes
 app.use('/api/v1/post', postRouter);
+app.use('/api/v1/user', userRouter);
+
 
 app.listen(port, () => {
     console.log(`[server]: Server is running at http://localhost:${port}`);

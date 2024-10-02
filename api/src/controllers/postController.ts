@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { UserProps } from '../lib/types';
 import { createPost, getPost } from '../services/postService';
 
-// Create new post
+// ---------------------------------------------------------------------------------------------------------
 
 interface NewPostProps {
     text: string,
@@ -32,7 +32,9 @@ export const newPost = async (req: Request, res: Response) => {
         return res.status(201).json({ response });
     } catch (error) {
         console.error('Error saving post data: ', error);
-        res.status(500).json({ error: 'Failed to process the data' });
+        return res.status(500).json({ error: 'Failed to process the data' });
     }
 };
+
+// ---------------------------------------------------------------------------------------------------------
 
