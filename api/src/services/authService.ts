@@ -20,8 +20,8 @@ export const createUserAndProfile = async (userData: userDataProps): Promise<Use
             // Create user first
             const user = await prisma.user.create({
                 data: {
-                    username: userData.username,
-                    email: userData.email,
+                    username: userData.username.toLocaleLowerCase(),
+                    email: userData.email.toLocaleLowerCase(),
                     dateOfBirth: userData.birthDate,
                     password: userData.hashedPassword
                 },
