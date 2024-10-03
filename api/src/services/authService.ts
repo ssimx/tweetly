@@ -2,6 +2,15 @@ import { Prisma, PrismaClient } from '@prisma/client';
 import { UserProps } from '../lib/types';
 const prisma = new PrismaClient();
 
+export const checkUserExsistence = async (username: string, email: string) => {
+    const duplicate = await prisma.user.findFirst({
+        where: {OR: [{username}, {email}] },
+    });
+
+    if (duplicate) return duplicate;
+    return;
+};
+
 // ---------------------------------------------------------------------------------------------------------
 
 interface userDataProps {

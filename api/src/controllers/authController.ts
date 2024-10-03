@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { createUserAndProfile, getUserLogin } from "../services/authService";
+import { checkUserExsistence, createUserAndProfile, getUserLogin } from "../services/authService";
 import { generateToken } from '../utils/jwt';
 const bcrypt = require('bcrypt');
 
@@ -16,6 +16,20 @@ export const registerUser = async (req: Request, res: Response) => {
     const { username, email, dateOfBirth, password } = req.body as signUpDataProps;
 
     try {
+        // check if user already exists
+        const existingUser = await checkUserExsistence(username, email);
+        if (existingUser) {
+            if (existingUser.username === username && existingUser.email === email) {
+                return res.status(400).json({ error: 'username and email' });
+            }
+            if (existingUser.username === username) {
+                return res.status(400).json({ error: 'username' });
+            }
+            if (existingUser.email === email) {
+                return res.status(400).json({ error: 'email' });
+            }
+        }
+
         // Hash the password before saving it
         const hashedPassword: string = await bcrypt.hash(password, 10);
 
@@ -27,6 +41,9 @@ export const registerUser = async (req: Request, res: Response) => {
 
         // Check if there was a unique constraint violation
         if ('error' in response) {
+            if (response.fields?.includes('username') && response.fields?.includes('email')) {
+                return res.status(400).json({ error: 'username and email' });
+            }
             if (response.fields?.includes('username')) {
                 return res.status(400).json({ error: 'username' });
             }
