@@ -10,7 +10,7 @@
 }
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
   width: 100wv;
   display: flex;
   justify-content: center;
@@ -122,17 +122,17 @@ body {
 
     .root-desktop {
         @apply 
-            hidden px-2
-            xs:w-full xs:max-w-[700px] xs:grid xs:mx-auto xs:grid-rows-1 xs:grid-cols-root-desktop-layout-xs xs:gap-8
+            hidden
+            xs:w-full xs:max-w-[700px] xs:grid xs:mx-auto xs:grid-rows-1 xs:grid-cols-root-desktop-layout-xs xs:gap-4
             lg:w-[1024px] lg:max-w-none lg:grid-cols-root-desktop-layout-lg
-            xl:w-[1280px] xl:grid-cols-root-desktop-layout-xl xl:px-4;
+            xl:w-[1280px] xl:grid-cols-root-desktop-layout-xl xl:gap-8 xl:px-4;
     }
 
     /* Left sidebar */
     .left-sidebar {
         @apply
             hidden
-            xs:flex xs:flex-col xs:items-center xs:gap-12 xs:pb-12 xs:[&_p]:hidden xs:[&_span]:hidden
+            xs:ml-4 xs:flex xs:flex-col xs:items-center xs:gap-12 xs:pb-12 xs:[&_p]:hidden xs:[&_span]:hidden
             xl:items-start xl:[&_p]:block xl:[&_span]:flex;
     }
 
@@ -144,12 +144,12 @@ body {
 
     .icon {
         @apply
-            xs:w-8 xs:h-8;
+            xs:w-7 xs:h-7;
     }
 
     .post-btn {
         @apply
-            flex-center h-[60px] w-[60px] rounded-[50%] bg-[hsl(var(--primary))] text-white-1 font-bold 
+            flex-center h-[50px] w-[50px] rounded-[50%] bg-[hsl(var(--primary))] text-white-1 font-bold 
             xl:w-full xl:rounded-[30px]
     }
 
@@ -159,7 +159,7 @@ body {
 
     .user-btn {
         @apply
-            w-[45px] h-[45px] mt-auto relative [&_svg]:hidden
+            w-[40px] h-[40px] mt-auto relative [&_svg]:hidden
             xl:w-full xl:[&_svg]:block;
     }
 
@@ -168,6 +168,22 @@ body {
             shadow-menu
             absolute w-[200px] h-fit rounded-[20px] p-[20px] mb-2 translate-y-[-125%]
             xl:w-[110%] xl:translate-x-[-5%];
+    }
+
+    /* Feed */
+    .feed-desktop {
+        @apply
+            px-4 grid grid-cols-1 grid-rows-feed-desktop-xs border-x;
+    }
+
+    .feed-header {
+        @apply
+            w-full flex flex-col;
+    }
+
+    .feed-header-tab-btn {
+        @apply
+            w-full flex-center hover:bg-dark-300/70
     }
 
     /* Right sidebar */

@@ -16,12 +16,18 @@ const config: Config = {
             gridTemplateRows: {
                 // 3 row grid
                 'root-phone-layout': '10% 1fr 6%',
+
+                // 2 row grid for feed
+                'feed-desktop-xs': 'auto 1fr',
+
+                // 3 row grid for feed header
+                'feed-header-desktop-xs': '40% auto',
             },
             gridTemplateColumns: {
-                'root-desktop-layout-xs': '13% 1fr',
+                'root-desktop-layout-xs': '10% 1fr',
                 // 3 col grid
-                'root-desktop-layout-lg': '5% 1fr 35%',
-                'root-desktop-layout-xl': '20% 1fr 30%',
+                'root-desktop-layout-lg': '5% 1fr 30%',
+                'root-desktop-layout-xl': '18% 1fr 28%',
 
                 // Post modal columns
                 'post-layout': '10% 1fr',
