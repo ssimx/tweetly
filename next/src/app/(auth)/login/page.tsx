@@ -1,5 +1,4 @@
 'use client';
-
 import { logInSchema } from "@/lib/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -41,7 +40,8 @@ export default function LogIn() {
                 throw new Error(errorData.error);
             }
 
-            router.push('/');
+            router.replace('/');
+            router.refresh();
         } catch (error) {
             if (error instanceof Error) {
                 if (error.message === 'User not found') {

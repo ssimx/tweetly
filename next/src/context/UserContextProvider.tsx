@@ -1,14 +1,13 @@
 'use client';
 import { UserInfo } from '@/lib/types';
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState } from 'react';
 
-type UserContextPropTypes = {
-    user?: UserInfo,
-    setUser?: React.Dispatch<React.SetStateAction<UserInfo | undefined>>,
-    updateUser: () => Promise<void>,
+type UserContextType = {
+    user: UserInfo,
+    setUser: (user: UserInfo) => void;
 };
 
-const UserContext = createContext<UserContextPropTypes | undefined>(undefined);
+const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const useUserContext = () => {
     const context = useContext(UserContext);
@@ -16,26 +15,11 @@ export const useUserContext = () => {
     return context;
 };
 
-export default function UserContextProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<UserInfo | undefined>(undefined);
-
-    const fetchUser = async () => {
-        const response = await fetch('/api/user');
-        const data = await response.json();
-        setUser(data);
-    };
-
-    useEffect(() => {
-        // Fetch user data
-        fetchUser();
-    }, []);
-
-    const updateUser = async () => {
-        await fetchUser();
-    };
+export default function UserContextProvider({ children, userData }: { children: React.ReactNode, userData: UserInfo }) {
+    const [user, setUser] = useState<UserInfo>(userData);
 
     return (
-        <UserContext.Provider value={{ user, setUser, updateUser }}>
+        <UserContext.Provider value={{ user, setUser }}>
             {children}
         </UserContext.Provider>
     )

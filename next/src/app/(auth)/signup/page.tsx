@@ -44,7 +44,8 @@ export default function SignUp() {
                 throw new Error(errorData.error);
             }
 
-            router.push('/');
+            router.replace('/');
+            router.refresh();
         } catch (error) {
             if (error instanceof Error) {
                 if (error.message === 'username') {
@@ -74,37 +75,37 @@ export default function SignUp() {
                     </Button>
                 </div>
 
-            <p>Or</p>
+                <p>Or</p>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
-                <Input {...register("username")} placeholder="username" />
-                {errors.username && (
-                    <p className="error-msg">{`${errors.username.message}`}</p>
-                )}
-                <Input {...register("email")} placeholder="email" />
-                {errors.email && (
-                    <p className="error-msg">{`${errors.email.message}`}</p>
-                )}
-                
-                <DateOfBirthSelect register={register} setValue={setValue} errors={errors} />
+                <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
+                    <Input {...register("username")} placeholder="username" />
+                    {errors.username && (
+                        <p className="error-msg">{`${errors.username.message}`}</p>
+                    )}
+                    <Input {...register("email")} placeholder="email" />
+                    {errors.email && (
+                        <p className="error-msg">{`${errors.email.message}`}</p>
+                    )}
 
-                <Input {...register("password")} type="password" placeholder="password" />
-                {errors.password && (
-                    <p className="error-msg">{`${errors.password.message}`}</p>
-                )}
-                <Input {...register("confirmPassword")} type="password" placeholder="confirm password" />
-                {errors.confirmPassword && (
-                    <p className="error-msg">{`${errors.confirmPassword.message}`}</p>
-                )}
+                    <DateOfBirthSelect register={register} setValue={setValue} errors={errors} />
 
-                {isSubmitting
-                    ? <Button disabled>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Signing up
-                    </Button>
-                    : <Button className='bg-primary font-bold'>Sign up</Button>
-                }
-            </form>
+                    <Input {...register("password")} type="password" placeholder="password" />
+                    {errors.password && (
+                        <p className="error-msg">{`${errors.password.message}`}</p>
+                    )}
+                    <Input {...register("confirmPassword")} type="password" placeholder="confirm password" />
+                    {errors.confirmPassword && (
+                        <p className="error-msg">{`${errors.confirmPassword.message}`}</p>
+                    )}
+
+                    {isSubmitting
+                        ? <Button disabled>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Signing up
+                        </Button>
+                        : <Button className='bg-primary font-bold'>Sign up</Button>
+                    }
+                </form>
                 <p>Already have an account? <Link href='/login' className='font-bold hover:text-primary'>Log in</Link></p>
             </div>
         </div>

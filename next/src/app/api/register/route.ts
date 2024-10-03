@@ -1,15 +1,13 @@
 import { signUpSchema } from '@/lib/schemas';
-import { createSession, hasSession, removeSession, verifySession } from '@/lib/session';
+import { createSession, getToken, removeSession, verifySession } from '@/lib/session';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 export async function POST(req: NextRequest) {
     if (req.method === 'POST') {
-        // Check for an existing session
-        const token = await hasSession();
-
+        const token = getToken();
         if (token) {
-            const isValid = await verifySession();
+            const isValid = await verifySession(token);
 
             if (isValid.isAuth) {
                 // User is already logged in, return an appropriate response

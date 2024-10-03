@@ -1,5 +1,5 @@
 import { newPostSchema } from "@/lib/schemas";
-import { getToken, hasSession, removeSession, verifySession } from "@/lib/session";
+import { getToken, removeSession, verifySession } from "@/lib/session";
 import { Post } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -7,11 +7,10 @@ import { z } from "zod";
 export async function POST(req: NextRequest) {
     if (req.method === 'POST') {
         // Check for an existing session
-        const token = await hasSession();
-
+        const token = getToken();
         if (token) {
             // Check for session validity
-            const isValid = await verifySession();
+            const isValid = await verifySession(token);
 
             if (!isValid.isAuth) {
                 removeSession();

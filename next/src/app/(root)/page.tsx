@@ -1,9 +1,10 @@
-import { verifySession } from "@/lib/session"
 import { redirect } from "next/navigation";
+import { getToken, verifySession } from "@/lib/session";
 
 export default async function Feed() {
-    const session = await verifySession();
-    if (!session.isAuth) redirect('/login');
+    const token = getToken();
+    const isAuth = await verifySession(token).then(res => res.isAuth);
+    if (!isAuth) redirect('/login');
 
     return (
         <section className='feed-desktop'>

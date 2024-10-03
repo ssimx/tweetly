@@ -17,16 +17,14 @@ export async function createSession(token: string) {
 const secretKey = process.env.JWT_SECRET;
 const encodedKey = new TextEncoder().encode(secretKey);
 
-export async function decryptSession() {
-    const cookie = cookies().get('access-token')?.value;
-
-    if (!cookie) {
+export async function decryptSession(token: string | undefined) {
+    if (!token) {
         console.error('No session found');
         return;
     }
 
     try {
-        const { payload } = await jwtVerify(cookie, encodedKey, {
+        const { payload } = await jwtVerify(token, encodedKey, {
             algorithms: ['HS256'],
         })
         return payload;
@@ -36,8 +34,8 @@ export async function decryptSession() {
     }
 };
 
-export const verifySession = async () => {
-    const session = await decryptSession();
+export const verifySession = async (token: string | undefined) => {
+    const session = await decryptSession(token);
 
     if (!session?.id) {
         return { isAuth: false };
@@ -52,10 +50,21 @@ export async function hasSession(): Promise<boolean> {
     return hasToken;
 };
 
-export async function getToken() {
-    return cookies().get('access-token')?.value;
+export function getToken() {
+    const token = cookies().get('access-token')?.value;
+    return token;    
 }
 
 export async function removeSession(): Promise<void> {
     cookies().delete('access-token');
+};
+
+export function extractToken(authHeader: string | null) {
+    if (authHeader) {
+        const parts = authHeader.split(' ');
+        if (parts.length === 2 && parts[0] === 'Bearer') {
+            return parts[1];
+        }
+    }
+    return;
 };
