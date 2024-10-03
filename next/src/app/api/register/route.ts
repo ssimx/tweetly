@@ -10,7 +10,6 @@ export async function POST(req: NextRequest) {
             const isValid = await verifySession(token);
 
             if (isValid.isAuth) {
-                // User is already logged in, return an appropriate response
                 return NextResponse.json({ message: 'Already logged in!' }, { status: 400 });
             } else {
                 // Remove invalid session if the session is not valid
@@ -19,24 +18,19 @@ export async function POST(req: NextRequest) {
         }
 
         try {
-            // Validate incoming data
             const body: z.infer<typeof signUpSchema> = await req.json();
             const validatedData = signUpSchema.parse(body);
 
-            // Remove confirmPassword from the object
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { confirmPassword, year, day, month, ...data } = validatedData;
 
             const dateOfBirth = `${year}-${('0' + month).slice(-2)}-${('0' + day).slice(-2)}`;
-
-            console.log(dateOfBirth);
 
             const userData = {
                 ...data,
                 dateOfBirth
             };
 
-            // Send a POST request to your Express backend
             const apiUrl = process.env.EXPRESS_API_URL;
             const response = await fetch(`${apiUrl}/auth/register`, {
                 method: 'POST',
@@ -46,7 +40,6 @@ export async function POST(req: NextRequest) {
                 body: JSON.stringify(userData),
             });
 
-            // Handle the response from your Express backend
             if (response.ok) {
                 const data = await response.json();
                 await createSession(data.token);

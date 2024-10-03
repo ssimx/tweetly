@@ -48,7 +48,10 @@ export default function SignUp() {
             router.refresh();
         } catch (error) {
             if (error instanceof Error) {
-                if (error.message === 'username') {
+                if (error.message === 'username and email') {
+                    setError("username", { type: "manual", message: 'Username already exists' });
+                    setError("email", { type: "manual", message: 'Email already in use' });
+                } else if (error.message === 'username') {
                     setError("username", { type: "manual", message: 'Username already exists' });
                 } else if (error.message === 'email') {
                     setError("email", { type: "manual", message: 'Email already in use' });

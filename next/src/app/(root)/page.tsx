@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getToken, verifySession } from "@/lib/session";
+import FeedHeader from '@/components/FeedHeader';
 
 export default async function Feed() {
     const token = getToken();
@@ -8,7 +9,7 @@ export default async function Feed() {
 
     return (
         <section className='feed-desktop'>
-            Feed
+            <FeedHeader />
         </section>
     )
 }
