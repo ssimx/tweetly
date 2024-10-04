@@ -14,6 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { Post } from "@/lib/types";
 import TextareaAutosize from 'react-textarea-autosize';
+import { useUserContext } from "@/context/UserContextProvider";
 
 type PostData = z.infer<typeof newPostSchema>;
 
@@ -22,6 +23,8 @@ export default function NewPost() {
     const maxChars = 280;
     const charsPercentage = Math.min((text.length / maxChars) * 100, 100);
     const router = useRouter();
+    const { user } = useUserContext();
+
 
     const {
         register,
@@ -38,7 +41,7 @@ export default function NewPost() {
         if (isSubmitting) return;
 
         try {
-            const response = await fetch('/api/createpost', {
+            const response = await fetch('/api/createPost', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -64,11 +67,14 @@ export default function NewPost() {
 
     return (
         <div className="border-y h-fit min-h-[175px] flex flex-col">
-            <div className="grid grid-cols-post-layout mt-4 h-full">
-                <Image src='/blackLogo.png' alt='User profile' width={30} height={30} className="w-fit" />
+            <div className="grid grid-cols-post-layout gap-2 mt-4 h-full">
+                <Image src={`http://localhost:3001/public/profilePictures/${user.profile?.profilePicture}`}
+                    alt='User profile'
+                    width={50} height={50}
+                    className="rounded-full" />
                 <form onSubmit={handleSubmit(onSubmit)} id='postForm' className='pr-4'>
                     <TextareaAutosize maxLength={maxChars}
-                        className='w-full focus:outline-none text-xl resize-none' 
+                        className='w-full focus:outline-none text-xl resize-none mt-1'
                         placeholder='What is happening?!'
                         {...register("text", {
                             onChange: (e) => handleTextChange(e),

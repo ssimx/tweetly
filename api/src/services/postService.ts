@@ -46,3 +46,35 @@ export const getPost = async (id: number) => {
         where: { id },
     })
 };
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getGlobal30DayPosts = async () => {
+    let date = new Date();
+    date.setDate(date.getDate() - 30);
+
+    return await prisma.post.findMany({
+        where: {
+            createdAt: {
+                gte: date
+            },
+            replyToId: null
+        },
+        orderBy: {
+            createdAt: 'desc'
+        },
+        include: {
+            author: {
+                select: {
+                    username: true,
+                    profile: {
+                        select: {
+                            name: true,
+                            profilePicture: true,
+                        }
+                    }
+                }
+            }
+        }
+    });
+};

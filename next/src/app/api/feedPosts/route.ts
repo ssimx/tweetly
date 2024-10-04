@@ -1,4 +1,5 @@
 import { getToken, removeSession, verifySession } from "@/lib/session";
+import { PostInfoType } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -18,16 +19,16 @@ export async function GET(req: NextRequest) {
 
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
-            const response = await fetch(`${apiUrl}/posts`, {
+            const response = await fetch(`${apiUrl}/posts/globalFeed`, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
                 }
             })
 
             if (response.ok) {
-                const feedPosts = await response.json();
-                return NextResponse.json({ feedPosts });
+                const feedPosts: PostInfoType[] = await response.json().then((res) => res.response);
+                return NextResponse.json(feedPosts);
             } else {
                 const errorData = await response.json();
                 return NextResponse.json({ error: errorData.error }, { status: response.status });

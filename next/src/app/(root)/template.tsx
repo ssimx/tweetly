@@ -10,7 +10,7 @@ export default async function RootTemplate({ children }: Readonly<{ children: Re
     
     return (
         <UserContextProvider userData={userData}>
-            <main className="w-screen">
+            <main className="w-screen h-screen">
                 <div className="root-phone xs:root-desktop xs:pt-4">
                     <LeftSidebar />
                     <div className="header">header</div>

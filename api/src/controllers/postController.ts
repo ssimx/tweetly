@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { UserProps } from '../lib/types';
-import { createPost, getPost } from '../services/postService';
+import { createPost, getGlobal30DayPosts, getPost } from '../services/postService';
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -38,3 +38,12 @@ export const newPost = async (req: Request, res: Response) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
+export const global30DayPosts = async (req: Request, res: Response) => {
+    try {
+        const response = await getGlobal30DayPosts();
+        return res.status(201).json({ response });
+    } catch (error) {
+        console.error('Error fetching data: ', error);
+        return res.status(500).json({ error: 'Failed to fetch the data' });
+    }
+};

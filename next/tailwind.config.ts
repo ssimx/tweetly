@@ -22,8 +22,11 @@ const config: Config = {
 
                 // 3 row grid for feed header
                 'feed-header-desktop-xs': '40% auto',
+
             },
             gridTemplateColumns: {
+                'post': '10% auto',
+                
                 'root-desktop-layout-xs': '10% 1fr',
                 // 3 col grid
                 'root-desktop-layout-lg': '5% 1fr 30%',

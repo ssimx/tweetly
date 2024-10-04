@@ -27,9 +27,8 @@ export async function POST(req: NextRequest) {
 
             // send POST request to the backend
             const apiUrl = process.env.EXPRESS_API_URL;
-            const token = await getToken();
-            
-            const response = await fetch(`${apiUrl}/post/createpost`, {
+
+            const response = await fetch(`${apiUrl}/posts/create`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

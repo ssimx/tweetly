@@ -28,3 +28,19 @@ export interface UserInfo {
         bannerPicture: string;
     },
 };
+
+export interface PostInfoType {
+    id: number,
+    content: string,
+    createdAt: string,
+    updatedAt: string,
+    authorId: number,
+    replyToId: number | null,
+    author: {
+        username: string,
+        profile: {
+            name: string,
+            profilePicture: string,
+        } | null;
+    };
+};

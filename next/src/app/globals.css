@@ -186,6 +186,16 @@ body {
             w-full flex-center hover:bg-dark-300/70
     }
 
+    .feed-posts-desktop {
+        @apply
+            w-full flex flex-col h-fit;
+    }
+
+    .feed-post {
+        @apply
+            w-full h-fit min-h-[65px] grid grid-cols-post gap-2;
+    }
+
     /* Right sidebar */
 
     .right-sidebar {
