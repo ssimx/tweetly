@@ -55,7 +55,7 @@ export function getToken() {
     return token;    
 }
 
-export async function removeSession(): Promise<void> {
+export function removeSession() {
     cookies().delete('access-token');
 };
 
