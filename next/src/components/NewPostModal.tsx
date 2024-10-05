@@ -1,3 +1,4 @@
+'use client';
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -16,12 +17,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { Post } from "@/lib/types";
 import TextareaAutosize from 'react-textarea-autosize';
+import { useUserContext } from "@/context/UserContextProvider";
 
 type PostData = z.infer<typeof newPostSchema>;
 
 export default function NewPostModal() {
     const [text, setText] = useState('');
     const maxChars = 280;
+    const { user } = useUserContext();
     const charsPercentage = Math.min((text.length / maxChars) * 100, 100);
     const router = useRouter();
 
@@ -43,11 +46,11 @@ export default function NewPostModal() {
         }
     };
 
-    const onSubmit = async (data: PostData) => {
+    const onSubmitModalPost = async (data: PostData) => {
         if (isSubmitting) return;
 
         try {
-            const response = await fetch('/api/createpost', {
+            const response = await fetch('/api/createPost', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -64,7 +67,7 @@ export default function NewPostModal() {
 
             console.log(postData);
 
-            router.push(`/post/${postData.id}`);
+            router.push(`/${user.username}/status/${postData.id}`);
         } catch (error) {
             console.error(error);
             reset();
@@ -78,12 +81,16 @@ export default function NewPostModal() {
                 <p>Post</p>
             </DialogTrigger>
             <DialogContent className="w-[90%] sm:max-w-[550px]">
-                <div className="grid grid-cols-post-layout mt-4 min-h-[60px] sm:min-h-[80px]">
-                    <Image src='/blackLogo.png' alt='User profile' width={30} height={30} className="w-fit" />
-                    <form onSubmit={handleSubmit(onSubmit)} id='postForm' className='pr-4'>
+                <div className="grid grid-cols-post-layout gap-2 mt-4 min-h-[60px] sm:min-h-[80px]">
+                    <Image 
+                        src={`http://localhost:3001/public/profilePictures/${user.profile?.profilePicture}`} 
+                        alt='User profile' 
+                        width={40} height={40} 
+                        className="w-fit rounded-full" />
+                    <form onSubmit={handleSubmit(onSubmitModalPost)} id='modalPostForm' className='pr-4'>
                         <TextareaAutosize
                             maxLength={maxChars}
-                            className='h-[200px] sm:h-[175px] w-full focus:outline-none text-xl resize-none'
+                            className='h-[200px] sm:h-[175px] w-full focus:outline-none text-xl resize-none mt-2'
                             placeholder='What is happening?!'
                             {...register("text", {
                                 onChange: (e) => handleTextChange(e),
@@ -106,7 +113,7 @@ export default function NewPostModal() {
                         : (<Button type="submit"
                             className='ml-auto font-bold w-fit rounded-3xl text-white-1'
                             disabled={text.length > 280}
-                            form='postForm'
+                            form='modalPostForm'
                         >
                             Post
                         </Button>)

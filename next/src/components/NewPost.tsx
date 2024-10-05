@@ -37,7 +37,7 @@ export default function NewPost() {
         setText(e.target.value);
     };
 
-    const onSubmit = async (data: PostData) => {
+    const onSubmitHeaderPost = async (data: PostData) => {
         if (isSubmitting) return;
 
         try {
@@ -58,7 +58,7 @@ export default function NewPost() {
 
             console.log(postData);
 
-            router.push(`/post/${postData.id}`);
+            router.push(`/${user.username}/status/${postData.id}`);
         } catch (error) {
             console.error(error);
             reset();
@@ -72,7 +72,7 @@ export default function NewPost() {
                     alt='User profile'
                     width={50} height={50}
                     className="rounded-full" />
-                <form onSubmit={handleSubmit(onSubmit)} id='postForm' className='pr-4'>
+                <form onSubmit={handleSubmit(onSubmitHeaderPost)} id='headerPostForm' className='pr-4'>
                     <TextareaAutosize maxLength={maxChars}
                         className='w-full focus:outline-none text-xl resize-none mt-1'
                         placeholder='What is happening?!'
@@ -96,7 +96,7 @@ export default function NewPost() {
                     : (<Button type="submit"
                         className='ml-auto font-bold w-fit rounded-3xl text-white-1'
                         disabled={text.length > 280}
-                        form='postForm'
+                        form='headerPostForm'
                     >
                         Post
                     </Button>)
