@@ -4,6 +4,8 @@ import { PostInfoType } from "@/lib/types";
 import { formatPostDate } from "@/lib/utils";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { MessageCircle, Repeat2, Heart, Bookmark, Share } from 'lucide-react';
+import Link from "next/link";
 
 export default function FeedContent() {
     const [feedPosts, setFeedPosts] = useState <PostInfoType[] | undefined | null>(undefined);
@@ -41,8 +43,8 @@ export default function FeedContent() {
         <section className='feed-posts-desktop gap-2'>
             {feedPosts.map((post) => {
                 return (
-                    <>
-                        <div key={post.id} className='feed-post'>
+                    <div key={post.id} className='feed-post'>
+                        <div className='feed-content'>
                             <Image
                                 src={`http://localhost:3001/public/profilePictures/${post.author.profile?.profilePicture}`}
                                 alt='Author profile picture'
@@ -56,10 +58,40 @@ export default function FeedContent() {
                                 </div>
 
                                 <p className='break-words whitespace-normal'>{post.content}</p>
+
+                                <div className="flex gap-2 items-center mt-2">
+                                    <div className='w-[60%] sm:w-[50%] flex gap-1 justify-between'>
+                                        <Link href={`/${post.author.username}/status/${post.id}`} className='comment-btn group'>
+                                            <div className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-blue-1/10'>
+                                                <MessageCircle size={20}
+                                                    className='text-dark-400 group-hover:text-blue-1/70' />
+                                            </div>
+                                            <p>{post.replies.length}</p>
+                                        </Link>
+                                        <button className='repost-btn group'>
+                                            <span className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-green-500/10'>
+                                                <Repeat2 size={24} className='text-dark-400 group-hover:text-green-500/70' />
+                                            </span>
+                                            <p>{post.reposts.length}</p>
+                                        </button>
+                                        <button className='like-btn group'>
+                                            <span className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-pink-500/10'>
+                                                <Heart size={20} className='text-dark-400 group-hover:text-pink-500/70' />
+                                            </span>
+                                            <p>{post.likes.length}</p>
+                                        </button>
+                                    </div>
+                                    <button className='bookmark-btn group'>
+                                        <Bookmark size={20} className='text-dark-400 group-hover:text-blue-1/70' />
+                                    </button>
+                                    <button className='share-btn group'>
+                                        <Share size={20} className='text-dark-400 group-hover:text-blue-1/70' />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div className='w-full h-1 border-b'></div>
-                    </>
+                    </div>
                 )
             })}
         </section>
