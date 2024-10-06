@@ -41,7 +41,7 @@ export const createPost = async (postData: NewPostDataProps): Promise<NewPostRes
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getPost = async (id: number) => {
+export const getPostId = async (id: number) => {
     return await prisma.post.findUnique({
         where: { id },
     })
@@ -74,7 +74,126 @@ export const getGlobal30DayPosts = async () => {
                         }
                     }
                 }
+            },
+            replies: {
+                select: {
+                    id: true,
+                }
+            },
+            reposts: {
+                select: {
+                    userId: true,
+                }
+            },
+            likes: {
+                select: {
+                    userId: true,
+                }
+            },
+            bookmarks: {
+                select: {
+                    userId: true,
+                }
             }
         }
     });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const addPostRepost = async (userId: number, postId: number) => {
+    try {
+        return await prisma.postRepost.create({
+            data: {
+                postId,
+                userId,
+            }
+        });
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === 'P2002') {
+                // Unique constraint violation (e.g. username or email already exists)
+                return { error: 'Unique constraint violation', fields: (error.meta?.target as string[]) ?? [] };
+            }
+        }
+
+        // Throw the error so it can be handled in the registerUser function
+        throw error;
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const removePostRepost = async (userId: number, postId: number) => {
+    return await prisma.postRepost.delete({
+        where: { 
+            postRepostId: { postId, userId},
+        },
+    })
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const addPostLike = async (userId: number, postId: number) => {
+    try {
+        return await prisma.postLike.create({
+            data: {
+                postId,
+                userId,
+            }
+        });
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === 'P2002') {
+                // Unique constraint violation (e.g. username or email already exists)
+                return { error: 'Unique constraint violation', fields: (error.meta?.target as string[]) ?? [] };
+            }
+        }
+
+        // Throw the error so it can be handled in the registerUser function
+        throw error;
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const removePostLike = async (userId: number, postId: number) => {
+    return await prisma.postLike.delete({
+        where: {
+            postLikeId: { postId, userId },
+        },
+    })
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const addPostBookmark = async (userId: number, postId: number) => {
+    try {
+        return await prisma.postBookmark.create({
+            data: {
+                postId,
+                userId,
+            }
+        });
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === 'P2002') {
+                // Unique constraint violation (e.g. username or email already exists)
+                return { error: 'Unique constraint violation', fields: (error.meta?.target as string[]) ?? [] };
+            }
+        }
+
+        // Throw the error so it can be handled in the registerUser function
+        throw error;
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const removePostBookmark = async (userId: number, postId: number) => {
+    return await prisma.postBookmark.delete({
+        where: {
+            postBookmarkId: { postId, userId },
+        },
+    })
 };
