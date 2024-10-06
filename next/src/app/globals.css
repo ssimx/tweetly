@@ -131,7 +131,7 @@ body {
     /* Left sidebar */
     .left-sidebar {
         @apply
-            hidden
+            hidden pt-4
             xs:ml-4 xs:flex xs:flex-col xs:items-center xs:gap-12 xs:pb-12 xs:[&_p]:hidden xs:[&_span]:hidden
             xl:items-start xl:[&_p]:block xl:[&_span]:flex;
     }
@@ -173,7 +173,7 @@ body {
     /* Feed */
     .feed-desktop {
         @apply
-            px-4 grid grid-cols-1 grid-rows-feed-desktop-xs border-x;
+            grid grid-cols-1 grid-rows-feed-desktop-xs;
     }
 
     .feed-header {
@@ -193,8 +193,53 @@ body {
 
     .feed-post {
         @apply
+            w-full flex flex-col gap-2 px-4 pt-3 pb-1 hover:bg-white-1;
+    }
+
+    .feed-content {
+        @apply
             w-full h-fit min-h-[65px] grid grid-cols-post gap-2;
     }
+
+    .feed-hr-line {
+        @apply w-full h-[1px] bg-[hsl(var(--border))];
+    }
+
+    .comment-btn {
+        @apply
+            flex items-center hover:text-blue-1/70;
+    }
+
+    .repost-btn {
+        @apply flex items-center hover:text-green-500/70;
+    }
+
+    .reposted {
+        @apply [&_svg]:text-green-500/70 [&_p]:text-green-500/70;
+    }
+
+    .like-btn {
+        @apply flex items-center hover:text-pink-500;
+    }
+
+    .liked {
+        @apply [&_svg]:text-pink-500 [&_svg]:fill-pink-500 [&_p]:text-pink-500;
+    }
+
+    .bookmark-btn {
+        @apply
+            flex-center ml-auto h-[35px] w-[35px] rounded-full hover:bg-blue-1/10;
+    }
+
+    .bookmarked {
+        @apply [&_svg]:text-blue-1/70 [&_svg]:fill-blue-1/70;
+    }
+
+    .share-btn {
+        @apply
+            flex-center h-[35px] w-[35px] rounded-full hover:bg-blue-1/10;
+    }
+
 
     /* Right sidebar */
 

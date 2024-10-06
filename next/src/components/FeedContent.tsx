@@ -39,6 +39,9 @@ export default function FeedContent() {
     }, []);
 
     const handlePostBtnsInteraction = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>, postId: number) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
         const btn = e.currentTarget;
         const type = btn.dataset.type as string;
         const styleType = type === 'like' ? 'lik' : type;
@@ -47,8 +50,17 @@ export default function FeedContent() {
         btn.disabled = true;
         // optimistically change the styling
         btn.classList.toggle(`${styleType}ed`);
+        const counter = btn.childNodes.item(1) ? btn.childNodes.item(1) : undefined;
         if (status === 'true') {
             try {
+                if (counter) {
+                    if (counter.textContent === '0') {
+                        throw new Error(`Failed to remove the ${type} on the post`);
+                    } else {
+                        counter.textContent = String(Number(counter.textContent) - 1);
+                    }
+                }
+
                 const response = await fetch(`/api/posts/remove${type.charAt(0).toUpperCase() + type.slice(1)}/${postId}`, {
                     method: 'DELETE',
                     headers: {
@@ -65,8 +77,11 @@ export default function FeedContent() {
                 console.log(error);
                 // revert the styling
                 btn.classList.toggle(`${styleType}ed`);
+                counter ? counter.textContent = String(Number(counter.textContent) + 1) : null;
             }
         } else {
+            counter ? counter.textContent = String(Number(counter.textContent) + 1) : null;
+
             try {
                 const response = await fetch(`/api/posts/${type}/${postId}`, {
                     method: 'POST',
@@ -84,6 +99,7 @@ export default function FeedContent() {
                 console.log(error);
                 // revert the styling
                 btn.classList.toggle(`${styleType}ed`);
+                counter ? counter.textContent = String(Number(counter.textContent) - 1) : null;
             }
         }
         btn.disabled = false;
@@ -93,72 +109,75 @@ export default function FeedContent() {
     if (feedPosts === null) return <div>No posts</div>;
 
     return (
-        <section className='feed-posts-desktop gap-2'>
+        <section className='feed-posts-desktop'>
             {feedPosts.map((post) => {
                 return (
-                    <div key={post.id} className='feed-post'>
-                        <div className='feed-content'>
-                            <Image
-                                src={`http://localhost:3001/public/profilePictures/${post.author.profile?.profilePicture}`}
-                                alt='Author profile picture'
-                                height={35} width={35}
-                                className='rounded-full h-[35px] w-[35px]' />
-                            <div className='w-full flex flex-col min-w-[1%]'>
-                                <div className='flex gap-2 items-center'>
-                                    <p className='font-bold'>{post.author.profile?.name}</p>
-                                    <p className='text-dark-400 text-16'>@{post.author.username}</p>
-                                    <p className='text-dark-400 text-16'>· {formatPostDate(post.createdAt)}</p>
-                                </div>
-
-                                <p className='break-words whitespace-normal'>{post.content}</p>
-
-                                <div className="flex gap-2 items-center mt-2">
-                                    <div className='w-[60%] sm:w-[50%] flex gap-1 justify-between'>
-                                        <Link href={`/${post.author.username}/status/${post.id}`} className='comment-btn group'>
-                                            <div className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-blue-1/10'>
-                                                <MessageCircle size={20}
-                                                    className='text-dark-400 group-hover:text-blue-1/70' />
+                    <div key={post.id}>
+                        <Link
+                            href={`/${post.author.username}/status/${post.id}`}
+                            className='feed-post'>
+                                <div className='feed-content'>
+                                    <Link href={`/${post.author.username}`} className='h-fit w-fit'>
+                                        <Image
+                                            src={`http://localhost:3001/public/profilePictures/${post.author.profile?.profilePicture}`}
+                                            alt='Author profile picture'
+                                            height={35} width={35}
+                                            className='rounded-full h-[35px] w-[35px] hover:border-primary/50 hover:border-2' />
+                                    </Link>
+                                    <div className='w-full flex flex-col min-w-[1%]'>
+                                        <div className='flex gap-2 items-center'>
+                                        <Link href={`/${post.author.username}`} className='h-fit w-fit hover:underline'>
+                                                <p className='font-bold'>{post.author.profile?.name}</p>
+                                            </Link>
+                                            <p className='text-dark-400 text-16'>@{post.author.username}</p>
+                                            <p className='text-dark-400 text-16'>· {formatPostDate(post.createdAt)}</p>
+                                        </div>
+                                        <p className='break-words whitespace-normal'>{post.content}</p>
+                                        <div className="flex gap-2 justify-center items-end mt-2">
+                                            <div className='w-[60%] sm:w-[50%] flex gap-1 justify-between'>
+                                                <Link href={`/${post.author.username}/status/${post.id}`} className='comment-btn group'>
+                                                    <div className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-blue-1/10'>
+                                                        <MessageCircle size={20}
+                                                            className='text-dark-400 group-hover:text-blue-1/70' />
+                                                    </div>
+                                                    <p>{post.replies.length}</p>
+                                                </Link>
+                                                <button
+                                                    className={`repost-btn group ${post.reposts.some((repost) => repost.userId === user.id) ? 'reposted' : ''}`}
+                                                    data-type='repost'
+                                                    data-status={`${post.reposts.some((repost) => repost.userId === user.id)}`}
+                                                    onClick={(e) => handlePostBtnsInteraction(e, post.id)}>
+                                                    <span className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-green-500/10'>
+                                                        <Repeat2 size={24} className='text-dark-400 group-hover:text-green-500/70' />
+                                                    </span>
+                                                    <p>{post.reposts.length}</p>
+                                                </button>
+                                                <button
+                                                    className={`like-btn group ${post.likes.some((like) => like.userId === user.id) ? 'liked' : ''}`}
+                                                    data-type='like'
+                                                    data-status={`${post.likes.some((like) => like.userId === user.id)}`}
+                                                    onClick={(e) => handlePostBtnsInteraction(e, post.id)}>
+                                                    <span className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-pink-500/10'>
+                                                        <Heart size={20} className='text-dark-400 group-hover:text-pink-500' />
+                                                    </span>
+                                                    <p>{post.likes.length}</p>
+                                                </button>
                                             </div>
-                                            <p>{post.replies.length}</p>
-                                        </Link>
-
-                                        <button
-                                            className={`repost-btn group ${post.reposts.some((repost) => repost.userId === user.id) ? 'reposted' : ''}`}
-                                            data-type='repost'
-                                            data-status={`${post.reposts.some((repost) => repost.userId === user.id)}`}
-                                            onClick={(e) => handlePostBtnsInteraction(e, post.id)}>
-                                            <span className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-green-500/10'>
-                                                <Repeat2 size={24} className='text-dark-400 group-hover:text-green-500/70' />
-                                            </span>
-                                            <p>{post.reposts.length}</p>
-                                        </button>
-
-                                        <button
-                                            className={`like-btn group ${post.likes.some((like) => like.userId === user.id) ? 'liked' : ''}`}
-                                            data-type='like'
-                                            data-status={`${post.likes.some((like) => like.userId === user.id)}`}
-                                            onClick={(e) => handlePostBtnsInteraction(e, post.id)}>
-                                            <span className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-pink-500/10'>
-                                                <Heart size={20} className='text-dark-400 group-hover:text-pink-500' />
-                                            </span>
-                                            <p>{post.likes.length}</p>
-                                        </button>
+                                            <button
+                                                className={`bookmark-btn group ${post.bookmarks.some((bookmark) => bookmark.userId === user.id) ? 'bookmarked' : ''}`}
+                                                data-type='bookmark'
+                                                data-status={`${post.bookmarks.some((bookmark) => bookmark.userId === user.id)}`}
+                                                onClick={(e) => handlePostBtnsInteraction(e, post.id)}>
+                                                <Bookmark size={20} className='text-dark-400 text-blue-1/70' />
+                                            </button>
+                                            <button className='share-btn group'>
+                                                <Share size={20} className='text-dark-400 group-hover:text-blue-1/70' />
+                                            </button>
+                                        </div>
                                     </div>
-                                    <button
-                                        className={`bookmark-btn group ${post.bookmarks.some((bookmark) => bookmark.userId === user.id ? 'bookmarked' : '')}`}
-                                        data-type='bookmark'
-                                        data-status={`${post.bookmarks.some((bookmark) => bookmark.userId === user.id)}`}
-                                        onClick={(e) => handlePostBtnsInteraction(e, post.id)}>
-                                        <Bookmark size={20} className='text-dark-400 text-blue-1/70' />
-                                    </button>
-
-                                    <button className='share-btn group'>
-                                        <Share size={20} className='text-dark-400 group-hover:text-blue-1/70' />
-                                    </button>
                                 </div>
-                            </div>
-                        </div>
-                        <div className='w-full h-1 border-b'></div>
+                        </Link>
+                        <div className="feed-hr-line"></div>
                     </div>
                 )
             })}

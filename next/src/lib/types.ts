@@ -16,6 +16,7 @@ export interface Post {
 };
 
 export interface UserInfo {
+    id: number,
     username: string;
     email: string;
     dateOfBirth: Date;
@@ -42,5 +43,17 @@ export interface PostInfoType {
             name: string,
             profilePicture: string,
         } | null;
-    };
+    },
+    replies: {
+        id: number;
+    }[],
+    reposts: {
+        userId: number;
+    }[],
+    likes: {
+        userId: number;
+    }[],
+    bookmarks: {
+        userId: number;
+    }[],
 };

@@ -66,7 +66,7 @@ export default function NewPost() {
     };
 
     return (
-        <div className="border-y h-fit min-h-[175px] flex flex-col">
+        <div className="border-y h-fit min-h-[140px] flex flex-col px-4">
             <div className="grid grid-cols-post-layout gap-2 mt-4 h-full">
                 <Image src={`http://localhost:3001/public/profilePictures/${user.profile?.profilePicture}`}
                     alt='User profile'
@@ -81,12 +81,12 @@ export default function NewPost() {
                         })} />
                 </form>
             </div>
-            <Progress value={charsPercentage} className='mt-auto' />
+            <Progress value={charsPercentage} className={`mt-auto ${text.length === 0 && 'hidden'}`} />
             {charsPercentage === 100 && <p className='text-center text-red-600 font-bold text-xs'>Max characters reached</p>}
             {errors.text && (
                 <p className="text-center text-red-600 font-bold text-xs">{`${errors.text.message}`}</p>
             )}
-            <DialogFooter className="pb-4">
+            <DialogFooter>
                 <Img size={24} className="text-[hsl(var(--primary))]" />
                 {isSubmitting
                     ? (<Button disabled className='ml-auto font-bold w-fit rounded-3xl text-white-1'>
@@ -95,7 +95,7 @@ export default function NewPost() {
                     </Button>)
                     : (<Button type="submit"
                         className='ml-auto font-bold w-fit rounded-3xl text-white-1'
-                        disabled={text.length > 280}
+                        disabled={text.length > 280 || text.length === 0}
                         form='headerPostForm'
                     >
                         Post

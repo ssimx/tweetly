@@ -27,7 +27,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     }
 }
 
-export async function POST(req: NextRequest, { params }: { params: { slug: { action: string, postId: string } }}) {
+export async function POST(req: NextRequest, { params }: { params: { slug: [ action: string, postId: string ] }}) {
     if (req.method === 'POST') {
         const token = getToken();
 
@@ -42,9 +42,14 @@ export async function POST(req: NextRequest, { params }: { params: { slug: { act
             return NextResponse.json({ error: 'Not logged in. Please log in first' }, { status: 401 })
         };
 
-        const { action, postId } = params.slug;
+        
+        const action = params.slug[0];
+        const postId = params.slug[1];
+
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
+            console.log(`${apiUrl}/posts/${action}/${postId}`);
+            
             const response = await fetch(`${apiUrl}/posts/${action}/${postId}`, {
                 method: 'POST',
                 headers: {
@@ -67,7 +72,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: { act
     }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { slug: { action: string, postId: string } } }) {
+export async function DELETE(req: NextRequest, { params }: { params: { slug: [ action: string, postId: string ] } }) {
     if (req.method === 'DELETE') {
         const token = getToken();
 
@@ -82,7 +87,9 @@ export async function DELETE(req: NextRequest, { params }: { params: { slug: { a
             return NextResponse.json({ error: 'Not logged in. Please log in first' }, { status: 401 })
         }
 
-        const { action, postId } = params.slug;
+        const action = params.slug[0];
+        const postId = params.slug[1];
+
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
             const response = await fetch(`${apiUrl}/posts/${action}/${postId}`, {

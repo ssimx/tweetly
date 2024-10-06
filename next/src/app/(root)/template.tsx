@@ -1,3 +1,4 @@
+import TemplateHeader from "@/components/Header";
 import LeftSidebar from "@/components/LeftSidebar";
 import PhoneBottomNav from "@/components/PhoneBottomNav";
 import UserContextProvider from "@/context/UserContextProvider";
@@ -11,10 +12,12 @@ export default async function RootTemplate({ children }: Readonly<{ children: Re
     return (
         <UserContextProvider userData={userData}>
             <main className="w-screen h-screen">
-                <div className="root-phone xs:root-desktop xs:pt-4">
+                <div className="root-phone xs:root-desktop">
                     <LeftSidebar />
-                    <div className="header">header</div>
-                    {children}
+                    <div className='border'>
+                        <TemplateHeader />
+                        {children}
+                    </div>
                     <div className="right-sidebar">right sidebar</div>
                     <PhoneBottomNav/>
                 </div>
