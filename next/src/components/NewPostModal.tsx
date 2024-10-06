@@ -50,7 +50,7 @@ export default function NewPostModal() {
         if (isSubmitting) return;
 
         try {
-            const response = await fetch('/api/createPost', {
+            const response = await fetch('/api/posts/create', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -82,10 +82,10 @@ export default function NewPostModal() {
             </DialogTrigger>
             <DialogContent className="w-[90%] sm:max-w-[550px]">
                 <div className="grid grid-cols-post-layout gap-2 mt-4 min-h-[60px] sm:min-h-[80px]">
-                    <Image 
-                        src={`http://localhost:3001/public/profilePictures/${user.profile?.profilePicture}`} 
-                        alt='User profile' 
-                        width={40} height={40} 
+                    <Image
+                        src={`http://localhost:3001/public/profilePictures/${user.profile?.profilePicture}`}
+                        alt='User profile'
+                        width={40} height={40}
                         className="w-fit rounded-full" />
                     <form onSubmit={handleSubmit(onSubmitModalPost)} id='modalPostForm' className='pr-4'>
                         <TextareaAutosize
@@ -94,7 +94,7 @@ export default function NewPostModal() {
                             placeholder='What is happening?!'
                             {...register("text", {
                                 onChange: (e) => handleTextChange(e),
-                            })} 
+                            })}
                         />
                     </form>
                 </div>

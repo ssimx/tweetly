@@ -41,7 +41,7 @@ export default function NewPost() {
         if (isSubmitting) return;
 
         try {
-            const response = await fetch('/api/createPost', {
+            const response = await fetch('/api/posts/create', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
