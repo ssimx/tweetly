@@ -41,7 +41,7 @@ export const createPost = async (postData: NewPostDataProps): Promise<NewPostRes
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getPostId = async (id: number) => {
+export const getPostInfo = async (id: number) => {
     return await prisma.post.findUnique({
         where: { id },
     })

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { UserProps } from '../lib/types';
-import { addPostBookmark, addPostLike, addPostRepost, createPost, getGlobal30DayPosts, getPostId, removePostBookmark, removePostLike, removePostRepost } from '../services/postService';
+import { addPostBookmark, addPostLike, addPostRepost, createPost, getGlobal30DayPosts, getPostInfo, removePostBookmark, removePostLike, removePostRepost } from '../services/postService';
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ export const newPost = async (req: Request, res: Response) => {
     try {
         if (replyToId) {
             // Check if post exists
-            const replyPost = await getPostId(replyToId);
+            const replyPost = await getPostInfo(replyToId);
             if (!replyPost) return res.status(404).json({ error: 'Reply post does not exist' });
         }
 
@@ -33,6 +33,22 @@ export const newPost = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Error saving post data: ', error);
         return res.status(500).json({ error: 'Failed to process the data' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getPost = async (req: Request, res: Response) => {
+    const postId = Number(req.params.id);
+
+    try {
+        const response = await getPostInfo(postId);
+        if (!response) return res.status(404).json({ error: 'Post not found' });
+
+        return res.status(201).json(response);
+    } catch (error) {
+        console.error('Error: ', error);
+        return res.status(500).json({ error: 'Failed to fetch the post' });
     }
 };
 
