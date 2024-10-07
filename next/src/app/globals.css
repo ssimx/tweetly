@@ -122,18 +122,28 @@ body {
 
     .root-desktop {
         @apply 
-            hidden
-            xs:w-full xs:max-w-[700px] xs:grid xs:mx-auto xs:grid-rows-1 xs:grid-cols-root-desktop-layout-xs xs:gap-4
-            lg:w-[1024px] lg:max-w-none lg:grid-cols-root-desktop-layout-lg
-            xl:w-[1280px] xl:grid-cols-root-desktop-layout-xl xl:gap-8 xl:px-4;
+            hidden h-auto min-h-full w-full
+            xs:max-w-[700px] xs:grid xs:mx-auto xs:grid-rows-1 xs:grid-cols-root-desktop-layout-xs
+            lg:w-[1000px] lg:max-w-none lg:grid-cols-root-desktop-layout-lg lg:ml-auto
+            xl:w-[1200px] xl:grid-cols-root-desktop-layout-xl xl:ml-auto xl:gap-4;
+    }
+
+    .main-content {
+        @apply min-h-screen h-auto
+            lg:grid lg:grid-cols-main-content-layout;
     }
 
     /* Left sidebar */
+    .left-sidebar-wrapper {
+        @apply
+            max-h-screen max-w-full w-full box-border flex justify-center;
+    }
+
     .left-sidebar {
         @apply
-            hidden pt-4
-            xs:ml-4 xs:flex xs:flex-col xs:items-center xs:gap-12 xs:pb-12 xs:[&_p]:hidden xs:[&_span]:hidden
-            xl:items-start xl:[&_p]:block xl:[&_span]:flex;
+            hidden fixed h-full pt-4 pb-6
+            xs:flex xs:flex-col xs:items-center xs:gap-12 xs:[&_p]:hidden xs:[&_span]:hidden
+            xl:items-start xl:[&_p]:block xl:[&_span]:flex xl:w-[200px];
     }
 
     .left-sidebar-links {
@@ -165,8 +175,8 @@ body {
 
     .user-menu {
         @apply
-            shadow-menu
-            absolute w-[200px] h-fit rounded-[20px] p-[20px] mb-2 translate-y-[-125%]
+            shadow-menu bg-[#ffffff] overflow-hidden
+            absolute w-[200px] h-fit rounded-[20px] py-[10px] mb-2 translate-y-[-125%]
             xl:w-[110%] xl:translate-x-[-5%];
     }
 

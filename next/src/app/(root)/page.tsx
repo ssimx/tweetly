@@ -9,7 +9,7 @@ export default async function Feed() {
     if (!isAuth) redirect('/login');
 
     return (
-        <section className='feed-desktop h-full'>
+        <section className='feed-desktop'>
             <FeedHeader />
             <FeedContent />
         </section>

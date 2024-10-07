@@ -1,12 +1,16 @@
 import { getToken, removeSession, verifySession } from "@/lib/session";
+import { PostInfoType } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { slug: [ action: string, id: string ] }}) {
     if (req.method === 'GET') {
-        const postId = params.id;
+
+        if (params.slug[0] !== 'status') return NextResponse.json({ message: "Route not found" }, { status: 404 })
+        const postId = params.slug[1];
+
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
-            const response = await fetch(`${apiUrl}/posts/${postId}`, {
+            const response = await fetch(`${apiUrl}/posts/status/${postId}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -14,7 +18,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
             });
 
             if (response.ok) {
-                return NextResponse.json({ message: 'Success' }, { status: 200 });
+                const postInfo = await response.json() as PostInfoType;
+                return NextResponse.json(postInfo, { status: 200 });
             } else {
                 const errorData = await response.json();
                 return NextResponse.json({ error: errorData.error }, { status: response.status });
@@ -25,7 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     } else {
         NextResponse.json({ error: `Method ${req.method} Not Allowed` }, { status: 405 });
     }
-}
+};
 
 export async function POST(req: NextRequest, { params }: { params: { slug: [ action: string, postId: string ] }}) {
     if (req.method === 'POST') {

@@ -6,7 +6,7 @@ export default function FeedHeaderTabs() {
     const [activeTab, setActiveTab] = useState(0);
 
     return (
-        <div className='w-full h-[50px] flex'>
+        <div className='w-full h-[50px] flex sticky'>
             <div className='feed-header-tab-btn relative'>
                 <button
                     className={`z-10 absolute w-full h-full ${activeTab === 0 ? 'text-black-1 font-bold' : 'text-dark-500 font-medium'}`}

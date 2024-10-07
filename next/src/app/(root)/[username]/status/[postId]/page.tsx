@@ -1,18 +1,22 @@
+import { PostInfoType } from '@/lib/types'
 import React from 'react'
 
-export default async function page({ params }: { params: { postId: string } }) {
-    const response = await fetch(`/api/test/repost/${params.postId}`, {
-        method: 'POST',
+export default async function Status({ params }: { params: { postId: string } }) {
+    const response = await fetch(`http://localhost:3000/api/posts/status/${params.postId}`, {
+        method: 'GET',
         headers: {
             'Content-Type': 'application/json',
         },
-    })
+    });
 
-    console.log(response);
+    const postInfo = await response.json() as PostInfoType;
+    console.log(postInfo);
     
+    if (!postInfo) return <div>loading...</div>
+
     return (
         <div>
-            {params.postId}
+            {postInfo.id}
         </div>
     )
 }

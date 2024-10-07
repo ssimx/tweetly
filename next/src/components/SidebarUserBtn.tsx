@@ -62,7 +62,7 @@ export default function SidebarUserBtn() {
         <div className='user-btn'>
             {menuOpen &&
                 <div ref={menuRef} className='user-menu'>
-                    <button type='button' onClick={signOut} className='w-full text-left font-bold'>Sign out @{user?.username} </button>
+                    <button type='button' onClick={signOut} className='w-full text-left font-bold px-[20px] py-[5px] hover:bg-white-1'>Sign out @{user?.username} </button>
                 </div>
             }
 

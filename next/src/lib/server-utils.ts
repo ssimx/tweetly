@@ -24,7 +24,6 @@ export async function fetchUserData() {
         const userData = await response.json() as UserInfo;
         return userData;
     } catch (error) {
-        console.error(error);
         return;
     }
 };

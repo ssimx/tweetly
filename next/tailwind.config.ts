@@ -23,15 +23,18 @@ const config: Config = {
                 // 3 row grid for feed header
                 'feed-header-desktop-xs': '40% auto',
 
+
             },
             gridTemplateColumns: {
                 'post': '10% auto',
 
-                'root-desktop-layout-xs': '10% 1fr',
+                'root-desktop-layout-xs': '15% 1fr',
                 // 3 col grid
-                'root-desktop-layout-lg': '5% 1fr 30%',
-                'root-desktop-layout-xl': '18% 1fr 28%',
+                'root-desktop-layout-lg': '10% 1fr',
+                'root-desktop-layout-xl': '18% 1fr',
 
+                // main content 2 col grid
+                'main-content-layout': '70% 30%',
                 // Post modal columns
                 'post-layout': '10% 1fr',
             },
