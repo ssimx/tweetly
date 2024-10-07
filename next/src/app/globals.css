@@ -250,6 +250,32 @@ body {
             flex-center h-[35px] w-[35px] rounded-full hover:bg-blue-1/10;
     }
 
+    /* Post */
+
+    .post {
+        @apply
+            w-full px-4 pt-4 flex flex-col gap-2;
+    }
+
+    .post-header {
+        @apply
+            w-full flex gap-2 items-center
+    }
+
+    .post-content {
+        @apply 
+            flex;
+    }
+
+    .post-footer {
+        @apply
+            flex mb-2 text-dark-500;
+    }
+
+    .post-btns {
+        @apply
+            py-1 border-t
+    }
 
     /* Right sidebar */
 

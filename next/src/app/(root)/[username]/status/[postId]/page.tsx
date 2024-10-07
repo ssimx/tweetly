@@ -1,3 +1,5 @@
+'server only';
+import PostInfo from '@/components/PostInfo';
 import { PostInfoType } from '@/lib/types'
 import React from 'react'
 
@@ -11,12 +13,13 @@ export default async function Status({ params }: { params: { postId: string } })
 
     const postInfo = await response.json() as PostInfoType;
     console.log(postInfo);
-    
+
     if (!postInfo) return <div>loading...</div>
 
     return (
-        <div>
-            {postInfo.id}
-        </div>
+        <section>
+            <PostInfo post={postInfo} />
+
+        </section>
     )
 }

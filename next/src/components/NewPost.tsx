@@ -18,7 +18,7 @@ import { useUserContext } from "@/context/UserContextProvider";
 
 type PostData = z.infer<typeof newPostSchema>;
 
-export default function NewPost() {
+export default function NewPost({ reply, placeholder }: { reply?: number, placeholder?: string }) {
     const [text, setText] = useState('');
     const maxChars = 280;
     const charsPercentage = Math.min((text.length / maxChars) * 100, 100);
@@ -39,6 +39,8 @@ export default function NewPost() {
 
     const onSubmitHeaderPost = async (data: PostData) => {
         if (isSubmitting) return;
+
+        data.replyToId = reply;
 
         try {
             const response = await fetch('/api/posts/create', {
@@ -66,16 +68,16 @@ export default function NewPost() {
     };
 
     return (
-        <div className="border-y h-fit min-h-[140px] flex flex-col px-4">
+        <div className={`border-y h-fit flex flex-col px-4 ${!placeholder && 'min-h-[140px]'}`}>
             <div className="grid grid-cols-post-layout gap-2 mt-4 h-full">
                 <Image src={`http://localhost:3001/public/profilePictures/${user.profile?.profilePicture}`}
                     alt='User profile'
                     width={50} height={50}
                     className="rounded-full" />
-                <form onSubmit={handleSubmit(onSubmitHeaderPost)} id='headerPostForm' className='pr-4'>
+                <form onSubmit={handleSubmit(onSubmitHeaderPost)} id='headerPostForm' className='pr-4 mb-4'>
                     <TextareaAutosize maxLength={maxChars}
                         className='w-full focus:outline-none text-xl resize-none mt-1'
-                        placeholder='What is happening?!'
+                        placeholder={placeholder ? placeholder : 'What is happening?!'}
                         {...register("text", {
                             onChange: (e) => handleTextChange(e),
                         })} />
