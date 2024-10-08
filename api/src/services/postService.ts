@@ -44,6 +44,39 @@ export const createPost = async (postData: NewPostDataProps): Promise<NewPostRes
 export const getPostInfo = async (id: number) => {
     return await prisma.post.findUnique({
         where: { id },
+        include: {
+            author: {
+                select: {
+                    username: true,
+                    profile: {
+                        select: {
+                            name: true,
+                            profilePicture: true,
+                        }
+                    }
+                }
+            },
+            replies: {
+                select: {
+                    id: true,
+                }
+            },
+            reposts: {
+                select: {
+                    userId: true,
+                }
+            },
+            likes: {
+                select: {
+                    userId: true,
+                }
+            },
+            bookmarks: {
+                select: {
+                    userId: true,
+                }
+            }
+        }
     })
 };
 
@@ -126,8 +159,8 @@ export const addPostRepost = async (userId: number, postId: number) => {
 
 export const removePostRepost = async (userId: number, postId: number) => {
     return await prisma.postRepost.delete({
-        where: { 
-            postRepostId: { postId, userId},
+        where: {
+            postRepostId: { postId, userId },
         },
     })
 };
@@ -196,4 +229,47 @@ export const removePostBookmark = async (userId: number, postId: number) => {
             postBookmarkId: { postId, userId },
         },
     })
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getPostReplies = async (postId: number) => {
+    return await prisma.post.findMany({
+        where: {
+            replyToId: postId,
+        },
+        include: {
+            author: {
+                select: {
+                    username: true,
+                    profile: {
+                        select: {
+                            name: true,
+                            profilePicture: true,
+                        }
+                    }
+                }
+            },
+            replies: {
+                select: {
+                    id: true,
+                }
+            },
+            reposts: {
+                select: {
+                    userId: true,
+                }
+            },
+            likes: {
+                select: {
+                    userId: true,
+                }
+            },
+            bookmarks: {
+                select: {
+                    userId: true,
+                }
+            }
+        }
+    });
 };

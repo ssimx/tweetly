@@ -30,7 +30,7 @@ app.use('/api/v1/auth', authRouter);
 // JWT authentication for all routes under /api/v1 except for /api/v1/auth
 app.use(
     '/api/v1', (req: Request, res: Response, next: NextFunction) => {
-        if (req.path.startsWith('/posts/status')) return next();
+        if (req.path.startsWith('/posts') && req.method === 'GET') return next();
         
         passport.authenticate('jwt', { session: false }, (err: PassportError, user: User | false, info: { message: string | null | undefined }) => {
             if (err) {

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { UserProps } from '../lib/types';
-import { addPostBookmark, addPostLike, addPostRepost, createPost, getGlobal30DayPosts, getPostInfo, removePostBookmark, removePostLike, removePostRepost } from '../services/postService';
+import { addPostBookmark, addPostLike, addPostRepost, createPost, getGlobal30DayPosts, getPostInfo, getPostReplies, removePostBookmark, removePostLike, removePostRepost } from '../services/postService';
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -181,5 +181,24 @@ export const removeBookmark = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Error: ', error);
         return res.status(500).json({ error: 'Failed to remove bookmark from the post' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getReplies = async (req: Request, res: Response) => {
+    const postId = Number(req.params.id);
+
+    try {
+        const response = await getPostReplies(postId);
+
+        if (!response) {
+            return res.status(404).json({ message: "No replies found" });
+        }
+
+        return res.status(201).json(response);
+    } catch (error) {
+        console.error('Error: ', error);
+        return res.status(500).json({ error: 'Failed to fetch post replies' });
     }
 };

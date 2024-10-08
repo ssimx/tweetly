@@ -2,7 +2,6 @@ import { PostInfoType } from '@/lib/types';
 import Image from 'next/image';
 import PostBtns from './PostBtns';
 import Link from 'next/link';
-import NewPost from './NewPost';
 
 export default function PostInfo({ post }: { post: PostInfoType }) {
     const postDate = new Date(post.createdAt);
@@ -34,10 +33,6 @@ export default function PostInfo({ post }: { post: PostInfoType }) {
                 <div className='post-btns'>
                     <PostBtns post={post} />
                 </div>
-            </div>
-
-            <div className='reply'>
-                <NewPost placeholder='Post your reply' reply={post.id} />
             </div>
         </>
     )

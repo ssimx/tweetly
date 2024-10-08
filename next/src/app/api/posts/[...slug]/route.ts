@@ -1,16 +1,15 @@
 import { getToken, removeSession, verifySession } from "@/lib/session";
-import { PostInfoType } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest, { params }: { params: { slug: [ action: string, id: string ] }}) {
     if (req.method === 'GET') {
 
-        if (params.slug[0] !== 'status') return NextResponse.json({ message: "Route not found" }, { status: 404 })
+        const action = params.slug[0];
         const postId = params.slug[1];
 
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
-            const response = await fetch(`${apiUrl}/posts/status/${postId}`, {
+            const response = await fetch(`${apiUrl}/posts/${action}/${postId}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -18,8 +17,8 @@ export async function GET(req: NextRequest, { params }: { params: { slug: [ acti
             });
 
             if (response.ok) {
-                const postInfo = await response.json() as PostInfoType;
-                return NextResponse.json(postInfo, { status: 200 });
+                const info = await response.json();
+                return NextResponse.json(info, { status: 200 });
             } else {
                 const errorData = await response.json();
                 return NextResponse.json({ error: errorData.error }, { status: response.status });

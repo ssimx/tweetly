@@ -1,10 +1,11 @@
-import { addBookmark, addLike, addRepost, getPost, global30DayPosts, newPost, removeBookmark, removeLike, removeRepost } from "../controllers/postController";
+import { addBookmark, addLike, addRepost, getPost, getReplies, global30DayPosts, newPost, removeBookmark, removeLike, removeRepost } from "../controllers/postController";
 
 const express = require('express');
 
 const router = express.Router();
 
 router.get('/status/:id', getPost);
+router.get('/replies/:id', getReplies);
 router.get('/feed/global', global30DayPosts);
 router.post('/create', newPost);
 router.post('/repost/:id', addRepost);

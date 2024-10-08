@@ -14,7 +14,7 @@ export function formatPostDate(date: string) {
         return `${Math.floor(Math.abs(now.getTime() - postDate.getTime()) / (1000 * 60))} min`
     }
     if (hoursDiff < 24) {
-        return `${Math.floor(hoursDiff)} hour${Math.floor(hoursDiff) !== 1 ? 's' : ''}`;
+        return `${Math.floor(hoursDiff)}h`;
     } else {
         const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
         return postDate.toLocaleDateString('en-US', options);

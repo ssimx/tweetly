@@ -73,7 +73,8 @@ const config: Config = {
                 foreground: 'hsl(var(--foreground))',
                 card: {
                     DEFAULT: 'hsl(var(--card))',
-                    foreground: 'hsl(var(--card-foreground))'
+                    foreground: 'hsl(var(--card-foreground))',
+                    hover: 'rgba(0, 0, 0, 0.03)'
                 },
                 popover: {
                     DEFAULT: 'hsl(var(--popover))',
