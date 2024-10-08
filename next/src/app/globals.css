@@ -277,6 +277,19 @@ body {
             py-1 border-t
     }
 
+    /* Parent post */
+
+    .parent-post {
+        @apply
+            w-full h-full px-4 pt-4 flex gap-2
+            hover:bg-card-hover hover:cursor-pointer;
+    }
+
+    .parent-post-left-side {
+        @apply
+            w-auto flex flex-col items-center gap-1;
+    }
+
     /* Right sidebar */
 
     .right-sidebar {

@@ -25,8 +25,8 @@ export default function PostReplies({ replies }: { replies: PostInfoType[] }) {
                                     src={`http://localhost:3001/public/profilePictures/${reply.author.profile?.profilePicture}`}
                                     alt='Post author profile pic' width={35} height={35} className='rounded-full h-fit group-hover:outline group-hover:outline-primary/10' />
                             </Link>
-                            <div className='flex gap-2'>
-                                <Link href={`/${reply.author.username}`} className='font-bold hover:underline'>{reply.author.profile?.name}</Link>
+                            <div className='flex gap-2 text-dark-500'>
+                                <Link href={`/${reply.author.username}`} className='text-black-1 font-bold hover:underline'>{reply.author.profile?.name}</Link>
                                 <p>@{reply.author.username}</p>
                                 <p>·</p>
                                 <p>{formatPostDate(reply.createdAt)}</p>

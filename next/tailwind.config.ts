@@ -10,6 +10,9 @@ const config: Config = {
     ],
     theme: {
         extend: {
+            scale: {
+                '115': 'var(--tw-scale-x: 1.1)'
+            },
             screens: {
                 'xs': '500px',
             },
