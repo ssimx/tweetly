@@ -111,7 +111,7 @@ export default function PostBtns({ post }: { post: PostInfoType }) {
                 data-type='bookmark'
                 data-status={`${post.bookmarks.some((bookmark) => bookmark.userId === user.id)}`}
                 onClick={(e) => handlePostBtnsInteraction(e, post.id)}>
-                <Bookmark size={20} className='text-dark-400 text-blue-1/70' />
+                <Bookmark size={20} className='text-dark-400 text-primary' />
             </button>
             <button className='share-btn group'>
                 <Share size={20} className='text-dark-400 group-hover:text-blue-1/70' />

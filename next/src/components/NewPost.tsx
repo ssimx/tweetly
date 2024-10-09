@@ -68,15 +68,15 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
     };
 
     return (
-        <div className={`border-y h-fit flex flex-col px-4 ${!placeholder && 'min-h-[140px]'}`}>
-            <div className="grid grid-cols-post-layout gap-2 mt-4 h-full">
+        <div className={`border-y h-fit flex flex-col px-4 min-h-[130px]`}>
+            <div className="grid grid-cols-post-layout gap-2 my-2 h-full">
                 <Image src={`http://localhost:3001/public/profilePictures/${user.profile?.profilePicture}`}
                     alt='User profile'
                     width={50} height={50}
                     className="rounded-full" />
-                <form onSubmit={handleSubmit(onSubmitHeaderPost)} id='headerPostForm' className='pr-4 mb-4'>
+                <form onSubmit={handleSubmit(onSubmitHeaderPost)} id='headerPostForm' className='min-h-full pr-4 flex items-center'>
                     <TextareaAutosize maxLength={maxChars}
-                        className='w-full focus:outline-none text-xl resize-none mt-1'
+                        className='w-full focus:outline-none text-xl resize-none'
                         placeholder={placeholder ? placeholder : 'What is happening?!'}
                         {...register("text", {
                             onChange: (e) => handleTextChange(e),

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getProfile, getUser } from '../services/userService';
+import { addFollow, getProfile, getUser, removeFollow } from '../services/userService';
 import { UserProps } from '../lib/types';
 
 // ---------------------------------------------------------------------------------------------------------
@@ -37,3 +37,37 @@ export const getProfileInfo = async (req: Request, res: Response) => {
 };
 
 // ---------------------------------------------------------------------------------------------------------
+
+export const followUser = async (req: Request, res: Response) => {
+    const username = req.params.username;
+    const user = req.user as UserProps;
+    
+    try {
+        const response = await addFollow(user.id, username);
+
+        if (!response) return res.status(404).json({ error: 'failure' })
+
+        return res.status(201).json('success');
+    } catch (error) {
+        console.error('Error: ', error);
+        return res.status(500).json({ error: 'Failed to process the request' });
+    };
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const unfollowUser = async (req: Request, res: Response) => {
+    const username = req.params.username;
+    const user = req.user as UserProps;
+
+    try {
+        const response = await removeFollow(user.id, username);
+
+        if (!response) return res.status(404).json({ error: 'failure' })
+
+        return res.status(201).json('success');
+    } catch (error) {
+        console.error('Error: ', error);
+        return res.status(500).json({ error: 'Failed to process the request' });
+    };
+};

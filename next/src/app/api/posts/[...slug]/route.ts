@@ -1,8 +1,10 @@
-import { getToken, removeSession, verifySession } from "@/lib/session";
+import { extractToken, getToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest, { params }: { params: { slug: [ action: string, id: string ] }}) {
     if (req.method === 'GET') {
+        const authHeader = req.headers.get('Authorization');
+        const token = extractToken(authHeader);
 
         const action = params.slug[0];
         const postId = params.slug[1];
@@ -13,6 +15,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: [ acti
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
                 },
             });
 

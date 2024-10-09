@@ -1,3 +1,9 @@
+export interface JwtPayload {
+    id: string,
+    email: string,
+    username: string,
+};
+
 export interface User {
     id: string,
     username: string,
@@ -30,6 +36,24 @@ export interface UserInfo {
     },
 };
 
+export interface ProfileInfo {
+    username: string,
+    followers: {
+        followeeId: number;
+    }[],
+    following: {
+        followeeId: number;
+    }[],
+    profile: {
+        name: string,
+        bio: string,
+        profilePicture: string,
+    } | null,
+    _count: {
+        followers: number;
+    },
+};
+
 export interface PostInfoType {
     id: number,
     content: string,
@@ -39,10 +63,20 @@ export interface PostInfoType {
     replyToId: number | null,
     author: {
         username: string,
+        followers: {
+            followeeId: number;
+        }[],
+        following: {
+            followeeId: number;
+        }[],
         profile: {
             name: string,
+            bio: string,
             profilePicture: string,
-        } | null;
+        } | null,
+        _count: {
+            followers: number;
+        },
     },
     replies: {
         id: number;

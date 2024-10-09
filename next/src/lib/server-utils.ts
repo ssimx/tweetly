@@ -9,7 +9,7 @@ export async function fetchUserData() {
             throw new Error("Unauthorized: No token provided");
         }
 
-        const response = await fetch('http://localhost:3000/api/user', {
+        const response = await fetch('http://localhost:3000/api/users', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

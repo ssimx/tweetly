@@ -1,14 +1,21 @@
 'use client';
 import { PostInfoType } from '@/lib/types';
-import React from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link';
 import Image from 'next/image';
 import { formatPostDate } from '@/lib/utils';
 import PostBtns from './PostBtns';
 import { useRouter } from 'next/navigation';
+import {
+    HoverCard,
+    HoverCardContent,
+    HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import UserHoverCard from './UserHoverCard';
 
 export default function ParentPostInfo({ postInfo }: { postInfo: PostInfoType }) {
-
+    const [isFollowing, setIsFollowing] = useState(postInfo.author['_count'].followers === 1);
+    const [followers, setFollowers] = useState(postInfo.author.followers.length);
     const router = useRouter();
 
     const handleCardClick = () => {
@@ -29,7 +36,15 @@ export default function ParentPostInfo({ postInfo }: { postInfo: PostInfoType })
 
             <div className='w-full flex flex-col gap-2'>
                 <div className='flex gap-2 text-gray-500'>
-                    <Link href={`/${postInfo.author.username}`} className='text-black-1 font-bold hover:underline'>{postInfo.author.profile?.name}</Link>
+                    <HoverCard>
+                        <HoverCardTrigger href={`/${postInfo.author.username}`} className='text-black-1 font-bold hover:underline'>{postInfo.author.profile?.name}</HoverCardTrigger>
+                        <HoverCardContent>
+                            <UserHoverCard
+                                author={postInfo.author}
+                                followers={followers} setFollowers={setFollowers}
+                                isFollowing={isFollowing} setIsFollowing={setIsFollowing} />
+                        </HoverCardContent>
+                    </HoverCard>
                     <p>@{postInfo.author.username}</p>
                     <p>·</p>
                     <p>{formatPostDate(postInfo.createdAt)}</p>

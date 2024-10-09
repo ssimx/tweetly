@@ -1,16 +1,17 @@
-import { extractToken, removeSession, verifySession } from "@/lib/session";
-import { UserInfo } from "@/lib/types";
+import { decryptSession, extractToken, removeSession } from "@/lib/session";
+import { JwtPayload, UserInfo } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
         const authHeader = req.headers.get('Authorization');
         const token = extractToken(authHeader);
+        let payload;
 
         if (token) {
-            const isValid = await verifySession(token);
+            payload = await decryptSession(token) as JwtPayload | undefined;
 
-            if (!isValid.isAuth) {
+            if (!payload) {
                 removeSession();
                 return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 400 });
             }
@@ -20,7 +21,7 @@ export async function GET(req: NextRequest) {
 
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
-            const response = await fetch(`${apiUrl}/user`, {
+            const response = await fetch(`${apiUrl}/users`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',

@@ -17,6 +17,5 @@ router.delete('/removeBookmark/:id', removeBookmark);
 
 // router.post('/edit', newPost);
 // router.post('/remove', newPost);
-// router.post('/:postId', newPost);
 
 export default router;

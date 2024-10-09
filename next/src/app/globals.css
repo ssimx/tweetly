@@ -201,23 +201,63 @@ body {
             w-full flex flex-col h-fit;
     }
 
+    /* Feed post */
+
     .feed-post {
         @apply
-            w-full flex flex-col gap-2 px-4 pt-3 pb-1 hover:bg-white-1;
+            w-full flex gap-2 px-4 pt-3 pb-1 hover:bg-white-1 cursor-pointer;
     }
 
-    .feed-content {
+    .feed-post-left-side {
         @apply
-            w-full h-fit min-h-[65px] grid grid-cols-post gap-2;
+            w-auto flex flex-col items-center gap-1;
+    }
+
+    .feed-post-right-side {
+        @apply
+            w-full flex flex-col;
+    }
+
+    .feed-post-content {
+        @apply
+            w-full h-fit min-w-[1%];
     }
 
     .feed-hr-line {
         @apply w-full h-[1px] bg-[hsl(var(--border))];
     }
 
-    .comment-btn {
+
+
+    /* Post */
+
+    .post {
         @apply
-            flex items-center hover:text-blue-1/70;
+            w-full px-4 pt-4 flex flex-col gap-2;
+    }
+
+    .post-header {
+        @apply
+            w-full flex gap-2 items-center
+    }
+
+    .post-content {
+        @apply 
+            w-full min-w-[1%] flex break-words whitespace-normal;
+    }
+
+    .post-footer {
+        @apply
+            flex mb-2 text-dark-500;
+    }
+
+    .post-btns {
+        @apply
+            py-1 border-t
+    }
+
+    .comment-btn {
+        @apply flex items-center hover:text-blue-1/70;
     }
 
     .repost-btn {
@@ -237,44 +277,15 @@ body {
     }
 
     .bookmark-btn {
-        @apply
-            flex-center ml-auto h-[35px] w-[35px] rounded-full hover:bg-blue-1/10;
+        @apply flex-center ml-auto h-[35px] w-[35px] rounded-full hover:bg-blue-1/10;
     }
 
     .bookmarked {
-        @apply [&_svg]:text-blue-1/70 [&_svg]:fill-blue-1/70;
+        @apply [&_svg]:text-primary [&_svg]:fill-primary;
     }
 
     .share-btn {
-        @apply
-            flex-center h-[35px] w-[35px] rounded-full hover:bg-blue-1/10;
-    }
-
-    /* Post */
-
-    .post {
-        @apply
-            w-full px-4 pt-4 flex flex-col gap-2;
-    }
-
-    .post-header {
-        @apply
-            w-full flex gap-2 items-center
-    }
-
-    .post-content {
-        @apply 
-            flex;
-    }
-
-    .post-footer {
-        @apply
-            flex mb-2 text-dark-500;
-    }
-
-    .post-btns {
-        @apply
-            py-1 border-t
+        @apply flex-center h-[35px] w-[35px] rounded-full hover:bg-blue-1/10;
     }
 
     /* Parent post */
@@ -288,6 +299,32 @@ body {
     .parent-post-left-side {
         @apply
             w-auto flex flex-col items-center gap-1;
+    }
+
+    /* User Hover Card */
+
+    .user-hover-card-info {
+        @apply
+           flex flex-col gap-2;
+    }
+
+    .user-hover-card-header {
+        @apply
+            flex justify-between
+    }
+
+    .follow-btn {
+        @apply w-[125px] bg-black-1 hover:bg-black-1/90 text-white-1
+            border border-border font-bold rounded-[25px] px-4 py-2;
+    }
+
+    .following {
+        @apply text-black-1
+            bg-transparent hover:bg-red-300;
+    }
+
+    .user-hover-card-content {
+
     }
 
     /* Right sidebar */

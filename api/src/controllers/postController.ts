@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { UserProps } from '../lib/types';
-import { addPostBookmark, addPostLike, addPostRepost, createPost, getGlobal30DayPosts, getPostInfo, getPostReplies, removePostBookmark, removePostLike, removePostRepost } from '../services/postService';
+import { addPostBookmark, addPostLike, addPostRepost, createPost, getGlobal30DayPosts, getPostInfo, getPostReplies, postExists, removePostBookmark, removePostLike, removePostRepost } from '../services/postService';
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ export const newPost = async (req: Request, res: Response) => {
     try {
         if (replyToId) {
             // Check if post exists
-            const replyPost = await getPostInfo(replyToId);
+            const replyPost = await postExists(replyToId);
             if (!replyPost) return res.status(404).json({ error: 'Reply post does not exist' });
         }
 
@@ -40,9 +40,10 @@ export const newPost = async (req: Request, res: Response) => {
 
 export const getPost = async (req: Request, res: Response) => {
     const postId = Number(req.params.id);
+    const user = req.user as UserProps;
 
     try {
-        const response = await getPostInfo(postId);
+        const response = await getPostInfo(user.id, postId);
         if (!response) return res.status(404).json({ error: 'Post not found' });
 
         return res.status(201).json(response);
@@ -55,8 +56,10 @@ export const getPost = async (req: Request, res: Response) => {
 // ---------------------------------------------------------------------------------------------------------
 
 export const global30DayPosts = async (req: Request, res: Response) => {
+    const user = req.user as UserProps;
+    
     try {
-        const response = await getGlobal30DayPosts();
+        const response = await getGlobal30DayPosts(user.id);
         return res.status(201).json({ response });
     } catch (error) {
         console.error('Error fetching data: ', error);
@@ -188,9 +191,10 @@ export const removeBookmark = async (req: Request, res: Response) => {
 
 export const getReplies = async (req: Request, res: Response) => {
     const postId = Number(req.params.id);
+    const user = req.user as UserProps;
 
     try {
-        const response = await getPostReplies(postId);
+        const response = await getPostReplies(user.id, postId);
 
         if (!response) {
             return res.status(404).json({ message: "No replies found" });

@@ -30,8 +30,6 @@ app.use('/api/v1/auth', authRouter);
 // JWT authentication for all routes under /api/v1 except for /api/v1/auth
 app.use(
     '/api/v1', (req: Request, res: Response, next: NextFunction) => {
-        if (req.path.startsWith('/posts') && req.method === 'GET') return next();
-        
         passport.authenticate('jwt', { session: false }, (err: PassportError, user: User | false, info: { message: string | null | undefined }) => {
             if (err) {
                 return res.status(500).json({ error: 'Internal Server Error' });
@@ -49,7 +47,7 @@ app.use(
 
 // JWT protected routes
 app.use('/api/v1/posts', postRouter);
-app.use('/api/v1/user', userRouter);
+app.use('/api/v1/users', userRouter);
 
 
 app.listen(port, () => {

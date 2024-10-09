@@ -4,6 +4,14 @@ const prisma = new PrismaClient();
 
 // ---------------------------------------------------------------------------------------------------------
 
+export const postExists = async (id: number) => {
+    return await prisma.post.findUnique({
+        where: { id },
+    })
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
 interface NewPostDataProps {
     text: string,
     replyToId?: number,
@@ -41,17 +49,35 @@ export const createPost = async (postData: NewPostDataProps): Promise<NewPostRes
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getPostInfo = async (id: number) => {
+export const getPostInfo = async (userId: number, postId: number) => {
     return await prisma.post.findUnique({
-        where: { id },
+        where: { id: postId },
         include: {
             author: {
                 select: {
                     username: true,
+                    followers: {
+                        select: {
+                            followeeId: true
+                        }
+                    },
+                    following: {
+                        select: {
+                            followeeId: true
+                        }
+                    },
                     profile: {
                         select: {
                             name: true,
+                            bio: true,
                             profilePicture: true,
+                        }
+                    },
+                    _count: {
+                        select: {
+                            followers: {
+                                where: { followerId: userId } // Check if the current user is a follower
+                            },
                         }
                     }
                 }
@@ -82,7 +108,7 @@ export const getPostInfo = async (id: number) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getGlobal30DayPosts = async () => {
+export const getGlobal30DayPosts = async (userId: number) => {
     let date = new Date();
     date.setDate(date.getDate() - 30);
 
@@ -100,10 +126,28 @@ export const getGlobal30DayPosts = async () => {
             author: {
                 select: {
                     username: true,
+                    followers: {
+                        select: {
+                            followeeId: true
+                        }
+                    },
+                    following: {
+                        select: {
+                            followeeId: true
+                        }
+                    },
                     profile: {
                         select: {
                             name: true,
+                            bio: true,
                             profilePicture: true,
+                        }
+                    },
+                    _count: {
+                        select: {
+                            followers: {
+                                where: { followerId: userId } // Check if the current user is a follower
+                            },
                         }
                     }
                 }
@@ -178,7 +222,6 @@ export const addPostLike = async (userId: number, postId: number) => {
     } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
             if (error.code === 'P2002') {
-                // Unique constraint violation (e.g. username or email already exists)
                 return { error: 'Unique constraint violation', fields: (error.meta?.target as string[]) ?? [] };
             }
         }
@@ -211,7 +254,6 @@ export const addPostBookmark = async (userId: number, postId: number) => {
     } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
             if (error.code === 'P2002') {
-                // Unique constraint violation (e.g. username or email already exists)
                 return { error: 'Unique constraint violation', fields: (error.meta?.target as string[]) ?? [] };
             }
         }
@@ -233,7 +275,7 @@ export const removePostBookmark = async (userId: number, postId: number) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getPostReplies = async (postId: number) => {
+export const getPostReplies = async (userId: number, postId: number) => {
     return await prisma.post.findMany({
         where: {
             replyToId: postId,
@@ -242,10 +284,28 @@ export const getPostReplies = async (postId: number) => {
             author: {
                 select: {
                     username: true,
+                    followers: {
+                        select: {
+                            followeeId: true
+                        }
+                    },
+                    following: {
+                        select: {
+                            followeeId: true
+                        }
+                    },
                     profile: {
                         select: {
                             name: true,
+                            bio: true,
                             profilePicture: true,
+                        }
+                    },
+                    _count: {
+                        select: {
+                            followers: {
+                                where: { followerId: userId } // Check if the current user is a follower
+                            },
                         }
                     }
                 }

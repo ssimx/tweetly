@@ -1,9 +1,21 @@
+'use client';
 import { PostInfoType } from '@/lib/types';
 import Image from 'next/image';
 import PostBtns from './PostBtns';
 import Link from 'next/link';
+import {
+    HoverCard,
+    HoverCardContent,
+    HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import UserHoverCard from './UserHoverCard';
+import { useState } from 'react';
+
 
 export default function PostInfo({ post }: { post: PostInfoType }) {
+    const [isFollowing, setIsFollowing] = useState(post.author['_count'].followers === 1);
+    const [followers, setFollowers] = useState(post.author.followers.length);
+
     const postDate = new Date(post.createdAt);
     const postTime = `${postDate.getHours()}:${postDate.getMinutes()}`;
     const postFormatDate = `${postDate.toLocaleString('default', { month: 'short' })} ${postDate.getDate()}, ${postDate.getFullYear()}`;
@@ -18,7 +30,15 @@ export default function PostInfo({ post }: { post: PostInfoType }) {
                             alt='Post author profile pic' width={50} height={50} className='rounded-full h-fit group-hover:outline group-hover:outline-primary/10' />
                     </Link>
                     <div className=''>
-                        <Link href={`/${post.author.username}`} className='font-bold hover:underline'>{post.author.profile?.name}</Link>
+                        <HoverCard>
+                            <HoverCardTrigger href={`/${post.author.username}`} className='font-bold hover:underline'>{post.author.profile?.name}</HoverCardTrigger>
+                            <HoverCardContent>
+                                <UserHoverCard 
+                                    author={post.author} 
+                                    followers={followers} setFollowers={setFollowers} 
+                                    isFollowing={isFollowing} setIsFollowing={setIsFollowing} />
+                            </HoverCardContent>
+                        </HoverCard>
                         <p>@{post.author.username}</p>
                     </div>
                 </div>

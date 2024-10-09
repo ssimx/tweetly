@@ -51,3 +51,63 @@ export const getProfile = async (username: string) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
+export const getUserId = async (username: string) => {
+    return await prisma.user.findUnique({
+        where: {
+            username: username,
+        }
+    })
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const addFollow = async (user: number, username: string) => {
+    const followee = await prisma.user.findUnique({
+        where: { username },
+        select: {
+            id: true
+        }
+    });
+
+    if (!followee) {
+        throw new Error('User not found');
+    }
+
+    try {
+        return await prisma.follow.create({
+            data: {
+                followerId: user,
+                followeeId: followee.id
+            }
+        })
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === 'P2002') {
+                throw { error: 'Unique constraint violation' };
+            }
+        }
+
+        throw error;
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const removeFollow = async (followerId: number, username: string) => {
+    const followeeId = await prisma.user.findUnique({
+        where: { username },
+        select: {
+            id: true
+        }
+    }).then((res) => res?.id);
+
+    if (!followeeId) {
+        throw new Error('User not found');
+    }
+
+    return await prisma.follow.delete({
+        where: {
+            followId: { followerId, followeeId }
+        }
+    });
+};
