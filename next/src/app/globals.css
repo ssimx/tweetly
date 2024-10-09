@@ -335,6 +335,51 @@ body {
             lg:block;
     }
 
+    /* Profile */
+
+    .profile-info {
+        @apply
+            w-full min-h-[300px] grid grid-rows-profile-info grid-cols-1;
+    }
+
+    .picture-banner-container {
+        @apply  
+            relative
+    }
+
+    .banner {
+        @apply w-full h-full hover:bg-dark-500/50 cursor-pointer
+    }
+
+    .edit-profile {
+        @apply w-full h-[55px] flex justify-end items-center pr-5
+    }
+
+    .edit-profile-btn {
+        @apply w-fit h-fit py-1 px-4 rounded-[25px] border border-border font-semibold
+            hover:bg-card-hover;
+    }
+
+    .edit-profile-dialog {
+        @apply w-[95%] h-[95%] flex flex-col
+    }
+
+    #editProfileForm {
+        @apply flex flex-col gap-4;
+    }
+
+    .profile-bio {
+        @apply break-all;
+    }
+
+    .profile-bio-input {
+        @apply flex flex-col border border-border rounded-md px-2 py-1;
+    }
+
+    .profile-textarea {
+        @apply h-[200px] sm:h-[175px] w-full resize-none mt-2 outline-none;
+    }
+
     /* Header */
 
     .header {

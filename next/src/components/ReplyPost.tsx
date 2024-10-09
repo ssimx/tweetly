@@ -27,7 +27,7 @@ export default function ReplyPost({ post }: { post: PostInfoType }) {
             <div className='post-header'>
                 <Link href={`/${post.author.username}`} className='group'>
                     <Image
-                        src={`http://localhost:3001/public/profilePictures/${post.author.profile?.profilePicture}`}
+                        src={post.author.profile?.profilePicture}
                         alt='Post author profile pic' width={35} height={35} className='rounded-full h-fit group-hover:outline group-hover:outline-primary/10' />
                 </Link>
                 <div className='flex gap-2 text-dark-500'>

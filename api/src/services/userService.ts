@@ -1,5 +1,5 @@
 import { Prisma, PrismaClient } from '@prisma/client';
-import { UserProps } from '../lib/types';
+import { ProfileInfo, UserProps } from '../lib/types';
 const prisma = new PrismaClient();
 
 // ---------------------------------------------------------------------------------------------------------
@@ -35,6 +35,7 @@ export const getProfile = async (username: string) => {
         },
         select: {
             username: true,
+            createdAt: true,
             profile: {
                 select: {
                     name: true,
@@ -44,7 +45,78 @@ export const getProfile = async (username: string) => {
                     profilePicture: true,
                     bannerPicture: true,
                 }
+            },
+            followers: {
+                select: {
+                    follower: {
+                        select: {
+                            username: true,
+                            profile: { // include profile information
+                                select: {
+                                    name: true,
+                                    bio: true,
+                                    profilePicture: true,
+                                }
+                            },
+                            _count: {
+                                select: {
+                                    followers: true,
+                                    following: true,
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            following: {
+                select: {
+                    follower: {
+                        select: {
+                            username: true,
+                            profile: { // include profile information
+                                select: {
+                                    name: true,
+                                    bio: true,
+                                    profilePicture: true,
+                                }
+                            },
+                            _count: {
+                                select: {
+                                    followers: true,
+                                    following: true,
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            posts: true,
+            repostedPosts: true,
+            _count: {
+                select: {
+                    followers: true,
+                    following: true,
+                    posts: true,
+                }
             }
+        }
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const updateProfile = async (id: number, data: ProfileInfo) => {
+    return await prisma.profile.update({
+        where: {
+            id: id,
+        },
+        data: {
+            name: data.name,
+            bio: data.bio,
+            location: data.location,
+            websiteUrl: data.website,
+            bannerPicture: data.bannerPicture,
+            profilePicture: data.profilePicture
         }
     });
 };

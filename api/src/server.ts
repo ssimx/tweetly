@@ -3,13 +3,11 @@ import dotenv from 'dotenv';
 import authRouter from './routes/authRoutes';
 import postRouter from './routes/postRoutes';
 import userRouter from './routes/userRoutes';
-
 import { configurePassport } from './middleware/passport';
 import { User } from '@prisma/client';
 import { PassportError } from './lib/types';
 const passport = require('passport');
 const cors = require('cors');
-
 dotenv.config();
 const app: Express = express();
 const port = process.env.PORT || 3001;
@@ -48,6 +46,7 @@ app.use(
 // JWT protected routes
 app.use('/api/v1/posts', postRouter);
 app.use('/api/v1/users', userRouter);
+
 
 
 app.listen(port, () => {

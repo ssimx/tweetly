@@ -15,7 +15,7 @@ import UserHoverCard from './UserHoverCard';
 export default function ReplyInfo({ replyPost, parentPost }: { replyPost: PostInfoType, parentPost: PostInfoType }) {
     const [isFollowing, setIsFollowing] = useState(replyPost.author['_count'].followers === 1);
     const [followers, setFollowers] = useState(replyPost.author.followers.length);
-    
+
     const replyDate = new Date(replyPost.createdAt);
     const replyTime = `${replyDate.getHours()}:${replyDate.getMinutes()}`;
     const replyFormatDate = `${replyDate.toLocaleString('default', { month: 'short' })} ${replyDate.getDate()}, ${replyDate.getFullYear()}`;
@@ -33,7 +33,7 @@ export default function ReplyInfo({ replyPost, parentPost }: { replyPost: PostIn
                 <div className='post-header'>
                     <Link href={`/${replyPost.author.username}`} className='group'>
                         <Image
-                            src={`http://localhost:3001/public/profilePictures/${replyPost.author.profile?.profilePicture}`}
+                            src={replyPost.author.profile?.profilePicture}
                             alt='Post author profile pic' width={50} height={50} className='w-[52px] rounded-full h-fit group-hover:outline group-hover:outline-primary/10' />
                     </Link>
                     <div className=''>

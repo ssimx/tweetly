@@ -27,7 +27,7 @@ export default function FeedPost({ post }: { post: PostInfoType }) {
             <div className='feed-post-left-side'>
                 <Link href={`/${post.author.username}`} className='flex group'>
                     <Image
-                        src={`http://localhost:3001/public/profilePictures/${post.author.profile?.profilePicture}`}
+                        src={post.author.profile?.profilePicture}
                         alt='Post author profile pic' width={40} height={40} className='h-fit rounded-full group-hover:outline group-hover:outline-primary/10' />
                 </Link>
             </div>

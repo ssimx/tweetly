@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
-import { addFollow, getProfile, getUser, removeFollow } from '../services/userService';
-import { UserProps } from '../lib/types';
+import { addFollow, getProfile, getUser, removeFollow, updateProfile } from '../services/userService';
+import { ProfileInfo, UserProps } from '../lib/types';
+import { deleteImageFromCloudinary } from './uploadController';
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -38,10 +39,53 @@ export const getProfileInfo = async (req: Request, res: Response) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
+export const updateProfileInfo = async (req: Request, res: Response) => {
+    const user = req.user as UserProps;
+    const username = req.params.username;
+    if (user.username !== username) return res.status(401).json({ error: 'Unauthorized request' });
+
+    const {
+        data,
+        bannerPicturePublicId,
+        profilePicturePublicId
+    }
+        = await req.body as {
+            data: ProfileInfo,
+            bannerPicturePublicId?: string,
+            profilePicturePublicId?: string,
+        };
+
+    console.log(data, bannerPicturePublicId, profilePicturePublicId);
+    
+    try {
+        const response = await updateProfile(user.id, data);
+
+        if (!response) {
+            const bannerPicturePromise = bannerPicturePublicId && deleteImageFromCloudinary(bannerPicturePublicId);
+            const profilePicturePromise = profilePicturePublicId && deleteImageFromCloudinary(profilePicturePublicId);
+
+            const promises: Promise<Response>[] = [];
+            if (bannerPicturePromise) promises.push(bannerPicturePromise);
+            if (profilePicturePromise) promises.push(profilePicturePromise);
+
+            await Promise.allSettled(promises);
+
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        return res.status(201).json('Success');
+    } catch (error) {
+        console.error('Error: ', error);
+        return res.status(500).json({ error: 'Failed to process the request' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
 export const followUser = async (req: Request, res: Response) => {
     const username = req.params.username;
     const user = req.user as UserProps;
-    
+
     try {
         const response = await addFollow(user.id, username);
 
@@ -71,3 +115,4 @@ export const unfollowUser = async (req: Request, res: Response) => {
         return res.status(500).json({ error: 'Failed to process the request' });
     };
 };
+

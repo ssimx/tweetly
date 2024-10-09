@@ -26,6 +26,8 @@ const config: Config = {
                 // 3 row grid for feed header
                 'feed-header-desktop-xs': '40% auto',
 
+                'profile-info': '135px auto auto',
+
 
             },
             gridTemplateColumns: {

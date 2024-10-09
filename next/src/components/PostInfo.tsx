@@ -26,16 +26,16 @@ export default function PostInfo({ post }: { post: PostInfoType }) {
                 <div className='post-header'>
                     <Link href={`/${post.author.username}`} className='group'>
                         <Image
-                            src={`http://localhost:3001/public/profilePictures/${post.author.profile?.profilePicture}`}
+                            src={post.author.profile?.profilePicture}
                             alt='Post author profile pic' width={50} height={50} className='rounded-full h-fit group-hover:outline group-hover:outline-primary/10' />
                     </Link>
                     <div className=''>
                         <HoverCard>
                             <HoverCardTrigger href={`/${post.author.username}`} className='font-bold hover:underline'>{post.author.profile?.name}</HoverCardTrigger>
                             <HoverCardContent>
-                                <UserHoverCard 
-                                    author={post.author} 
-                                    followers={followers} setFollowers={setFollowers} 
+                                <UserHoverCard
+                                    author={post.author}
+                                    followers={followers} setFollowers={setFollowers}
                                     isFollowing={isFollowing} setIsFollowing={setIsFollowing} />
                             </HoverCardContent>
                         </HoverCard>

@@ -38,19 +38,59 @@ export interface UserInfo {
 
 export interface ProfileInfo {
     username: string,
-    followers: {
-        followeeId: number;
-    }[],
-    following: {
-        followeeId: number;
-    }[],
+    createdAt: string,
     profile: {
         name: string,
         bio: string,
+        location: string,
+        websiteUrl: string,
+        bannerPicture: string,
         profilePicture: string,
-    } | null,
+    },
+    posts: {
+        id: number,
+        content: string,
+        createdAt: Date,
+        updatedAt: Date,
+        authorId: number,
+        replyToId: number | null,
+    }[],
+    repostedPosts: {
+        id: number,
+        content: string,
+        createdAt: Date,
+        updatedAt: Date,
+        authorId: number,
+        replyToId: number | null,
+    }[],
+    followers: {
+        username: string,
+        profile: {
+            name: string,
+            bio: string,
+            profilePicture: string,
+        },
+        _count: {
+            followers: number,
+            following: number,
+        }
+    }[],
+    following: {
+        username: string,
+        profile: {
+            name: string,
+            bio: string,
+            profilePicture: string,
+        },
+        _count: {
+            followers: number,
+            following: number,
+        },
+    }[],
     _count: {
-        followers: number;
+        followers: number,
+        following: number,
+        posts: number,
     },
 };
 

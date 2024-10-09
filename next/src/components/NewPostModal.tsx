@@ -83,7 +83,7 @@ export default function NewPostModal() {
             <DialogContent className="w-[90%] sm:max-w-[550px]">
                 <div className="grid grid-cols-post-layout gap-2 mt-4 min-h-[60px] sm:min-h-[80px]">
                     <Image
-                        src={`http://localhost:3001/public/profilePictures/${user.profile?.profilePicture}`}
+                        src={user.profile?.profilePicture}
                         alt='User profile'
                         width={40} height={40}
                         className="w-fit rounded-full" />

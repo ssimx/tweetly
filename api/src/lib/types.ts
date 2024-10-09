@@ -26,3 +26,12 @@ export interface UserInfo {
         bannerPicture: string;
     },
 };
+
+export interface ProfileInfo {
+    name: string,
+    bio: string,
+    location: string,
+    website: string,
+    bannerPicture: string,
+    profilePicture: string,
+};

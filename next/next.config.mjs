@@ -3,10 +3,9 @@ const nextConfig = {
     images: {
         remotePatterns: [
             {
-                protocol: 'http',
-                hostname: 'localhost',
-                port: '3001', // Your Express server port
-                pathname: '/public/**', // Path to your images on the Express server
+                protocol: 'https',
+                hostname: 'res.cloudinary.com',
+                pathname: '/ddj6z1ptr/**', // Path to your images on the Express server
             },
         ],
     },

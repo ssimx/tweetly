@@ -27,7 +27,7 @@ export default function ParentPostInfo({ postInfo }: { postInfo: PostInfoType })
             <div className='parent-post-left-side'>
                 <Link href={`/${postInfo.author.username}`} className='flex group'>
                     <Image
-                        src={`http://localhost:3001/public/profilePictures/${postInfo.author.profile?.profilePicture}`}
+                        src={postInfo.author.profile?.profilePicture}
                         alt='Post author profile pic' width={50} height={50} className='min-w-[52px] max-w-[52px] h-fit rounded-full group-hover:outline group-hover:outline-primary/10' />
                 </Link>
 

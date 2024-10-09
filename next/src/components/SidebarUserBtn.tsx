@@ -69,7 +69,7 @@ export default function SidebarUserBtn() {
             <button type='button'
                 className='absolute top-0 left-0 w-full h-[50px] flex gap-4 items-center rounded-[25px] bg-transparent text-white-1 font-bold'
                 onClick={toggleMenu}>
-                <Image width={50} height={50} src={`http://localhost:3001/public/profilePictures/${user?.profile.profilePicture}`} alt='User profile' className='rounded-[50%] bg-[hsl(var(--primary))]' />
+                <Image width={50} height={50} src={user?.profile.profilePicture} alt='User profile' className='rounded-[50%] bg-[hsl(var(--primary))]' />
                 <span className='username flex flex-col items-start leading-tight text-dark-600'><span className=''>{user?.profile.name}</span> <span className='text-dark-400 font-medium'>@{user?.username}</span></span>
                 <Ellipsis size={22} color={'#5B7083'} className='ml-auto' />
             </button>

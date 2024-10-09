@@ -11,7 +11,7 @@ export default async function RootTemplate({ children }: Readonly<{ children: Re
 
     return (
         <UserContextProvider userData={userData}>
-            <main className="w-screen h-auto overflow-y-scroll">
+            <main className="w-screen h-auto">
                 <div className="root-phone xs:root-desktop">
                     <div className='left-sidebar-wrapper'>
                         <LeftSidebar />
@@ -23,7 +23,7 @@ export default async function RootTemplate({ children }: Readonly<{ children: Re
                         </div>
                         <div className="right-sidebar">right sidebar</div>
                     </div>
-                    <PhoneBottomNav/>
+                    <PhoneBottomNav />
                 </div>
             </main>
         </UserContextProvider>

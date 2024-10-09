@@ -13,23 +13,22 @@ interface UserHoverCardType {
     setIsFollowing: React.Dispatch<React.SetStateAction<boolean>>,
 };
 
-export default function UserHoverCard({ 
-    author, 
-    followers, 
-    setFollowers, 
-    isFollowing, 
-    setIsFollowing 
-}: UserHoverCardType) 
-    {
+export default function UserHoverCard({
+    author,
+    followers,
+    setFollowers,
+    isFollowing,
+    setIsFollowing
+}: UserHoverCardType) {
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const followBtn = useRef <HTMLButtonElement>(null);
+    const followBtn = useRef<HTMLButtonElement>(null);
     const { user } = useUserContext();
     const userIsAuthor = author.username === user.username;
 
     const handleFollow = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         e.stopPropagation();
         e.preventDefault();
-        
+
         if (isSubmitting) return;
 
         setIsSubmitting(true);
@@ -72,24 +71,24 @@ export default function UserHoverCard({
     };
 
     console.log(author.username !== user.username, author.username, user.username);
-    
+
     return (
         <div className='user-hover-card-info'>
             <div className='user-hover-card-header'>
                 <Link href={`/${author.username}`} className='group w-fit'>
-                    <Image 
-                        src={`http://localhost:3001/public/profilePictures/${author.profile?.profilePicture}`} 
-                        alt='User profile picture' 
-                        width={60} height={60} 
+                    <Image
+                        src={author.profile?.profilePicture}
+                        alt='User profile picture'
+                        width={60} height={60}
                         className='rounded-full group-hover:outline group-hover:outline-primary/10' />
                 </Link>
 
                 <div>
-                    { 
+                    {
                         !userIsAuthor ?
-                             isFollowing
+                            isFollowing
                                 ? (
-                                    <button 
+                                    <button
                                         className="follow-btn following before:content-['Following'] hover:before:content-['Unfollow']"
                                         onClick={(e) => handleFollow(e)} ref={followBtn} >
                                     </button>

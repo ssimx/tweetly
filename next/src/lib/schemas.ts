@@ -44,4 +44,32 @@ export const newPostSchema = z.object({
     replyToId: z
         .number()
         .optional()
-})
+});
+
+export const updateProfileSchema = z.object({
+    name: z
+        .string()
+        .min(1, 'Please enter the name')
+        .max(50, "Name can't exceed 50 characters"),
+    bio: z
+        .string()
+        .max(160, "Bio can't exceed 60 characters")
+        .optional(),
+    location: z
+        .string()
+        .max(30, "Location can't exceed 30 characters")
+        .optional(),
+    website: z
+        .string()
+        .max(100, "Website url can't exceed 30 characters")
+        .optional()
+        .refine((val) => val === '' || /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?$/.test(val), {
+            message: 'Invalid website URL',
+        }),
+    bannerPicture: z
+        .string()
+        .optional(),
+    profilePicture: z
+        .string()
+        .optional(),
+});
