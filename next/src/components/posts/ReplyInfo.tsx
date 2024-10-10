@@ -1,5 +1,5 @@
 'use client';
-import { PostInfoType } from '@/lib/types';
+import { PostType } from '@/lib/types';
 import Image from 'next/image';
 import PostBtns from './PostBtns';
 import Link from 'next/link';
@@ -10,9 +10,9 @@ import {
     HoverCardContent,
     HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import UserHoverCard from './UserHoverCard';
+import UserHoverCard from '../UserHoverCard';
 
-export default function ReplyInfo({ replyPost, parentPost }: { replyPost: PostInfoType, parentPost: PostInfoType }) {
+export default function ReplyInfo({ replyPost, parentPost }: { replyPost: PostType, parentPost: PostType }) {
     const [isFollowing, setIsFollowing] = useState(replyPost.author['_count'].followers === 1);
     const [followers, setFollowers] = useState(replyPost.author.followers.length);
 
@@ -27,21 +27,27 @@ export default function ReplyInfo({ replyPost, parentPost }: { replyPost: PostIn
 
     return (
         <div className='flex flex-col'>
-            <ParentPostInfo postInfo={parentPost} />
+            <ParentPostInfo post={parentPost} />
 
             <div className='post' ref={parentRef}>
                 <div className='post-header'>
                     <Link href={`/${replyPost.author.username}`} className='group'>
                         <Image
                             src={replyPost.author.profile?.profilePicture}
-                            alt='Post author profile pic' width={50} height={50} className='w-[52px] rounded-full h-fit group-hover:outline group-hover:outline-primary/10' />
+                            alt='Post author profile pic' width={50} height={50} className='w-[50px] h-[50px] rounded-full group-hover:outline group-hover:outline-primary/10' />
                     </Link>
                     <div className=''>
                         <HoverCard>
-                            <HoverCardTrigger href={`/${replyPost.author.username}`} className='font-bold hover:underline'>{replyPost.author.profile?.name}</HoverCardTrigger>
+                            <HoverCardTrigger href={`/${replyPost.author.username}`} className='font-bold hover:underline'>{replyPost.author.profile.name}</HoverCardTrigger>
                             <HoverCardContent>
                                 <UserHoverCard
-                                    author={replyPost.author}
+                                    author={{
+                                        username: replyPost.author.username,
+                                        name: replyPost.author.profile.name,
+                                        profilePicture: replyPost.author.profile.profilePicture,
+                                        bio: replyPost.author.profile.bio,
+                                        following: replyPost.author['_count'].following,
+                                    }}
                                     followers={followers} setFollowers={setFollowers}
                                     isFollowing={isFollowing} setIsFollowing={setIsFollowing} />
                             </HoverCardContent>
@@ -58,7 +64,15 @@ export default function ReplyInfo({ replyPost, parentPost }: { replyPost: PostIn
                     <p>{replyFormatDate}</p>
                 </div>
                 <div className='post-btns'>
-                    <PostBtns post={replyPost} />
+                    <PostBtns
+                        postId={replyPost.id}
+                        author={replyPost.author.username}
+                        replies={replyPost['_count'].replies}
+                        reposts={replyPost['_count'].reposts}
+                        likes={replyPost['_count'].likes}
+                        reposted={!!replyPost.reposts.length}
+                        liked={!!replyPost.likes.length}
+                        bookmarked={!!replyPost.bookmarks.length} />
                 </div>
             </div>
         </div>

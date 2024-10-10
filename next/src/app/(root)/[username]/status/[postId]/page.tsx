@@ -1,13 +1,13 @@
 'server only';
-import NewPost from '@/components/NewPost';
-import PostInfo from '@/components/PostInfo';
-import PostReplies from '@/components/PostReplies';
-import ReplyInfo from '@/components/ReplyInfo';
+import NewPost from '@/components/feed/NewPost';
+import PostInfo from '@/components/posts/PostInfo';
+import PostReplies from '@/components/posts/post-replies/Replies';
+import ReplyInfo from '@/components/posts/ReplyInfo';
 import { getToken } from '@/lib/session';
-import { PostInfoType } from '@/lib/types';
+import { PostType } from '@/lib/types';
 
 export default async function Status({ params }: { params: { postId: string } }) {
-    let parentPostInfo;
+    let parentPost;
     const token = getToken();
 
     const postResponse = await fetch(`http://localhost:3000/api/posts/status/${params.postId}`, {
@@ -18,13 +18,10 @@ export default async function Status({ params }: { params: { postId: string } })
         },
         cache: 'no-store',
     });
-    const postInfo = await postResponse.json() as PostInfoType;
+    const post = await postResponse.json() as PostType;
 
-    console.log(postInfo);
-    
-
-    if (postInfo.replyToId) {
-        const parentPostResponse = await fetch(`http://localhost:3000/api/posts/status/${postInfo.replyToId}`, {
+    if (post.replyToId) {
+        const parentPostResponse = await fetch(`http://localhost:3000/api/posts/status/${post.replyToId}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -33,7 +30,7 @@ export default async function Status({ params }: { params: { postId: string } })
             cache: 'no-store',
         });
 
-        parentPostInfo = await parentPostResponse.json() as PostInfoType;
+        parentPost = await parentPostResponse.json() as PostType;
     }
 
     const repliesResponse = await fetch(`http://localhost:3000/api/posts/replies/${params.postId}`, {
@@ -44,20 +41,20 @@ export default async function Status({ params }: { params: { postId: string } })
         },
         cache: 'no-store',
     });
-    const replies = await repliesResponse.json() as PostInfoType[];
+    const replies = await repliesResponse.json() as PostType[];
 
-    if (!postInfo) return <div>loading...</div>
+    if (!post) return <div>loading...</div>
 
     return (
         <section>
             <div>
                 {
-                    parentPostInfo
-                        ? <ReplyInfo replyPost={postInfo} parentPost={parentPostInfo} />
-                        : <PostInfo post={postInfo} />
+                    parentPost
+                        ? <ReplyInfo replyPost={post} parentPost={parentPost} />
+                        : <PostInfo post={post} />
                 }
                 <div className='reply'>
-                    <NewPost placeholder='Post your reply' reply={postInfo.id} />
+                    <NewPost placeholder='Post your reply' reply={post.id} />
                 </div>
             </div>
 

@@ -22,8 +22,8 @@ export default function LeftSidebar() {
                     return (
                         <Link key={index} href={link.route === '/profile' ? `/${user.username}` : link.route} className='flex gap-4 items-center'>
                             <Icon className='icon'
-                                color={pathname === link.route ? 'hsl(var(--primary))' : 'hsl(var(--foreground))'} 
-                                />
+                                color={pathname === link.route ? 'hsl(var(--primary))' : 'hsl(var(--foreground))'}
+                            />
                             <p className={`${pathname === link.route && 'font-bold'} text-20`} >{link.label}</p>
                         </Link>
                     )

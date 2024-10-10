@@ -52,20 +52,15 @@ export const createPost = async (postData: NewPostDataProps): Promise<NewPostRes
 export const getPostInfo = async (userId: number, postId: number) => {
     return await prisma.post.findUnique({
         where: { id: postId },
-        include: {
+        select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            updatedAt: true,
+            replyToId: true,
             author: {
                 select: {
                     username: true,
-                    followers: {
-                        select: {
-                            followeeId: true
-                        }
-                    },
-                    following: {
-                        select: {
-                            followeeId: true
-                        }
-                    },
                     profile: {
                         select: {
                             name: true,
@@ -73,33 +68,59 @@ export const getPostInfo = async (userId: number, postId: number) => {
                             profilePicture: true,
                         }
                     },
+                    followers: {
+                        where: {
+                            followerId: userId,
+                        },
+                        select: {
+                            followerId: true
+                        }
+                    },
+                    following: {
+                        where: {
+                            followeeId: userId,
+                        },
+                        select: {
+                            followeeId: true,
+                        }
+                    },
                     _count: {
                         select: {
-                            followers: {
-                                where: { followerId: userId } // Check if the current user is a follower
-                            },
+                            followers: true,
+                            following: true,
                         }
                     }
                 }
             },
-            replies: {
-                select: {
-                    id: true,
-                }
-            },
             reposts: {
+                where: {
+                    userId: userId,
+                },
                 select: {
                     userId: true,
                 }
             },
             likes: {
+                where: {
+                    userId: userId,
+                },
                 select: {
                     userId: true,
                 }
             },
             bookmarks: {
+                where: {
+                    userId: userId,
+                },
                 select: {
                     userId: true,
+                }
+            },
+            _count: {
+                select: {
+                    likes: true,
+                    reposts: true,
+                    replies: true,
                 }
             }
         }
@@ -122,20 +143,15 @@ export const getGlobal30DayPosts = async (userId: number) => {
         orderBy: {
             createdAt: 'desc'
         },
-        include: {
+        select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            updatedAt: true,
+            replyToId: true,
             author: {
                 select: {
                     username: true,
-                    followers: {
-                        select: {
-                            followeeId: true
-                        }
-                    },
-                    following: {
-                        select: {
-                            followeeId: true
-                        }
-                    },
                     profile: {
                         select: {
                             name: true,
@@ -143,33 +159,59 @@ export const getGlobal30DayPosts = async (userId: number) => {
                             profilePicture: true,
                         }
                     },
+                    followers: {
+                        where: {
+                            followerId: userId,
+                        },
+                        select: {
+                            followerId: true
+                        }
+                    },
+                    following: {
+                        where: {
+                            followeeId: userId,
+                        },
+                        select: {
+                            followeeId: true,
+                        }
+                    },
                     _count: {
                         select: {
-                            followers: {
-                                where: { followerId: userId } // Check if the current user is a follower
-                            },
+                            followers: true,
+                            following: true,
                         }
                     }
                 }
             },
-            replies: {
-                select: {
-                    id: true,
-                }
-            },
             reposts: {
+                where: {
+                    userId: userId,
+                },
                 select: {
                     userId: true,
                 }
             },
             likes: {
+                where: {
+                    userId: userId,
+                },
                 select: {
                     userId: true,
                 }
             },
             bookmarks: {
+                where: {
+                    userId: userId,
+                },
                 select: {
                     userId: true,
+                }
+            },
+            _count: {
+                select: {
+                    likes: true,
+                    reposts: true,
+                    replies: true,
                 }
             }
         }
@@ -280,20 +322,15 @@ export const getPostReplies = async (userId: number, postId: number) => {
         where: {
             replyToId: postId,
         },
-        include: {
+        select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            updatedAt: true,
+            replyToId: true,
             author: {
                 select: {
                     username: true,
-                    followers: {
-                        select: {
-                            followeeId: true
-                        }
-                    },
-                    following: {
-                        select: {
-                            followeeId: true
-                        }
-                    },
                     profile: {
                         select: {
                             name: true,
@@ -301,33 +338,59 @@ export const getPostReplies = async (userId: number, postId: number) => {
                             profilePicture: true,
                         }
                     },
+                    followers: {
+                        where: {
+                            followerId: userId,
+                        },
+                        select: {
+                            followerId: true
+                        }
+                    },
+                    following: {
+                        where: {
+                            followeeId: userId,
+                        },
+                        select: {
+                            followeeId: true,
+                        }
+                    },
                     _count: {
                         select: {
-                            followers: {
-                                where: { followerId: userId } // Check if the current user is a follower
-                            },
+                            followers: true,
+                            following: true,
                         }
                     }
                 }
             },
-            replies: {
-                select: {
-                    id: true,
-                }
-            },
             reposts: {
+                where: {
+                    userId: userId,
+                },
                 select: {
                     userId: true,
                 }
             },
             likes: {
+                where: {
+                    userId: userId,
+                },
                 select: {
                     userId: true,
                 }
             },
             bookmarks: {
+                where: {
+                    userId: userId,
+                },
                 select: {
                     userId: true,
+                }
+            },
+            _count: {
+                select: {
+                    likes: true,
+                    reposts: true,
+                    replies: true,
                 }
             }
         }

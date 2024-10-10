@@ -1,6 +1,6 @@
-import TemplateHeader from "@/components/Header";
-import LeftSidebar from "@/components/LeftSidebar";
-import PhoneBottomNav from "@/components/PhoneBottomNav";
+import TemplateHeader from "@/components/root-template/Header";
+import LeftSidebar from "@/components/root-template/left-sidebar/LeftSidebar";
+import PhoneBottomNav from "@/components/root-template/PhoneBottomNav";
 import UserContextProvider from "@/context/UserContextProvider";
 import { fetchUserData } from "@/lib/server-utils";
 import { redirect } from "next/navigation";

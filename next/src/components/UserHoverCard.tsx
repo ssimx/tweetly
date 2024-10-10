@@ -1,12 +1,19 @@
 'use client';
 import { useUserContext } from '@/context/UserContextProvider';
-import { ProfileInfo } from '@/lib/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRef, useState } from 'react';
 
+interface AuthorType {
+    username: string,
+    name: string,
+    profilePicture: string,
+    bio: string,
+    following: number,
+};
+
 interface UserHoverCardType {
-    author: ProfileInfo,
+    author: AuthorType,
     followers: number,
     setFollowers: React.Dispatch<React.SetStateAction<number>>,
     isFollowing: boolean,
@@ -70,14 +77,16 @@ export default function UserHoverCard({
         }
     };
 
-    console.log(author.username !== user.username, author.username, user.username);
+    const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+        e.stopPropagation();
+    };
 
     return (
         <div className='user-hover-card-info'>
             <div className='user-hover-card-header'>
-                <Link href={`/${author.username}`} className='group w-fit'>
+                <Link href={`/${author.username}`} className='group w-fit' onClick={(e) => handleLinkClick(e)}>
                     <Image
-                        src={author.profile?.profilePicture}
+                        src={author.profilePicture}
                         alt='User profile picture'
                         width={60} height={60}
                         className='rounded-full group-hover:outline group-hover:outline-primary/10' />
@@ -103,17 +112,17 @@ export default function UserHoverCard({
             </div>
 
             <div className='flex flex-col'>
-                <Link href={`/${author.username}`} className='font-bold text-18 hover:underline'>{author.profile?.name}</Link>
+                <Link href={`/${author.username}`} className='font-bold text-18 hover:underline' onClick={(e) => handleLinkClick(e)}>{author.name}</Link>
                 <p className='text-dark-500'>@{author.username}</p>
             </div>
 
             <div>
-                {author.profile?.bio}
+                <p className='break-all'>{author.bio}</p>
             </div>
 
             <div className='flex gap-4'>
                 <div className='flex gap-1'>
-                    <p className='font-bold'>{author.following.length}</p>
+                    <p className='font-bold'>{author.following}</p>
                     <p className='text-dark-500'>Following</p>
                 </div>
 

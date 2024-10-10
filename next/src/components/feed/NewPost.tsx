@@ -73,7 +73,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
                 <Image src={user.profile?.profilePicture}
                     alt='User profile'
                     width={50} height={50}
-                    className="rounded-full" />
+                    className="w-[50px] h-[50px] rounded-full" />
                 <form onSubmit={handleSubmit(onSubmitHeaderPost)} id='headerPostForm' className='min-h-full pr-4 flex items-center'>
                     <TextareaAutosize maxLength={maxChars}
                         className='w-full focus:outline-none text-xl resize-none'

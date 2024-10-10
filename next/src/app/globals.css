@@ -205,12 +205,12 @@ body {
 
     .feed-post {
         @apply
-            w-full flex gap-2 px-4 pt-3 pb-1 hover:bg-white-1 cursor-pointer;
+            w-full grid grid-cols-post-layout grid-rows-1 gap-2 px-4 pt-3 pb-1 hover:bg-white-1 cursor-pointer;
     }
 
     .feed-post-left-side {
         @apply
-            w-auto flex flex-col items-center gap-1;
+            w-auto h-full;
     }
 
     .feed-post-right-side {
@@ -225,9 +225,7 @@ body {
 
     .feed-hr-line {
         @apply w-full h-[1px] bg-[hsl(var(--border))];
-    }
-
-
+    }  
 
     /* Post */
 
@@ -238,7 +236,7 @@ body {
 
     .post-header {
         @apply
-            w-full flex gap-2 items-center
+            w-full grid grid-cols-post-layout grid-rows-1 gap-2;
     }
 
     .post-content {
@@ -292,7 +290,7 @@ body {
 
     .parent-post {
         @apply
-            w-full h-full px-4 pt-4 flex gap-2
+            w-full grid grid-cols-post-layout grid-rows-1 gap-2 h-full px-4 pt-4
             hover:bg-card-hover hover:cursor-pointer;
     }
 
@@ -378,6 +376,18 @@ body {
 
     .profile-textarea {
         @apply h-[200px] sm:h-[175px] w-full resize-none mt-2 outline-none;
+    }
+
+    .profile-content-header {
+        @apply w-full h-[50px] flex;
+    }
+
+    .profile-content-header-btn {
+        @apply w-full flex-center relative hover:bg-dark-300/70;
+    }
+
+    .profile-content-feed {
+        @apply w-full flex flex-col
     }
 
     /* Header */

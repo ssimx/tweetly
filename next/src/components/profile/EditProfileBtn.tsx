@@ -12,10 +12,12 @@ import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import TextareaAutosize from 'react-textarea-autosize';
 import { z } from "zod";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import { Loader2, ImagePlus, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+// import { CropperRef, Cropper } from 'react-advanced-cropper';
+// import 'react-advanced-cropper/dist/style.css';
 
 type ProfileInfoData = z.infer<typeof updateProfileSchema>;
 
@@ -66,7 +68,7 @@ export default function EditProfileBtn({ user }: { user: ProfileInfo }) {
                 } // if its null, skip it because it hasn't changed
 
                 console.log(data.bannerPicture);
-                
+
 
                 if (profilePicture) {
                     profilePictureData = new FormData();
@@ -137,6 +139,10 @@ export default function EditProfileBtn({ user }: { user: ProfileInfo }) {
         setBannerPicturePreview('');
     };
 
+    // const onChange = (cropper: CropperRef) => {
+    //     console.log(cropper.getCoordinates(), cropper.getCanvas());
+    // };
+
     const handleSelectedImage = async (file: File, type: 'banner' | 'profile') => {
         const fileType = file.type;
         const allowedFileTypes = ['image/jpg', 'image/jpeg', 'image/png'];
@@ -206,6 +212,7 @@ export default function EditProfileBtn({ user }: { user: ProfileInfo }) {
                                 type="file"
                                 accept=".png, .jpg, .jpeg"
                                 className="hidden"
+                                style={{ minWidth: '1500px', minHeight: '500px' }}
                                 onChange={(e) => {
                                     if (e.target.files && e.target.files[0]) {
                                         handleSelectedImage(e.target.files[0], 'banner');
@@ -213,6 +220,14 @@ export default function EditProfileBtn({ user }: { user: ProfileInfo }) {
                                 }}
                             />
                             {errors.bannerPicture && <p>{errors.bannerPicture.message}</p>}
+
+                            {/* { user.profile.bannerPicture !== bannerPicturePreview && (
+                                <Cropper
+                                    src={bannerPicturePreview as string}
+                                    onChange={onChange}
+                                    className={'cropper'}
+                                />
+                            )} */}
                         </div>
                     </div>
 

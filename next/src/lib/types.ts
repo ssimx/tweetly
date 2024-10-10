@@ -48,20 +48,29 @@ export interface ProfileInfo {
         profilePicture: string,
     },
     posts: {
-        id: number,
         content: string,
-        createdAt: Date,
-        updatedAt: Date,
-        authorId: number,
+        createdAt: string,
+        updatedAt: string,
         replyToId: number | null,
     }[],
     repostedPosts: {
-        id: number,
-        content: string,
-        createdAt: Date,
-        updatedAt: Date,
-        authorId: number,
-        replyToId: number | null,
+        post: {
+            content: string,
+            createdAt: string,
+            updatedAt: string,
+            replyToId: number | null,
+        },
+        user: {
+            username: string,
+            _count: {
+                followers: number,
+                following: number,
+            },
+            profile: {
+                name: string,
+                profilePicture: string,
+            }
+        }
     }[],
     followers: {
         username: string,
@@ -94,28 +103,102 @@ export interface ProfileInfo {
     },
 };
 
+export interface PostType {
+    id: number,
+    content: string,
+    createdAt: string,
+    updatedAt: string,
+    replyToId: number | null,
+    author: {
+        username: string,
+        profile: {
+            name: string,
+            bio: string,
+            profilePicture: string,
+        },
+        following: {
+            followerId?: number,
+        }[],
+        followers: {
+            followeeId?: number,
+        }[],
+        _count: {
+            followers: number,
+            following: number,
+        },
+    },
+    reposts: {
+        userId?: number,
+    }[],
+    likes: {
+        userId?: number,
+    }[],
+    bookmarks: {
+        userId?: number,
+    }[],
+    _count: {
+        likes: number,
+        reposts: number,
+        replies: number,
+    }
+};
+
 export interface PostInfoType {
     id: number,
     content: string,
     createdAt: string,
     updatedAt: string,
-    authorId: number,
-    replyToId: number | null,
     author: {
         username: string,
-        followers: {
-            followeeId: number;
-        }[],
-        following: {
-            followeeId: number;
-        }[],
         profile: {
             name: string,
             bio: string,
             profilePicture: string,
-        } | null,
+        },
+        posts: {
+            id: number,
+            content: string,
+            createdAt: string,
+            updatedAt: string,
+            authorId: number,
+            replyToId: number | null,
+        }[],
+        repostedPosts: {
+            id: number,
+            content: string,
+            createdAt: string,
+            updatedAt: string,
+            authorId: number,
+            replyToId: number | null,
+        }[],
+        followers: {
+            username: string,
+            profile: {
+                name: string,
+                bio: string,
+                profilePicture: string,
+            },
+            _count: {
+                followers: number,
+                following: number,
+            }
+        }[],
+        following: {
+            username: string,
+            profile: {
+                name: string,
+                bio: string,
+                profilePicture: string,
+            },
+            _count: {
+                followers: number,
+                following: number,
+            },
+        }[],
         _count: {
-            followers: number;
+            followers: number,
+            following: number,
+            posts: number,
         },
     },
     replies: {

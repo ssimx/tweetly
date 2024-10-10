@@ -1,9 +1,9 @@
 'use client';
-import { PostInfoType } from '@/lib/types';
+import { PostType } from '@/lib/types';
 import Link from 'next/link';
 import Image from 'next/image';
 import { formatPostDate } from '@/lib/utils';
-import PostBtns from './PostBtns';
+import PostBtns from '../PostBtns';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import {
@@ -11,9 +11,9 @@ import {
     HoverCardContent,
     HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import UserHoverCard from './UserHoverCard';
+import UserHoverCard from '../../UserHoverCard';
 
-export default function ReplyPost({ post }: { post: PostInfoType }) {
+export default function ReplyPost({ post }: { post: PostType }) {
     const [isFollowing, setIsFollowing] = useState(post.author['_count'].followers === 1);
     const [followers, setFollowers] = useState(post.author.followers.length);
     const router = useRouter();
@@ -22,20 +22,30 @@ export default function ReplyPost({ post }: { post: PostInfoType }) {
         router.push(`/${post.author.username}/status/${post.id}`);
     };
 
+    const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+        e.stopPropagation();
+    };
+
     return (
         <div onClick={() => handleCardClick()} className='post hover:bg-card-hover hover:cursor-pointer'>
             <div className='post-header'>
-                <Link href={`/${post.author.username}`} className='group'>
+                <Link href={`/${post.author.username}`} className='group' onClick={(e) => handleLinkClick(e)}>
                     <Image
                         src={post.author.profile?.profilePicture}
-                        alt='Post author profile pic' width={35} height={35} className='rounded-full h-fit group-hover:outline group-hover:outline-primary/10' />
+                        alt='Post author profile pic' width={35} height={35} className='w-[35px] h-[35px] rounded-full group-hover:outline group-hover:outline-primary/10' />
                 </Link>
                 <div className='flex gap-2 text-dark-500'>
                     <HoverCard>
-                        <HoverCardTrigger href={`/${post.author.username}`} className='text-black-1 font-bold hover:underline'>{post.author.profile?.name}</HoverCardTrigger>
+                        <HoverCardTrigger href={`/${post.author.username}`} className='text-black-1 font-bold hover:underline' onClick={(e) => handleLinkClick(e)}>{post.author.profile.name}</HoverCardTrigger>
                         <HoverCardContent>
                             <UserHoverCard
-                                author={post.author}
+                                author={{
+                                    username: post.author.username,
+                                    name: post.author.profile.name,
+                                    profilePicture: post.author.profile.profilePicture,
+                                    bio: post.author.profile.bio,
+                                    following: post.author['_count'].following,
+                                }}
                                 followers={followers} setFollowers={setFollowers}
                                 isFollowing={isFollowing} setIsFollowing={setIsFollowing} />
                         </HoverCardContent>
@@ -49,7 +59,15 @@ export default function ReplyPost({ post }: { post: PostInfoType }) {
                 <p>{post.content}</p>
             </div>
             <div className='!border-t-0 post-btns'>
-                <PostBtns post={post} />
+                <PostBtns
+                    postId={post.id}
+                    author={post.author.username}
+                    replies={post['_count'].replies}
+                    reposts={post['_count'].reposts}
+                    likes={post['_count'].likes}
+                    reposted={!!post.reposts.length}
+                    liked={!!post.likes.length}
+                    bookmarked={!!post.bookmarks.length} />
             </div>
         </div>
     )

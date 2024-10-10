@@ -1,12 +1,23 @@
 'use client';
-import { useUserContext } from "@/context/UserContextProvider";
-import { PostInfoType } from "@/lib/types";
 import { Bookmark, Heart, MessageCircle, Repeat2, Share } from "lucide-react";
 import Link from "next/link";
 
+interface PostBtnsType {
+    postId: number,
+    author: string,
+    replies: number,
+    reposts: number,
+    likes: number,
+    reposted: boolean,
+    liked: boolean,
+    bookmarked: boolean,
+};
 
-export default function PostBtns({ post }: { post: PostInfoType }) {
-    const { user } = useUserContext();
+export default function PostBtns({
+    postId, author,
+    replies, reposts, likes,
+    reposted, liked, bookmarked
+}: PostBtnsType) {
 
     const handlePostBtnsInteraction = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>, postId: number) => {
         e.preventDefault();
@@ -78,39 +89,39 @@ export default function PostBtns({ post }: { post: PostInfoType }) {
     return (
         <div className="flex gap-2 justify-center items-end">
             <div className='w-[60%] sm:w-[50%] flex gap-1 justify-between'>
-                <Link href={`/${post.author.username}/status/${post.id}`} className='comment-btn group'>
+                <Link href={`/${author}/status/${postId}`} className='comment-btn group'>
                     <div className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-blue-1/10'>
                         <MessageCircle size={20}
                             className='text-dark-400 group-hover:text-blue-1/70' />
                     </div>
-                    <p>{post.replies.length}</p>
+                    <p>{replies}</p>
                 </Link>
                 <button
-                    className={`repost-btn group ${post.reposts.some((repost) => repost.userId === user.id) ? 'reposted' : ''}`}
+                    className={`repost-btn group ${reposted ? 'reposted' : ''}`}
                     data-type='repost'
-                    data-status={`${post.reposts.some((repost) => repost.userId === user.id)}`}
-                    onClick={(e) => handlePostBtnsInteraction(e, post.id)}>
+                    data-status={`${reposted === 1}`}
+                    onClick={(e) => handlePostBtnsInteraction(e, postId)}>
                     <span className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-green-500/10'>
                         <Repeat2 size={24} className='text-dark-400 group-hover:text-green-500/70' />
                     </span>
-                    <p>{post.reposts.length}</p>
+                    <p>{reposts}</p>
                 </button>
                 <button
-                    className={`like-btn group ${post.likes.some((like) => like.userId === user.id) ? 'liked' : ''}`}
+                    className={`like-btn group ${liked ? 'liked' : ''}`}
                     data-type='like'
-                    data-status={`${post.likes.some((like) => like.userId === user.id)}`}
-                    onClick={(e) => handlePostBtnsInteraction(e, post.id)}>
+                    data-status={`${liked}`}
+                    onClick={(e) => handlePostBtnsInteraction(e, postId)}>
                     <span className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-pink-500/10'>
                         <Heart size={20} className='text-dark-400 group-hover:text-pink-500' />
                     </span>
-                    <p>{post.likes.length}</p>
+                    <p>{likes}</p>
                 </button>
             </div>
             <button
-                className={`bookmark-btn group ${post.bookmarks.some((bookmark) => bookmark.userId === user.id) ? 'bookmarked' : ''}`}
+                className={`bookmark-btn group ${bookmarked ? 'bookmarked' : ''}`}
                 data-type='bookmark'
-                data-status={`${post.bookmarks.some((bookmark) => bookmark.userId === user.id)}`}
-                onClick={(e) => handlePostBtnsInteraction(e, post.id)}>
+                data-status={`${bookmarked}`}
+                onClick={(e) => handlePostBtnsInteraction(e, postId)}>
                 <Bookmark size={20} className='text-dark-400 text-primary' />
             </button>
             <button className='share-btn group'>

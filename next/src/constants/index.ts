@@ -64,3 +64,19 @@ export const bottomNavLinks = [
         route: "/messages",
     },
 ];
+
+// Profile content tabs
+export const profileContentTabs = [
+    {
+        name: 'Posts'
+    },
+    {
+        name: 'Replies'
+    },
+    {
+        name: 'Media'
+    },
+    {
+        name: 'Likes'
+    }
+]

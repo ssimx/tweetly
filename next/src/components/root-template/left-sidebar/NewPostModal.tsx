@@ -86,7 +86,7 @@ export default function NewPostModal() {
                         src={user.profile?.profilePicture}
                         alt='User profile'
                         width={40} height={40}
-                        className="w-fit rounded-full" />
+                        className="w-[40xp] h-[40px] rounded-full" />
                     <form onSubmit={handleSubmit(onSubmitModalPost)} id='modalPostForm' className='pr-4'>
                         <TextareaAutosize
                             maxLength={maxChars}

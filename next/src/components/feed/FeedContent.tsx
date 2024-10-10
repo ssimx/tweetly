@@ -1,10 +1,10 @@
 'use client';
-import { PostInfoType } from "@/lib/types";
+import { PostType } from "@/lib/types";
 import { useEffect, useState } from "react";
 import FeedPost from "./FeedPost";
 
 export default function FeedContent() {
-    const [feedPosts, setFeedPosts] = useState<PostInfoType[] | undefined | null>(undefined);
+    const [feedPosts, setFeedPosts] = useState<PostType[] | undefined | null>(undefined);
 
     useEffect(() => {
         const fetchPosts = async () => {
@@ -20,7 +20,7 @@ export default function FeedContent() {
                     throw new Error(errorData.error);
                 }
 
-                const feedData: PostInfoType[] = await response.json();
+                const feedData: PostType[] = await response.json();
                 console.log(feedData);
 
                 setFeedPosts(feedData);

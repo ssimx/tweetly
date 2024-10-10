@@ -28,7 +28,6 @@ const config: Config = {
 
                 'profile-info': '135px auto auto',
 
-
             },
             gridTemplateColumns: {
                 'post': '10% auto',
@@ -41,7 +40,7 @@ const config: Config = {
                 // main content 2 col grid
                 'main-content-layout': '70% 30%',
                 // Post modal columns
-                'post-layout': '10% 1fr',
+                'post-layout': 'auto 1fr',
             },
             colors: {
                 fill: {
