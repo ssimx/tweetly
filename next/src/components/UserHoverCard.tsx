@@ -82,7 +82,7 @@ export default function UserHoverCard({
     };
 
     return (
-        <div className='user-hover-card-info'>
+        <div className='user-hover-card-info '>
             <div className='user-hover-card-header'>
                 <Link href={`/${author.username}`} className='group w-fit' onClick={(e) => handleLinkClick(e)}>
                     <Image

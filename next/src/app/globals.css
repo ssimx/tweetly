@@ -390,6 +390,14 @@ body {
         @apply w-full flex flex-col
     }
 
+    .profile-content-post {
+        @apply w-full flex flex-col gap-2 px-4 pt-3 pb-1 hover:bg-white-1 cursor-pointer;
+    }
+
+    .profile-content-post-content {
+        @apply w-full grid grid-cols-post-layout grid-rows-1 gap-2;
+    }
+
     /* Header */
 
     .header {

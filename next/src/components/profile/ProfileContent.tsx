@@ -1,16 +1,28 @@
 'use client';
-import { profileContentTabs } from "@/constants";
 import { ProfileInfo } from "@/lib/types";
-import Link from "next/link";
-import Image from "next/image";
 import { useEffect, useState } from "react";
-import { formatPostDate } from "@/lib/utils";
-import PostBtns from "../posts/PostBtns";
+import ProfileContentTabs from "./ProfileContentTabs";
+import ProfileContentPost from "./ProfileContentPost";
 
 interface Post {
     id: number,
     createdAt: string,
     updatedAt: string,
+    author: {
+        username: string,
+        profile: {
+            name: string,
+            bio: string,
+            profilePicture: string,
+        },
+        followers: {
+            followerId: number,
+        }[] | [],
+        _count: {
+            followers: number,
+            following: number,
+        }
+    },
     reposts: {
         userId: number,
     }[] | [],
@@ -43,6 +55,13 @@ interface Repost {
             name: string,
             bio: string,
             profilePicture: string,
+        },
+        followers: {
+            followerId: number,
+        }[] | [],
+        _count: {
+            followers: number,
+            following: number,
         }
     },
     reposts: {
@@ -67,18 +86,26 @@ interface MappedRepost extends Repost {
     repost: boolean,
 };
 
-interface PostRepost {
+export interface PostRepost {
     id: number,
+    content: string,
     createdAt: string,
     updatedAt: string,
     repost: boolean,
     timeForSorting: number,
-    author?: {
+    author: {
         username: string,
         profile: {
             name: string,
             bio: string,
             profilePicture: string,
+        },
+        followers: {
+            followerId: number,
+        }[] | [],
+        _count: {
+            followers: number,
+            following: number,
         }
     },
     reposts: {
@@ -98,20 +125,20 @@ interface PostRepost {
     }
 };
 
-export default function ProfileContent({ username }: { username: string }) {
+export default function ProfileContent({ user }: { user: ProfileInfo }) {
     const [postsReposts, setPostsReposts] = useState<PostRepost[] | undefined>(undefined);
     const [activeTab, setActiveTab] = useState(0);
 
     useEffect(() => {
         const fetchPostsReposts = async () => {
-            const postsPromise = fetch(`/api/posts/posts/${username}`, {
+            const postsPromise = fetch(`/api/posts/posts/${user.username}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                 },
             });
 
-            const repostsPromise = fetch(`/api/posts/reposts/${username}`, {
+            const repostsPromise = fetch(`/api/posts/reposts/${user.username}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -119,12 +146,12 @@ export default function ProfileContent({ username }: { username: string }) {
             });
 
             const [postsResponse, repostsResponse] = await Promise.all([postsPromise, repostsPromise]);
-            
+
             const posts: Post[] = await postsResponse.json();
             const reposts: Repost[] = await repostsResponse.json();
 
             const mappedPosts: MappedPost[] = posts.map((post) => {
-                return {...post, timeForSorting: new Date(post.createdAt).getTime(), repost: false };
+                return { ...post, timeForSorting: new Date(post.createdAt).getTime(), repost: false };
             });
 
             const mappedReposts: MappedRepost[] = reposts.map((repost) => {
@@ -136,79 +163,37 @@ export default function ProfileContent({ username }: { username: string }) {
             });
 
             setPostsReposts(mappedPostsReposts as PostRepost[]);
-        }   
-        
+        }
+
         fetchPostsReposts();
-    }, [username]);
+    }, [user]);
+
+    if (!postsReposts) return <div>loading...</div>
+
+    console.log(postsReposts);
+
+    if (activeTab === 0) {
+        return (
+            <div>
+                <ProfileContentTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+
+                <div className='feed-hr-line'></div>
+
+                <section className='feed-posts-desktop'>
+                    {postsReposts.map((post, index) => {
+                        return (
+                            <div key={index}>
+                                <ProfileContentPost post={post} />
+                                <div className='feed-hr-line'></div>
+                            </div>
+                        )
+                    })}
+                </section>
+            </div>
+        )
+    };
 
     return (
-        // <div>
-        //     <div className='profile-content-header'>
-        //         {
-        //             profileContentTabs.map((tab, index) => (
-        //                 <div key={index} className='profile-content-header-btn'>
-        //                     <button
-        //                         className={`w-full h-full z-10 absolute ${activeTab === index ? 'text-black-1 font-bold' : 'text-dark-500 font-medium'}`}
-        //                         onClick={() => setActiveTab(index)}>
-        //                         {tab.name}
-        //                     </button>
-
-        //                     {activeTab === index && (
-        //                         <div className='w-full flex-center'>
-        //                             <div className='h-[4px] absolute rounded-xl bottom-0 bg-primary z-0'
-        //                                 style={{ width: `${tab.name.length}ch` }}></div>
-        //                         </div>
-        //                     )}
-        //                 </div>
-        //             ))
-        //         }
-        //     </div>
-
-        //     <div className='feed-hr-line'></div>
-
-        //     <div className='profile-content-feed'>
-        //         {activeTab === 0
-        //             ? postsAndReposts.map((post, index) => (
-        //                 <div key={index} className='post hover:bg-card-hover hover:cursor-pointer'>
-        //                     {post.repost && (
-        //                         <div>You reposted</div>
-        //                     )}
-        //                     <div>
-        //                         <div className='post-header'>
-        //                             <Link href={`/${post.post.user.username}`} className='group'>
-        //                                 <Image
-        //                                     src={post.post.user.profile.profilePicture}
-        //                                     alt='Post author profile pic' width={35} height={35} className='w-[35px] h-[35px] rounded-full group-hover:outline group-hover:outline-primary/10' />
-        //                             </Link>
-        //                             <div className='flex gap-2 text-dark-500'>
-        //                                 {/* <HoverCard>
-        //                                         <HoverCardTrigger href={`/${post.post.user.username}`} className='text-black-1 font-bold hover:underline'>{post.author.profile?.name}</HoverCardTrigger>
-        //                                         <HoverCardContent>
-        //                                             <UserHoverCard
-        //                                                 author={post.post.user}
-        //                                                 followers={followers} setFollowers={setFollowers}
-        //                                                 isFollowing={isFollowing} setIsFollowing={setIsFollowing} />
-        //                                         </HoverCardContent>
-        //                                     </HoverCard> */}
-        //                                 <p>@{post.post.user.username}</p>
-        //                                 <p>·</p>
-        //                                 <p>{formatPostDate(String(post.createdAt))}</p>
-        //                             </div>
-        //                         </div>
-
-        //                         <div className='post-content'>
-        //                             <p className='break-all'>{post.post.post.content}</p>
-        //                         </div>
-        //                         <div className='!border-t-0 post-btns'>
-        //                             {/* <PostBtns post={post.post.post} /> */}
-        //                         </div>
-        //                     </div>
-        //                 </div>
-        //             ))
-        //             : null
-        //         }
-        //     </div>
-        // </div>
         <div></div>
     )
 }

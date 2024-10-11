@@ -72,10 +72,10 @@ export default async function page({ params }: { params: { username: string } })
                                 <span className='text-dark-500 font-normal'> Followers</span>
                             </p>
                         </div>
+                    </div>
 
-                        <div>
-                            <ProfileContent username={user.username} />
-                        </div>
+                    <div>
+                        <ProfileContent user={user} />
                     </div>
                 </div>
             </section>

@@ -32,7 +32,9 @@ export default function FeedPost({ post }: { post: PostType }) {
                 <Link href={`/${post.author.username}`} className='flex group' onClick={(e) => handleLinkClick(e)}>
                     <Image
                         src={post.author.profile.profilePicture}
-                        alt='Post author profile pic' width={40} height={40} className='w-[40px] h-[40px] rounded-full group-hover:outline group-hover:outline-primary/10' />
+                        alt='Post author profile pic' 
+                        width={40} height={40} 
+                        className='w-[40px] h-[40px] rounded-full group-hover:outline group-hover:outline-primary/10' />
                 </Link>
             </div>
 

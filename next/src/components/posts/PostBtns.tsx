@@ -1,6 +1,7 @@
 'use client';
 import { Bookmark, Heart, MessageCircle, Repeat2, Share } from "lucide-react";
 import Link from "next/link";
+import { SetStateAction } from "react";
 
 interface PostBtnsType {
     postId: number,
@@ -11,12 +12,14 @@ interface PostBtnsType {
     reposted: boolean,
     liked: boolean,
     bookmarked: boolean,
+    setPostIsVisible?: React.Dispatch<SetStateAction<boolean>>,
 };
 
 export default function PostBtns({
     postId, author,
     replies, reposts, likes,
-    reposted, liked, bookmarked
+    reposted, liked, bookmarked,
+    setPostIsVisible
 }: PostBtnsType) {
 
     const handlePostBtnsInteraction = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>, postId: number) => {
@@ -54,6 +57,9 @@ export default function PostBtns({
                 }
 
                 btn.dataset.status = 'false';
+
+                // Call function to hide post, works only for feed on profile
+                setPostIsVisible && setPostIsVisible(false);
             } catch (error) {
                 console.log(error);
                 // revert the styling
@@ -99,7 +105,7 @@ export default function PostBtns({
                 <button
                     className={`repost-btn group ${reposted ? 'reposted' : ''}`}
                     data-type='repost'
-                    data-status={`${reposted === 1}`}
+                    data-status={`${reposted}`}
                     onClick={(e) => handlePostBtnsInteraction(e, postId)}>
                     <span className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-green-500/10'>
                         <Repeat2 size={24} className='text-dark-400 group-hover:text-green-500/70' />
