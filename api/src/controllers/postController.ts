@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { UserProps } from '../lib/types';
-import { addPostBookmark, addPostLike, addPostRepost, createPost, getGlobal30DayPosts, getPostInfo, getPostReplies, postExists, removePostBookmark, removePostLike, removePostRepost } from '../services/postService';
+import { addPostBookmark, addPostLike, addPostRepost, createPost, getGlobal30DayPosts, getPostInfo, getPostReplies, getPosts, getReposts, postExists, removePostBookmark, removePostLike, removePostRepost } from '../services/postService';
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -55,9 +55,41 @@ export const getPost = async (req: Request, res: Response) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
+export const getUserPosts = async (req: Request, res: Response) => {
+    const username = req.params.username;
+
+    try {
+        const response = await getPosts(username);
+        if (!response) return res.status(404).json({ error: 'User or posts not found' });
+
+        return res.status(201).json(response);
+    } catch (error) {
+        console.error('Error: ', error);
+        return res.status(500).json({ error: 'Failed to fetch the post' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getUserReposts = async (req: Request, res: Response) => {
+    const username = req.params.username;
+
+    try {
+        const response = await getReposts(username);
+        if (!response) return res.status(404).json({ error: 'User or reposts not found' });
+
+        return res.status(201).json(response);
+    } catch (error) {
+        console.error('Error: ', error);
+        return res.status(500).json({ error: 'Failed to fetch the post' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
 export const global30DayPosts = async (req: Request, res: Response) => {
     const user = req.user as UserProps;
-    
+
     try {
         const response = await getGlobal30DayPosts(user.id);
         return res.status(201).json({ response });
@@ -72,7 +104,7 @@ export const global30DayPosts = async (req: Request, res: Response) => {
 export const addRepost = async (req: Request, res: Response) => {
     const { id } = req.user as UserProps;
     const postId = Number(req.params.id);
-    
+
     try {
         const response = await addPostRepost(id, postId);
 

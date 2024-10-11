@@ -129,6 +129,83 @@ export const getPostInfo = async (userId: number, postId: number) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
+export const getPosts = async (username: string) => {
+    return await prisma.post.findMany({
+        where: {
+            AND: [
+                {
+                    author: {
+                        username: username,
+                    },
+                },
+                {
+                    replyToId: null
+                }
+            ]
+
+        },
+        select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            updatedAt: true,
+            author: true,
+            _count: {
+                select: {
+                    replies: true,
+                    reposts: true,
+                    likes: true,
+                }
+            }
+        }
+    })
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getReposts = async (username: string) => {
+    return await prisma.post.findMany({
+        where: {
+            reposts: {
+                some: {
+                    user: {
+                        username: username
+                    }
+                }
+            }
+        },
+        select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            updatedAt: true,
+            likes: {
+                where: {
+                    user: {
+                        username
+                    }
+                }
+            },
+            bookmarks: {
+                where: {
+                    user: {
+                        username
+                    }
+                }
+            },
+            _count: {
+                select: {
+                    replies: true,
+                    reposts: true,
+                    likes: true,
+                }
+            }
+        }
+    })
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
 export const getGlobal30DayPosts = async (userId: number) => {
     let date = new Date();
     date.setDate(date.getDate() - 30);
