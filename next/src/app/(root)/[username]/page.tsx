@@ -3,7 +3,8 @@ import { ProfileInfo } from "@/lib/types";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import { CalendarDays } from 'lucide-react';
-import EditProfileBtn from "@/components/EditProfileBtn";
+import EditProfileBtn from "@/components/profile/EditProfileBtn";
+import ProfileContent from "@/components/profile/ProfileContent";
 
 export default async function page({ params }: { params: { username: string } }) {
     const token = getToken();
@@ -53,10 +54,8 @@ export default async function page({ params }: { params: { username: string } })
                             <p className='text-dark-500'>@{user.username}</p>
                         </div>
                         { user.profile.bio && (
-                            <p>{user.profile.bio}</p>
+                            <p className='profile-bio'>{user.profile.bio}</p>
                         )}
-
-                        <p className='profile-bio'>sdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsdsd</p>
 
                         <div className='flex gap-2'>
                             <CalendarDays size={20} className='text-dark-500' />
@@ -72,6 +71,10 @@ export default async function page({ params }: { params: { username: string } })
                            <p className='font-bold'>{user['_count'].followers}
                                 <span className='text-dark-500 font-normal'> Followers</span>
                             </p>
+                        </div>
+
+                        <div>
+                            <ProfileContent username={user.username} />
                         </div>
                     </div>
                 </div>
