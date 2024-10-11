@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { UserProps } from '../lib/types';
-import { addPostBookmark, addPostLike, addPostRepost, createPost, getGlobal30DayPosts, getPostInfo, getPostReplies, getPosts, getReposts, postExists, removePostBookmark, removePostLike, removePostRepost } from '../services/postService';
+import { addPostBookmark, addPostLike, addPostRepost, createPost, getGlobal30DayPosts, getPostInfo, getPostReplies, getPosts, getReplies, getReposts, postExists, removePostBookmark, removePostLike, removePostRepost } from '../services/postService';
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -79,6 +79,23 @@ export const getUserReposts = async (req: Request, res: Response) => {
     try {
         const response = await getReposts(user.id, username);
         if (!response) return res.status(404).json({ error: 'User or reposts not found' });
+
+        return res.status(201).json(response);
+    } catch (error) {
+        console.error('Error: ', error);
+        return res.status(500).json({ error: 'Failed to fetch the post' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getUserReplies = async (req: Request, res: Response) => {
+    const username = req.params.username;
+    const user = req.user as UserProps;
+
+    try {
+        const response = await getReplies(user.id, username);
+        if (!response) return res.status(404).json({ error: 'User or replies not found' });
 
         return res.status(201).json(response);
     } catch (error) {
@@ -223,7 +240,7 @@ export const removeBookmark = async (req: Request, res: Response) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getReplies = async (req: Request, res: Response) => {
+export const getPostReply = async (req: Request, res: Response) => {
     const postId = Number(req.params.id);
     const user = req.user as UserProps;
 
