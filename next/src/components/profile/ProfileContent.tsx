@@ -7,8 +7,99 @@ import { useEffect, useState } from "react";
 import { formatPostDate } from "@/lib/utils";
 import PostBtns from "../posts/PostBtns";
 
+interface Post {
+    id: number,
+    createdAt: string,
+    updatedAt: string,
+    reposts: {
+        userId: number,
+    }[] | [],
+    likes: {
+        userId: number,
+    }[] | [],
+    bookmarks: {
+        userId: number,
+    }[] | [],
+    _count: {
+        replies: number,
+        reposts: number,
+        likes: number,
+    }
+};
+
+interface MappedPost extends Post {
+    timeForSorting: number,
+    repost: boolean,
+};
+
+interface Repost {
+    id: number,
+    createdAt: string,
+    updatedAt: string,
+    repost: boolean,
+    author: {
+        username: string,
+        profile: {
+            name: string,
+            bio: string,
+            profilePicture: string,
+        }
+    },
+    reposts: {
+        userId: number,
+        createdAt: string,
+    }[] | [],
+    likes: {
+        userId: number,
+    }[] | [],
+    bookmarks: {
+        userId: number,
+    }[] | [],
+    _count: {
+        replies: number,
+        reposts: number,
+        likes: number,
+    }
+};
+
+interface MappedRepost extends Repost {
+    timeForSorting: number,
+    repost: boolean,
+};
+
+interface PostRepost {
+    id: number,
+    createdAt: string,
+    updatedAt: string,
+    repost: boolean,
+    timeForSorting: number,
+    author?: {
+        username: string,
+        profile: {
+            name: string,
+            bio: string,
+            profilePicture: string,
+        }
+    },
+    reposts: {
+        userId: number,
+        createdAt?: string,
+    }[] | [],
+    likes: {
+        userId: number,
+    }[] | [],
+    bookmarks: {
+        userId: number,
+    }[] | [],
+    _count: {
+        replies: number,
+        reposts: number,
+        likes: number,
+    }
+};
+
 export default function ProfileContent({ username }: { username: string }) {
-    const [postsReposts, setPostsReposts] = useState();
+    const [postsReposts, setPostsReposts] = useState<PostRepost[] | undefined>(undefined);
     const [activeTab, setActiveTab] = useState(0);
 
     useEffect(() => {
@@ -29,9 +120,22 @@ export default function ProfileContent({ username }: { username: string }) {
 
             const [postsResponse, repostsResponse] = await Promise.all([postsPromise, repostsPromise]);
             
-            const posts = await postsResponse.json();
-            const reposts = await repostsResponse.json();
+            const posts: Post[] = await postsResponse.json();
+            const reposts: Repost[] = await repostsResponse.json();
 
+            const mappedPosts: MappedPost[] = posts.map((post) => {
+                return {...post, timeForSorting: new Date(post.createdAt).getTime(), repost: false };
+            });
+
+            const mappedReposts: MappedRepost[] = reposts.map((repost) => {
+                return { ...repost, timeForSorting: new Date(repost.reposts[0].createdAt).getTime(), repost: true };
+            });
+
+            const mappedPostsReposts = mappedPosts.concat(mappedReposts).sort((a, b) => {
+                return b.timeForSorting - a.timeForSorting
+            });
+
+            setPostsReposts(mappedPostsReposts as PostRepost[]);
         }   
         
         fetchPostsReposts();
