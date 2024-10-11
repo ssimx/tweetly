@@ -33,7 +33,7 @@ export default async function Status({ params }: { params: { postId: string } })
         parentPost = await parentPostResponse.json() as PostType;
     }
 
-    const repliesResponse = await fetch(`http://localhost:3000/api/posts/replies/${params.postId}`, {
+    const repliesResponse = await fetch(`http://localhost:3000/api/posts/postReplies/${params.postId}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',

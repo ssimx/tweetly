@@ -3,6 +3,7 @@ import { ProfileInfo } from "@/lib/types";
 import { useEffect, useState } from "react";
 import ProfileContentTabs from "./ProfileContentTabs";
 import ProfileContentPost from "./ProfileContentPost";
+import ProfileContentReply from "./ProfileContentReply";
 
 interface Post {
     id: number,
@@ -125,8 +126,82 @@ export interface PostRepost {
     }
 };
 
+export interface Reply {
+    id: number,
+    content: string,
+    createdAt: string,
+    updatedAt: string,
+    replyTo: {
+        id: number,
+        content: true,
+        createdAt: string,
+        updatedAt: string,
+        author: {
+            username: string,
+            profile: {
+                name: string,
+                profilePicture: string,
+                bio: string,
+            },
+            followers: {
+                followerId: number,
+            }[] | [],
+            _count: {
+                select: {
+                    followers: true,
+                    following: true,
+                }
+            }
+        },
+        reposts: {
+            userId: number,
+        }[] | [],
+        likes: {
+            userId: number,
+        }[] | [],
+        bookmarks: {
+            userId: number,
+        }[] | [],
+        _count: {
+            replies: number,
+            reposts: number,
+            likes: number,
+        },
+    },
+    author: {
+        username: string,
+        profile: {
+            name: string,
+            bio: string,
+            profilePicture: string,
+        },
+        followers: {
+            followerId: number,
+        }[] | [],
+        _count: {
+            followers: number,
+            following: number,
+        }
+    },
+    reposts: {
+        userId: number,
+    }[] | [],
+    likes: {
+        userId: number,
+    }[] | [],
+    bookmarks: {
+        userId: number,
+    }[] | [],
+    _count: {
+        replies: number,
+        reposts: number,
+        likes: number,
+    }
+}
+
 export default function ProfileContent({ user }: { user: ProfileInfo }) {
     const [postsReposts, setPostsReposts] = useState<PostRepost[] | undefined>(undefined);
+    const [replies, setReplies] = useState<Reply[] | undefined>(undefined)
     const [activeTab, setActiveTab] = useState(0);
 
     useEffect(() => {
@@ -168,9 +243,26 @@ export default function ProfileContent({ user }: { user: ProfileInfo }) {
         fetchPostsReposts();
     }, [user]);
 
-    if (!postsReposts) return <div>loading...</div>
+    useEffect(() => {
+        if (activeTab === 1 && replies === undefined) {
+            const fetchReplies = async () => {
+                const repliesResponse = await fetch(`/api/posts/replies/${user.username}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
 
-    console.log(postsReposts);
+                const replies: Reply[] = await repliesResponse.json();
+
+                setReplies(replies);
+            }
+
+            fetchReplies();
+        }
+    }, [user, activeTab, replies]);
+
+    if (!postsReposts) return <div>loading...</div>
 
     if (activeTab === 0) {
         return (
@@ -193,7 +285,28 @@ export default function ProfileContent({ user }: { user: ProfileInfo }) {
         )
     };
 
-    return (
-        <div></div>
-    )
+    console.log(replies);
+
+    if (activeTab === 1) {
+        if (!replies) return <div>loading...</div>
+
+        return (
+            <div>
+                <ProfileContentTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+
+                <div className='feed-hr-line'></div>
+
+                <section className='feed-posts-desktop'>
+                    {replies.map((reply, index) => {
+                        return (
+                            <div key={index}>
+                                <ProfileContentReply replyPost={reply} />
+                                <div className='feed-hr-line'></div>
+                            </div>
+                        )
+                    })}
+                </section>
+            </div>
+        )
+    };
 }

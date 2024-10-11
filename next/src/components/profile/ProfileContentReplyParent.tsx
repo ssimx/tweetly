@@ -1,23 +1,57 @@
 'use client';
-import { PostRepost } from './ProfileContent';
+import { PostType } from '@/lib/types';
+import React, { useState } from 'react'
 import Link from 'next/link';
 import Image from 'next/image';
+import { formatPostDate } from '@/lib/utils';
+import PostBtns from '../posts/PostBtns';
+import { useRouter } from 'next/navigation';
 import {
     HoverCard,
     HoverCardContent,
     HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import UserHoverCard from '../UserHoverCard';
-import { formatPostDate } from '@/lib/utils';
-import PostBtns from '../posts/PostBtns';
-import { useState } from 'react';
-import { Repeat2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 
-export default function ProfileContentPost({ post }: { post: PostRepost }) {
+interface Parent {
+    id: number,
+    content: true,
+    createdAt: string,
+    updatedAt: string,
+    author: {
+        username: string,
+        profile: {
+            name: string,
+            profilePicture: string,
+            bio: string,
+        },
+        followers: {
+            followerId: number,
+        }[] | [],
+        _count: {
+            followers: number,
+            following: number,
+        }
+    },
+    reposts: {
+        userId: number,
+    }[] | [],
+    likes: {
+        userId: number,
+    }[] | [],
+    bookmarks: {
+        userId: number,
+    }[] | [],
+    _count: {
+        replies: number,
+        reposts: number,
+        likes: number,
+    },
+}
+
+export default function ParentPostInfo({ post }: { post: Parent }) {
     const [isFollowing, setIsFollowing] = useState(post.author.followers.length === 1);
     const [followers, setFollowers] = useState(post.author['_count'].followers);
-    const [postIsVisible, setPostIsVisible] = useState(true);
     const router = useRouter();
 
     const handleCardClick = () => {
@@ -28,27 +62,19 @@ export default function ProfileContentPost({ post }: { post: PostRepost }) {
         e.stopPropagation();
     };
 
-    if (!postIsVisible) return <div className='mt-[-1px]'></div>;
-
     return (
         <div onClick={handleCardClick} className='profile-content-post'>
-            {post.repost && (
-                <div className='flex items-center gap-1 text-14 font-bold text-dark-400'>
-                    <Repeat2 size={16} className='text-dark-400 group-hover:text-green-500/70' />
-                    <p>You reposted</p>
-                </div>
-            )}
-
             <div className='profile-content-post-content'>
-                <div className='feed-post-left-side'>
+                <div className='parent-post-left-side min-w-[40px] min-h-full'>
                     <Link href={`/${post.author.username}`} className='flex group' onClick={(e) => handleLinkClick(e)}>
                         <Image
                             src={post.author.profile.profilePicture}
-                            alt='Post author profile pic'
-                            width={40} height={40}
-                            className='w-[40px] h-[40px] rounded-full group-hover:outline group-hover:outline-primary/10' />
+                            alt='Post author profile pic' width={40} height={40} className='w-[40px] h-[40px] rounded-full group-hover:outline group-hover:outline-primary/10' />
                     </Link>
+
+                    <div className='border-x h-full origin-top' style={{ transform: 'scaleY(1.23)' }}></div>
                 </div>
+
                 <div className='feed-post-right-side'>
                     <div className='flex gap-2 text-gray-500'>
                         <HoverCard>
@@ -82,8 +108,7 @@ export default function ProfileContentPost({ post }: { post: PostRepost }) {
                             likes={post['_count'].likes}
                             reposted={!!post.reposts.length}
                             liked={!!post.likes.length}
-                            bookmarked={!!post.bookmarks.length}
-                            setPostIsVisible={setPostIsVisible} />
+                            bookmarked={!!post.bookmarks.length} />
                     </div>
                 </div>
             </div>
