@@ -57,9 +57,10 @@ export const getPost = async (req: Request, res: Response) => {
 
 export const getUserPosts = async (req: Request, res: Response) => {
     const username = req.params.username;
+    const user = req.user as UserProps;
 
     try {
-        const response = await getPosts(username);
+        const response = await getPosts(user.id, username);
         if (!response) return res.status(404).json({ error: 'User or posts not found' });
 
         return res.status(201).json(response);
@@ -73,9 +74,10 @@ export const getUserPosts = async (req: Request, res: Response) => {
 
 export const getUserReposts = async (req: Request, res: Response) => {
     const username = req.params.username;
+    const user = req.user as UserProps;
 
     try {
-        const response = await getReposts(username);
+        const response = await getReposts(user.id, username);
         if (!response) return res.status(404).json({ error: 'User or reposts not found' });
 
         return res.status(201).json(response);

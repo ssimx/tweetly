@@ -129,7 +129,7 @@ export const getPostInfo = async (userId: number, postId: number) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getPosts = async (username: string) => {
+export const getPosts = async (userId: number, username: string) => {
     return await prisma.post.findMany({
         where: {
             AND: [
@@ -140,6 +140,15 @@ export const getPosts = async (username: string) => {
                 },
                 {
                     replyToId: null
+                },
+                {
+                    reposts: {
+                        none: {
+                            user: {
+                                username: username,
+                            }
+                        }
+                    }
                 }
             ]
 
@@ -149,7 +158,62 @@ export const getPosts = async (username: string) => {
             content: true,
             createdAt: true,
             updatedAt: true,
-            author: true,
+            author: {
+                select: {
+                    username: true,
+                    profile: {
+                        select: {
+                            name: true,
+                            bio: true,
+                            profilePicture: true,
+                        }
+                    },
+                    followers: {
+                        where: {
+                            followerId: userId
+                        },
+                        select: {
+                            followerId: true
+                        }
+                    },
+                    _count: {
+                        select: {
+                            followers: true,
+                            following: true,
+                        }
+                    }
+                }
+            },
+            reposts: {
+                where: {
+                    user: {
+                        username
+                    }
+                },
+                select: {
+                    userId: true
+                }
+            },
+            likes: {
+                where: {
+                    user: {
+                        username
+                    }
+                },
+                select: {
+                    userId: true
+                }
+            },
+            bookmarks: {
+                where: {
+                    user: {
+                        username
+                    }
+                },
+                select: {
+                    userId: true
+                }
+            },
             _count: {
                 select: {
                     replies: true,
@@ -163,27 +227,72 @@ export const getPosts = async (username: string) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getReposts = async (username: string) => {
+export const getReposts = async (userId: number, username: string) => {
     return await prisma.post.findMany({
         where: {
-            reposts: {
-                some: {
-                    user: {
-                        username: username
+            AND: [
+                {
+                    reposts: {
+                        some: {
+                            user: {
+                                username: username
+                            }
+                        }
                     }
-                }
-            }
+                },
+            ]
+
         },
         select: {
             id: true,
             content: true,
             createdAt: true,
             updatedAt: true,
+            author: {
+                select: {
+                    username: true,
+                    profile: {
+                        select: {
+                            name: true,
+                            bio: true,
+                            profilePicture: true,
+                        }
+                    },
+                    followers: {
+                        where: {
+                            followerId: userId
+                        },
+                        select: {
+                            followerId: true
+                        }
+                    },
+                    _count: {
+                        select: {
+                            followers: true,
+                            following: true,
+                        }
+                    }
+                }
+            },
+            reposts: {
+                where: {
+                    user: {
+                        username
+                    }
+                },
+                select: {
+                    userId: true,
+                    createdAt: true,
+                }
+            },
             likes: {
                 where: {
                     user: {
                         username
                     }
+                },
+                select: {
+                    userId: true,
                 }
             },
             bookmarks: {
@@ -191,6 +300,9 @@ export const getReposts = async (username: string) => {
                     user: {
                         username
                     }
+                },
+                select: {
+                    userId: true
                 }
             },
             _count: {
