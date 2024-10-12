@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import ProfileContentTabs from "./ProfileContentTabs";
 import ProfileContentPost from "./ProfileContentPost";
 import ProfileContentReply from "./ProfileContentReply";
+import ProfileContentLikedPost from "./ProfileContentLikedPost";
 
 interface Post {
     id: number,
+    content: string,
     createdAt: string,
     updatedAt: string,
     author: {
@@ -197,11 +199,69 @@ export interface Reply {
         reposts: number,
         likes: number,
     }
-}
+};
+
+export interface LikedPost {
+    id: number,
+    content: string,
+    createdAt: string,
+    updatedAt: string,
+    replyTo: {
+        author: {
+            username: string,
+            profile: {
+                name: string,
+                profilePicture: string,
+                bio: string
+            },
+            followers: {
+                followerId: number,
+            }[] | [],
+            _count: {
+                followers: number,
+                following: number,
+            }
+        }
+    } | null,
+    author: {
+        username: string,
+        profile: {
+            name: string,
+            bio: string,
+            profilePicture: string,
+        },
+        followers: {
+            followerId: number,
+        }[] | [],
+        _count: {
+            followers: number,
+            following: number,
+        }
+    },
+    reposts: {
+        userId: number,
+    }[] | [],
+    likes: {
+        userId: number,
+    }[] | [],
+    bookmarks: {
+        userId: number,
+    }[] | [],
+    _count: {
+        replies: number,
+        reposts: number,
+        likes: number,
+    }
+};
+
+interface LikedPostResponse {
+    post: LikedPost
+};
 
 export default function ProfileContent({ user }: { user: ProfileInfo }) {
     const [postsReposts, setPostsReposts] = useState<PostRepost[] | undefined>(undefined);
-    const [replies, setReplies] = useState<Reply[] | undefined>(undefined)
+    const [replies, setReplies] = useState<Reply[] | undefined>(undefined);
+    const [likedPosts, setLikedPosts] = useState<LikedPostResponse[] | undefined>(undefined);
     const [activeTab, setActiveTab] = useState(0);
 
     useEffect(() => {
@@ -259,54 +319,78 @@ export default function ProfileContent({ user }: { user: ProfileInfo }) {
             }
 
             fetchReplies();
+        } else if (activeTab === 3 && likedPosts === undefined) {
+            const fetchLikedPosts = async () => {
+                const likedPostsResponse = await fetch(`/api/posts/likedPosts/${user.username}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                const likedPosts: LikedPostResponse[] = await likedPostsResponse.json();
+
+                console.log(likedPosts);
+                
+
+                setLikedPosts(likedPosts);
+            }
+
+            fetchLikedPosts();
         }
-    }, [user, activeTab, replies]);
+    }, [user, activeTab, replies, likedPosts]);
 
-    if (!postsReposts) return <div>loading...</div>
+    return (
+        <div>
+            <ProfileContentTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+            
+            <div className='feed-hr-line'></div>
 
-    if (activeTab === 0) {
-        return (
-            <div>
-                <ProfileContentTabs activeTab={activeTab} setActiveTab={setActiveTab} />
-
-                <div className='feed-hr-line'></div>
-
-                <section className='feed-posts-desktop'>
-                    {postsReposts.map((post, index) => {
+            {
+                activeTab === 0
+                ? postsReposts
+                    ? <section className='feed-posts-desktop'>
+                        {postsReposts.map((post, index) => {
                         return (
                             <div key={index}>
                                 <ProfileContentPost post={post} />
                                 <div className='feed-hr-line'></div>
                             </div>
                         )
-                    })}
-                </section>
-            </div>
-        )
-    };
+                        })}
+                        </section>
+                    : <div>loading...</div>
 
-    console.log(replies);
+                : activeTab === 1
+                    ? replies
+                        ? <section className='feed-posts-desktop'>
+                            {replies.map((reply, index) => {
+                                return (
+                                    <div key={index}>
+                                        <ProfileContentReply replyPost={reply} />
+                                        <div className='feed-hr-line'></div>
+                                    </div>
+                                )
+                            })}
+                            </section>
+                        : <div>loading...</div>
+                
+                : activeTab === 3
+                    ? likedPosts
+                        ? <section className='feed-posts-desktop'>
+                            {likedPosts.map((post, index) => {
+                                return (
+                                    <div key={index}>
+                                        <ProfileContentLikedPost post={post.post} />
+                                        <div className='feed-hr-line'></div>
+                                    </div>
+                                )
+                            })}
+                        </section>
+                        : <div>loading...</div>
 
-    if (activeTab === 1) {
-        if (!replies) return <div>loading...</div>
-
-        return (
-            <div>
-                <ProfileContentTabs activeTab={activeTab} setActiveTab={setActiveTab} />
-
-                <div className='feed-hr-line'></div>
-
-                <section className='feed-posts-desktop'>
-                    {replies.map((reply, index) => {
-                        return (
-                            <div key={index}>
-                                <ProfileContentReply replyPost={reply} />
-                                <div className='feed-hr-line'></div>
-                            </div>
-                        )
-                    })}
-                </section>
-            </div>
-        )
-    };
+                : null
+            }
+        </div>
+    )
 }
