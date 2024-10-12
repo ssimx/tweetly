@@ -1,4 +1,4 @@
-import { addBookmark, addLike, addRepost, getPost, getUserReplies, getPostReply, getUserPosts, getUserReposts, global30DayPosts, newPost, removeBookmark, removeLike, removeRepost } from "../controllers/postController";
+import { addBookmark, addLike, addRepost, getPost, getUserReplies, getPostReply, getUserPosts, getUserReposts, global30DayPosts, newPost, removeBookmark, removeLike, removeRepost, getUserLikedPosts } from "../controllers/postController";
 
 const express = require('express');
 
@@ -7,6 +7,7 @@ const router = express.Router();
 router.get('/:username', getUserPosts);
 router.get('/reposts/:username', getUserReposts);
 router.get('/replies/:username', getUserReplies);
+router.get('/likedPosts/:username', getUserLikedPosts);
 router.get('/status/:id', getPost);
 router.get('/postReplies/:id', getPostReply);
 router.get('/feed/global', global30DayPosts);

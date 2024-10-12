@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { UserProps } from '../lib/types';
-import { addPostBookmark, addPostLike, addPostRepost, createPost, getGlobal30DayPosts, getPostInfo, getPostReplies, getPosts, getReplies, getReposts, postExists, removePostBookmark, removePostLike, removePostRepost } from '../services/postService';
+import { addPostBookmark, addPostLike, addPostRepost, createPost, getGlobal30DayPosts, getLikedPosts, getPostInfo, getPostReplies, getPosts, getReplies, getReposts, postExists, removePostBookmark, removePostLike, removePostRepost } from '../services/postService';
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -101,6 +101,23 @@ export const getUserReplies = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Error: ', error);
         return res.status(500).json({ error: 'Failed to fetch the post' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getUserLikedPosts = async (req: Request, res: Response) => {
+    const username = req.params.username;
+    const user = req.user as UserProps;
+
+    try {
+        const response = await getLikedPosts(user.id, username);
+        if (!response) return res.status(404).json({ error: 'User or liked posts not found' });
+
+        return res.status(201).json(response);
+    } catch (error) {
+        console.error('Error: ', error);
+        return res.status(500).json({ error: 'Failed to process the request' });
     }
 };
 
