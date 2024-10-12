@@ -34,7 +34,7 @@ export default function ProfileContentPost({ post }: { post: PostRepost }) {
         <div onClick={handleCardClick} className='profile-content-post'>
             {post.repost && (
                 <div className='flex items-center gap-1 text-14 font-bold text-dark-400'>
-                    <Repeat2 size={16} className='text-dark-400 group-hover:text-green-500/70' />
+                    <Repeat2 size={16} className='text-dark-400' />
                     <p>You reposted</p>
                 </div>
             )}

@@ -14,7 +14,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ProfileContentReplyParent from './ProfileContentReplyParent';
 
-export default function ProfileContentPost({ replyPost }: { replyPost: Reply }) {
+export default function ProfileContentReply({ replyPost }: { replyPost: Reply }) {
     const [isFollowing, setIsFollowing] = useState(replyPost.author.followers.length === 1);
     const [followers, setFollowers] = useState(replyPost.author['_count'].followers);
     const router = useRouter();

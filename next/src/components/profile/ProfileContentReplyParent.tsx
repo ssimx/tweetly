@@ -1,5 +1,4 @@
 'use client';
-import { PostType } from '@/lib/types';
 import React, { useState } from 'react'
 import Link from 'next/link';
 import Image from 'next/image';
@@ -49,7 +48,7 @@ interface Parent {
     },
 }
 
-export default function ParentPostInfo({ post }: { post: Parent }) {
+export default function ProfileContentReplyParent({ post }: { post: Parent }) {
     const [isFollowing, setIsFollowing] = useState(post.author.followers.length === 1);
     const [followers, setFollowers] = useState(post.author['_count'].followers);
     const router = useRouter();
