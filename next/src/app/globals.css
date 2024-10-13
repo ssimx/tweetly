@@ -71,6 +71,10 @@ body {
         @apply text-sm leading-[20px];
     }
 
+    .text-15 {
+        @apply text-[15px];
+    }
+
     .text-16 {
         @apply text-base leading-[24px];
     }
@@ -412,7 +416,15 @@ body {
 
     .profile-menu {
         @apply 
-            w-[38px] h-[38px] relative;
+            w-[38px] h-[38px] relative flex-center;
+    }
+
+    .menu-overlay {
+        @apply fixed top-0 left-0 w-screen h-screen z-40 pointer-events-auto
+    }
+
+    .disable-interaction {
+        @apply pointer-events-none
     }
 
     .profile-menu-btn {
@@ -422,12 +434,16 @@ body {
     .profile-opened-menu {
         @apply 
             shadow-menu bg-[#ffffff] overflow-hidden 
-            absolute top-[125%] right-[0%] w-[250px] h-fit rounded-[20px] py-[10px];
+            absolute top-[125%] right-[0%] z-50 w-[250px] h-fit rounded-[20px] py-[10px];
     }
 
     .profile-copy-alert {
         @apply fixed bottom-10 left-[50%] translate-x-[-50%]
             bg-primary text-white-1 px-4 py-2 rounded-md;
+    }
+
+    .profile-follower-followee-card {
+        @apply w-full h-fit px-4 py-3 flex gap-2 items-center hover:bg-white-1 cursor-pointer;
     }
 
     /* Header */

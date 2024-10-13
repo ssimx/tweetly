@@ -23,7 +23,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
     const maxChars = 280;
     const charsPercentage = Math.min((text.length / maxChars) * 100, 100);
     const router = useRouter();
-    const { user } = useUserContext();
+    const { loggedInUser } = useUserContext();
 
 
     const {
@@ -60,7 +60,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
 
             console.log(postData);
 
-            router.push(`/${user.username}/status/${postData.id}`);
+            router.push(`/${loggedInUser.username}/status/${postData.id}`);
         } catch (error) {
             console.error(error);
             reset();
@@ -70,7 +70,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
     return (
         <div className={`border-y h-fit flex flex-col px-4 min-h-[130px]`}>
             <div className="grid grid-cols-post-layout gap-2 my-2 h-full">
-                <Image src={user.profile?.profilePicture}
+                <Image src={loggedInUser.profile?.profilePicture}
                     alt='User profile'
                     width={50} height={50}
                     className="w-[50px] h-[50px] rounded-full" />

@@ -1,13 +1,14 @@
 'use client';
 
 import { ProfileInfo } from "@/lib/types";
-import { CalendarDays, BellOff } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { useState } from "react";
 import ProfileFollowBtn from "./ProfileFollowBtn";
 import ProfileEditBtn from "./ProfileEditBtn";
 import ProfileNotificationBtn from "./ProfileNotificationBtn";
 import ProfileMenuBtn from "./ProfileMenuBtn";
 import ProfileContent from "./ProfileContent";
+import Link from "next/link";
 
 
 export default function ProfileDynamicInfo({ user, loggedInUser }: { user: ProfileInfo, loggedInUser: boolean }) {
@@ -90,13 +91,18 @@ export default function ProfileDynamicInfo({ user, loggedInUser }: { user: Profi
                     </p>
                 </div>
 
-                <div className='flex gap-4'>
-                    <p className='font-bold'>{followingCount}
-                        <span className='text-dark-500 font-normal'> Following</span>
-                    </p>
-                    <p className='font-bold'>{followersCount}
-                        <span className='text-dark-500 font-normal'> Followers</span>
-                    </p>
+                <div className='flex gap-4 text-14'>
+                    <Link href={`/${user.username}/following`} className='hover:underline'>
+                        <p className='font-bold'>{followingCount}
+                            <span className='text-dark-500 font-normal'> Following</span>
+                        </p>
+                    </Link>
+
+                    <Link href={`/${user.username}/followers`} className='hover:underline'>
+                        <p className='font-bold'>{followersCount}
+                            <span className='text-dark-500 font-normal'> Followers</span>
+                        </p>
+                    </Link>
                 </div>
             </div>
             

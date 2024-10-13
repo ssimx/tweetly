@@ -2,10 +2,9 @@ import { decryptSession, getToken } from "@/lib/session";
 import { ProfileInfo } from "@/lib/types";
 import { redirect } from "next/navigation";
 import Image from "next/image";
-import ProfileContent from "@/components/profile/ProfileContent";
 import ProfileDynamicInfo from "@/components/profile/ProfileDynamicInfo";
 
-export default async function page({ params }: { params: { username: string } }) {
+export default async function Profile({ params }: { params: { username: string } }) {
     const token = getToken();
     const payload = await decryptSession(token);
 
@@ -20,25 +19,25 @@ export default async function page({ params }: { params: { username: string } })
         cache: 'no-store',
     });
     const user = await response.json() as ProfileInfo;
-    
+
     return (
         <section className='w-full h-fit'>
             <div className='profile-info'>
                 <div className='picture-banner-container'>
-                    <Image 
+                    <Image
                         src={user.profile.profilePicture}
                         alt='User profile picture'
                         height={100} width={100}
                         className='absolute bottom-0 left-5 translate-y-[50%] rounded-full' />
-                    { user.profile.bannerPicture
+                    {user.profile.bannerPicture
                         ? <Image
                             src={user.profile.bannerPicture}
                             alt='User banner picture'
                             height={100} width={100}
-                            className='w-full h-full' /> 
+                            className='w-full h-full' />
                         : <div className='w-full h-full bg-slate-200'></div>
                     }
-                </div> 
+                </div>
 
                 <ProfileDynamicInfo user={user} loggedInUser={payload.username === params.username} />
             </div>

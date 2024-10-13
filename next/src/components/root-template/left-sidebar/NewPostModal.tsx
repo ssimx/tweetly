@@ -24,7 +24,7 @@ type PostData = z.infer<typeof newPostSchema>;
 export default function NewPostModal() {
     const [text, setText] = useState('');
     const maxChars = 280;
-    const { user } = useUserContext();
+    const { loggedInUser } = useUserContext();
     const charsPercentage = Math.min((text.length / maxChars) * 100, 100);
     const router = useRouter();
 
@@ -67,7 +67,7 @@ export default function NewPostModal() {
 
             console.log(postData);
 
-            router.push(`/${user.username}/status/${postData.id}`);
+            router.push(`/${loggedInUser.username}/status/${postData.id}`);
         } catch (error) {
             console.error(error);
             reset();
@@ -83,7 +83,7 @@ export default function NewPostModal() {
             <DialogContent className="w-[90%] sm:max-w-[550px]">
                 <div className="grid grid-cols-post-layout gap-2 mt-4 min-h-[60px] sm:min-h-[80px]">
                     <Image
-                        src={user.profile?.profilePicture}
+                        src={loggedInUser.profile?.profilePicture}
                         alt='User profile'
                         width={40} height={40}
                         className="w-[40xp] h-[40px] rounded-full" />

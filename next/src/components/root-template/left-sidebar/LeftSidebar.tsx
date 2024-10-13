@@ -9,7 +9,7 @@ import { useUserContext } from '@/context/UserContextProvider';
 
 export default function LeftSidebar() {
     const pathname = usePathname();
-    const { user } = useUserContext();
+    const { loggedInUser } = useUserContext();
 
     return (
         <nav className='left-sidebar'>
@@ -20,7 +20,7 @@ export default function LeftSidebar() {
                 {leftSidebarLinks.map((link, index) => {
                     const Icon = link.icon;
                     return (
-                        <Link key={index} href={link.route === '/profile' ? `/${user.username}` : link.route} className='flex gap-4 items-center'>
+                        <Link key={index} href={link.route === '/profile' ? `/${loggedInUser.username}` : link.route} className='flex gap-4 items-center'>
                             <Icon className='icon'
                                 color={pathname === link.route ? 'hsl(var(--primary))' : 'hsl(var(--foreground))'}
                             />

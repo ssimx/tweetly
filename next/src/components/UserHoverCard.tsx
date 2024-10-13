@@ -3,6 +3,7 @@ import { useUserContext } from '@/context/UserContextProvider';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRef, useState } from 'react';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card';
 
 interface AuthorType {
     username: string,
@@ -14,23 +15,23 @@ interface AuthorType {
 
 interface UserHoverCardType {
     author: AuthorType,
-    followers: number,
-    setFollowers: React.Dispatch<React.SetStateAction<number>>,
-    isFollowing: boolean,
-    setIsFollowing: React.Dispatch<React.SetStateAction<boolean>>,
+    followersCount: number,
+    setFollowersCount: React.Dispatch<React.SetStateAction<number>>,
+    isFollowedByTheUser: boolean,
+    setIsFollowedByTheUser: React.Dispatch<React.SetStateAction<boolean>>,
 };
 
 export default function UserHoverCard({
     author,
-    followers,
-    setFollowers,
-    isFollowing,
-    setIsFollowing
+    followersCount,
+    setFollowersCount,
+    isFollowedByTheUser,
+    setIsFollowedByTheUser
 }: UserHoverCardType) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const followBtn = useRef<HTMLButtonElement>(null);
-    const { user } = useUserContext();
-    const userIsAuthor = author.username === user.username;
+    const { loggedInUser } = useUserContext();
+    const userIsAuthor = author.username === loggedInUser.username;
 
     const handleFollow = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         e.stopPropagation();
@@ -42,7 +43,7 @@ export default function UserHoverCard({
         followBtn.current && followBtn.current.setAttribute('disabled', "");
 
         try {
-            if (isFollowing) {
+            if (isFollowedByTheUser) {
                 const unfollow = await fetch(`/api/users/removeFollow/${author.username}`, {
                     method: 'DELETE',
                     headers: {
@@ -52,8 +53,8 @@ export default function UserHoverCard({
 
                 if (!unfollow) throw new Error("Couldn't unfollow the user");
 
-                setIsFollowing(false);
-                setFollowers((current) => current - 1);
+                setIsFollowedByTheUser(false);
+                setFollowersCount((current) => current - 1);
                 return;
             } else {
                 const follow = await fetch(`/api/users/follow/${author.username}`, {
@@ -65,8 +66,8 @@ export default function UserHoverCard({
 
                 if (!follow) throw new Error("Couldn't follow the user");
 
-                setIsFollowing(true);
-                setFollowers((current) => current + 1);
+                setIsFollowedByTheUser(true);
+                setFollowersCount((current) => current + 1);
                 return;
             }
         } catch (error) {
@@ -82,55 +83,59 @@ export default function UserHoverCard({
     };
 
     return (
-        <div className='user-hover-card-info '>
-            <div className='user-hover-card-header'>
-                <Link href={`/${author.username}`} className='group w-fit' onClick={(e) => handleLinkClick(e)}>
-                    <Image
-                        src={author.profilePicture}
-                        alt='User profile picture'
-                        width={60} height={60}
-                        className='rounded-full group-hover:outline group-hover:outline-primary/10' />
-                </Link>
+        <HoverCard>
+            <HoverCardTrigger href={`/${author.username}`} className='text-black-1 w-fit font-bold hover:underline' onClick={(e) => handleLinkClick(e)}>{author.name}</HoverCardTrigger>
+            <HoverCardContent>
+                <div className='user-hover-card-info '>
+                    <div className='user-hover-card-header'>
+                        <Link href={`/${author.username}`} className='group w-fit' onClick={(e) => handleLinkClick(e)}>
+                            <Image
+                                src={author.profilePicture}
+                                alt='User profile picture'
+                                width={60} height={60}
+                                className='rounded-full group-hover:outline group-hover:outline-primary/10' />
+                        </Link>
 
-                <div>
-                    {
-                        !userIsAuthor ?
-                            isFollowing
-                                ? (
-                                    <button
-                                        className="follow-btn following before:content-['Following'] hover:before:content-['Unfollow']"
-                                        onClick={(e) => handleFollow(e)} ref={followBtn} >
-                                    </button>
-                                )
-                                : <button className='follow-btn' onClick={handleFollow} ref={followBtn}>
-                                    Follow
-                                </button>
-                            : null
+                        <div>
+                            {
+                                !userIsAuthor ?
+                                    isFollowedByTheUser
+                                        ? (
+                                            <button
+                                                className="follow-btn following before:content-['Following'] hover:before:content-['Unfollow']"
+                                                onClick={(e) => handleFollow(e)} ref={followBtn} >
+                                            </button>
+                                        )
+                                        : <button className='follow-btn' onClick={handleFollow} ref={followBtn}>
+                                            Follow
+                                        </button>
+                                    : null
 
-                    }
+                            }
+                        </div>
+                    </div>
+
+                    <div className='flex flex-col'>
+                        <Link href={`/${author.username}`} className='font-bold w-fit text-18 hover:underline' onClick={(e) => handleLinkClick(e)}>{author.name}</Link>
+                        <p className='text-dark-500'>@{author.username}</p>
+                    </div>
+
+                    <div>
+                        <p className='break-all'>{author.bio}</p>
+                    </div>
+
+                    <div className='flex gap-4'>
+                        <Link href={`/${author.username}/following`} className='hover:underline' onClick={(e) => handleLinkClick(e)}>
+                            <p className='font-bold'>{`${author.following}`} <span className='text-dark-500 font-normal'>Following</span></p>
+                        </Link>
+
+                        <Link href={`/${author.username}/followers`} className='hover:underline' onClick={(e) => handleLinkClick(e)}>
+                            <p className='font-bold'>{`${followersCount}`} <span className='text-dark-500 font-normal'>Followers</span></p>
+                        </Link>
+                    </div>
                 </div>
-            </div>
-
-            <div className='flex flex-col'>
-                <Link href={`/${author.username}`} className='font-bold text-18 hover:underline' onClick={(e) => handleLinkClick(e)}>{author.name}</Link>
-                <p className='text-dark-500'>@{author.username}</p>
-            </div>
-
-            <div>
-                <p className='break-all'>{author.bio}</p>
-            </div>
-
-            <div className='flex gap-4'>
-                <div className='flex gap-1'>
-                    <p className='font-bold'>{author.following}</p>
-                    <p className='text-dark-500'>Following</p>
-                </div>
-
-                <div className='flex gap-1'>
-                    <p className='font-bold'>{followers}</p>
-                    <p className='text-dark-500'>Followers</p>
-                </div>
-            </div>
-        </div>
+            </HoverCardContent>
+        </HoverCard>
+        
     )
 }
