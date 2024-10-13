@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { addBlock, addFollow, getProfile, getUser, removeBlock, removeFollow, updateProfile } from '../services/userService';
+import { addBlock, addFollow, getFollowers, getFollowing, getProfile, getUser, removeBlock, removeFollow, updateProfile } from '../services/userService';
 import { ProfileInfo, UserProps } from '../lib/types';
 import { deleteImageFromCloudinary } from './uploadController';
 
@@ -77,6 +77,42 @@ export const updateProfileInfo = async (req: Request, res: Response) => {
         return res.status(201).json('Success');
     } catch (error) {
         console.error('Error: ', error);
+        return res.status(500).json({ error: 'Failed to process the request' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getProfileFollowers = async (req: Request, res: Response) => {
+    const username = req.params.username;
+    const user = req.user as UserProps;
+
+    try {
+        const profileData = await getFollowers(user.id, username);
+
+        if (!profileData) return res.status(404).json({ error: 'Profile does not exist' });
+
+        return res.status(201).json({ profileData });
+    } catch (error) {
+        console.error('Error getting profile: ', error);
+        return res.status(500).json({ error: 'Failed to process the request' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getProfileFollowing = async (req: Request, res: Response) => {
+    const username = req.params.username;
+    const user = req.user as UserProps;
+
+    try {
+        const profileData = await getFollowing(user.id, username);
+
+        if (!profileData) return res.status(404).json({ error: 'Profile does not exist' });
+
+        return res.status(201).json({ profileData });
+    } catch (error) {
+        console.error('Error getting profile: ', error);
         return res.status(500).json({ error: 'Failed to process the request' });
     }
 };
