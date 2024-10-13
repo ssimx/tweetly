@@ -12,13 +12,16 @@ import { formatPostDate } from '@/lib/utils';
 import PostBtns from '../posts/PostBtns';
 import { useState } from 'react';
 import { Repeat2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useUserContext } from '@/context/UserContextProvider';
 
 export default function ProfileContentPost({ post }: { post: PostRepost }) {
     const [isFollowing, setIsFollowing] = useState(post.author.followers.length === 1);
     const [followers, setFollowers] = useState(post.author['_count'].followers);
     const [postIsVisible, setPostIsVisible] = useState(true);
     const router = useRouter();
+    const { user } = useUserContext();
+    const path = usePathname();
 
     const handleCardClick = () => {
         router.push(`/${post.author.username}/status/${post.id}`);
@@ -35,7 +38,10 @@ export default function ProfileContentPost({ post }: { post: PostRepost }) {
             {post.repost && (
                 <div className='flex items-center gap-1 text-14 font-bold text-dark-400'>
                     <Repeat2 size={16} className='text-dark-400' />
-                    <p>You reposted</p>
+                    { path === `/${user.username}`
+                        ? <p>You reposted</p>
+                        : <p>Reposted</p>
+                    }
                 </div>
             )}
 

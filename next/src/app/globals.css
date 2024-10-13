@@ -379,7 +379,7 @@ body {
     }
 
     .profile-content-header {
-        @apply w-full h-[50px] flex;
+        @apply w-full h-[50px] flex mt-2;
     }
 
     .profile-content-header-btn {
@@ -396,6 +396,38 @@ body {
 
     .profile-content-post-content {
         @apply w-full grid grid-cols-post-layout grid-rows-1 gap-2;
+    }
+
+    .profile-interaction {
+        @apply w-full h-[55px] flex justify-end items-center gap-2 pr-5
+    }
+
+    .notifications-btn {
+        @apply w-fit hover:bg-dark-300 text-white-1 border border-border font-bold rounded-full p-2;
+    }
+
+    .notifications-enabled {
+        @apply text-black-1 bg-transparent;
+    }
+
+    .profile-menu {
+        @apply 
+            w-[38px] h-[38px] relative;
+    }
+
+    .profile-menu-btn {
+        @apply w-fit hover:bg-dark-300 text-white-1 border border-border font-bold rounded-full p-2;
+    }
+
+    .profile-opened-menu {
+        @apply 
+            shadow-menu bg-[#ffffff] overflow-hidden 
+            absolute top-[125%] right-[0%] w-[250px] h-fit rounded-[20px] py-[10px];
+    }
+
+    .profile-copy-alert {
+        @apply fixed bottom-10 left-[50%] translate-x-[-50%]
+            bg-primary text-white-1 px-4 py-2 rounded-md;
     }
 
     /* Header */

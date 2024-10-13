@@ -1,11 +1,18 @@
 import { profileContentTabs } from '@/constants';
 import { SetStateAction } from 'react';
 
-export default function ProfileContentTabs({ activeTab, setActiveTab }: { activeTab: number, setActiveTab: React.Dispatch<SetStateAction<number>> }) {
+export default function ProfileContentTabs({ 
+    activeTab,
+    setActiveTab,
+    loggedInUser
+}: { activeTab: number, setActiveTab: React.Dispatch<SetStateAction<number>>, loggedInUser: boolean }) {
+    const tabs: { name: string }[] = JSON.parse(JSON.stringify(profileContentTabs));
+    !loggedInUser && tabs.pop();
+
     return (
         <div className='profile-content-header'>
             {
-                profileContentTabs.map((tab, index) => (
+                tabs.map((tab, index) => (
                     <div key={index} className='profile-content-header-btn'>
                         <button
                             className={`w-full h-full z-10 absolute ${activeTab === index ? 'text-black-1 font-bold' : 'text-dark-500 font-medium'}`}

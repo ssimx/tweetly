@@ -47,55 +47,18 @@ export interface ProfileInfo {
         bannerPicture: string,
         profilePicture: string,
     },
-    posts: {
-        content: string,
-        createdAt: string,
-        updatedAt: string,
-        replyToId: number | null,
-    }[],
-    repostedPosts: {
-        post: {
-            content: string,
-            createdAt: string,
-            updatedAt: string,
-            replyToId: number | null,
-        },
-        user: {
-            username: string,
-            _count: {
-                followers: number,
-                following: number,
-            },
-            profile: {
-                name: string,
-                profilePicture: string,
-            }
-        }
-    }[],
     followers: {
-        username: string,
-        profile: {
-            name: string,
-            bio: string,
-            profilePicture: string,
-        },
-        _count: {
-            followers: number,
-            following: number,
-        }
-    }[],
+        followerId: number,
+    }[] | [],
     following: {
-        username: string,
-        profile: {
-            name: string,
-            bio: string,
-            profilePicture: string,
-        },
-        _count: {
-            followers: number,
-            following: number,
-        },
-    }[],
+        followeeId: number,
+    }[] | [],
+    blockedBy: {
+        blockerId: number,
+    }[] | [],
+    blockedUsers: {
+        blockedId: number,
+    }[] | [],
     _count: {
         followers: number,
         following: number,

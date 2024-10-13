@@ -22,7 +22,7 @@ import { useRouter } from "next/navigation";
 type ProfileInfoData = z.infer<typeof updateProfileSchema>;
 
 
-export default function EditProfileBtn({ user }: { user: ProfileInfo }) {
+export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
     const [open, setOpen] = useState(false);
     const [name, setName] = useState(user.profile.name);
     const [bio, setBio] = useState(user.profile.bio);

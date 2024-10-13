@@ -1,8 +1,8 @@
 import { getToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function DELETE(req: NextRequest, { params }: { params: { username: string } }) {
-    if (req.method === 'DELETE') {
+export async function POST(req: NextRequest, { params }: { params: { username: string } }) {
+    if (req.method === 'POST') {
         const token = getToken();
 
         if (token) {
@@ -17,9 +17,11 @@ export async function DELETE(req: NextRequest, { params }: { params: { username:
         }
 
         try {
+            console.log('fetch');
+            
             const apiUrl = process.env.EXPRESS_API_URL;
-            const response = await fetch(`${apiUrl}/users/removeFollow/${params.username}`, {
-                method: 'DELETE',
+            const response = await fetch(`${apiUrl}/users/block/${params.username}`, {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,

@@ -49,6 +49,7 @@ interface MappedPost extends Post {
 
 interface Repost {
     id: number,
+    content: string,
     createdAt: string,
     updatedAt: string,
     repost: boolean,
@@ -258,7 +259,7 @@ interface LikedPostResponse {
     post: LikedPost
 };
 
-export default function ProfileContent({ user }: { user: ProfileInfo }) {
+export default function ProfileContent({ userProfile, loggedInUser }: { userProfile: ProfileInfo, loggedInUser: boolean }) {
     const [postsReposts, setPostsReposts] = useState<PostRepost[] | undefined>(undefined);
     const [replies, setReplies] = useState<Reply[] | undefined>(undefined);
     const [likedPosts, setLikedPosts] = useState<LikedPostResponse[] | undefined>(undefined);
@@ -266,14 +267,14 @@ export default function ProfileContent({ user }: { user: ProfileInfo }) {
 
     useEffect(() => {
         const fetchPostsReposts = async () => {
-            const postsPromise = fetch(`/api/posts/posts/${user.username}`, {
+            const postsPromise = fetch(`/api/posts/posts/${userProfile.username}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                 },
             });
 
-            const repostsPromise = fetch(`/api/posts/reposts/${user.username}`, {
+            const repostsPromise = fetch(`/api/posts/reposts/${userProfile.username}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -301,12 +302,12 @@ export default function ProfileContent({ user }: { user: ProfileInfo }) {
         }
 
         fetchPostsReposts();
-    }, [user]);
+    }, [userProfile]);
 
     useEffect(() => {
         if (activeTab === 1 && replies === undefined) {
             const fetchReplies = async () => {
-                const repliesResponse = await fetch(`/api/posts/replies/${user.username}`, {
+                const repliesResponse = await fetch(`/api/posts/replies/${userProfile.username}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -321,7 +322,7 @@ export default function ProfileContent({ user }: { user: ProfileInfo }) {
             fetchReplies();
         } else if (activeTab === 3 && likedPosts === undefined) {
             const fetchLikedPosts = async () => {
-                const likedPostsResponse = await fetch(`/api/posts/likedPosts/${user.username}`, {
+                const likedPostsResponse = await fetch(`/api/posts/likedPosts/${userProfile.username}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -330,19 +331,16 @@ export default function ProfileContent({ user }: { user: ProfileInfo }) {
 
                 const likedPosts: LikedPostResponse[] = await likedPostsResponse.json();
 
-                console.log(likedPosts);
-                
-
                 setLikedPosts(likedPosts);
             }
 
             fetchLikedPosts();
         }
-    }, [user, activeTab, replies, likedPosts]);
+    }, [userProfile, activeTab, replies, likedPosts]);
 
     return (
         <div>
-            <ProfileContentTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+            <ProfileContentTabs activeTab={activeTab} setActiveTab={setActiveTab} loggedInUser={loggedInUser} />
             
             <div className='feed-hr-line'></div>
 
