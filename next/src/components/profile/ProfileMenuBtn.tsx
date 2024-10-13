@@ -36,11 +36,20 @@ export default function ProfileMenuBtn({
         console.log('open');
         e.stopPropagation();
         setMenuOpen((prev) => !prev);
+
+        if (!menuOpen) {
+            // Disable interaction behind the menu when it's opened
+            document.body.classList.add('disable-interaction');
+        } else {
+            // Re-enable interaction when the menu is closed
+            document.body.classList.remove('disable-interaction');
+        }
     };
 
     const handleClickOutside = (event: MouseEvent) => {
         if (menuBtn.current && !menuBtn.current.contains(event.target as Node)) {
             setMenuOpen(false);
+            document.body.classList.remove('disable-interaction'); // Enable interaction again
         }
     };
 
@@ -52,7 +61,8 @@ export default function ProfileMenuBtn({
         }
 
         return () => {
-            window.removeEventListener('click', handleClickOutside); // Cleanup on unmount
+            window.removeEventListener('click', handleClickOutside);
+            document.body.classList.remove('disable-interaction'); 
         };
     }, [menuOpen]);
 
@@ -119,27 +129,30 @@ export default function ProfileMenuBtn({
     return (
         <div className='profile-menu'>
             {menuOpen &&
-                <div ref={menuBtn} className='profile-opened-menu'>
-                    <button onClick={handleCopyLink}
-                        className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[10px] hover:bg-white-1'>
-                        <Link size={20} className='text-black-1' />
-                        Copy link to profile
-                    </button>
+                <>
+                    <div className='menu-overlay' onClick={toggleMenu}></div>
 
-                    {
-                        isBlockedByTheUser
-                            ? (
-                                <button className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[10px] hover:bg-white-1' onClick={handleBlock} ref={blockBtn}>
-                                    <CircleOff size={20} className='text-black-1' />
-                                    Unblock @{user}
+                    <div ref={menuBtn} className='profile-opened-menu'>
+                        <button onClick={handleCopyLink}
+                            className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[10px] hover:bg-white-1'>
+                            <Link size={20} className='text-black-1' />
+                            Copy link to profile
+                        </button>
+                        {
+                            isBlockedByTheUser
+                                ? (
+                                    <button className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[10px] hover:bg-white-1' onClick={handleBlock} ref={blockBtn}>
+                                        <CircleOff size={20} className='text-black-1' />
+                                        Unblock @{user}
+                                    </button>
+                                )
+                                : <button className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[10px] hover:bg-white-1' onClick={handleBlock} ref={blockBtn}>
+                                    <Ban size={20} className='text-black-1' />
+                                    Block @{user}
                                 </button>
-                            )
-                            : <button className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[10px] hover:bg-white-1' onClick={handleBlock} ref={blockBtn}>
-                                <Ban size={20} className='text-black-1' />
-                                Block @{user}
-                            </button>
-                    }
-                </div>
+                        }
+                    </div>
+                </>
             }
 
             <button className='profile-menu-btn'
