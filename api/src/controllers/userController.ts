@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { addFollow, getProfile, getUser, removeFollow, updateProfile } from '../services/userService';
+import { addBlock, addFollow, getProfile, getUser, removeBlock, removeFollow, updateProfile } from '../services/userService';
 import { ProfileInfo, UserProps } from '../lib/types';
 import { deleteImageFromCloudinary } from './uploadController';
 
@@ -24,9 +24,10 @@ export const getUserInfo = async (req: Request, res: Response) => {
 
 export const getProfileInfo = async (req: Request, res: Response) => {
     const username = req.params.username;
+    const user = req.user as UserProps;
 
     try {
-        const profileData = await getProfile(username);
+        const profileData = await getProfile(user.id, username);
 
         if (!profileData) return res.status(404).json({ error: 'Profile does not exist' });
 
@@ -116,3 +117,38 @@ export const unfollowUser = async (req: Request, res: Response) => {
     };
 };
 
+// ---------------------------------------------------------------------------------------------------------
+
+export const blockUser = async (req: Request, res: Response) => {
+    const username = req.params.username;
+    const user = req.user as UserProps;
+
+    try {
+        const response = await addBlock(user.id, username);
+
+        if (!response) return res.status(404).json({ error: 'User not found or already blocked' })
+
+        return res.status(201).json('success');
+    } catch (error) {
+        console.error('Error: ', error);
+        return res.status(500).json({ error: 'Failed to process the request' });
+    };
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const unblockUser = async (req: Request, res: Response) => {
+    const username = req.params.username;
+    const user = req.user as UserProps;
+
+    try {
+        const response = await removeBlock(user.id, username);
+
+        if (!response) return res.status(404).json({ error: 'User not found or not blocked' })
+
+        return res.status(201).json('success');
+    } catch (error) {
+        console.error('Error: ', error);
+        return res.status(500).json({ error: 'Failed to process the request' });
+    };
+};

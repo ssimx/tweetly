@@ -28,7 +28,7 @@ export const getUser = async (id: number) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getProfile = async (username: string) => {
+export const getProfile = async (userId: number, username: string) => {
     return await prisma.user.findUnique({
         where: {
             username,
@@ -47,51 +47,37 @@ export const getProfile = async (username: string) => {
                 }
             },
             followers: {
+                where: {
+                    followerId: userId
+                },
                 select: {
-                    follower: {
-                        select: {
-                            username: true,
-                            profile: { // include profile information
-                                select: {
-                                    name: true,
-                                    bio: true,
-                                    profilePicture: true,
-                                }
-                            },
-                            _count: {
-                                select: {
-                                    followers: true,
-                                    following: true,
-                                }
-                            }
-                        }
-                    }
+                    followerId: true
                 }
             },
             following: {
+                where: {
+                    followeeId: userId
+                },
                 select: {
-                    follower: {
-                        select: {
-                            username: true,
-                            profile: { // include profile information
-                                select: {
-                                    name: true,
-                                    bio: true,
-                                    profilePicture: true,
-                                }
-                            },
-                            _count: {
-                                select: {
-                                    followers: true,
-                                    following: true,
-                                }
-                            }
-                        }
-                    }
+                    followeeId: true
                 }
             },
-            posts: true,
-            repostedPosts: true,
+            blockedBy: {
+                where: {
+                    blockerId: userId,
+                },
+                select: {
+                    blockerId: true,
+                }
+            },
+            blockedUsers: {
+                where: {
+                    blockedId: userId,
+                },
+                select: {
+                    blockedId: true,
+                }
+            },
             _count: {
                 select: {
                     followers: true,
@@ -133,7 +119,7 @@ export const getUserId = async (username: string) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const addFollow = async (user: number, username: string) => {
+export const addFollow = async (userId: number, username: string) => {
     const followee = await prisma.user.findUnique({
         where: { username },
         select: {
@@ -148,7 +134,7 @@ export const addFollow = async (user: number, username: string) => {
     try {
         return await prisma.follow.create({
             data: {
-                followerId: user,
+                followerId: userId,
                 followeeId: followee.id
             }
         })
@@ -183,3 +169,61 @@ export const removeFollow = async (followerId: number, username: string) => {
         }
     });
 };
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const addBlock = async (userId: number, username: string) => {
+    const blocked = await prisma.user.findUnique({
+        where: { username },
+        select: {
+            id: true
+        }
+    });
+
+    if (!blocked) {
+        throw new Error('User not found');
+    }
+
+    await prisma.follow.deleteMany({
+        where: {
+            OR: [
+                {
+                    followeeId: userId,
+                    followerId: blocked.id
+                },
+                {
+                    followeeId: blocked.id,
+                    followerId: userId
+                },
+            ]
+        }
+    })
+
+    return await prisma.block.create({
+        data: {
+            blockerId: userId,
+            blockedId: blocked.id
+        }
+    })
+}
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const removeBlock = async (blockerId: number, username: string) => {
+    const blockedId = await prisma.user.findUnique({
+        where: { username },
+        select: {
+            id: true
+        }
+    }).then(res => res?.id);
+
+    if (!blockedId) {
+        throw new Error('User not found');
+    }
+
+    return await prisma.block.delete({
+        where: {
+            blockId: { blockerId, blockedId }
+        }
+    })
+}
