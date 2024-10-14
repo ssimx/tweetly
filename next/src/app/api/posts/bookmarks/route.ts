@@ -1,9 +1,10 @@
-import { getToken, removeSession, verifySession } from "@/lib/session";
+import { extractToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: NextRequest, { params }: { params: { username: string }}) {
+export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
-        const token = getToken();
+        const authHeader = req.headers.get('Authorization');
+        const token = extractToken(authHeader);
         if (token) {
             const isValid = await verifySession(token);
 
@@ -17,7 +18,7 @@ export async function GET(req: NextRequest, { params }: { params: { username: st
 
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
-            const response = await fetch(`${apiUrl}/posts/likedPosts/${params.username}`, {
+            const response = await fetch(`${apiUrl}/posts/bookmarks/`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -26,8 +27,8 @@ export async function GET(req: NextRequest, { params }: { params: { username: st
             });
 
             if (response.ok) {
-                const likedPosts = await response.json();
-                return NextResponse.json(likedPosts);
+                const bookmarkedPosts = await response.json();
+                return NextResponse.json(bookmarkedPosts);
             } else {
                 const errorData = await response.json();
                 return NextResponse.json({ error: errorData.error }, { status: response.status });

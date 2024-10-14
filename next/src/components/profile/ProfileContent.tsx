@@ -281,7 +281,7 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
     const [activeTab, setActiveTab] = useState(0);
 
     console.log(replies);
-    
+
 
     useEffect(() => {
         const fetchPostsReposts = async () => {
@@ -333,22 +333,20 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
                 });
 
                 const replies: Reply[] = await repliesResponse.json();
-
                 setReplies(replies);
             }
 
             fetchReplies();
         } else if (activeTab === 3 && likedPosts === undefined) {
             const fetchLikedPosts = async () => {
-                const likedPostsResponse = await fetch(`/api/posts/likedPosts/${userProfile.username}`, {
+                const likedPostsResponse = await fetch(`/api/posts/likedPosts`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                 });
-
+                
                 const likedPosts: LikedPostResponse[] = await likedPostsResponse.json();
-
                 setLikedPosts(likedPosts);
             }
 
@@ -359,53 +357,53 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
     return (
         <div>
             <ProfileContentTabs activeTab={activeTab} setActiveTab={setActiveTab} loggedInUser={loggedInUser} />
-            
+
             <div className='feed-hr-line'></div>
 
             {
                 activeTab === 0
-                ? postsReposts
-                    ? <section className='feed-posts-desktop'>
-                        {postsReposts.map((post, index) => {
-                        return (
-                            <div key={index}>
-                                <ProfileContentPost post={post} />
-                                <div className='feed-hr-line'></div>
-                            </div>
-                        )
-                        })}
-                        </section>
-                    : <div>loading...</div>
-
-                : activeTab === 1
-                    ? replies
+                    ? postsReposts
                         ? <section className='feed-posts-desktop'>
-                            {replies.map((reply, index) => {
+                            {postsReposts.map((post, index) => {
                                 return (
                                     <div key={index}>
-                                        <ProfileContentReply replyPost={reply} />
+                                        <ProfileContentPost post={post} />
                                         <div className='feed-hr-line'></div>
                                     </div>
                                 )
                             })}
+                        </section>
+                        : <div>loading...</div>
+
+                    : activeTab === 1
+                        ? replies
+                            ? <section className='feed-posts-desktop'>
+                                {replies.map((reply, index) => {
+                                    return (
+                                        <div key={index}>
+                                            <ProfileContentReply replyPost={reply} />
+                                            <div className='feed-hr-line'></div>
+                                        </div>
+                                    )
+                                })}
                             </section>
-                        : <div>loading...</div>
-                
-                : activeTab === 3
-                    ? likedPosts
-                        ? <section className='feed-posts-desktop'>
-                            {likedPosts.map((post, index) => {
-                                return (
-                                    <div key={index}>
-                                        <ProfileContentLikedPost post={post.post} />
-                                        <div className='feed-hr-line'></div>
-                                    </div>
-                                )
-                            })}
-                        </section>
-                        : <div>loading...</div>
+                            : <div>loading...</div>
 
-                : null
+                        : activeTab === 3
+                            ? likedPosts
+                                ? <section className='feed-posts-desktop'>
+                                    {likedPosts.map((post, index) => {
+                                        return (
+                                            <div key={index}>
+                                                <ProfileContentLikedPost post={post.post} />
+                                                <div className='feed-hr-line'></div>
+                                            </div>
+                                        )
+                                    })}
+                                </section>
+                                : <div>loading...</div>
+
+                            : null
             }
         </div>
     )
