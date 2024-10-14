@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { UserProps } from '../lib/types';
-import { addPostBookmark, addPostLike, addPostRepost, createPost, getGlobal30DayPosts, getLikedPosts, getPostInfo, getPostReplies, getPosts, getReplies, getReposts, postExists, removePostBookmark, removePostLike, removePostRepost } from '../services/postService';
+import { addPostBookmark, addPostLike, addPostRepost, createPost, getFollowing30DayPosts, getGlobal30DayPosts, getLikedPosts, getPostInfo, getPostReplies, getPosts, getReplies, getReposts, postExists, removePostBookmark, removePostLike, removePostRepost } from '../services/postService';
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -128,6 +128,20 @@ export const global30DayPosts = async (req: Request, res: Response) => {
 
     try {
         const response = await getGlobal30DayPosts(user.id);
+        return res.status(201).json({ response });
+    } catch (error) {
+        console.error('Error fetching data: ', error);
+        return res.status(500).json({ error: 'Failed to fetch the data' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const following30DayPosts = async (req: Request, res: Response) => {
+    const user = req.user as UserProps;
+
+    try {
+        const response = await getFollowing30DayPosts(user.id);
         return res.status(201).json({ response });
     } catch (error) {
         console.error('Error fetching data: ', error);

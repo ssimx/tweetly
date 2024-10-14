@@ -602,10 +602,122 @@ export const getGlobal30DayPosts = async (userId: number) => {
 
     return await prisma.post.findMany({
         where: {
-            createdAt: {
-                gte: date
+            AND: [
+                {
+                    createdAt: {
+                        gte: date
+                    }
+                },
+                {
+                    replyToId: null
+                }
+            ]
+        },
+        orderBy: {
+            createdAt: 'desc'
+        },
+        select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            updatedAt: true,
+            replyToId: true,
+            author: {
+                select: {
+                    username: true,
+                    profile: {
+                        select: {
+                            name: true,
+                            bio: true,
+                            profilePicture: true,
+                        }
+                    },
+                    followers: {
+                        where: {
+                            followerId: userId,
+                        },
+                        select: {
+                            followerId: true
+                        }
+                    },
+                    following: {
+                        where: {
+                            followeeId: userId,
+                        },
+                        select: {
+                            followeeId: true,
+                        }
+                    },
+                    _count: {
+                        select: {
+                            followers: true,
+                            following: true,
+                        }
+                    }
+                }
             },
-            replyToId: null
+            reposts: {
+                where: {
+                    userId: userId,
+                },
+                select: {
+                    userId: true,
+                }
+            },
+            likes: {
+                where: {
+                    userId: userId,
+                },
+                select: {
+                    userId: true,
+                }
+            },
+            bookmarks: {
+                where: {
+                    userId: userId,
+                },
+                select: {
+                    userId: true,
+                }
+            },
+            _count: {
+                select: {
+                    likes: true,
+                    reposts: true,
+                    replies: true,
+                }
+            }
+        }
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getFollowing30DayPosts = async (userId: number) => {
+    let date = new Date();
+    date.setDate(date.getDate() - 30);
+
+    return await prisma.post.findMany({
+        where: {
+            AND: [
+                {
+                    createdAt: {
+                        gte: date
+                    }
+                },
+                {
+                    replyToId: null
+                },
+                {
+                    author: {
+                        followers: {
+                            some: {
+                                followerId: userId
+                            }
+                        }
+                    }
+                }
+            ]
         },
         orderBy: {
             createdAt: 'desc'
