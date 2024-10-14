@@ -19,6 +19,7 @@ interface UserHoverCardType {
     setFollowersCount: React.Dispatch<React.SetStateAction<number>>,
     isFollowedByTheUser: boolean,
     setIsFollowedByTheUser: React.Dispatch<React.SetStateAction<boolean>>,
+    isFollowingTheUser: boolean,
 };
 
 export default function UserHoverCard({
@@ -26,7 +27,8 @@ export default function UserHoverCard({
     followersCount,
     setFollowersCount,
     isFollowedByTheUser,
-    setIsFollowedByTheUser
+    setIsFollowedByTheUser,
+    isFollowingTheUser,
 }: UserHoverCardType) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const followBtn = useRef<HTMLButtonElement>(null);
@@ -117,7 +119,12 @@ export default function UserHoverCard({
 
                     <div className='flex flex-col'>
                         <Link href={`/${author.username}`} className='font-bold w-fit text-18 hover:underline' onClick={(e) => handleLinkClick(e)}>{author.name}</Link>
-                        <p className='text-dark-500'>@{author.username}</p>
+                        <div className='flex gap-x-2 flex-wrap items-center text-dark-500'>
+                            <p className='text-dark-500'>@{author.username}</p>
+                            {loggedInUser.username !== author.username && isFollowingTheUser && (
+                                <p className='bg-dark-300 text-12 px-1 rounded-sm h-fit mt-[2px] font-medium'>Follows you</p>
+                            )}
+                        </div>
                     </div>
 
                     <div>

@@ -13,6 +13,9 @@ import { useUserContext } from '@/context/UserContextProvider';
 export default function ProfileContentPost({ post }: { post: PostRepost }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
     const [followersCount, setFollowersCount] = useState(post.author['_count'].followers);
+    // state to show whether the profile follows logged in user
+    const [isFollowingTheUser, setIsFollowingTheUser] = useState(post.author.following.length === 1);
+
     const [postIsVisible, setPostIsVisible] = useState(true);
     const router = useRouter();
     const { loggedInUser } = useUserContext();
@@ -60,8 +63,11 @@ export default function ProfileContentPost({ post }: { post: PostRepost }) {
                                 bio: post.author.profile.bio,
                                 following: post.author['_count'].following,
                             }}
-                            followersCount={followersCount} setFollowersCount={setFollowersCount}
-                            isFollowedByTheUser={isFollowedByTheUser} setIsFollowedByTheUser={setIsFollowedByTheUser} />
+                            followersCount={followersCount}
+                            setFollowersCount={setFollowersCount}
+                            isFollowedByTheUser={isFollowedByTheUser}
+                            setIsFollowedByTheUser={setIsFollowedByTheUser}
+                            isFollowingTheUser={isFollowingTheUser} />
                         <p>@{post.author.username}</p>
                         <p>·</p>
                         <p>{formatPostDate(post.createdAt)}</p>

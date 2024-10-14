@@ -107,6 +107,9 @@ export interface PostRepost {
         followers: {
             followerId: number,
         }[] | [],
+        following: {
+            followeeId: number,
+        }[] | [],
         _count: {
             followers: number,
             following: number,
@@ -149,6 +152,9 @@ export interface Reply {
             followers: {
                 followerId: number,
             }[] | [],
+            following: {
+                followeeId: number,
+            }[] | [],
             _count: {
                 select: {
                     followers: true,
@@ -180,6 +186,9 @@ export interface Reply {
         },
         followers: {
             followerId: number,
+        }[] | [],
+        following: {
+            followeeId: number,
         }[] | [],
         _count: {
             followers: number,
@@ -218,6 +227,9 @@ export interface LikedPost {
             followers: {
                 followerId: number,
             }[] | [],
+            following: {
+                followeeId: number,
+            }[] | [],
             _count: {
                 followers: number,
                 following: number,
@@ -233,6 +245,9 @@ export interface LikedPost {
         },
         followers: {
             followerId: number,
+        }[] | [],
+        following: {
+            followeeId: number,
         }[] | [],
         _count: {
             followers: number,
@@ -264,6 +279,9 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
     const [replies, setReplies] = useState<Reply[] | undefined>(undefined);
     const [likedPosts, setLikedPosts] = useState<LikedPostResponse[] | undefined>(undefined);
     const [activeTab, setActiveTab] = useState(0);
+
+    console.log(replies);
+    
 
     useEffect(() => {
         const fetchPostsReposts = async () => {

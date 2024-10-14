@@ -11,6 +11,9 @@ export default function ReplyInfo({ replyPost, parentPost }: { replyPost: PostTy
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(replyPost.author['_count'].followers === 1);
     const [followersCount, setFollowersCount] = useState(replyPost.author.followers.length);
 
+    // state to show whether the profile follows logged in user
+    const [isFollowingTheUser, setIsFollowingTheUser] = useState(replyPost.author.following.length === 1);
+
     const replyDate = new Date(replyPost.createdAt);
     const replyTime = `${replyDate.getHours()}:${replyDate.getMinutes()}`;
     const replyFormatDate = `${replyDate.toLocaleString('default', { month: 'short' })} ${replyDate.getDate()}, ${replyDate.getFullYear()}`;
@@ -40,8 +43,11 @@ export default function ReplyInfo({ replyPost, parentPost }: { replyPost: PostTy
                                 bio: replyPost.author.profile.bio,
                                 following: replyPost.author['_count'].following,
                             }}
-                            followersCount={followersCount} setFollowersCount={setFollowersCount}
-                            isFollowedByTheUser={isFollowedByTheUser} setIsFollowedByTheUser={setIsFollowedByTheUser} />
+                            followersCount={followersCount}
+                            setFollowersCount={setFollowersCount}
+                            isFollowedByTheUser={isFollowedByTheUser}
+                            setIsFollowedByTheUser={setIsFollowedByTheUser}
+                            isFollowingTheUser={isFollowingTheUser} />
                         <p className='text-dark-500'>@{replyPost.author.username}</p>
                     </div>
                 </div>

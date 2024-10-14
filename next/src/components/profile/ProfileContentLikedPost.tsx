@@ -12,8 +12,14 @@ import { useRouter } from 'next/navigation';
 export default function ProfileContentLikedpost({ post }: { post: LikedPost }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
     const [followersCount, setFollowersCount] = useState(post.author['_count'].followers);
+    // state to show whether the profile follows logged in user
+    const [isFollowingTheUser, setIsFollowingTheUser] = useState(post.author.following.length === 1);
+
     const [replyIsFollowedByTheUser, setReplyIsFollowedByTheUser] = useState(post.replyTo?.author.followers.length === 1);
     const [replyFollowersCount, setReplyFollowersCount] = useState(post.replyTo?.author['_count'].followers);
+        // state to show whether the profile follows logged in user
+    const [replyIsFollowingTheUser, setReplyIsFollowingTheUser] = useState(post.replyTo?.author.following.length === 1);
+
     const [postIsVisible, setPostIsVisible] = useState(true);
     const router = useRouter();
 
@@ -41,8 +47,11 @@ export default function ProfileContentLikedpost({ post }: { post: LikedPost }) {
                                 bio: post.replyTo.author.profile.bio,
                                 following: post.replyTo.author['_count'].following,
                             }}
-                            followersCount={replyFollowersCount as number} setFollowersCount={setReplyFollowersCount as React.Dispatch<SetStateAction<number>>}
-                            isFollowedByTheUser={replyIsFollowedByTheUser} setIsFollowedByTheUser={setReplyIsFollowedByTheUser} />
+                            followersCount={replyFollowersCount as number}
+                            setFollowersCount={setReplyFollowersCount as React.Dispatch<SetStateAction<number>>}
+                            isFollowedByTheUser={replyIsFollowedByTheUser}
+                            setIsFollowedByTheUser={setReplyIsFollowedByTheUser}
+                            isFollowingTheUser={replyIsFollowingTheUser} />
                     </p>
                 </div>
             )}
@@ -67,8 +76,11 @@ export default function ProfileContentLikedpost({ post }: { post: LikedPost }) {
                                 bio: post.author.profile.bio,
                                 following: post.author['_count'].following,
                             }}
-                            followersCount={followersCount} setFollowersCount={setFollowersCount}
-                            isFollowedByTheUser={isFollowedByTheUser} setIsFollowedByTheUser={setIsFollowedByTheUser} />
+                            followersCount={followersCount}
+                            setFollowersCount={setFollowersCount}
+                            isFollowedByTheUser={isFollowedByTheUser}
+                            setIsFollowedByTheUser={setIsFollowedByTheUser}
+                            isFollowingTheUser={isFollowingTheUser} />
                         <p>@{post.author.username}</p>
                         <p>·</p>
                         <p>{formatPostDate(post.createdAt)}</p>

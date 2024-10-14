@@ -2,11 +2,6 @@
 import { Reply } from './ProfileContent';
 import Link from 'next/link';
 import Image from 'next/image';
-import {
-    HoverCard,
-    HoverCardContent,
-    HoverCardTrigger,
-} from "@/components/ui/hover-card";
 import UserHoverCard from '../UserHoverCard';
 import { formatPostDate } from '@/lib/utils';
 import PostBtns from '../posts/PostBtns';
@@ -15,8 +10,12 @@ import { useRouter } from 'next/navigation';
 import ProfileContentReplyParent from './ProfileContentReplyParent';
 
 export default function ProfileContentReply({ replyPost }: { replyPost: Reply }) {
-    const [isFollowing, setIsFollowing] = useState(replyPost.author.followers.length === 1);
-    const [followers, setFollowers] = useState(replyPost.author['_count'].followers);
+    const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(replyPost.author['_count'].followers === 1);
+    const [followersCount, setFollowersCount] = useState(replyPost.author.followers.length);
+
+    // state to show whether the profile follows logged in user
+    const [isFollowingTheUser, setIsFollowingTheUser] = useState(replyPost.author.following.length === 1);
+
     const router = useRouter();
 
     const parentPost = JSON.parse(JSON.stringify(replyPost.replyTo))
@@ -46,21 +45,19 @@ export default function ProfileContentReply({ replyPost }: { replyPost: Reply })
                     </div>
                     <div className='feed-post-right-side'>
                         <div className='flex gap-2 text-gray-500'>
-                            <HoverCard>
-                                <HoverCardTrigger href={`/${replyPost.author.username}`} className='text-black-1 font-bold hover:underline' onClick={(e) => handleLinkClick(e)}>{replyPost.author.profile.name}</HoverCardTrigger>
-                                <HoverCardContent>
-                                    <UserHoverCard
-                                        author={{
-                                            username: replyPost.author.username,
-                                            name: replyPost.author.profile.name,
-                                            profilePicture: replyPost.author.profile.profilePicture,
-                                            bio: replyPost.author.profile.bio,
-                                            following: replyPost.author['_count'].following,
-                                        }}
-                                        followers={followers} setFollowers={setFollowers}
-                                        isFollowing={isFollowing} setIsFollowing={setIsFollowing} />
-                                </HoverCardContent>
-                            </HoverCard>
+                            <UserHoverCard
+                                author={{
+                                    username: replyPost.author.username,
+                                    name: replyPost.author.profile.name,
+                                    profilePicture: replyPost.author.profile.profilePicture,
+                                    bio: replyPost.author.profile.bio,
+                                    following: replyPost.author['_count'].following,
+                                }}
+                                followersCount={followersCount}
+                                setFollowersCount={setFollowersCount}
+                                isFollowedByTheUser={isFollowedByTheUser}
+                                setIsFollowedByTheUser={setIsFollowedByTheUser}
+                                isFollowingTheUser={isFollowingTheUser} />
                             <p>@{replyPost.author.username}</p>
                             <p>·</p>
                             <p>{formatPostDate(replyPost.createdAt)}</p>

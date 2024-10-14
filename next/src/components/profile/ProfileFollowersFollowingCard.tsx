@@ -77,6 +77,7 @@ export default function ProfileFollowersFollowingCard({ user }: { user: Follower
                     setFollowersCount={setFollowersCount}
                     isFollowedByTheUser={isFollowedByTheUser}
                     setIsFollowedByTheUser={setIsFollowedByTheUser}
+                    isFollowingTheUser={isFollowingTheUser}
                     />
                 <div className='flex gap-x-2 flex-wrap items-center text-dark-500'>
                     <p className='text-16'>@{user.username}</p>

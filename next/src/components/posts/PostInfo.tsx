@@ -11,6 +11,9 @@ export default function PostInfo({ post }: { post: PostType }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author['_count'].followers === 1);
     const [followersCount, setFollowersCount] = useState(post.author.followers.length);
 
+    // state to show whether the profile follows logged in user
+    const [isFollowingTheUser, setIsFollowingTheUser] = useState(post.author.following.length === 1);
+
     const postDate = new Date(post.createdAt);
     const postTime = `${postDate.getHours()}:${postDate.getMinutes()}`;
     const postFormatDate = `${postDate.toLocaleString('default', { month: 'short' })} ${postDate.getDate()}, ${postDate.getFullYear()}`;
@@ -33,8 +36,11 @@ export default function PostInfo({ post }: { post: PostType }) {
                                 bio: post.author.profile.bio,
                                 following: post.author['_count'].following,
                             }}
-                            followersCount={followersCount} setFollowersCount={setFollowersCount}
-                            isFollowedByTheUser={isFollowedByTheUser} setIsFollowedByTheUser={setIsFollowedByTheUser} />
+                            followersCount={followersCount}
+                            setFollowersCount={setFollowersCount}
+                            isFollowedByTheUser={isFollowedByTheUser}
+                            setIsFollowedByTheUser={setIsFollowedByTheUser}
+                            isFollowingTheUser={isFollowingTheUser} />
                         <p>@{post.author.username}</p>
                     </div>
                 </div>

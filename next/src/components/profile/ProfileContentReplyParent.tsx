@@ -22,6 +22,9 @@ interface Parent {
         followers: {
             followerId: number,
         }[] | [],
+        following: {
+            followerId: number,
+        }[] | [],
         _count: {
             followers: number,
             following: number,
@@ -46,6 +49,10 @@ interface Parent {
 export default function ProfileContentReplyParent({ post }: { post: Parent }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
     const [followersCount, setFollowersCount] = useState(post.author['_count'].followers);
+
+    // state to show whether the profile follows logged in user
+    const [isFollowingTheUser, setIsFollowingTheUser] = useState(post.author.following.length === 1);
+
     const router = useRouter();
 
     const handleCardClick = () => {
@@ -79,8 +86,12 @@ export default function ProfileContentReplyParent({ post }: { post: Parent }) {
                                 bio: post.author.profile.bio,
                                 following: post.author['_count'].following,
                             }}
-                            followersCount={followersCount} setFollowersCount={setFollowersCount}
-                            isFollowedByTheUser={isFollowedByTheUser} setIsFollowedByTheUser={setIsFollowedByTheUser} />
+                            followersCount={followersCount}
+                            setFollowersCount={setFollowersCount}
+                            isFollowedByTheUser={isFollowedByTheUser}
+                            setIsFollowedByTheUser={setIsFollowedByTheUser}
+                            isFollowingTheUser={isFollowingTheUser}
+                            />
                         <p>@{post.author.username}</p>
                         <p>·</p>
                         <p>{formatPostDate(post.createdAt)}</p>
