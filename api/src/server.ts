@@ -29,6 +29,7 @@ app.use('/api/v1/auth', authRouter);
 app.use(
     '/api/v1', (req: Request, res: Response, next: NextFunction) => {
         passport.authenticate('jwt', { session: false }, (err: PassportError, user: User | false, info: { message: string | null | undefined }) => {
+            
             if (err) {
                 return res.status(500).json({ error: 'Internal Server Error' });
             }

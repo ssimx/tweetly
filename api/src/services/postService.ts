@@ -647,6 +647,138 @@ export const getLikes = async (userId: number, username: string) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
+export const getBookmarks = async (userId: number, username: string) => {
+    return await prisma.postBookmark.findMany({
+        where: {
+            userId: userId
+        },
+        orderBy: {
+            createdAt: 'desc'
+        },
+        select: {
+            post: {
+                select: {
+                    id: true,
+                    content: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    replyTo: {
+                        select: {
+                            author: {
+                                select: {
+                                    username: true,
+                                    profile: {
+                                        select: {
+                                            name: true,
+                                            profilePicture: true,
+                                            bio: true
+                                        }
+                                    },
+                                    followers: {
+                                        where: {
+                                            followerId: userId
+                                        },
+                                        select: {
+                                            followerId: true
+                                        }
+                                    },
+                                    following: {
+                                        where: {
+                                            followeeId: userId,
+                                        },
+                                        select: {
+                                            followeeId: true,
+                                        }
+                                    },
+                                    _count: {
+                                        select: {
+                                            followers: true,
+                                            following: true,
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    author: {
+                        select: {
+                            username: true,
+                            profile: {
+                                select: {
+                                    name: true,
+                                    bio: true,
+                                    profilePicture: true,
+                                }
+                            },
+                            followers: {
+                                where: {
+                                    followerId: userId
+                                },
+                                select: {
+                                    followerId: true
+                                }
+                            },
+                            following: {
+                                where: {
+                                    followeeId: userId,
+                                },
+                                select: {
+                                    followeeId: true,
+                                }
+                            },
+                            _count: {
+                                select: {
+                                    followers: true,
+                                    following: true,
+                                }
+                            }
+                        }
+                    },
+                    reposts: {
+                        where: {
+                            user: {
+                                username
+                            }
+                        },
+                        select: {
+                            userId: true
+                        }
+                    },
+                    likes: {
+                        where: {
+                            user: {
+                                username
+                            }
+                        },
+                        select: {
+                            userId: true
+                        }
+                    },
+                    bookmarks: {
+                        where: {
+                            user: {
+                                username
+                            }
+                        },
+                        select: {
+                            userId: true
+                        }
+                    },
+                    _count: {
+                        select: {
+                            replies: true,
+                            reposts: true,
+                            likes: true,
+                        }
+                    }
+                }
+            }
+        }
+    })
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
 export const getGlobal30DayPosts = async (userId: number) => {
     let date = new Date();
     date.setDate(date.getDate() - 30);
