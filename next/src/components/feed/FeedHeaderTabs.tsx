@@ -1,8 +1,7 @@
 'use client';
-import { useState } from "react";
+import { SetStateAction } from "react";
 
-export default function FeedHeaderTabs() {
-    const [activeTab, setActiveTab] = useState(0);
+export default function FeedHeaderTabs({ activeTab, setActiveTab }: { activeTab: number, setActiveTab: React.Dispatch<SetStateAction<number>> }) {
 
     return (
         <div className='w-full h-[50px] flex sticky'>
