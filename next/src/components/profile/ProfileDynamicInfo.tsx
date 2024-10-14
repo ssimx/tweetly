@@ -9,6 +9,7 @@ import ProfileNotificationBtn from "./ProfileNotificationBtn";
 import ProfileMenuBtn from "./ProfileMenuBtn";
 import ProfileContent from "./ProfileContent";
 import Link from "next/link";
+import ProfileMessageBtn from "./ProfileMessageBtn";
 
 
 export default function ProfileDynamicInfo({ user, loggedInUser }: { user: ProfileInfo, loggedInUser: boolean }) {
@@ -58,6 +59,10 @@ export default function ProfileDynamicInfo({ user, loggedInUser }: { user: Profi
                             setIsFollowingTheUser={setIsFollowingTheUser}
                             setFollowingCount={setFollowingCount}
                              />
+                        {!hasBlockedTheUser && !isBlockedByTheUser && isFollowingTheUser && (
+                            <ProfileMessageBtn username={user.username} />
+                        )}
+
                         {!hasBlockedTheUser && !isBlockedByTheUser && isFollowingTheUser && (
                             <ProfileNotificationBtn username={user.username} notificationsEnabled={notificationsEnabled} setNotificationsEnabled={setNotificationsEnabled} />
                         )}

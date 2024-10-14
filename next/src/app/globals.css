@@ -414,6 +414,10 @@ body {
         @apply text-black-1 bg-transparent;
     }
 
+    .message-btn {
+        @apply w-fit hover:bg-dark-300 text-white-1 border border-border font-bold rounded-full p-2;
+    }
+
     .profile-menu {
         @apply 
             w-[38px] h-[38px] relative flex-center;
