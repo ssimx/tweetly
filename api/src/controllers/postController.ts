@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { UserProps } from '../lib/types';
-import { addPostBookmark, addPostLike, addPostRepost, createPost, getFollowing30DayPosts, getGlobal30DayPosts, getLikedPosts, getPostInfo, getPostReplies, getPosts, getReplies, getReposts, postExists, removePostBookmark, removePostLike, removePostRepost } from '../services/postService';
+import { addPostBookmark, addPostLike, addPostRepost, createPost, getFollowing30DayPosts, getGlobal30DayPosts, getLikes, getPostInfo, getPostReplies, getPosts, getReplies, getReposts, postExists, removePostBookmark, removePostLike, removePostRepost } from '../services/postService';
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -111,7 +111,7 @@ export const getUserLikedPosts = async (req: Request, res: Response) => {
     const user = req.user as UserProps;
 
     try {
-        const response = await getLikedPosts(user.id, username);
+        const response = await getLikes(user.id, username);
         if (!response) return res.status(404).json({ error: 'User or liked posts not found' });
 
         return res.status(201).json(response);

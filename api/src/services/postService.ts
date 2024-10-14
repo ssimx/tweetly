@@ -176,6 +176,14 @@ export const getPosts = async (userId: number, username: string) => {
                             followerId: true
                         }
                     },
+                    following: {
+                        where: {
+                            followeeId: userId,
+                        },
+                        select: {
+                            followeeId: true,
+                        }
+                    },
                     _count: {
                         select: {
                             followers: true,
@@ -266,6 +274,14 @@ export const getReposts = async (userId: number, username: string) => {
                             followerId: true
                         }
                     },
+                    following: {
+                        where: {
+                            followeeId: userId,
+                        },
+                        select: {
+                            followeeId: true,
+                        }
+                    },
                     _count: {
                         select: {
                             followers: true,
@@ -335,6 +351,9 @@ export const getReplies = async (userId: number, username: string) => {
             ]
 
         },
+        orderBy: {
+            createdAt: 'desc'
+        },
         select: {
             id: true,
             content: true,
@@ -362,6 +381,14 @@ export const getReplies = async (userId: number, username: string) => {
                                 },
                                 select: {
                                     followerId: true
+                                }
+                            },
+                            following: {
+                                where: {
+                                    followeeId: userId,
+                                },
+                                select: {
+                                    followeeId: true,
                                 }
                             },
                             _count: {
@@ -429,6 +456,14 @@ export const getReplies = async (userId: number, username: string) => {
                             followerId: true
                         }
                     },
+                    following: {
+                        where: {
+                            followeeId: userId,
+                        },
+                        select: {
+                            followeeId: true,
+                        }
+                    },
                     _count: {
                         select: {
                             followers: true,
@@ -480,7 +515,7 @@ export const getReplies = async (userId: number, username: string) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getLikedPosts = async (userId: number, username: string) => {
+export const getLikes = async (userId: number, username: string) => {
     return await prisma.postLike.findMany({
         where: {
             userId: userId
@@ -515,6 +550,14 @@ export const getLikedPosts = async (userId: number, username: string) => {
                                             followerId: true
                                         }
                                     },
+                                    following: {
+                                        where: {
+                                            followeeId: userId,
+                                        },
+                                        select: {
+                                            followeeId: true,
+                                        }
+                                    },
                                     _count: {
                                         select: {
                                             followers: true,
@@ -541,6 +584,14 @@ export const getLikedPosts = async (userId: number, username: string) => {
                                 },
                                 select: {
                                     followerId: true
+                                }
+                            },
+                            following: {
+                                where: {
+                                    followeeId: userId,
+                                },
+                                select: {
+                                    followeeId: true,
                                 }
                             },
                             _count: {
