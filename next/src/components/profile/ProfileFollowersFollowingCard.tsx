@@ -61,7 +61,7 @@ export default function ProfileFollowersFollowingCard({ user }: { user: Follower
                     src={user.profile.profilePicture}
                     height={40} width={40}
                     alt='Follower profile pic'
-                    className='rounded-full' />
+                    className='rounded-full min-w-[40px]' />
             </div>
 
             <div className='flex flex-col leading-5'>
@@ -83,6 +83,10 @@ export default function ProfileFollowersFollowingCard({ user }: { user: Follower
                     { loggedInUser.username !== user.username && isFollowingTheUser && (
                         <p className='bg-dark-300 text-12 px-1 rounded-sm h-fit mt-[2px] font-medium'>Follows you</p>
                     )}
+                </div>
+
+                <div className='profile-card-bio-overflow' >
+                    <p className='break-all'>{user.profile.bio}</p>
                 </div>
             </div>
             

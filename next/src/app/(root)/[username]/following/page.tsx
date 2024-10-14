@@ -75,7 +75,7 @@ export default function Following({ params }: { params: { username: string } }) 
                 <div className='profile-content-header-btn'>
                     <Link href={`/${username}/followers`}
                         className={`w-full h-full z-10 absolute text-dark-500 font-medium flex-center`}>
-                        Following
+                        Followers
                     </Link>
                 </div>
             </div>
