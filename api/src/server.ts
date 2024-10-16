@@ -6,7 +6,9 @@ import userRouter from './routes/userRoutes';
 import { configurePassport } from './middleware/passport';
 import { User } from '@prisma/client';
 import { PassportError } from './lib/types';
+import { socketConnection } from './utils/sockets';
 const passport = require('passport');
+const http = require("http");
 const cors = require('cors');
 dotenv.config();
 const app: Express = express();
@@ -48,8 +50,8 @@ app.use(
 app.use('/api/v1/posts', postRouter);
 app.use('/api/v1/users', userRouter);
 
-
-
-app.listen(port, () => {
+const server = app.listen(port, () => {
     console.log(`[server]: Server is running at http://localhost:${port}`);
 });
+
+socketConnection(server);
