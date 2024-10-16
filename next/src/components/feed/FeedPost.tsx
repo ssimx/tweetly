@@ -9,8 +9,8 @@ import { useState } from 'react';
 import UserHoverCard from '../UserHoverCard';
 
 export default function FeedPost({ post }: { post: PostType }) {
-    const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author['_count'].followers === 1);
-    const [followersCount, setFollowersCount] = useState(post.author.followers.length);
+    const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
+    const [followersCount, setFollowersCount] = useState(post.author['_count'].followers);
 
     // state to show whether the profile follows logged in user
     const [isFollowingTheUser, setIsFollowingTheUser] = useState(post.author.following.length === 1);

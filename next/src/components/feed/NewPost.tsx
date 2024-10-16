@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress"
 import { newPostSchema } from "@/lib/schemas";
 import { Image as Img, Loader2 } from "lucide-react";
 import Image from 'next/image';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { Post } from "@/lib/types";
 import TextareaAutosize from 'react-textarea-autosize';
 import { useUserContext } from "@/context/UserContextProvider";
+import { socket } from "@/lib/socket";
 
 type PostData = z.infer<typeof newPostSchema>;
 
@@ -24,7 +25,6 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
     const charsPercentage = Math.min((text.length / maxChars) * 100, 100);
     const router = useRouter();
     const { loggedInUser } = useUserContext();
-
 
     const {
         register,
@@ -58,8 +58,8 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
 
             const postData = await response.json() as Post;
 
-            console.log(postData);
-
+            socket.emit('new_global_post');
+            socket.emit('new_following_post', postData.authorId)
             router.push(`/${loggedInUser.username}/status/${postData.id}`);
         } catch (error) {
             console.error(error);

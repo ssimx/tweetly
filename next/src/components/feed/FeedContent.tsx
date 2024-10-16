@@ -4,78 +4,141 @@ import { useEffect, useState } from "react";
 import FeedPost from "./FeedPost";
 import FeedHeaderTabs from "./FeedHeaderTabs";
 import NewPost from "./NewPost";
+import { socket } from '@/lib/socket';
+import { useUserContext } from "@/context/UserContextProvider";
 
 export default function FeedContent() {
     const [activeTab, setActiveTab] = useState(0);
     const [followingPosts, setFollowingPosts] = useState<PostType[] | undefined>(undefined);
     const [globalPosts, setGlobalPosts] = useState<PostType[] | undefined>(undefined);
+    const [newGlobalPostCount, setNewGlobalPostCount] = useState(0);
+    const [newFollowingPostCount, setNewFollowingPostCount] = useState(0);
+    const { loggedInUser } = useUserContext();
 
     useEffect(() => {
-        const fetchPosts = async () => {
-            if (activeTab === 0) {
-                try {
-                    const response = await fetch('/api/posts/feed/global', {
-                        method: 'GET',
-                    });
+        socket.connect();
 
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        console.log(errorData);
+        // After connecting, tell the server which users this user is following
+        socket.emit('get_following', loggedInUser.id);
 
-                        throw new Error(errorData.error);
+        return () => {
+            socket.disconnect();
+        };
+    }, [loggedInUser]);
+
+    useEffect(() => {
+        const onNewGlobalPostEvent = () => {
+            setNewGlobalPostCount(currentPostCount => currentPostCount + 1);
+        };
+
+        const onNewFollowingPostEvent = () => {
+            setNewFollowingPostCount(currentPostCount => currentPostCount + 1);
+        };
+
+        socket.on('new_global_post', onNewGlobalPostEvent);
+        socket.on('new_following_post', onNewFollowingPostEvent);
+
+        return () => {
+            socket.off('new_global_post', onNewGlobalPostEvent);
+            socket.off('new_following_post', onNewGlobalPostEvent);
+        };
+    }), [];
+
+    useEffect(() => {
+        if (activeTab === 0) {
+            const fetchFeedPosts = async () => {
+                if (globalPosts === undefined) {
+                    try {
+                        const response = await fetch('/api/posts/feed/global', {
+                            method: 'GET',
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            console.log(errorData);
+
+                            throw new Error(errorData.error);
+                        }
+
+                        const globalFeed: PostType[] = await response.json();
+                        setGlobalPosts(globalFeed);
+                    } catch (error) {
+
                     }
-
-                    const globalFeed: PostType[] = await response.json();
-                    console.log(globalFeed);
-
-                    setGlobalPosts(globalFeed);
-                } catch (error) {
-
                 }
-            } else {
-                try {
-                    const response = await fetch('/api/posts/feed/following', {
-                        method: 'GET',
-                    });
+            };
 
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        console.log(errorData);
+            fetchFeedPosts();
+        } else {
+            const fetchFeedPosts = async () => {
+                if (followingPosts === undefined) {
+                    try {
+                        const response = await fetch('/api/posts/feed/following', {
+                            method: 'GET',
+                        });
 
-                        throw new Error(errorData.error);
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            console.log(errorData);
+
+                            throw new Error(errorData.error);
+                        }
+
+                        const followingFeed: PostType[] = await response.json();
+                        setFollowingPosts(followingFeed);
+                    } catch (error) {
+
                     }
-
-                    const followingFeed: PostType[] = await response.json();
-                    console.log(followingFeed);
-
-                    setFollowingPosts(followingFeed);
-                } catch (error) {
-
                 }
             }
+
+            fetchFeedPosts();
         }
+    }, [activeTab, globalPosts, followingPosts]);
 
-        fetchPosts();
-    }, [activeTab]);
-
-    console.log(followingPosts);
-    
+    const fetchNewPosts = () => {
+        if (activeTab === 0) {
+            setGlobalPosts(undefined);
+            setNewGlobalPostCount(0);
+        } else {
+            setFollowingPosts(undefined);
+            setNewFollowingPostCount(0);
+        }
+    };
 
     return (
         <>
             <section className='feed-header'>
                 <FeedHeaderTabs activeTab={activeTab} setActiveTab={setActiveTab} />
                 <NewPost />
+                { activeTab === 0
+                    ? newGlobalPostCount !== 0 && (
+                        <>
+                            <button onClick={fetchNewPosts} className='text-primary py-3 hover:bg-card-hover'>
+                                {newGlobalPostCount > 1 ? `Show ${newGlobalPostCount} posts` : 'Show new post'}
+                            </button>
+                            <div className='feed-hr-line'></div>
+                        </>
+                    )
+                    : newFollowingPostCount !== 0 && (
+                        <>
+                            <button onClick={fetchNewPosts} className='text-primary py-3 hover:bg-card-hover'>
+                                {newGlobalPostCount > 1 ? `Show ${newGlobalPostCount} posts` : 'Show new post'}
+                            </button>
+                            <div className='feed-hr-line'></div>
+                        </>
+                    )
+                }
             </section>
 
             <section className='feed-posts-desktop'>
                 {activeTab === 0
                     ? globalPosts
                         ? globalPosts.map((post, index) => (
-                        <div key={index}>
-                            <FeedPost post={post} />
-                            <div className='feed-hr-line'></div>
-                        </div>
+                            <div key={index}>
+                                <FeedPost post={post} />
+                                <div className='feed-hr-line'></div>
+                            </div>
                         ))
                         : <div>loading...</div>
                     : null
