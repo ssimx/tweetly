@@ -19,6 +19,7 @@ import {
     removePostLike,
     removePostRepost,
 } from '../services/postService';
+import { createNotificationsForNewPost } from '../services/notificationService';
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -45,9 +46,12 @@ export const newPost = async (req: Request, res: Response) => {
             if (response.fields?.includes('content')) {
                 return res.status(400).json({ error: 'content' });
             }
-        }
+        } else {
+            // handle notifications
+            createNotificationsForNewPost(response.post.id, user.id);
 
-        return res.status(201).json({ response });
+            return res.status(201).json({ response });
+        }
     } catch (error) {
         console.error('Error saving post data: ', error);
         return res.status(500).json({ error: 'Failed to process the data' });

@@ -15,33 +15,31 @@ datasource db {
 }
 
 model User {
-    id                Int                @id @default(autoincrement())
-    createdAt         DateTime           @default(now())
-    updatedAt         DateTime           @updatedAt
-    username          String             @unique @db.VarChar(15)
-    email             String             @unique @db.VarChar(254)
-    password          String
-    dateOfBirth       DateTime           @db.Date()
-    role              UserRole           @default(USER)
-    profile           Profile?
-    posts             Post[]
-    likedPosts        PostLike[]
-    repostedPosts     PostRepost[]
-    bookmarkedPosts   PostBookmark[]
-    followers         Follow[]           @relation("followee")
-    following         Follow[]           @relation("follower")
-    messagesReceived  Message[]          @relation("receiver")
-    messagesSent      Message[]          @relation("messeger")
-    blockedBy         Block[]            @relation("blocked")
-    blockedUsers      Block[]            @relation("blocker")
-    // notifiers         Notification[]     @relation("receiver")
-    // notifying         Notification[]     @relation("notifier")
-    // likeNotifications LikeNotification[]
-}
-
-enum UserRole {
-    USER
-    ADMIN
+    id                          Int                    @id @default(autoincrement())
+    createdAt                   DateTime               @default(now())
+    updatedAt                   DateTime               @updatedAt
+    username                    String                 @unique @db.VarChar(15)
+    email                       String                 @unique @db.VarChar(254)
+    password                    String
+    dateOfBirth                 DateTime               @db.Date()
+    role                        UserRole               @default(USER)
+    profile                     Profile?
+    posts                       Post[]
+    likedPosts                  PostLike[]
+    repostedPosts               PostRepost[]
+    bookmarkedPosts             PostBookmark[]
+    followers                   Follow[]               @relation("followee")
+    following                   Follow[]               @relation("follower")
+    messagesReceived            Message[]              @relation("receiver")
+    messagesSent                Message[]              @relation("messeger")
+    blockedBy                   Block[]                @relation("blocked")
+    blockedUsers                Block[]                @relation("blocker")
+    notifiers                   FollowerNotification[] @relation("receiver")
+    notifying                   FollowerNotification[] @relation("notifier")
+    postNotificationsCreated    PostNotification[]     @relation("notifier")
+    postNotificationsReceived   PostNotification[]     @relation("receiver")
+    followNotificationsCreated  FollowNotification[]   @relation("notifier")
+    followNotificationsReceived FollowNotification[]   @relation("receiver")
 }
 
 model Profile {
@@ -59,26 +57,27 @@ model Profile {
 }
 
 model Post {
-    id        Int            @id @default(autoincrement())
-    content   String         @db.VarChar(280)
-    createdAt DateTime       @default(now())
-    updatedAt DateTime       @updatedAt
-    author    User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
-    authorId  Int
-    replyTo   Post?          @relation("reply", fields: [replyToId], references: [id], onDelete: Cascade)
-    replyToId Int?
-    replies   Post[]         @relation("reply")
-    likes     PostLike[]
-    reposts   PostRepost[]
-    bookmarks PostBookmark[]
+    id                Int                @id @default(autoincrement())
+    content           String             @db.VarChar(280)
+    createdAt         DateTime           @default(now())
+    updatedAt         DateTime           @updatedAt
+    author            User               @relation(fields: [authorId], references: [id], onDelete: Cascade)
+    authorId          Int
+    replyTo           Post?              @relation("reply", fields: [replyToId], references: [id], onDelete: Cascade)
+    replyToId         Int?
+    replies           Post[]             @relation("reply")
+    likes             PostLike[]
+    reposts           PostRepost[]
+    bookmarks         PostBookmark[]
+    postNotifications PostNotification[]
 }
 
 model PostLike {
-    postId           Int
-    userId           Int
-    createdAt        DateTime           @default(now())
-    post             Post               @relation(fields: [postId], references: [id], onDelete: Cascade)
-    user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+    postId    Int
+    userId    Int
+    createdAt DateTime @default(now())
+    post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@id(name: "postLikeId", [postId, userId])
 }
@@ -133,29 +132,53 @@ model Block {
     @@id(name: "blockId", [blockerId, blockedId])
 }
 
-// model Notification {
-//     receiverId Int
-//     notifierId Int
-//     createdAt  DateTime @default(now())
-//     receiver   User     @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
-//     notifier   User     @relation("notifier", fields: [notifierId], references: [id], onDelete: Cascade)
+model FollowerNotification {
+    receiverId Int
+    notifierId Int
+    createdAt  DateTime @default(now())
+    receiver   User     @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+    notifier   User     @relation("notifier", fields: [notifierId], references: [id], onDelete: Cascade)
 
-//     @@id(name: "notificationId", [receiverId, notifierId])
-// }
+    @@id(name: "followerNotificationId", [receiverId, notifierId])
+}
 
-// model LikeNotification {
-//     isRead    Boolean  @default(false)
-//     createdAt DateTime @default(now())
+model NotificationType {
+    id                 Int                  @id @default(autoincrement())
+    name               String
+    description        String
+    PostNotification   PostNotification[]
+    FollowNotification FollowNotification[]
+}
 
-//     // Composite key to reference PostLike
-//     postId Int
-//     userId Int
+model PostNotification {
+    typeId     Int
+    postId     Int
+    notifierId Int
+    receiverId Int
+    isRead     Boolean          @default(false)
+    createdAt  DateTime         @default(now())
+    type       NotificationType @relation(fields: [typeId], references: [id], onDelete: Cascade)
+    post       Post             @relation(fields: [postId], references: [id], onDelete: Cascade)
+    notifier   User             @relation("notifier", fields: [notifierId], references: [id], onDelete: Cascade)
+    receiver   User             @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
 
-//     // Reference PostLike model via composite key
-//     like PostLike @relation(fields: [postId, userId], references: [postId, userId], onDelete: Cascade)
+    @@id(name: "postNotificationId", [typeId, postId, notifierId, receiverId])
+}
 
-//     actor   User @relation(fields: [actorId], references: [id], onDelete: Cascade)
-//     actorId Int
+model FollowNotification {
+    typeId     Int
+    notifierId Int
+    receiverId Int
+    isRead     Boolean          @default(false)
+    createdAt  DateTime         @default(now())
+    type       NotificationType @relation(fields: [typeId], references: [id], onDelete: Cascade)
+    notifier   User             @relation("notifier", fields: [notifierId], references: [id], onDelete: Cascade)
+    receiver   User             @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
 
-//     @@id(name: "likeNotificationId", [postId, userId, actorId])
-// }
+    @@id(name: "followNotificationId", [typeId, notifierId, receiverId])
+}
+
+enum UserRole {
+    USER
+    ADMIN
+}
