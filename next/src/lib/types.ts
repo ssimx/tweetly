@@ -59,6 +59,9 @@ export interface ProfileInfo {
     blockedUsers: {
         blockedId: number,
     }[] | [],
+    notifying: {
+        receivedId: number,
+    }[] | [],
     _count: {
         followers: number,
         following: number,

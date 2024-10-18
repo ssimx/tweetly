@@ -25,26 +25,26 @@ export default function ProfileNotificationBtn({ username, notificationsEnabled,
 
         try {
             if (notificationsEnabled) {
-                // const unfollow = await fetch(`/api/users/disableNotification/${username}`, {
-                //     method: 'DELETE',
-                //     headers: {
-                //         'Content-Type': 'application/json',
-                //     }
-                // });
+                const response = await fetch(`/api/users/disableNotifications/${username}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
 
-                // if (!unfollow) throw new Error("Couldn't disable notifications for the user");
+                if (!response.ok) throw new Error("Couldn't disable notifications for the user");
 
                 setNotificationsEnabled(false);
                 return;
             } else {
-                // const follow = await fetch(`/api/users/enableNotification/${username}`, {
-                //     method: 'POST',
-                //     headers: {
-                //         'Content-Type': 'application/json',
-                //     }
-                // });
+                const response = await fetch(`/api/users/enableNotifications/${username}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
 
-                // if (!follow) throw new Error("Couldn't enable notifications for the user");
+                if (!response.ok) throw new Error("Couldn't enable notifications for the user");
 
                 setNotificationsEnabled(true);
                 return;

@@ -22,15 +22,13 @@ export default function ProfileDynamicInfo({ user, loggedInUser }: { user: Profi
     const [isFollowingTheUser, setIsFollowingTheUser] = useState(user.following.length === 1);
     const [followingCount, setFollowingCount] = useState(user['_count'].following);
 
-    const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+    const [notificationsEnabled, setNotificationsEnabled] = useState(user.notifying.length === 1);
     const [viewPosts, setViewPosts] = useState(false);
     const [isBlockedByTheUser, setIsBlockedByTheUser] = useState(user.blockedBy.length === 1);
     const hasBlockedTheUser = user.blockedUsers.length === 1;
 
     const createdAt = new Date(user.createdAt);
     const joined = `${createdAt.toLocaleDateString('default', { month: 'long' })} ${createdAt.getFullYear()}`;
-
-    console.log(user);
 
     const handleViewPosts = () => {
         setViewPosts((prev) => !prev);
@@ -59,16 +57,20 @@ export default function ProfileDynamicInfo({ user, loggedInUser }: { user: Profi
                             setIsFollowingTheUser={setIsFollowingTheUser}
                             setFollowingCount={setFollowingCount}
                              />
-                        {!hasBlockedTheUser && !isBlockedByTheUser && isFollowingTheUser && (
+                        {!hasBlockedTheUser && !isBlockedByTheUser && isFollowedByTheUser && (
                             <ProfileMessageBtn username={user.username} />
                         )}
 
-                        {!hasBlockedTheUser && !isBlockedByTheUser && isFollowingTheUser && (
+                        {!hasBlockedTheUser && !isBlockedByTheUser && isFollowedByTheUser && (
                             <ProfileNotificationBtn username={user.username} notificationsEnabled={notificationsEnabled} setNotificationsEnabled={setNotificationsEnabled} />
                         )}
 
                         { !hasBlockedTheUser && !isBlockedByTheUser && (
-                            <ProfileFollowBtn username={user.username} setFollowersCount={setFollowersCount} isFollowedByTheUser={isFollowedByTheUser} setIsFollowedByTheUser={setIsFollowedByTheUser} />
+                            <ProfileFollowBtn username={user.username} 
+                                setFollowersCount={setFollowersCount}
+                                isFollowedByTheUser={isFollowedByTheUser}
+                                setIsFollowedByTheUser={setIsFollowedByTheUser}
+                                setNotificationsEnabled={setNotificationsEnabled} />
                         )}
                     </div>
                 )

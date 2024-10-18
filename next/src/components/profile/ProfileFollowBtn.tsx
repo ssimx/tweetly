@@ -7,13 +7,15 @@ interface FollowBtnType {
     setFollowersCount: React.Dispatch<React.SetStateAction<number>>,
     isFollowedByTheUser: boolean,
     setIsFollowedByTheUser: React.Dispatch<React.SetStateAction<boolean>>,
+    setNotificationsEnabled: React.Dispatch<React.SetStateAction<boolean>>,
 };
 
 export default function ProfileFollowBtn({
     username,
     setFollowersCount,
     isFollowedByTheUser,
-    setIsFollowedByTheUser
+    setIsFollowedByTheUser,
+    setNotificationsEnabled
 }: FollowBtnType) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const followBtn = useRef<HTMLButtonElement>(null);
@@ -53,6 +55,7 @@ export default function ProfileFollowBtn({
                 if (!follow) throw new Error("Couldn't follow the user");
 
                 setIsFollowedByTheUser(true);
+                setNotificationsEnabled(false);
                 setFollowersCount((current) => current + 1);
                 return;
             }

@@ -6,6 +6,7 @@ import Image from 'next/image';
 import SidebarUserBtn from './SidebarUserBtn';
 import NewPostModal from './NewPostModal';
 import { useUserContext } from '@/context/UserContextProvider';
+import { Socket } from 'socket.io-client';
 
 export default function LeftSidebar() {
     const pathname = usePathname();

@@ -18,7 +18,7 @@ export async function POST(req: NextRequest, { params }: { params: { username: s
 
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
-            const response = await fetch(`${apiUrl}/users/follow/${params.username}`, {
+            const response = await fetch(`${apiUrl}/users/enableNotifications/${params.username}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
