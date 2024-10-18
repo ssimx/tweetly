@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
-import { addBlock, addFollow, addNotifications, getFollowers, getFollowing, getProfile, getUser, removeBlock, removeFollow, removeNotfications, updateProfile } from '../services/userService';
+import { addBlock, addFollow, addPushNotifications, getFollowers, getFollowing, getProfile, getUser, removeBlock, removeFollow, removePushNotfications, updateProfile } from '../services/userService';
 import { ProfileInfo, UserProps } from '../lib/types';
 import { deleteImageFromCloudinary } from './uploadController';
+import { getNotifications } from '../services/notificationService';
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -191,12 +192,12 @@ export const unblockUser = async (req: Request, res: Response) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const enableNotifications = async (req: Request, res: Response) => {
+export const enablePushNotifications = async (req: Request, res: Response) => {
     const username = req.params.username;
     const user = req.user as UserProps;    
 
     try {
-        const response = await addNotifications(user.id, username);
+        const response = await addPushNotifications(user.id, username);
 
         if (!response) return res.status(404).json({ error: 'failure' })
 
@@ -209,15 +210,12 @@ export const enableNotifications = async (req: Request, res: Response) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const disableNotifications = async (req: Request, res: Response) => {
+export const disablePushNotifications = async (req: Request, res: Response) => {
     const username = req.params.username;
     const user = req.user as UserProps;
 
-    console.log('disabling');
-
-
     try {
-        const response = await removeNotfications(user.id, username);
+        const response = await removePushNotfications(user.id, username);
 
         if (!response) return res.status(404).json({ error: 'failure' })
 
@@ -226,4 +224,21 @@ export const disableNotifications = async (req: Request, res: Response) => {
         console.error('Error: ', error);
         return res.status(500).json({ error: 'Failed to process the request' });
     };
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getUserNotifications = async (req: Request, res: Response) => {
+    const user = req.user as UserProps;
+
+    try {
+        const notifications = await getNotifications(user.id);
+
+        if (!notifications) return res.status(404).json({ error: 'User does not exist' });
+
+        return res.status(201).json({ notifications });
+    } catch (error) {
+        console.error('Error getting profile: ', error);
+        return res.status(500).json({ error: 'Failed to process the request' });
+    }
 };

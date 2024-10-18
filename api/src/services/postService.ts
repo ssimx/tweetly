@@ -1,5 +1,6 @@
 import { Post, Prisma, PrismaClient, Profile, User } from '@prisma/client';
 import { UserProps } from '../lib/types';
+import { createNotificationsForNewLike, createNotificationsForNewRepost, removeNotificationsForLike, removeNotificationsForRepost } from './notificationService';
 const prisma = new PrismaClient();
 
 // ---------------------------------------------------------------------------------------------------------
@@ -1009,8 +1010,8 @@ export const removePostRepost = async (userId: number, postId: number) => {
     return await prisma.postRepost.delete({
         where: {
             postRepostId: { postId, userId },
-        },
-    })
+        }
+    });
 };
 
 // ---------------------------------------------------------------------------------------------------------

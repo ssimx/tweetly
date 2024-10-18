@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 export const createNotificationsForNewPost = async (postId: number, authorId: number) => {
     // fetch all followers who have notifications enabled for the author
-    const followers = await prisma.followerNotification.findMany({
+    const followers = await prisma.pushNotification.findMany({
         where: {
             notifierId: authorId,
         },
@@ -23,7 +23,7 @@ export const createNotificationsForNewPost = async (postId: number, authorId: nu
         receiverId: follower.receiverId,
     }));
 
-    return await prisma.postNotification.createMany({
+    return await prisma.notification.createMany({
         data: notifications
     });
 };
@@ -32,7 +32,7 @@ export const createNotificationsForNewPost = async (postId: number, authorId: nu
 
 export const createNotificationsForNewReply = async (postId: number, authorId: number) => {
     // fetch all followers who have notifications enabled for the author
-    const followers = await prisma.followerNotification.findMany({
+    const followers = await prisma.pushNotification.findMany({
         where: {
             notifierId: authorId,
         },
@@ -49,7 +49,7 @@ export const createNotificationsForNewReply = async (postId: number, authorId: n
         receiverId: follower.receiverId,
     }));
 
-    return await prisma.postNotification.createMany({
+    return await prisma.notification.createMany({
         data: notifications
     });
 };
@@ -58,7 +58,7 @@ export const createNotificationsForNewReply = async (postId: number, authorId: n
 
 export const createNotificationsForNewRepost = async (postId: number, authorId: number) => {
     // fetch all followers who have notifications enabled for the author
-    const followers = await prisma.followerNotification.findMany({
+    const followers = await prisma.pushNotification.findMany({
         where: {
             notifierId: authorId,
         },
@@ -75,7 +75,7 @@ export const createNotificationsForNewRepost = async (postId: number, authorId: 
         receiverId: follower.receiverId,
     }));
 
-    return await prisma.postNotification.createMany({
+    return await prisma.notification.createMany({
         data: notifications
     });
 };
@@ -84,7 +84,7 @@ export const createNotificationsForNewRepost = async (postId: number, authorId: 
 
 export const createNotificationsForNewLike = async (postId: number, authorId: number) => {
     // fetch all followers who have notifications enabled for the author
-    const followers = await prisma.followerNotification.findMany({
+    const followers = await prisma.pushNotification.findMany({
         where: {
             notifierId: authorId,
         },
@@ -101,7 +101,7 @@ export const createNotificationsForNewLike = async (postId: number, authorId: nu
         receiverId: follower.receiverId,
     }));
 
-    return await prisma.postNotification.createMany({
+    return await prisma.notification.createMany({
         data: notifications
     });
 };
@@ -110,7 +110,7 @@ export const createNotificationsForNewLike = async (postId: number, authorId: nu
 
 export const createNotificationsForNewFollower = async (postId: number, authorId: number) => {
     // fetch all followers who have notifications enabled for the author
-    const followers = await prisma.followerNotification.findMany({
+    const followers = await prisma.pushNotification.findMany({
         where: {
             notifierId: authorId,
         },
@@ -127,7 +127,7 @@ export const createNotificationsForNewFollower = async (postId: number, authorId
         receiverId: follower.receiverId,
     }));
 
-    return await prisma.postNotification.createMany({
+    return await prisma.notification.createMany({
         data: notifications
     });
 };
@@ -135,7 +135,7 @@ export const createNotificationsForNewFollower = async (postId: number, authorId
 // ---------------------------------------------------------------------------------------------------------
 
 export const removeNotificationsForPost = async (postId: number, notifierId: number) => {
-    return await prisma.postNotification.deleteMany({
+    return await prisma.notification.deleteMany({
         where: {
             AND: [
                 {
@@ -155,7 +155,7 @@ export const removeNotificationsForPost = async (postId: number, notifierId: num
 // ---------------------------------------------------------------------------------------------------------
 
 export const removeNotificationsForReply = async (postId: number, notifierId: number) => {
-    return await prisma.postNotification.deleteMany({
+    return await prisma.notification.deleteMany({
         where: {
             AND: [
                 {
@@ -175,7 +175,7 @@ export const removeNotificationsForReply = async (postId: number, notifierId: nu
 // ---------------------------------------------------------------------------------------------------------
 
 export const removeNotificationsForRepost = async (postId: number, notifierId: number) => {
-    return await prisma.postNotification.deleteMany({
+    return await prisma.notification.deleteMany({
         where: {
             AND: [
                 {
@@ -195,7 +195,7 @@ export const removeNotificationsForRepost = async (postId: number, notifierId: n
 // ---------------------------------------------------------------------------------------------------------
 
 export const removeNotificationsForLike = async (postId: number, notifierId: number) => {
-    return await prisma.postNotification.deleteMany({
+    return await prisma.notification.deleteMany({
         where: {
             AND: [
                 {
@@ -215,7 +215,7 @@ export const removeNotificationsForLike = async (postId: number, notifierId: num
 // ---------------------------------------------------------------------------------------------------------
 
 export const removeNotificationsForFollow = async (postId: number, notifierId: number) => {
-    return await prisma.postNotification.deleteMany({
+    return await prisma.notification.deleteMany({
         where: {
             AND: [
                 {
@@ -234,11 +234,11 @@ export const removeNotificationsForFollow = async (postId: number, notifierId: n
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getNotifications = async (username: string, userId: number) => {
+export const getNotifications = async (userId: number) => {
     let date = new Date();
     date.setDate(date.getDate() - 30);
 
-    const posts = await prisma.postNotification.findMany({
+    const posts = await prisma.notification.findMany({
         where: {
             AND: [
                 {
@@ -257,6 +257,7 @@ export const getNotifications = async (username: string, userId: number) => {
             ]
         },
         select: {
+            createdAt: true,
             post: {
                 select: {
                     id: true,
@@ -299,9 +300,7 @@ export const getNotifications = async (username: string, userId: number) => {
                     },
                     reposts: {
                         where: {
-                            user: {
-                                username
-                            }
+                            userId
                         },
                         select: {
                             userId: true
@@ -309,9 +308,7 @@ export const getNotifications = async (username: string, userId: number) => {
                     },
                     likes: {
                         where: {
-                            user: {
-                                username
-                            }
+                            userId
                         },
                         select: {
                             userId: true
@@ -319,9 +316,7 @@ export const getNotifications = async (username: string, userId: number) => {
                     },
                     bookmarks: {
                         where: {
-                            user: {
-                                username
-                            }
+                            userId
                         },
                         select: {
                             userId: true
@@ -339,7 +334,7 @@ export const getNotifications = async (username: string, userId: number) => {
         }
     });
 
-    const replies = await prisma.postNotification.findMany({
+    const replies = await prisma.notification.findMany({
         where: {
             AND: [
                 {
@@ -358,6 +353,7 @@ export const getNotifications = async (username: string, userId: number) => {
             ]
         },
         select: {
+            createdAt: true,
             post: {
                 select: {
                     id: true,
@@ -406,9 +402,7 @@ export const getNotifications = async (username: string, userId: number) => {
                             },
                             reposts: {
                                 where: {
-                                    user: {
-                                        username
-                                    }
+                                    userId
                                 },
                                 select: {
                                     userId: true
@@ -416,9 +410,7 @@ export const getNotifications = async (username: string, userId: number) => {
                             },
                             likes: {
                                 where: {
-                                    user: {
-                                        username
-                                    }
+                                    userId
                                 },
                                 select: {
                                     userId: true
@@ -426,9 +418,7 @@ export const getNotifications = async (username: string, userId: number) => {
                             },
                             bookmarks: {
                                 where: {
-                                    user: {
-                                        username
-                                    }
+                                    userId
                                 },
                                 select: {
                                     userId: true
@@ -479,9 +469,7 @@ export const getNotifications = async (username: string, userId: number) => {
                     },
                     reposts: {
                         where: {
-                            user: {
-                                username
-                            }
+                            userId
                         },
                         select: {
                             userId: true
@@ -489,9 +477,7 @@ export const getNotifications = async (username: string, userId: number) => {
                     },
                     likes: {
                         where: {
-                            user: {
-                                username
-                            }
+                            userId
                         },
                         select: {
                             userId: true
@@ -499,9 +485,7 @@ export const getNotifications = async (username: string, userId: number) => {
                     },
                     bookmarks: {
                         where: {
-                            user: {
-                                username
-                            }
+                            userId
                         },
                         select: {
                             userId: true
@@ -519,7 +503,7 @@ export const getNotifications = async (username: string, userId: number) => {
         }
     });
 
-    const likes = await prisma.postNotification.findMany({
+    const likes = await prisma.notification.findMany({
         where: {
             AND: [
                 {
@@ -538,6 +522,7 @@ export const getNotifications = async (username: string, userId: number) => {
             ]
         },
         select: {
+            createdAt: true,
             post: {
                 select: {
                     id: true,
@@ -618,9 +603,7 @@ export const getNotifications = async (username: string, userId: number) => {
                     },
                     reposts: {
                         where: {
-                            user: {
-                                username
-                            }
+                            userId
                         },
                         select: {
                             userId: true
@@ -628,9 +611,7 @@ export const getNotifications = async (username: string, userId: number) => {
                     },
                     likes: {
                         where: {
-                            user: {
-                                username
-                            }
+                            userId
                         },
                         select: {
                             userId: true
@@ -638,9 +619,7 @@ export const getNotifications = async (username: string, userId: number) => {
                     },
                     bookmarks: {
                         where: {
-                            user: {
-                                username
-                            }
+                            userId
                         },
                         select: {
                             userId: true
@@ -658,7 +637,7 @@ export const getNotifications = async (username: string, userId: number) => {
         }
     });
 
-    const reposts = await prisma.postNotification.findMany({
+    const reposts = await prisma.notification.findMany({
         where: {
             AND: [
                 {
@@ -677,6 +656,7 @@ export const getNotifications = async (username: string, userId: number) => {
             ]
         },
         select: {
+            createdAt: true,
             post: {
                 select: {
                     id: true,
@@ -719,9 +699,7 @@ export const getNotifications = async (username: string, userId: number) => {
                     },
                     reposts: {
                         where: {
-                            user: {
-                                username
-                            }
+                            userId
                         },
                         select: {
                             userId: true,
@@ -730,9 +708,7 @@ export const getNotifications = async (username: string, userId: number) => {
                     },
                     likes: {
                         where: {
-                            user: {
-                                username
-                            }
+                            userId
                         },
                         select: {
                             userId: true,
@@ -740,9 +716,7 @@ export const getNotifications = async (username: string, userId: number) => {
                     },
                     bookmarks: {
                         where: {
-                            user: {
-                                username
-                            }
+                            userId
                         },
                         select: {
                             userId: true
@@ -760,7 +734,7 @@ export const getNotifications = async (username: string, userId: number) => {
         }
     });
 
-    const follows = await prisma.followNotification.findMany({
+    const follows = await prisma.notification.findMany({
         where: {
             AND: [
                 {
@@ -779,6 +753,7 @@ export const getNotifications = async (username: string, userId: number) => {
             ]
         },
         select: {
+            createdAt: true,
             notifier: {
                 select: {
                     username: true,
@@ -816,12 +791,17 @@ export const getNotifications = async (username: string, userId: number) => {
         }
     });
 
+    const mappedFollows = follows.map((follow) => {
+        return { time: new Date(follow.createdAt).getTime(), item: follow.notifier };
+    })
+    const notifications = posts.concat(replies, likes, reposts).map((post) => {
+        return { time: new Date(post.createdAt).getTime(), item: post.post };
+    });
+
+    // const postAndFollowNotifications = notifications.concat(mappedFollows).sort((a, b) => b.time - a.time);
+
     return {
-        posts,
-        replies,
-        likes,
-        reposts,
-        follows
+        notifications
     };
 };
 

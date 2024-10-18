@@ -1,5 +1,6 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { ProfileInfo, UserProps } from '../lib/types';
+import { removeNotificationsForFollow } from './notificationService';
 const prisma = new PrismaClient();
 
 // ---------------------------------------------------------------------------------------------------------
@@ -269,7 +270,7 @@ export const getUserId = async (username: string) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const addNotifications = async (userId: number, username: string) => {
+export const addPushNotifications = async (userId: number, username: string) => {
     const followee = await prisma.user.findUnique({
         where: {
             username,
@@ -291,7 +292,7 @@ export const addNotifications = async (userId: number, username: string) => {
     }
 
     try {
-        return await prisma.followerNotification.create({
+        return await prisma.pushNotification.create({
             data: {
                 receiverId: userId,
                 notifierId: followee.id
@@ -310,7 +311,7 @@ export const addNotifications = async (userId: number, username: string) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const removeNotfications = async (userId: number, username: string) => {
+export const removePushNotfications = async (userId: number, username: string) => {
     const notifier = await prisma.user.findUnique({
         where: {
             username,
@@ -324,9 +325,9 @@ export const removeNotfications = async (userId: number, username: string) => {
         throw new Error("User not found");
     }
 
-    return await prisma.followerNotification.delete({
+    return await prisma.pushNotification.delete({
         where: {
-            followerNotificationId: { receiverId: userId, notifierId: notifier.id },
+            pushNotificationId: { receiverId: userId, notifierId: notifier.id },
         }
     })
 };
@@ -346,12 +347,24 @@ export const addFollow = async (userId: number, username: string) => {
     }
 
     try {
-        return await prisma.follow.create({
+        const newFollow = await prisma.follow.create({
             data: {
                 followerId: userId,
                 followeeId: followee.id
             }
-        })
+        });
+
+        if (!newFollow) throw new Error("User not found or is already beeing followed");
+
+        await prisma.notification.create({
+            data: {
+                notifierId: userId,
+                receiverId: followee.id,
+                typeId: 4,
+            }
+        });
+
+        return true;
     } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
             if (error.code === 'P2002') {
@@ -377,13 +390,17 @@ export const removeFollow = async (followerId: number, username: string) => {
         throw new Error('User not found');
     }
 
-    await removeNotfications(followerId, username);
-
-    return await prisma.follow.delete({
+    const removed = await prisma.follow.delete({
         where: {
             followId: { followerId, followeeId }
         }
     });
+
+    if (!removed) throw new Error('Logged in user is not following the user');;
+
+    removeNotificationsForFollow(followerId, followeeId);
+
+    return true;
 };
 
 // ---------------------------------------------------------------------------------------------------------
