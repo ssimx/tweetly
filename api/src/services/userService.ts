@@ -78,6 +78,14 @@ export const getProfile = async (userId: number, username: string) => {
                     blockedId: true,
                 }
             },
+            notifying: {
+                where: {
+                    receiverId: userId,
+                },
+                select: {
+                    receiverId: true,
+                }
+            },
             _count: {
                 select: {
                     followers: true,
@@ -261,6 +269,70 @@ export const getUserId = async (username: string) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
+export const addNotifications = async (userId: number, username: string) => {
+    const followee = await prisma.user.findUnique({
+        where: {
+            username,
+        },
+        select: {
+            id: true,
+            followers: {
+                where: {
+                    followerId: userId
+                }
+            }
+        }
+    });
+
+    if (!followee) {
+        throw new Error("User not found");
+    } else if (followee.followers.length === 0) {
+        throw new Error("Logged in user doesn't follow the user");
+    }
+
+    try {
+        return await prisma.followerNotification.create({
+            data: {
+                receiverId: userId,
+                notifierId: followee.id
+            }
+        })
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === 'P2002') {
+                throw { error: 'Unique constraint violation' };
+            }
+        }
+
+        throw error;
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const removeNotfications = async (userId: number, username: string) => {
+    const notifier = await prisma.user.findUnique({
+        where: {
+            username,
+        },
+        select: {
+            id: true
+        }
+    });
+
+    if (!notifier) {
+        throw new Error("User not found");
+    }
+
+    return await prisma.followerNotification.delete({
+        where: {
+            followerNotificationId: { receiverId: userId, notifierId: notifier.id },
+        }
+    })
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
 export const addFollow = async (userId: number, username: string) => {
     const followee = await prisma.user.findUnique({
         where: { username },
@@ -304,6 +376,8 @@ export const removeFollow = async (followerId: number, username: string) => {
     if (!followeeId) {
         throw new Error('User not found');
     }
+
+    await removeNotfications(followerId, username);
 
     return await prisma.follow.delete({
         where: {

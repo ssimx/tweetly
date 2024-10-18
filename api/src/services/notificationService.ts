@@ -5,15 +5,6 @@ const prisma = new PrismaClient();
 // ---------------------------------------------------------------------------------------------------------
 
 export const createNotificationsForNewPost = async (postId: number, authorId: number) => {
-    // create a new post notification object
-    const notificationObject = await prisma.notificationObject.create({
-        data: {
-            entityId: postId,
-            entityTypeId: 1,
-            actorId: authorId,
-        }
-    });
-
     // fetch all followers who have notifications enabled for the author
     const followers = await prisma.followerNotification.findMany({
         where: {
@@ -26,13 +17,218 @@ export const createNotificationsForNewPost = async (postId: number, authorId: nu
 
     // create a notification for each follower
     const notifications = followers.map(follower => ({
-        notificationObjectId: notificationObject.id,
-        receiverId: follower.receiverId,
+        typeId: 0,
         postId: postId,
+        notifierId: authorId,
+        receiverId: follower.receiverId,
     }));
 
     return await prisma.postNotification.createMany({
         data: notifications
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const createNotificationsForNewReply = async (postId: number, authorId: number) => {
+    // fetch all followers who have notifications enabled for the author
+    const followers = await prisma.followerNotification.findMany({
+        where: {
+            notifierId: authorId,
+        },
+        select: {
+            receiverId: true,
+        }
+    });
+
+    // create a notification for each follower
+    const notifications = followers.map(follower => ({
+        typeId: 1,
+        postId: postId,
+        notifierId: authorId,
+        receiverId: follower.receiverId,
+    }));
+
+    return await prisma.postNotification.createMany({
+        data: notifications
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const createNotificationsForNewRepost = async (postId: number, authorId: number) => {
+    // fetch all followers who have notifications enabled for the author
+    const followers = await prisma.followerNotification.findMany({
+        where: {
+            notifierId: authorId,
+        },
+        select: {
+            receiverId: true,
+        }
+    });
+
+    // create a notification for each follower
+    const notifications = followers.map(follower => ({
+        typeId: 2,
+        postId: postId,
+        notifierId: authorId,
+        receiverId: follower.receiverId,
+    }));
+
+    return await prisma.postNotification.createMany({
+        data: notifications
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const createNotificationsForNewLike = async (postId: number, authorId: number) => {
+    // fetch all followers who have notifications enabled for the author
+    const followers = await prisma.followerNotification.findMany({
+        where: {
+            notifierId: authorId,
+        },
+        select: {
+            receiverId: true,
+        }
+    });
+
+    // create a notification for each follower
+    const notifications = followers.map(follower => ({
+        typeId: 3,
+        postId: postId,
+        notifierId: authorId,
+        receiverId: follower.receiverId,
+    }));
+
+    return await prisma.postNotification.createMany({
+        data: notifications
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const createNotificationsForNewFollower = async (postId: number, authorId: number) => {
+    // fetch all followers who have notifications enabled for the author
+    const followers = await prisma.followerNotification.findMany({
+        where: {
+            notifierId: authorId,
+        },
+        select: {
+            receiverId: true,
+        }
+    });
+
+    // create a notification for each follower
+    const notifications = followers.map(follower => ({
+        typeId: 4,
+        postId: postId,
+        notifierId: authorId,
+        receiverId: follower.receiverId,
+    }));
+
+    return await prisma.postNotification.createMany({
+        data: notifications
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const removeNotificationsForPost = async (postId: number, notifierId: number) => {
+    return await prisma.postNotification.deleteMany({
+        where: {
+            AND: [
+                {
+                    typeId: 0
+                },
+                {
+                    postId
+                },
+                {
+                    notifierId: notifierId
+                }
+            ]
+        }
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const removeNotificationsForReply = async (postId: number, notifierId: number) => {
+    return await prisma.postNotification.deleteMany({
+        where: {
+            AND: [
+                {
+                    typeId: 1
+                },
+                {
+                    postId
+                },
+                {
+                    notifierId: notifierId
+                }
+            ]
+        }
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const removeNotificationsForRepost = async (postId: number, notifierId: number) => {
+    return await prisma.postNotification.deleteMany({
+        where: {
+            AND: [
+                {
+                    typeId: 2
+                },
+                {
+                    postId
+                },
+                {
+                    notifierId: notifierId
+                }
+            ]
+        }
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const removeNotificationsForLike = async (postId: number, notifierId: number) => {
+    return await prisma.postNotification.deleteMany({
+        where: {
+            AND: [
+                {
+                    typeId: 3
+                },
+                {
+                    postId
+                },
+                {
+                    notifierId: notifierId
+                }
+            ]
+        }
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const removeNotificationsForFollow = async (postId: number, notifierId: number) => {
+    return await prisma.postNotification.deleteMany({
+        where: {
+            AND: [
+                {
+                    typeId: 4
+                },
+                {
+                    postId
+                },
+                {
+                    notifierId: notifierId
+                }
+            ]
+        }
     });
 };
 

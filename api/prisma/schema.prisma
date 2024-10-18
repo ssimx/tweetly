@@ -151,6 +151,7 @@ model NotificationType {
 }
 
 model PostNotification {
+    id         Int              @id @default(autoincrement())
     typeId     Int
     postId     Int
     notifierId Int
@@ -161,8 +162,6 @@ model PostNotification {
     post       Post             @relation(fields: [postId], references: [id], onDelete: Cascade)
     notifier   User             @relation("notifier", fields: [notifierId], references: [id], onDelete: Cascade)
     receiver   User             @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
-
-    @@id(name: "postNotificationId", [typeId, postId, notifierId, receiverId])
 }
 
 model FollowNotification {

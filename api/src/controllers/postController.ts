@@ -19,7 +19,7 @@ import {
     removePostLike,
     removePostRepost,
 } from '../services/postService';
-import { createNotificationsForNewPost } from '../services/notificationService';
+import { createNotificationsForNewLike, createNotificationsForNewPost, createNotificationsForNewReply, createNotificationsForNewRepost, removeNotificationsForLike, removeNotificationsForRepost } from '../services/notificationService';
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -48,7 +48,11 @@ export const newPost = async (req: Request, res: Response) => {
             }
         } else {
             // handle notifications
-            createNotificationsForNewPost(response.post.id, user.id);
+            if (postData.replyToId === undefined) {
+                createNotificationsForNewPost(response.post.id, user.id);
+            } else {
+                createNotificationsForNewReply(response.post.id, user.id);
+            }
 
             return res.status(201).json({ response });
         }
@@ -189,15 +193,21 @@ export const following30DayPosts = async (req: Request, res: Response) => {
 // ---------------------------------------------------------------------------------------------------------
 
 export const addRepost = async (req: Request, res: Response) => {
-    const { id } = req.user as UserProps;
+    const user = req.user as UserProps;
     const postId = Number(req.params.id);
 
     try {
-        const response = await addPostRepost(id, postId);
+        const response = await addPostRepost(user.id, postId);
 
         if ('error' in response) {
             return res.status(400).json({ error: 'User has already reposted the post' });
+        } else {
+            // handle notifications
+            createNotificationsForNewRepost(response.postId, user.id);
+
+            return res.status(201).json({ response });
         }
+
 
         return res.status(201).json({ response });
     } catch (error) {
@@ -209,17 +219,20 @@ export const addRepost = async (req: Request, res: Response) => {
 // ---------------------------------------------------------------------------------------------------------
 
 export const removeRepost = async (req: Request, res: Response) => {
-    const { id } = req.user as UserProps;
+    const user = req.user as UserProps;
     const postId = Number(req.params.id);
 
     try {
-        const response = await removePostRepost(id, postId);
+        const response = await removePostRepost(user.id, postId);
 
         if (!response) {
             return res.status(404).json({ message: "User has not reposted the post." });
-        }
+        } else {
+            // handle notifications
+            removeNotificationsForRepost(response.postId, user.id);
 
-        return res.status(201).json({ response });
+            return res.status(201).json({ response });
+        }
     } catch (error) {
         console.error('Error: ', error);
         return res.status(500).json({ error: 'Failed to remove repost from the post' });
@@ -229,17 +242,20 @@ export const removeRepost = async (req: Request, res: Response) => {
 // ---------------------------------------------------------------------------------------------------------
 
 export const addLike = async (req: Request, res: Response) => {
-    const { id } = req.user as UserProps;
+    const user = req.user as UserProps;
     const postId = Number(req.params.id);
 
     try {
-        const response = await addPostLike(id, postId);
+        const response = await addPostLike(user.id, postId);
 
         if ('error' in response) {
             return res.status(400).json({ error: 'User has already liked the post' });
-        }
+        } else {
+            // handle notifications
+            createNotificationsForNewLike(response.postId, user.id);
 
-        return res.status(201).json({ response });
+            return res.status(201).json({ response });
+        }
     } catch (error) {
         console.error('Error: ', error);
         return res.status(500).json({ error: 'Failed to like the post' });
@@ -249,17 +265,20 @@ export const addLike = async (req: Request, res: Response) => {
 // ---------------------------------------------------------------------------------------------------------
 
 export const removeLike = async (req: Request, res: Response) => {
-    const { id } = req.user as UserProps;
+    const user = req.user as UserProps;
     const postId = Number(req.params.id);
 
     try {
-        const response = await removePostLike(id, postId);
+        const response = await removePostLike(user.id, postId);
 
         if (!response) {
             return res.status(404).json({ message: "User has not liked the post." });
-        }
+        } else {
+            // handle notifications
+            removeNotificationsForLike(response.postId, user.id);
 
-        return res.status(201).json({ response });
+            return res.status(201).json({ response });
+        }
     } catch (error) {
         console.error('Error: ', error);
         return res.status(500).json({ error: 'Failed to remove like from the post' });

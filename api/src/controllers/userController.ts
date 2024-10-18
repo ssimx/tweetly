@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { addBlock, addFollow, getFollowers, getFollowing, getProfile, getUser, removeBlock, removeFollow, updateProfile } from '../services/userService';
+import { addBlock, addFollow, addNotifications, getFollowers, getFollowing, getProfile, getUser, removeBlock, removeFollow, removeNotfications, updateProfile } from '../services/userService';
 import { ProfileInfo, UserProps } from '../lib/types';
 import { deleteImageFromCloudinary } from './uploadController';
 
@@ -181,6 +181,45 @@ export const unblockUser = async (req: Request, res: Response) => {
         const response = await removeBlock(user.id, username);
 
         if (!response) return res.status(404).json({ error: 'User not found or not blocked' })
+
+        return res.status(201).json('success');
+    } catch (error) {
+        console.error('Error: ', error);
+        return res.status(500).json({ error: 'Failed to process the request' });
+    };
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const enableNotifications = async (req: Request, res: Response) => {
+    const username = req.params.username;
+    const user = req.user as UserProps;    
+
+    try {
+        const response = await addNotifications(user.id, username);
+
+        if (!response) return res.status(404).json({ error: 'failure' })
+
+        return res.status(201).json('success');
+    } catch (error) {
+        console.error('Error: ', error);
+        return res.status(500).json({ error: 'Failed to process the request' });
+    };
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const disableNotifications = async (req: Request, res: Response) => {
+    const username = req.params.username;
+    const user = req.user as UserProps;
+
+    console.log('disabling');
+
+
+    try {
+        const response = await removeNotfications(user.id, username);
+
+        if (!response) return res.status(404).json({ error: 'failure' })
 
         return res.status(201).json('success');
     } catch (error) {
