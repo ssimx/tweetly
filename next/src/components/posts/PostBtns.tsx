@@ -2,6 +2,8 @@
 import { Bookmark, Heart, MessageCircle, Repeat2, Share } from "lucide-react";
 import Link from "next/link";
 import { SetStateAction } from "react";
+import { socket } from "@/lib/socket";
+import { useUserContext } from "@/context/UserContextProvider";
 
 interface PostBtnsType {
     postId: number,
@@ -21,6 +23,7 @@ export default function PostBtns({
     reposted, liked, bookmarked,
     setPostIsVisible
 }: PostBtnsType) {
+    const { loggedInUser } = useUserContext();
 
     const handlePostBtnsInteraction = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>, postId: number) => {
         e.preventDefault();
@@ -60,6 +63,11 @@ export default function PostBtns({
 
                 // Call function to hide post, works only for feed on profile
                 setPostIsVisible && setPostIsVisible(false);
+
+                // Update notifications
+                if (type !== 'bookmark') {
+                    socket.emit('new_user_notification', loggedInUser.id);
+                }
             } catch (error) {
                 console.log(error);
                 // revert the styling
@@ -82,6 +90,11 @@ export default function PostBtns({
                 }
 
                 btn.dataset.status = 'true';
+
+                // Update notifications
+                if (type !== 'bookmark') {
+                    socket.emit('new_user_notification', loggedInUser.id);
+                }
             } catch (error) {
                 console.log(error);
                 // revert the styling

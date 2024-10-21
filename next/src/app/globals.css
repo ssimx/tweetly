@@ -465,6 +465,29 @@ body {
         }
     }
 
+    /* Notifications */
+
+    .notifications-post {
+        @apply w-full flex flex-row items-center gap-2 px-4 pt-3 pb-1 hover:bg-card-hover cursor-pointer;
+    }
+
+    .notifications-post-content {
+        @apply w-full grid grid-cols-post-layout grid-rows-1 gap-2;
+    }
+
+    .notification-replied-post {
+        @apply 
+            mt-2 w-full border rounded-xl p-2
+            flex flex-row items-center gap-2 hover:bg-[#0000000d] cursor-pointer;
+    }
+
+    .notifications-replied-post-content {
+        @apply w-full grid grid-cols-post-layout grid-rows-1 gap-2;
+    }
+
+    .new-notification-icon {
+    }
+
     /* Header */
 
     .header {

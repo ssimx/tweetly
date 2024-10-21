@@ -34,6 +34,9 @@ export interface UserInfo {
         profilePicture: string;
         bannerPicture: string;
     },
+    _count: {
+        notificationsReceived: number,
+    }
 };
 
 export interface ProfileInfo {

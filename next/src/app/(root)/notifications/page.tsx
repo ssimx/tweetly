@@ -1,13 +1,39 @@
+
 import { decryptSession, getToken } from "@/lib/session";
 import { redirect } from "next/navigation";
-import BookmarkedPost from "@/components/posts/BookmarkedPost";
+import NotificationPost from "@/components/notifications/NotificationPost";
+import NotificationFollow from "@/components/notifications/NotificationFollow";
 
-export interface BookmarkedPostType {
-    id: number,
-    content: string,
-    createdAt: string,
-    updatedAt: string,
-    replyTo: {
+interface NotificationType {
+    id: number;
+    type: {
+        name: string;
+        description: string;
+    };
+    isRead: boolean,
+    notifier: {
+        username: string,
+        profile: {
+            name: string,
+            profilePicture: string,
+            bio: string
+        },
+        followers: {
+            followerId: number,
+        }[] | [],
+        following: {
+            followeeId: number,
+        }[] | [],
+        _count: {
+            followers: number,
+            following: number,
+        }
+    };
+    post: {
+        id: number;
+        content: string;
+        createdAt: string;
+        updatedAt: string;
         author: {
             username: string,
             profile: {
@@ -25,49 +51,12 @@ export interface BookmarkedPostType {
                 followers: number,
                 following: number,
             }
-        }
-    } | null,
-    author: {
-        username: string,
-        profile: {
-            name: string,
-            bio: string,
-            profilePicture: string,
-        },
-        followers: {
-            followerId: number,
-        }[] | [],
-        following: {
-            followeeId: number,
-        }[] | [],
-        _count: {
-            followers: number,
-            following: number,
-        }
-    },
-    reposts: {
-        userId: number,
-    }[] | [],
-    likes: {
-        userId: number,
-    }[] | [],
-    bookmarks: {
-        userId: number,
-    }[] | [],
-    _count: {
-        replies: number,
-        reposts: number,
-        likes: number,
-    }
-};
-
-interface BookmarkedPostResponseType {
-    post: {
-        id: number,
-        content: string,
-        createdAt: string,
-        updatedAt: string,
+        };
         replyTo: {
+            id: number;
+            content: string;
+            createdAt: string;
+            updatedAt: string;
             author: {
                 username: string,
                 profile: {
@@ -85,26 +74,8 @@ interface BookmarkedPostResponseType {
                     followers: number,
                     following: number,
                 }
-            }
+            };
         } | null,
-        author: {
-            username: string,
-            profile: {
-                name: string,
-                bio: string,
-                profilePicture: string,
-            },
-            followers: {
-                followerId: number,
-            }[] | [],
-            following: {
-                followeeId: number,
-            }[] | [],
-            _count: {
-                followers: number,
-                following: number,
-            }
-        },
         reposts: {
             userId: number,
         }[] | [],
@@ -119,8 +90,72 @@ interface BookmarkedPostResponseType {
             reposts: number,
             likes: number,
         }
+    } | null;
+};
+
+export interface NotificationPostType {
+    id: number;
+    content: string;
+    createdAt: string;
+    updatedAt: string;
+    author: {
+        username: string,
+        profile: {
+            name: string,
+            profilePicture: string,
+            bio: string
+        },
+        followers: {
+            followerId: number,
+        }[] | [],
+        following: {
+            followeeId: number,
+        }[] | [],
+        _count: {
+            followers: number,
+            following: number,
+        }
+    };
+    replyTo: {
+        id: number;
+        content: string;
+        createdAt: string;
+        updatedAt: string;
+        author: {
+            username: string,
+            profile: {
+                name: string,
+                profilePicture: string,
+                bio: string
+            },
+            followers: {
+                followerId: number,
+            }[] | [],
+            following: {
+                followeeId: number,
+            }[] | [],
+            _count: {
+                followers: number,
+                following: number,
+            }
+        };
+    } | null,
+    reposts: {
+        userId: number,
+    }[] | [],
+    likes: {
+        userId: number,
+    }[] | [],
+    bookmarks: {
+        userId: number,
+    }[] | [],
+    _count: {
+        replies: number,
+        reposts: number,
+        likes: number,
     }
 };
+
 
 export default async function Notifications() {
     const token = getToken();
@@ -128,7 +163,7 @@ export default async function Notifications() {
 
     if (!payload) return redirect('/login');
 
-    const response = await fetch(`http://localhost:3000/api/posts/notifications/`, {
+    const response = await fetch(`http://localhost:3000/api/users/notifications/`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -136,17 +171,35 @@ export default async function Notifications() {
         },
         cache: 'no-store',
     });
-    const notifications = await response.json() as BookmarkedPostResponseType[];
+    const notifications = await response.json() as NotificationType[];
 
     return (
         <section className='w-full h-fit'>
             <div className='feed-hr-line'></div>
             {notifications.map((item, index) => (
                 <div key={index}>
-                    <BookmarkedPost post={item.post} />
-                    <div className='feed-hr-line'></div>
+                    {
+                        item.type.name !== 'FOLLOW'
+                            ? (
+                                <>
+                                    <NotificationPost
+                                        post={item.post as NotificationPostType}
+                                        type={item.type}
+                                        isRead={item.isRead}
+                                        notifier={item.notifier} />
+                                    <div className='feed-hr-line'></div>
+                                </>
+                            )
+                            : (
+                                <>
+                                    <NotificationFollow isRead={item.isRead} notifier={item.notifier} />
+                                    <div className='feed-hr-line'></div>
+                                </>
+                            )
+                    }
+
                 </div>
             ))}
-        </section>
+        </section >
     )
 }

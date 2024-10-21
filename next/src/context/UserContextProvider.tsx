@@ -19,7 +19,8 @@ export default function UserContextProvider({ children, userData }: { children: 
     const [loggedInUser, setLoggedInUser] = useState<UserInfo>(userData);
 
     return (
-        <UserContext.Provider value={{ loggedInUser, setLoggedInUser }}>
+        <UserContext.Provider 
+            value={{ loggedInUser, setLoggedInUser }}>
             {children}
         </UserContext.Provider>
     )

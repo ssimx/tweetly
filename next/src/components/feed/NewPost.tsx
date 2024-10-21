@@ -58,8 +58,15 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
 
             const postData = await response.json() as Post;
 
-            socket.emit('new_global_post');
-            socket.emit('new_following_post', postData.authorId)
+            // update feed only if it's not a reply
+            if (postData.replyToId === null) {
+                socket.emit('new_global_post');
+                socket.emit('new_following_post', postData.authorId)
+            }
+            
+            // send notification to users
+            socket.emit('new_user_notification', postData.authorId);
+
             router.push(`/${loggedInUser.username}/status/${postData.id}`);
         } catch (error) {
             console.error(error);

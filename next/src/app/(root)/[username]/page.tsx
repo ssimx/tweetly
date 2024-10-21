@@ -28,7 +28,7 @@ export default async function Profile({ params }: { params: { username: string }
                         src={user.profile.profilePicture}
                         alt='User profile picture'
                         height={100} width={100}
-                        className='absolute bottom-0 left-5 translate-y-[50%] rounded-full' />
+                        className='h-[100px] w-[100px] absolute bottom-0 left-5 translate-y-[50%] rounded-full border-[#ffffff] border-4' />
                     {user.profile.bannerPicture
                         ? <Image
                             src={user.profile.bannerPicture}

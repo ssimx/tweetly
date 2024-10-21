@@ -11,21 +11,21 @@ export default async function RootTemplate({ children }: Readonly<{ children: Re
 
     return (
         <UserContextProvider userData={userData}>
-            <main className="w-screen h-auto">
-                <div className="root-phone xs:root-desktop">
-                    <div className='left-sidebar-wrapper'>
-                        <LeftSidebar />
-                    </div>
-                    <div className='main-content'>
-                        <div className='border-x h-full'>
-                            <TemplateHeader />
-                            {children}
+                <main className="w-screen h-auto">
+                    <div className="root-phone xs:root-desktop">
+                        <div className='left-sidebar-wrapper'>
+                            <LeftSidebar />
                         </div>
-                        <div className="right-sidebar">right sidebar</div>
+                        <div className='main-content'>
+                            <div className='border-x h-full'>
+                                <TemplateHeader />
+                                {children}
+                            </div>
+                            <div className="right-sidebar">right sidebar</div>
+                        </div>
+                        <PhoneBottomNav />
                     </div>
-                    <PhoneBottomNav />
-                </div>
-            </main>
+                </main>
         </UserContextProvider>
     )
 }

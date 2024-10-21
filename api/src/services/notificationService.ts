@@ -237,27 +237,59 @@ export const removeNotificationsForFollow = async (postId: number, notifierId: n
 export const getNotifications = async (userId: number) => {
     let date = new Date();
     date.setDate(date.getDate() - 30);
-
-    const posts = await prisma.notification.findMany({
+    return await prisma.notification.findMany({
         where: {
-            AND: [
-                {
-                    receiverId: userId
-                },
-                {
-                    type: {
-                        name: 'POST'
-                    }
-                },
-                {
-                    createdAt: {
-                        gte: date
-                    }
-                }
-            ]
+            receiverId: userId,
+            createdAt: {
+                gte: date,
+            }
+        },
+        orderBy: {
+            createdAt: 'desc'
         },
         select: {
-            createdAt: true,
+            id: true,
+            type: {
+                select: {
+                    name: true,
+                    description: true,
+                },
+            },
+            isRead: true,
+            notifier: {
+                select: {
+                    username: true,
+                    profile: {
+                        select: {
+                            name: true,
+                            bio: true,
+                            profilePicture: true,
+                        }
+                    },
+                    followers: {
+                        where: {
+                            followerId: userId
+                        },
+                        select: {
+                            followerId: true
+                        }
+                    },
+                    following: {
+                        where: {
+                            followeeId: userId,
+                        },
+                        select: {
+                            followeeId: true,
+                        }
+                    },
+                    _count: {
+                        select: {
+                            followers: true,
+                            following: true,
+                        }
+                    }
+                }
+            },
             post: {
                 select: {
                     id: true,
@@ -298,68 +330,6 @@ export const getNotifications = async (userId: number) => {
                             }
                         }
                     },
-                    reposts: {
-                        where: {
-                            userId
-                        },
-                        select: {
-                            userId: true
-                        }
-                    },
-                    likes: {
-                        where: {
-                            userId
-                        },
-                        select: {
-                            userId: true
-                        }
-                    },
-                    bookmarks: {
-                        where: {
-                            userId
-                        },
-                        select: {
-                            userId: true
-                        }
-                    },
-                    _count: {
-                        select: {
-                            replies: true,
-                            reposts: true,
-                            likes: true,
-                        }
-                    }
-                }
-            }
-        }
-    });
-
-    const replies = await prisma.notification.findMany({
-        where: {
-            AND: [
-                {
-                    receiverId: userId
-                },
-                {
-                    type: {
-                        name: 'REPLY'
-                    }
-                },
-                {
-                    createdAt: {
-                        gte: date
-                    }
-                }
-            ]
-        },
-        select: {
-            createdAt: true,
-            post: {
-                select: {
-                    id: true,
-                    content: true,
-                    createdAt: true,
-                    updatedAt: true,
                     replyTo: {
                         select: {
                             id: true,
@@ -400,71 +370,6 @@ export const getNotifications = async (userId: number) => {
                                     }
                                 }
                             },
-                            reposts: {
-                                where: {
-                                    userId
-                                },
-                                select: {
-                                    userId: true
-                                }
-                            },
-                            likes: {
-                                where: {
-                                    userId
-                                },
-                                select: {
-                                    userId: true
-                                }
-                            },
-                            bookmarks: {
-                                where: {
-                                    userId
-                                },
-                                select: {
-                                    userId: true
-                                }
-                            },
-                            _count: {
-                                select: {
-                                    replies: true,
-                                    reposts: true,
-                                    likes: true
-                                }
-                            }
-                        }
-                    },
-                    author: {
-                        select: {
-                            username: true,
-                            profile: {
-                                select: {
-                                    name: true,
-                                    bio: true,
-                                    profilePicture: true,
-                                }
-                            },
-                            followers: {
-                                where: {
-                                    followerId: userId
-                                },
-                                select: {
-                                    followerId: true
-                                }
-                            },
-                            following: {
-                                where: {
-                                    followeeId: userId,
-                                },
-                                select: {
-                                    followeeId: true,
-                                }
-                            },
-                            _count: {
-                                select: {
-                                    followers: true,
-                                    following: true,
-                                }
-                            }
                         }
                     },
                     reposts: {
@@ -502,307 +407,31 @@ export const getNotifications = async (userId: number) => {
             }
         }
     });
-
-    const likes = await prisma.notification.findMany({
-        where: {
-            AND: [
-                {
-                    receiverId: userId
-                },
-                {
-                    type: {
-                        name: 'LIKE'
-                    }
-                },
-                {
-                    createdAt: {
-                        gte: date
-                    }
-                }
-            ]
-        },
-        select: {
-            createdAt: true,
-            post: {
-                select: {
-                    id: true,
-                    content: true,
-                    createdAt: true,
-                    updatedAt: true,
-                    replyTo: {
-                        select: {
-                            author: {
-                                select: {
-                                    username: true,
-                                    profile: {
-                                        select: {
-                                            name: true,
-                                            profilePicture: true,
-                                            bio: true
-                                        }
-                                    },
-                                    followers: {
-                                        where: {
-                                            followerId: userId
-                                        },
-                                        select: {
-                                            followerId: true
-                                        }
-                                    },
-                                    following: {
-                                        where: {
-                                            followeeId: userId,
-                                        },
-                                        select: {
-                                            followeeId: true,
-                                        }
-                                    },
-                                    _count: {
-                                        select: {
-                                            followers: true,
-                                            following: true,
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    author: {
-                        select: {
-                            username: true,
-                            profile: {
-                                select: {
-                                    name: true,
-                                    bio: true,
-                                    profilePicture: true,
-                                }
-                            },
-                            followers: {
-                                where: {
-                                    followerId: userId
-                                },
-                                select: {
-                                    followerId: true
-                                }
-                            },
-                            following: {
-                                where: {
-                                    followeeId: userId,
-                                },
-                                select: {
-                                    followeeId: true,
-                                }
-                            },
-                            _count: {
-                                select: {
-                                    followers: true,
-                                    following: true,
-                                }
-                            }
-                        }
-                    },
-                    reposts: {
-                        where: {
-                            userId
-                        },
-                        select: {
-                            userId: true
-                        }
-                    },
-                    likes: {
-                        where: {
-                            userId
-                        },
-                        select: {
-                            userId: true
-                        }
-                    },
-                    bookmarks: {
-                        where: {
-                            userId
-                        },
-                        select: {
-                            userId: true
-                        }
-                    },
-                    _count: {
-                        select: {
-                            replies: true,
-                            reposts: true,
-                            likes: true,
-                        }
-                    }
-                }
-            }
-        }
-    });
-
-    const reposts = await prisma.notification.findMany({
-        where: {
-            AND: [
-                {
-                    receiverId: userId
-                },
-                {
-                    type: {
-                        name: 'REPOST'
-                    }
-                },
-                {
-                    createdAt: {
-                        gte: date
-                    }
-                }
-            ]
-        },
-        select: {
-            createdAt: true,
-            post: {
-                select: {
-                    id: true,
-                    content: true,
-                    createdAt: true,
-                    updatedAt: true,
-                    author: {
-                        select: {
-                            username: true,
-                            profile: {
-                                select: {
-                                    name: true,
-                                    bio: true,
-                                    profilePicture: true,
-                                }
-                            },
-                            followers: {
-                                where: {
-                                    followerId: userId
-                                },
-                                select: {
-                                    followerId: true
-                                }
-                            },
-                            following: {
-                                where: {
-                                    followeeId: userId,
-                                },
-                                select: {
-                                    followeeId: true,
-                                }
-                            },
-                            _count: {
-                                select: {
-                                    followers: true,
-                                    following: true,
-                                }
-                            }
-                        }
-                    },
-                    reposts: {
-                        where: {
-                            userId
-                        },
-                        select: {
-                            userId: true,
-                            createdAt: true,
-                        }
-                    },
-                    likes: {
-                        where: {
-                            userId
-                        },
-                        select: {
-                            userId: true,
-                        }
-                    },
-                    bookmarks: {
-                        where: {
-                            userId
-                        },
-                        select: {
-                            userId: true
-                        }
-                    },
-                    _count: {
-                        select: {
-                            replies: true,
-                            reposts: true,
-                            likes: true,
-                        }
-                    }
-                }
-            }
-        }
-    });
-
-    const follows = await prisma.notification.findMany({
-        where: {
-            AND: [
-                {
-                    receiverId: userId
-                },
-                {
-                    type: {
-                        name: 'FOLLOW'
-                    }
-                },
-                {
-                    createdAt: {
-                        gte: date
-                    }
-                }
-            ]
-        },
-        select: {
-            createdAt: true,
-            notifier: {
-                select: {
-                    username: true,
-                    profile: {
-                        select: {
-                            name: true,
-                            bio: true,
-                            profilePicture: true,
-                        }
-                    },
-                    followers: {
-                        where: {
-                            followerId: userId
-                        },
-                        select: {
-                            followerId: true
-                        }
-                    },
-                    following: {
-                        where: {
-                            followeeId: userId,
-                        },
-                        select: {
-                            followeeId: true,
-                        }
-                    },
-                    _count: {
-                        select: {
-                            followers: true,
-                            following: true,
-                        }
-                    }
-                }
-            }
-        }
-    });
-
-    const mappedFollows = follows.map((follow) => {
-        return { time: new Date(follow.createdAt).getTime(), item: follow.notifier };
-    })
-    const notifications = posts.concat(replies, likes, reposts).map((post) => {
-        return { time: new Date(post.createdAt).getTime(), item: post.post };
-    });
-
-    // const postAndFollowNotifications = notifications.concat(mappedFollows).sort((a, b) => b.time - a.time);
-
-    return {
-        notifications
-    };
 };
 
 // ---------------------------------------------------------------------------------------------------------
+
+export const updateNotificationsToRead = async (userId: number) => {
+    return await prisma.notification.updateMany({
+        where: {
+            receiverId: userId,
+        },
+        data: {
+            isRead: true,
+        }
+    })
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getNotificationsReadStatus = async (userId: number) => {
+    return await prisma.notification.findFirst({
+        where: {
+            receiverId: userId,
+            isRead: false
+        },
+        select: {
+            id: true,
+        }
+    })
+};

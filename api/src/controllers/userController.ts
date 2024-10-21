@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { addBlock, addFollow, addPushNotifications, getFollowers, getFollowing, getProfile, getUser, removeBlock, removeFollow, removePushNotfications, updateProfile } from '../services/userService';
 import { ProfileInfo, UserProps } from '../lib/types';
 import { deleteImageFromCloudinary } from './uploadController';
-import { getNotifications } from '../services/notificationService';
+import { getNotifications, updateNotificationsToRead } from '../services/notificationService';
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -235,6 +235,8 @@ export const getUserNotifications = async (req: Request, res: Response) => {
         const notifications = await getNotifications(user.id);
 
         if (!notifications) return res.status(404).json({ error: 'User does not exist' });
+
+        await updateNotificationsToRead(user.id);
 
         return res.status(201).json({ notifications });
     } catch (error) {

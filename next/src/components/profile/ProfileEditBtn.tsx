@@ -67,9 +67,6 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
                     data.bannerPicture = '';
                 } // if its null, skip it because it hasn't changed
 
-                console.log(data.bannerPicture);
-
-
                 if (profilePicture) {
                     profilePictureData = new FormData();
                     profilePictureData.append('file', profilePicture);

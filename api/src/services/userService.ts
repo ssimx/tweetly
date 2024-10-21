@@ -22,6 +22,15 @@ export const getUser = async (id: number) => {
                     profilePicture: true,
                     bannerPicture: true,
                 }
+            },
+            _count: {
+                select: {
+                    notificationsReceived: {
+                        where: {
+                            isRead: false
+                        }
+                    }
+                }
             }
         }
     });
