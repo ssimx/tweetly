@@ -95,7 +95,7 @@ export default function UserHoverCard({
                                 src={author.profilePicture}
                                 alt='User profile picture'
                                 width={60} height={60}
-                                className='rounded-full group-hover:outline group-hover:outline-primary/10' />
+                                className='w-[60px] h-[60px] rounded-full group-hover:outline group-hover:outline-primary/10' />
                         </Link>
 
                         <div>

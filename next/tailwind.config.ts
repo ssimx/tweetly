@@ -1,3 +1,4 @@
+import { Input } from '@/components/ui/input';
 import type { Config } from "tailwindcss";
 
 const config: Config = {
@@ -16,7 +17,13 @@ const config: Config = {
             screens: {
                 'xs': '500px',
             },
+            height: {
+                'header': 'var(--header-size)'
+            },
             gridTemplateRows: {
+                // main content
+                'main-content': 'auto 1fr',
+
                 // 3 row grid
                 'root-phone-layout': '10% 1fr 6%',
 
@@ -28,6 +35,11 @@ const config: Config = {
 
                 'profile-info': '135px auto auto',
 
+                // conversation messages + input
+                'conversation-content': '1fr auto',
+
+                // conversation user + messages
+                'conversation-messages': 'auto 1fr'
             },
             gridTemplateColumns: {
                 'post': '10% auto',

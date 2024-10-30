@@ -58,7 +58,7 @@ export const updateProfileInfo = async (req: Request, res: Response) => {
         };
 
     console.log(data, bannerPicturePublicId, profilePicturePublicId);
-    
+
     try {
         const response = await updateProfile(user.id, data);
 
@@ -194,7 +194,7 @@ export const unblockUser = async (req: Request, res: Response) => {
 
 export const enablePushNotifications = async (req: Request, res: Response) => {
     const username = req.params.username;
-    const user = req.user as UserProps;    
+    const user = req.user as UserProps;
 
     try {
         const response = await addPushNotifications(user.id, username);
@@ -234,13 +234,13 @@ export const getUserNotifications = async (req: Request, res: Response) => {
     try {
         const notifications = await getNotifications(user.id);
 
-        if (!notifications) return res.status(404).json({ error: 'User does not exist' });
+        if (!notifications) return res.status(404).json({ error: 'User has no notifications' });
 
         await updateNotificationsToRead(user.id);
 
         return res.status(201).json({ notifications });
     } catch (error) {
-        console.error('Error getting profile: ', error);
+        console.error('Error getting notifications: ', error);
         return res.status(500).json({ error: 'Failed to process the request' });
     }
 };

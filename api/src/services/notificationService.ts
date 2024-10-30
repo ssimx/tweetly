@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import { UserProps } from '../lib/types';
 const prisma = new PrismaClient();
 
 // ---------------------------------------------------------------------------------------------------------

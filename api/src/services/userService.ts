@@ -96,6 +96,24 @@ export const getProfile = async (userId: number, username: string) => {
                     receiverId: true,
                 }
             },
+            conversationsParticipant: {
+                where: {
+                    conversation: {
+                        participants: {
+                            some: {
+                                userId: userId,
+                            }
+                        }
+                    }
+                },
+                select: {
+                    conversation: {
+                        select: {
+                            id: true,
+                        }
+                    }
+                }
+            },
             _count: {
                 select: {
                     followers: true,
@@ -273,6 +291,9 @@ export const getUserId = async (username: string) => {
     return await prisma.user.findUnique({
         where: {
             username: username,
+        },
+        select: {
+            id: true
         }
     })
 };

@@ -5,13 +5,15 @@ export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
 };
 
-export function formatPostDate(date: string) {
+export function formatPostDate(date: string | number) {
     const postDate = new Date(date);
     const now = new Date();
     const hoursDiff = Math.abs(now.getTime() - postDate.getTime()) / (1000 * 60 * 60);
 
     if (hoursDiff < 1) {
-        return `${Math.floor(Math.abs(now.getTime() - postDate.getTime()) / (1000 * 60))} min`
+        const min = Math.floor(Math.abs(now.getTime() - postDate.getTime()) / (1000 * 60));
+        if (min === 0) return 'now';
+        return `${min}m`
     }
     if (hoursDiff < 24) {
         return `${Math.floor(hoursDiff)}h`;

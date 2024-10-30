@@ -1,3 +1,4 @@
+import { Conversation } from './../../../api/node_modules/.prisma/client/index.d';
 export interface JwtPayload {
     id: string,
     email: string,
@@ -64,6 +65,11 @@ export interface ProfileInfo {
     }[] | [],
     notifying: {
         receivedId: number,
+    }[] | [],
+    conversationsParticipant: {
+        conversation: {
+            id: string,
+        }
     }[] | [],
     _count: {
         followers: number,

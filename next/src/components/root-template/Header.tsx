@@ -5,6 +5,9 @@ import { ArrowLeft } from 'lucide-react';
 export default function TemplateHeader() {
     const path = usePathname();
     const router = useRouter();
+
+    // don't include in messages, has it's own implementation
+    if (/^\/messages\/.+/.test(path)) return <></>;
     
     if (path === '/') {
         return (
@@ -28,7 +31,7 @@ export default function TemplateHeader() {
     
 
     return (
-        <div className='h-fit flex items-center gap-6 px-2 pt-4 pb-2'>
+        <div className='h-header flex items-center gap-6 px-2'>
             <button onClick={handleBackClick}>
                 <ArrowLeft size={22} />
             </button>

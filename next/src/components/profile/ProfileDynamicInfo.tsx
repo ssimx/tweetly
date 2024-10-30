@@ -1,5 +1,4 @@
 'use client';
-
 import { ProfileInfo } from "@/lib/types";
 import { CalendarDays } from "lucide-react";
 import { useState } from "react";
@@ -10,7 +9,6 @@ import ProfileMenuBtn from "./ProfileMenuBtn";
 import ProfileContent from "./ProfileContent";
 import Link from "next/link";
 import ProfileMessageBtn from "./ProfileMessageBtn";
-
 
 export default function ProfileDynamicInfo({ user, loggedInUser }: { user: ProfileInfo, loggedInUser: boolean }) {
     // state for updating followers count when logged in user follows / blocks the profile
@@ -58,7 +56,7 @@ export default function ProfileDynamicInfo({ user, loggedInUser }: { user: Profi
                             setFollowingCount={setFollowingCount}
                              />
                         {!hasBlockedTheUser && !isBlockedByTheUser && isFollowedByTheUser && (
-                            <ProfileMessageBtn username={user.username} />
+                            <ProfileMessageBtn profileUser={user.username} conversationId={user.conversationsParticipant.length === 1 ? user.conversationsParticipant[0].conversation.id : undefined} />
                         )}
 
                         {!hasBlockedTheUser && !isBlockedByTheUser && isFollowedByTheUser && (

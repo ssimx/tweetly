@@ -91,7 +91,7 @@ export default function NewPostModal() {
                     <form onSubmit={handleSubmit(onSubmitModalPost)} id='modalPostForm' className='pr-4'>
                         <TextareaAutosize
                             maxLength={maxChars}
-                            className='h-[200px] sm:h-[175px] w-full focus:outline-none text-xl resize-none mt-2'
+                            className='h-[28px] w-full focus:outline-none text-xl resize-none mt-2'
                             placeholder='What is happening?!'
                             {...register("text", {
                                 onChange: (e) => handleTextChange(e),

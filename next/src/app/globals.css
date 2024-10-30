@@ -36,8 +36,8 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-    width: 3px;
-    height: 3px;
+    width: 5px;
+    height: 5px;
     border-radius: 2px;
 }
 
@@ -46,12 +46,79 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #5c5c7b;
+    background: #b1b1b1;
     border-radius: 50px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #7878a3;
+    background: #8f8f8f;
+}
+
+.unread-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #afafaf;
+    font-size: 14px;
+    font-weight: normal;
+    position: relative;
+    text-align: center;
+}
+
+.unread-message::before,
+.unread-message::after {
+    content: '';
+    flex-grow: 1;
+    height: 1px;
+    background-color: #afafaf;
+    margin: 0 8px;
+}
+
+.typing {
+    width: 5em;
+    height: 2em;
+    position: relative;
+    padding: 4px;
+    margin-left: 5px;
+    background: #e6e6e6;
+    border-radius: 20px;
+}
+
+.typing__dot {
+    float: left;
+    width: 4px;
+    height: 4px;
+    margin: 0 4px;
+    background: #8d8c91;
+    border-radius: 50%;
+    opacity: 0;
+    animation: loadingFade 1s infinite;
+}
+
+.typing__dot:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.typing__dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing__dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes loadingFade {
+    0% {
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+
+    100% {
+        opacity: 0;
+    }
 }
 
 @layer utilities {
@@ -415,7 +482,7 @@ body {
     }
 
     .message-btn {
-        @apply w-fit hover:bg-dark-300 text-white-1 border border-border font-bold rounded-full p-2;
+        @apply w-fit cursor-pointer hover:bg-dark-300 text-white-1 border border-border font-bold rounded-full p-2;
     }
 
     .profile-menu {
@@ -485,7 +552,27 @@ body {
         @apply w-full grid grid-cols-post-layout grid-rows-1 gap-2;
     }
 
-    .new-notification-icon {
+    /* Conversations */
+
+    .message-content-overflow {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+
+        @supports (-webkit-line-clamp: 1) {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: initial;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+        }
+    }
+
+    /* Conversation content */
+
+    .msg-input-container-expanded {
+        @apply h-[400px];
     }
 
     /* Header */
@@ -522,6 +609,7 @@ body {
         --chart-4: 43 74% 66%;
         --chart-5: 27 87% 67%;
         --radius: 0.5rem;
+        --header-size: 60px;
     }
   .dark {
         --background: 212 29% 13%;

@@ -15,29 +15,30 @@ datasource db {
 }
 
 model User {
-    id                    Int                    @id @default(autoincrement())
-    createdAt             DateTime               @default(now())
-    updatedAt             DateTime               @updatedAt
-    username              String                 @unique @db.VarChar(15)
-    email                 String                 @unique @db.VarChar(254)
-    password              String
-    dateOfBirth           DateTime               @db.Date()
-    role                  UserRole               @default(USER)
-    profile               Profile?
-    posts                 Post[]
-    likedPosts            PostLike[]
-    repostedPosts         PostRepost[]
-    bookmarkedPosts       PostBookmark[]
-    followers             Follow[]               @relation("followee")
-    following             Follow[]               @relation("follower")
-    messagesReceived      Message[]              @relation("receiver")
-    messagesSent          Message[]              @relation("messeger")
-    blockedBy             Block[]                @relation("blocked")
-    blockedUsers          Block[]                @relation("blocker")
-    notifiers             PushNotification[] @relation("receiver")
-    notifying             PushNotification[] @relation("notifier")
-    notificationsCreated  Notification[]         @relation("notifier")
-    notificationsReceived Notification[]         @relation("receiver")
+    id                       Int                       @id @default(autoincrement())
+    createdAt                DateTime                  @default(now())
+    updatedAt                DateTime                  @updatedAt
+    username                 String                    @unique @db.VarChar(15)
+    email                    String                    @unique @db.VarChar(254)
+    password                 String
+    dateOfBirth              DateTime                  @db.Date()
+    role                     UserRole                  @default(USER)
+    profile                  Profile?
+    posts                    Post[]
+    likedPosts               PostLike[]
+    repostedPosts            PostRepost[]
+    bookmarkedPosts          PostBookmark[]
+    followers                Follow[]                  @relation("followee")
+    following                Follow[]                  @relation("follower")
+    messagesReceived         Message[]                 @relation("receiver")
+    messagesSent             Message[]                 @relation("sender")
+    blockedBy                Block[]                   @relation("blocked")
+    blockedUsers             Block[]                   @relation("blocker")
+    notifiers                PushNotification[]        @relation("receiver")
+    notifying                PushNotification[]        @relation("notifier")
+    notificationsCreated     Notification[]            @relation("notifier")
+    notificationsReceived    Notification[]            @relation("receiver")
+    conversationsParticipant ConversationParticipant[]
 }
 
 model Profile {
@@ -110,14 +111,37 @@ model Follow {
     @@id(name: "followId", [followerId, followeeId])
 }
 
+model Conversation {
+    id           String                    @id @default(uuid())
+    createdAt    DateTime                  @default(now())
+    updatedAt    DateTime                  @updatedAt
+    participants ConversationParticipant[]
+    messages     Message[]
+}
+
+model ConversationParticipant {
+    id             Int          @id @default(autoincrement())
+    conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+    conversationId String
+    user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId         Int
+    isDeleted      Boolean      @default(false) // Tracks if the participant "deleted" the conversation on their end
+
+    @@unique([conversationId, userId])
+}
+
 model Message {
-    id         Int      @id @default(autoincrement())
-    content    String   @db.VarChar(10000)
-    createdAt  DateTime @default(now())
-    author     User     @relation("messeger", fields: [authorId], references: [id], onDelete: Cascade)
-    authorId   Int
-    receiver   User     @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
-    receiverId Int
+    id             String       @id @default(uuid())
+    content        String       @db.VarChar(10000)
+    createdAt      DateTime     @default(now())
+    updatedAt      DateTime     @default(now())
+    readStatus     Boolean      @default(false)
+    sender         User         @relation("sender", fields: [senderId], references: [id], onDelete: Cascade)
+    senderId       Int
+    receiver       User         @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+    receiverId     Int
+    conversation   Conversation @relation(fields: [conversationId], references: [id])
+    conversationId String
 }
 
 model Block {
