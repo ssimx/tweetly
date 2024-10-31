@@ -134,7 +134,6 @@ export default async function Bookmarks() {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
         },
-        cache: 'no-store',
     });
     const bookmarks = await response.json() as BookmarkedPostResponseType[];
 

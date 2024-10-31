@@ -13,7 +13,6 @@ import { useRef, useEffect } from "react";
 
 export default function SearchInput({ conversations }: { conversations: ConversationLastMessageType[] }) {
     const commandEmptyRef = useRef<HTMLDivElement>(null);
-    console.log(conversations);
 
     useEffect(() => {
         // there are issues with CommandEmpty being visible on component mount for quick second

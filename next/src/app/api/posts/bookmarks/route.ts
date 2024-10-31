@@ -1,6 +1,8 @@
 import { extractToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
         const authHeader = req.headers.get('Authorization');
@@ -23,7 +25,7 @@ export async function GET(req: NextRequest) {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,
-                }
+                },
             });
 
             if (response.ok) {

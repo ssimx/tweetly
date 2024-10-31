@@ -10,8 +10,43 @@ import { useUserContext } from '@/context/UserContextProvider';
 import { socket } from '@/lib/socket';
 
 export default function LeftSidebar() {
-    const [newNotification, setNewNotification] = useState(false);
+    const [notifications, setNotifications] = useState(false);
+    const [messages, setMessages] = useState(false);
     const { loggedInUser } = useUserContext();
+
+    useEffect(() => {
+        const onNewNotification = () => {
+            setNotifications(true);
+        };
+
+        const onNewMessages = () => {
+            setMessages(true);
+        };
+
+        const initializeNotificationsStatus = (status: boolean) => {
+            setNotifications(status);
+        };
+
+        const initializeMessagesStatus = (status: boolean) => {
+            setMessages(status);
+        };
+
+        socket.on('notification_read_status', (status) => {
+            initializeNotificationsStatus(status);
+        });
+        socket.on('message_read_status', (status) => {
+            initializeMessagesStatus(status);
+        });
+        socket.on('new_notification', onNewNotification);
+        socket.on('new_message', onNewMessages);
+
+        return () => {
+            socket.off('notification_read_status', initializeNotificationsStatus);
+            socket.off('message_read_status', initializeNotificationsStatus);
+            socket.off('new_notification', onNewNotification);
+            socket.off('new_message', onNewMessages);
+        };
+    }), [];
 
     useEffect(() => {
         socket.connect();
@@ -23,31 +58,6 @@ export default function LeftSidebar() {
             socket.disconnect();
         };
     }, [loggedInUser]);
-
-    useEffect(() => {
-        const onNewNotification = () => {
-            setNewNotification(true);
-        };
-
-        const onNewMessages = () => {
-        };
-
-        const initializeNotificationsStatus = (status: boolean) => {
-            setNewNotification(status);
-        };
-
-        socket.on('notification_read_status', (status) => {
-            initializeNotificationsStatus(status);
-        })
-        socket.on('new_notification', onNewNotification);
-        socket.on('new_message', onNewMessages);
-
-        return () => {
-            socket.off('notification_read_status', initializeNotificationsStatus)
-            socket.off('new_notification', onNewNotification);
-            socket.off('new_message', onNewMessages);
-        };
-    }), [];
     
     return (
         <nav className='left-sidebar'>
@@ -59,7 +69,8 @@ export default function LeftSidebar() {
                     <LeftSidebarLink 
                         key={index} 
                         link={link}
-                        newNotification={newNotification} />
+                        messages={messages}
+                        notifications={notifications} />
                 ))}
             </div>
 

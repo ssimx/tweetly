@@ -224,6 +224,7 @@ export const createMessage = async (senderId: number, receiverId: number, conten
             id: true,
             content: true,
             createdAt: true,
+            receiverId: true,
         }
     });
 };

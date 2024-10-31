@@ -92,7 +92,12 @@ export default function ConversationInput({ conversationId, setAllMessagesOrdere
                 throw new Error(errorData.error);
             }
 
-            const confirmedMessage = await response.json();
+            const confirmedMessage = await response.json() as {
+                id: string,
+                content: string,
+                createdAt: string,
+                receiverId: number,
+            };
 
             // Update the message status and id from temporary to confirmed
             setAllMessagesOrdered((prevMessages) => {
@@ -110,6 +115,7 @@ export default function ConversationInput({ conversationId, setAllMessagesOrdere
             // emit new message to the receiver
             stopTyping();
             socket.emit('new_conversation_message', conversationId, confirmedMessage);
+            socket.emit('new_user_message', confirmedMessage.receiverId);
         } catch (error) {
             // Update the message to "failed" if there was an error
             setAllMessagesOrdered((prevMessages) => {

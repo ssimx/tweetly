@@ -39,7 +39,6 @@ export default async function Messages() {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
         },
-        cache: 'no-store',
     });
     const conversations = await response.json() as ConversationLastMessageType[];
 

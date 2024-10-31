@@ -1,7 +1,7 @@
 import { Server } from 'socket.io';
 import { PrismaClient } from "@prisma/client";
 import { Server as HttpServer } from 'http';
-import { getNotifications, getNotificationsReadStatus } from '../services/notificationService';
+import { getMessagesReadStatus, getNotifications, getNotificationsReadStatus } from '../services/notificationService';
 import { updateMessageReadStatus } from '../services/conversationService';
 
 const prisma = new PrismaClient();
@@ -10,7 +10,9 @@ interface ServerToClientEvents {
     new_following_post: () => void;
     new_global_post: () => void;
     new_notification: () => void;
+    new_message: () => void;
     notification_read_status: (status: boolean) => void;
+    message_read_status: (status: boolean) => void;
     message_received: (message: { content: string, createdAt: Date, username: string }) => void;
     message_typing_status: (status: boolean) => void;
     message_seen: (messageId?: string) => void;
@@ -21,6 +23,7 @@ interface ClientToServerEvents {
     get_notifications: (userId: number) => void;
     new_following_post: (authorId: number) => void;
     new_user_notification: (userId: number) => void;
+    new_user_message: (userId: number) => void;
     new_global_post: () => void;
     join_conversation_room: (conversationId: string) => void;
     new_conversation_message: (conversationId: string, message: { content: string, createdAt: Date, username: string }) => void;
@@ -97,10 +100,13 @@ const socketConnection = (server: HttpServer) => {
 
             // Store the user's followers in the socket session
             socket.join(pushNotificationUsers.map((user) => `user_${user.id}`));
+            socket.join(`user_${userId}_messages`);
 
             const notificationsReadStatus = await getNotificationsReadStatus(userId);
+            const messagesReadStatus = await getMessagesReadStatus(userId);
             
             socket.emit('notification_read_status', notificationsReadStatus !== null);
+            socket.emit('message_read_status', messagesReadStatus !== null);
         });
 
         socket.on('new_following_post', (authorId) => {
@@ -126,7 +132,7 @@ const socketConnection = (server: HttpServer) => {
 
         socket.on('new_conversation_message', async (conversationId, message) => {
             socket.to(`${conversationId}`).emit('message_received', message);
-        }
+            }
         );
 
         socket.on('conversation_seen_status', async (conversationId, messageId) => {
@@ -134,6 +140,11 @@ const socketConnection = (server: HttpServer) => {
             if (messageId) updateMessageReadStatus(conversationId, messageId)
             socket.to(`${conversationId}`).emit('message_seen', messageId);
         });
+
+        socket.on('new_user_message', async (receiverId) => {
+            socket.to(`user_${receiverId}_messages`).emit('new_message');
+            }
+        );
 
         socket.on('disconnect', () => {
             console.log('user disconnected');
