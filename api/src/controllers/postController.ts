@@ -9,6 +9,8 @@ import {
     getFollowing30DayPosts,
     getGlobal30DayPosts,
     getLikes,
+    getOldestFollowing30DayPost,
+    getOldestGlobal30DayPost,
     getPostInfo,
     getPostReplies,
     getPosts,
@@ -59,6 +61,84 @@ export const newPost = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Error saving post data: ', error);
         return res.status(500).json({ error: 'Failed to process the data' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const global30DayPosts = async (req: Request, res: Response) => {
+    const user = req.user as UserProps;
+    const cursor = Number(req.query.cursor);
+
+    try {
+        if (cursor) {
+            const oldestGlobalPost = await getOldestGlobal30DayPost().then(res => res[0].id);
+            if (oldestGlobalPost) {
+                if (cursor === oldestGlobalPost) {
+                    return res.status(200).json({
+                        olderGlobalPosts: [],
+                        end: true
+                    });
+                }
+            }
+
+            const olderGlobalPosts = await getGlobal30DayPosts(user.id, Number(cursor));
+            if (!olderGlobalPosts) return res.status(404).json({ error: "Couldn't find more posts" });
+
+            const lastOlderGlobalPost = olderGlobalPosts.slice(-1);
+
+            return res.status(200).json({
+                olderGlobalPosts: olderGlobalPosts,
+                end: oldestGlobalPost
+                    ? oldestGlobalPost === lastOlderGlobalPost[0].id ? true : false
+                    : true,
+            });
+        } else {
+            const response = await getGlobal30DayPosts(user.id);
+            return res.status(200).json({ response });
+        }
+    } catch (error) {
+        console.error('Error fetching data: ', error);
+        return res.status(500).json({ error: 'Failed to fetch the data' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const following30DayPosts = async (req: Request, res: Response) => {
+    const user = req.user as UserProps;
+    const cursor = Number(req.query.cursor);
+
+    try {
+        if (cursor) {
+            const oldestFollowingPost = await getOldestFollowing30DayPost(user.id).then(res => res[0].id);
+            if (oldestFollowingPost) {
+                if (cursor === oldestFollowingPost) {
+                    return res.status(200).json({
+                        olderFollowingPosts: [],
+                        end: true
+                    });
+                }
+            }
+
+            const olderFollowingPosts = await getFollowing30DayPosts(user.id, Number(cursor));
+            if (!olderFollowingPosts) return res.status(404).json({ error: "Couldn't find more posts" });
+
+            const lastOlderFollowingPost = olderFollowingPosts.slice(-1);
+
+            return res.status(200).json({
+                olderFollowingPosts: olderFollowingPosts,
+                end: oldestFollowingPost
+                    ? oldestFollowingPost === lastOlderFollowingPost[0].id ? true : false
+                    : true,
+            });
+        } else {
+            const response = await getFollowing30DayPosts(user.id);
+            return res.status(200).json({ response });
+        }
+    } catch (error) {
+        console.error('Error fetching data: ', error);
+        return res.status(500).json({ error: 'Failed to fetch the data' });
     }
 };
 
@@ -159,34 +239,6 @@ export const getUserBookmarks = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Error: ', error);
         return res.status(500).json({ error: 'Failed to process the request' });
-    }
-};
-
-// ---------------------------------------------------------------------------------------------------------
-
-export const global30DayPosts = async (req: Request, res: Response) => {
-    const user = req.user as UserProps;
-
-    try {
-        const response = await getGlobal30DayPosts(user.id);
-        return res.status(201).json({ response });
-    } catch (error) {
-        console.error('Error fetching data: ', error);
-        return res.status(500).json({ error: 'Failed to fetch the data' });
-    }
-};
-
-// ---------------------------------------------------------------------------------------------------------
-
-export const following30DayPosts = async (req: Request, res: Response) => {
-    const user = req.user as UserProps;
-
-    try {
-        const response = await getFollowing30DayPosts(user.id);
-        return res.status(201).json({ response });
-    } catch (error) {
-        console.error('Error fetching data: ', error);
-        return res.status(500).json({ error: 'Failed to fetch the data' });
     }
 };
 

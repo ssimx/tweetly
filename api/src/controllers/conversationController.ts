@@ -29,12 +29,9 @@ export const getSpecificConversation = async (req: Request, res: Response) => {
 
     try {
         if (cursor) {
-            
             const firstMessage = await getFirstMessage(conversationId).then(res => res?.messages);
             if (firstMessage) {
                 if (cursor === firstMessage[0].id) {
-                    console.log('test');
-
                     return res.status(200).json({
                         messages: [],
                         end: true

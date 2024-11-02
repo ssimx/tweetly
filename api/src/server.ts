@@ -22,9 +22,6 @@ app.use(cors());
 // Passport configuration
 configurePassport(passport);
 
-// Serve static files from the 'public' directory
-app.use('/public', express.static('public'));
-
 // Unprotected routes
 app.use('/api/v1/auth', authRouter);
 

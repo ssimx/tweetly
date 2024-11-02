@@ -1,4 +1,3 @@
-import { Input } from '@/components/ui/input';
 import type { Config } from "tailwindcss";
 
 const config: Config = {

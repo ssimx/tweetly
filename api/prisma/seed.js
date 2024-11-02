@@ -2,11 +2,15 @@ const { PrismaClient } = require('@prisma/client');
 const { faker } = require('@faker-js/faker');
 const prisma = new PrismaClient();
 const bcrypt = require('bcrypt');
+const { generateUsername } = require("unique-username-generator");
 
 const UserRole = {
     USER: 'USER',
     ADMIN: 'ADMIN',
 };
+
+const date30daysAgo = new Date(new Date().setDate(new Date().getDate() - 30));
+
 
 async function main() {
     console.log("Seeding database...");
@@ -15,12 +19,14 @@ async function main() {
 
     // Create 50 users with profiles
     const users = await Promise.all(
-        Array.from({ length: 50 }).map(async () => {
-            const userCreatedAt = faker.date.recent(365);
+        Array.from({ length: 100 }).map(async () => {
+            const userCreatedAt = faker.date.recent({ days: 90, refDate: date30daysAgo });
+
+            const usernameAndName = generateUsername("", 3, 15).replaceAll('-', '');
 
             const user = await prisma.user.create({
                 data: {
-                    username: faker.internet.username().slice(0, 15),
+                    username: usernameAndName,
                     email: faker.internet.email().slice(0, 254),
                     password: hashedPassword,
                     dateOfBirth: faker.date.birthdate({ min: 18, max: 80, mode: 'age' }),
@@ -28,7 +34,7 @@ async function main() {
                     createdAt: userCreatedAt,
                     profile: {
                         create: {
-                            name: faker.name.fullName().slice(0, 50),
+                            name: generateUsername("", Math.random() * 3, 25, usernameAndName),
                             bio: faker.lorem.sentence().slice(0, 160),
                             location: faker.location.city().slice(0, 30),
                             websiteUrl: faker.internet.url().slice(0, 100),
@@ -38,6 +44,9 @@ async function main() {
                     },
                 },
             });
+
+            console.log(user);
+
             return user;
         })
     );
@@ -46,20 +55,20 @@ async function main() {
     const posts = await Promise.all(
         Array.from({ length: 1000 }).map(async () => {
             const author = faker.helpers.arrayElement(users);
-            const postCreatedAt = faker.date.recent(30);
+            const postCreatedAt = faker.date.recent({ days: 30 });
 
             const post = await prisma.post.create({
                 data: {
                     content: faker.lorem.sentences().slice(0, 280),
                     authorId: author.id,
                     createdAt: postCreatedAt,
+                    updatedAt: postCreatedAt,
                 },
             });
 
             const replyCount = faker.number.int({ min: 0, max: 15 });
             for (let i = 0; i < replyCount; i++) {
                 const replyAuthor = faker.helpers.arrayElement(users);
-                console.log('postCreatedAt:', postCreatedAt);
                 const replyCreatedAt = faker.date.between({ from: postCreatedAt, to: Date.now() });
                 await prisma.post.create({
                     data: {
@@ -67,6 +76,7 @@ async function main() {
                         authorId: replyAuthor.id,
                         replyToId: post.id,
                         createdAt: replyCreatedAt,
+                        updatedAt: replyCreatedAt,
                     },
                 });
             }
@@ -173,7 +183,7 @@ async function main() {
     for (const user of users) {
         const followers = await prisma.follow.findMany({ where: { followeeId: user.id } });
         for (const follower of followers) {
-            const conversationCreatedAt = faker.date.recent(30);
+            const conversationCreatedAt = faker.date.recent({ days: 30 });
             const conversation = await prisma.conversation.create({
                 data: {
                     participants: {
@@ -223,6 +233,7 @@ async function main() {
     }
 
     console.log("Seeding completed!");
+    return;
 }
 
 main()
