@@ -1,10 +1,11 @@
 'use client';
 import { ProfileInfo } from "@/lib/types";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ProfileContentTabs from "./ProfileContentTabs";
 import ProfileContentPost from "./ProfileContentPost";
 import ProfileContentReply from "./ProfileContentReply";
 import ProfileContentLikedPost from "./ProfileContentLikedPost";
+import { useInView } from "react-intersection-observer";
 
 interface Post {
     id: number,
@@ -280,9 +281,20 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
     const [likedPosts, setLikedPosts] = useState<LikedPostResponse[] | undefined>(undefined);
     const [activeTab, setActiveTab] = useState(0);
 
-    console.log(replies);
+    // scroll and pagination
+    const scrollPositionRef = useRef<number>(0);
+    const [scrollPosition, setScrollPosition] = useState(0);
+    const [postsCursor, setPostsCursor] = useState<number>();
+    const [repostsCursor, setRepostsCursor] = useState<number>();
+    const [repliesCursor, setRepliesCursor] = useState<number>();
+    const [likesCursor, setLikesCursor] = useState<number>();
+    const [endReached, setEndReached] = useState(false);
+    const { ref, inView } = useInView({
+        threshold: 0,
+        delay: 100,
+    });
 
-
+    // Initial posts/reposts fetch, save cursor
     useEffect(() => {
         const fetchPostsReposts = async () => {
             const postsPromise = fetch(`/api/posts/posts/${userProfile.username}`, {
@@ -304,6 +316,12 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
             const posts: Post[] = await postsResponse.json();
             const reposts: Repost[] = await repostsResponse.json();
 
+            console.log(posts);
+            
+
+            setPostsCursor(posts.length > 0 ? posts[posts.length - 1].id : 0);
+            setRepostsCursor(reposts.length > 0 ? reposts[reposts.length - 1].id : 0)
+
             const mappedPosts: MappedPost[] = posts.map((post) => {
                 return { ...post, timeForSorting: new Date(post.createdAt).getTime(), repost: false };
             });
@@ -322,6 +340,7 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
         fetchPostsReposts();
     }, [userProfile]);
 
+    // Initial replies/likes fetch, save cursor
     useEffect(() => {
         if (activeTab === 1 && replies === undefined) {
             const fetchReplies = async () => {
@@ -334,6 +353,7 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
 
                 const replies: Reply[] = await repliesResponse.json();
                 setReplies(replies);
+                setRepliesCursor(replies.length > 0 ? replies[replies.length - 1].id : 0)
             }
 
             fetchReplies();
@@ -348,6 +368,7 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
                 
                 const likedPosts: LikedPostResponse[] = await likedPostsResponse.json();
                 setLikedPosts(likedPosts);
+                setLikesCursor(likedPosts[likedPosts.length === 0 ? 0 : likedPosts.length - 1].post.id)
             }
 
             fetchLikedPosts();

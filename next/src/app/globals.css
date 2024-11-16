@@ -107,6 +107,18 @@ body {
     animation-delay: 0.4s;
 }
 
+.post-content {
+    overflow-wrap: anywhere
+}
+
+.message-content {
+    overflow-wrap: anywhere
+}
+
+.bio-content {
+    overflow-wrap: anywhere
+}
+
 @keyframes loadingFade {
     0% {
         opacity: 0;
@@ -286,7 +298,7 @@ body {
 
     .feed-post-right-side {
         @apply
-            w-full flex flex-col;
+            w-full flex flex-col min-w-0;
     }
 
     .feed-post-content {
@@ -307,7 +319,8 @@ body {
 
     .post-header {
         @apply
-            w-full grid grid-cols-post-layout grid-rows-1 gap-2;
+            w-full grid grid-cols-post-layout grid-rows-1 gap-2
+            items-center;
     }
 
     .post-content {
@@ -573,6 +586,10 @@ body {
 
     .msg-input-container-expanded {
         @apply h-[400px];
+    }
+
+    .message-content {
+        @apply min-w-[1%] break-words whitespace-normal max-w-[90%];
     }
 
     /* Header */

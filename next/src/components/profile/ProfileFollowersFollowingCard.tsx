@@ -26,6 +26,9 @@ interface FollowerFolloweeUser {
     blockedUsers: {
         blockedId: number,
     }[] | [],
+    notifying: {
+        receiverId: number,
+    }[] | [],
     _count: {
         followers: number,
         following: number,
@@ -44,6 +47,8 @@ export default function ProfileFollowersFollowingCard({ user }: { user: Follower
     const [followingCount, setFollowingCount] = useState(user['_count'].following);
 
     const [isBlockedByTheUser, setIsBlockedByTheUser] = useState(user.blockedBy.length === 1);
+    const [notificationsEnabled, setNotificationsEnabled] = useState(user.notifying.length === 1);
+
     const { loggedInUser } = useUserContext();
     const router = useRouter();
     
@@ -65,29 +70,32 @@ export default function ProfileFollowersFollowingCard({ user }: { user: Follower
             </div>
 
             <div className='flex flex-col leading-5'>
-                <UserHoverCard 
-                    author={{
-                        username: user.username,
-                        name: user.profile.name,
-                        profilePicture: user.profile.profilePicture,
-                        bio: user.profile.bio,
-                        following: followingCount
-                    }}
-                    followersCount={followersCount}
-                    setFollowersCount={setFollowersCount}
-                    isFollowedByTheUser={isFollowedByTheUser}
-                    setIsFollowedByTheUser={setIsFollowedByTheUser}
-                    isFollowingTheUser={isFollowingTheUser}
-                    />
                 <div className='flex gap-x-2 flex-wrap items-center text-dark-500'>
-                    <p className='text-16'>@{user.username}</p>
-                    { loggedInUser.username !== user.username && isFollowingTheUser && (
-                        <p className='bg-dark-300 text-12 px-1 rounded-sm h-fit mt-[2px] font-medium'>Follows you</p>
-                    )}
+                    <UserHoverCard
+                        author={{
+                            username: user.username,
+                            name: user.profile.name,
+                            profilePicture: user.profile.profilePicture,
+                            bio: user.profile.bio,
+                            following: followingCount
+                        }}
+                        followersCount={followersCount}
+                        setFollowersCount={setFollowersCount}
+                        isFollowedByTheUser={isFollowedByTheUser}
+                        setIsFollowedByTheUser={setIsFollowedByTheUser}
+                        isFollowingTheUser={isFollowingTheUser}
+                    />
+
+                    <div className='flex-center gap-2'>
+                        <p className='text-16'>@{user.username}</p>
+                        { loggedInUser.username !== user.username && isFollowingTheUser && (
+                            <p className='bg-dark-300 text-12 px-1 rounded-sm h-fit mt-[2px] font-medium'>Follows you</p>
+                        )}
+                    </div>
                 </div>
 
                 <div className='profile-card-bio-overflow' >
-                    <p className='break-all'>{user.profile.bio}</p>
+                    <p className='bio-content'>{user.profile.bio}</p>
                 </div>
             </div>
             
@@ -98,7 +106,8 @@ export default function ProfileFollowersFollowingCard({ user }: { user: Follower
                             username={user.username}
                             setFollowersCount={setFollowersCount}
                             isFollowedByTheUser={isFollowedByTheUser}
-                            setIsFollowedByTheUser={setIsFollowedByTheUser} />
+                            setIsFollowedByTheUser={setIsFollowedByTheUser} 
+                            setNotificationsEnabled={setNotificationsEnabled} />
                     </div>
                     <div className='[&_button]:border-none [&_svg]:w-[18px] [&_svg]:h-[18px]'>
                         <ProfileMenuBtn

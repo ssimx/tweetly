@@ -29,6 +29,7 @@ export interface ConversationType {
             username: string
         }
     }[] | [],
+    end: boolean,
 }
 
 export interface ParticipantType {
@@ -83,6 +84,10 @@ export default async function Conversation({ params }: { params: { conversationI
         cache: 'no-store',
     });
     const conversation = await response.json() as ConversationType;
+    if (!conversation.participants.some(participant => participant.user.username === payload.username)) return redirect('/');
+
+    console.log(conversation);
+    
 
     // filter out user on the other side of the conversation
     const receiver = conversation.participants.filter((participant) => participant.user.username !== payload.username);

@@ -9,8 +9,13 @@ import {
     getFollowing30DayPosts,
     getGlobal30DayPosts,
     getLikes,
+    getOldestBookmark,
     getOldestFollowing30DayPost,
     getOldestGlobal30DayPost,
+    getOldestLike,
+    getOldestPost,
+    getOldestReply,
+    getOldestRepost,
     getPostInfo,
     getPostReplies,
     getPosts,
@@ -164,15 +169,39 @@ export const getPost = async (req: Request, res: Response) => {
 export const getUserPosts = async (req: Request, res: Response) => {
     const username = req.params.username;
     const user = req.user as UserProps;
+    const cursor = Number(req.query.cursor);
 
     try {
-        const response = await getPosts(user.id, username);
-        if (!response) return res.status(404).json({ error: 'User or posts not found' });
+        if (cursor) {
+            const userOldestPost = await getOldestPost(username).then(res => res[0].id);
+            if (userOldestPost) {
+                if (cursor === userOldestPost) {
+                    return res.status(200).json({
+                        olderFollowingPosts: [],
+                        end: true
+                    });
+                }
+            }
 
-        return res.status(201).json(response);
+            const userPosts = await getPosts(user.id, username, Number(cursor));
+            if (!userPosts) return res.status(404).json({ error: "Couldn't find more posts" });
+
+            const lastOlderPost = userPosts.slice(-1);
+
+            return res.status(200).json({
+                olderUserPosts: userPosts,
+                end: userOldestPost
+                    ? userOldestPost === lastOlderPost[0].id ? true : false
+                    : true,
+            });
+        } else {
+            const response = await getPosts(user.id, username);
+            if (!response) return res.status(404).json({ error: 'User or posts not found' });
+            return res.status(201).json(response);
+        }
     } catch (error) {
         console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to fetch the post' });
+        return res.status(500).json({ error: 'Failed to fetch the posts' });
     }
 };
 
@@ -181,15 +210,39 @@ export const getUserPosts = async (req: Request, res: Response) => {
 export const getUserReposts = async (req: Request, res: Response) => {
     const username = req.params.username;
     const user = req.user as UserProps;
+    const cursor = Number(req.query.cursor);
 
     try {
-        const response = await getReposts(user.id, username);
-        if (!response) return res.status(404).json({ error: 'User or reposts not found' });
+        if (cursor) {
+            const userOldestRepost= await getOldestRepost(username).then(res => res[0].id);
+            if (userOldestRepost) {
+                if (cursor === userOldestRepost) {
+                    return res.status(200).json({
+                        olderFollowingPosts: [],
+                        end: true
+                    });
+                }
+            }
 
-        return res.status(201).json(response);
+            const userReposts = await getReposts(user.id, username, Number(cursor));
+            if (!userReposts) return res.status(404).json({ error: "Couldn't find more reposts" });
+
+            const lastOlderRepost = userReposts.slice(-1);
+
+            return res.status(200).json({
+                olderUserReposts: userReposts,
+                end: userOldestRepost
+                    ? userOldestRepost === lastOlderRepost[0].id ? true : false
+                    : true,
+            });
+        } else {
+            const response = await getReposts(user.id, username);
+            if (!response) return res.status(404).json({ error: 'User or reposts not found' });
+            return res.status(201).json(response);
+        }
     } catch (error) {
         console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to fetch the post' });
+        return res.status(500).json({ error: 'Failed to fetch reposts' });
     }
 };
 
@@ -198,15 +251,39 @@ export const getUserReposts = async (req: Request, res: Response) => {
 export const getUserReplies = async (req: Request, res: Response) => {
     const username = req.params.username;
     const user = req.user as UserProps;
+    const cursor = Number(req.query.cursor);
 
     try {
-        const response = await getReplies(user.id, username);
-        if (!response) return res.status(404).json({ error: 'User or replies not found' });
+        if (cursor) {
+            const userOldestReply = await getOldestReply(username).then(res => res[0].id);
+            if (userOldestReply) {
+                if (cursor === userOldestReply) {
+                    return res.status(200).json({
+                        olderFollowingPosts: [],
+                        end: true
+                    });
+                }
+            }
 
-        return res.status(201).json(response);
+            const userReplies = await getReplies(user.id, username, Number(cursor));
+            if (!userReplies) return res.status(404).json({ error: "Couldn't find more replies" });
+
+            const lastOlderReply = userReplies.slice(-1);
+
+            return res.status(200).json({
+                olderUserReplies: userReplies,
+                end: userOldestReply
+                    ? userOldestReply === lastOlderReply[0].id ? true : false
+                    : true,
+            });
+        } else {
+            const response = await getReplies(user.id, username);
+            if (!response) return res.status(404).json({ error: 'User or replies not found' });
+            return res.status(201).json(response);
+        }
     } catch (error) {
         console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to fetch the post' });
+        return res.status(500).json({ error: 'Failed to fetch replies' });
     }
 };
 
@@ -214,15 +291,39 @@ export const getUserReplies = async (req: Request, res: Response) => {
 
 export const getUserLikes = async (req: Request, res: Response) => {
     const user = req.user as UserProps;
+    const cursor = Number(req.query.cursor);
 
     try {
-        const response = await getLikes(user.id, user.username);
-        if (!response) return res.status(404).json({ error: 'User or liked posts not found' });
+        if (cursor) {
+            const userOldestLike = await getOldestLike(user.id).then(res => res[0].post.id);
+            if (userOldestLike) {
+                if (cursor === userOldestLike) {
+                    return res.status(200).json({
+                        olderFollowingPosts: [],
+                        end: true
+                    });
+                }
+            }
 
-        return res.status(201).json(response);
+            const userLikes = await getLikes(user.id, user.username, Number(cursor));
+            if (!userLikes) return res.status(404).json({ error: "Couldn't find more likes" });
+
+            const lastOlderLike = userLikes.slice(-1);
+
+            return res.status(200).json({
+                olderUserLikes: userLikes,
+                end: userOldestLike
+                    ? userOldestLike === lastOlderLike[0].post.id ? true : false
+                    : true,
+            });
+        } else {
+            const response = await getLikes(user.id, user.username);
+            if (!response) return res.status(404).json({ error: 'User or likes not found' });
+            return res.status(201).json(response);
+        }
     } catch (error) {
         console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        return res.status(500).json({ error: 'Failed to fetch likes' });
     }
 };
 
@@ -230,15 +331,39 @@ export const getUserLikes = async (req: Request, res: Response) => {
 
 export const getUserBookmarks = async (req: Request, res: Response) => {
     const user = req.user as UserProps;
+    const cursor = Number(req.query.cursor);
 
     try {
-        const response = await getBookmarks(user.id, user.username);
-        if (!response) return res.status(404).json({ error: 'User or bookmarked posts not found' });
+        if (cursor) {
+            const userOldestBookmark = await getOldestBookmark(user.id).then(res => res[0].post.id);
+            if (userOldestBookmark) {
+                if (cursor === userOldestBookmark) {
+                    return res.status(200).json({
+                        olderFollowingPosts: [],
+                        end: true
+                    });
+                }
+            }
 
-        return res.status(201).json(response);
+            const userBookmarks = await getBookmarks(user.id, user.username, Number(cursor));
+            if (!userBookmarks) return res.status(404).json({ error: "Couldn't find more bookmarks" });
+
+            const lastOlderBookmark = userBookmarks.slice(-1);
+
+            return res.status(200).json({
+                olderUserBookmarks: userBookmarks,
+                end: userOldestBookmark
+                    ? userOldestBookmark === lastOlderBookmark[0].post.id ? true : false
+                    : true,
+            });
+        } else {
+            const response = await getBookmarks(user.id, user.username);
+            if (!response) return res.status(404).json({ error: 'User or bookmarks not found' });
+            return res.status(201).json(response);
+        }
     } catch (error) {
         console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        return res.status(500).json({ error: 'Failed to fetch bookmarks' });
     }
 };
 

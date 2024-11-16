@@ -14,8 +14,8 @@ export default function MessageBubble({ msg, index, allMessagesOrdered, sender =
     const nextMsgSameSender = !isLast && allMessagesOrdered[index + 1].sender === sender;
 
     const bubbleClasses = !sender
-        ? `w-fit mr-auto bg-dark-300 text-white p-3 ${prevMsgSameSender ? 'rounded-tl-none' : 'rounded-tl-[25px]'} ${nextMsgSameSender ? 'rounded-bl-none' : 'rounded-bl-[25px]'} rounded-r-[25px]`
-        : `w-fit ml-auto bg-primary text-white-1 p-3 ${prevMsgSameSender ? 'rounded-tr-none' : 'rounded-tr-[25px]'} ${nextMsgSameSender ? 'rounded-br-none' : 'rounded-br-[25px]'} rounded-l-[25px]`;
+        ? `w-fit mr-auto bg-dark-300 text-white p-3 ${prevMsgSameSender ? 'rounded-tl-none' : `rounded-tl-[25px] ${!isFirst && 'mt-4'}`} ${nextMsgSameSender ? 'rounded-bl-none' : 'rounded-bl-[25px]'} rounded-r-[25px]`
+        : `w-fit ml-auto bg-primary text-white-1 p-3 ${prevMsgSameSender ? 'rounded-tr-none' : `rounded-tr-[25px] ${!isFirst && 'mt-4'}`} ${nextMsgSameSender ? 'rounded-br-none' : 'rounded-br-[25px]'} rounded-l-[25px]`;
 
     return <div className={bubbleClasses}>{msg.content}</div>;
 }

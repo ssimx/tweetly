@@ -12,7 +12,7 @@ export default function ReplyInfo({ replyPost, parentPost }: { replyPost: PostTy
     const [followersCount, setFollowersCount] = useState(replyPost.author.followers.length);
 
     // state to show whether the profile follows logged in user
-    const [isFollowingTheUser, setIsFollowingTheUser] = useState(replyPost.author.following.length === 1);
+    const [isFollowingTheUser,] = useState(replyPost.author.following.length === 1);
 
     const replyDate = new Date(replyPost.createdAt);
     const replyTime = `${replyDate.getHours()}:${replyDate.getMinutes()}`;
@@ -57,7 +57,7 @@ export default function ReplyInfo({ replyPost, parentPost }: { replyPost: PostTy
                 <div className='post-footer'>
                     <p>{replyTime}</p>
                     <p className='px-1'>·</p>
-                    <p>{replyFormatDate}</p>
+                    <p className='whitespace-nowrap'>{replyFormatDate}</p>
                 </div>
                 <div className='post-btns'>
                     <PostBtns

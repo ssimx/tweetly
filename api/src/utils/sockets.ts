@@ -12,10 +12,11 @@ interface ServerToClientEvents {
     new_notification: () => void;
     new_message: () => void;
     notification_read_status: (status: boolean) => void;
+    conversation_seen: (joinedUser: string) => void,
     message_read_status: (status: boolean) => void;
     message_received: (message: { content: string, createdAt: Date, username: string }) => void;
-    message_typing_status: (status: boolean) => void;
-    message_seen: (messageId?: string) => void;
+    message_typing_status: (typingUser: null | string) => void;
+    message_seen: (messageId: string) => void;
 };
 
 interface ClientToServerEvents {
@@ -25,9 +26,9 @@ interface ClientToServerEvents {
     new_user_notification: (userId: number) => void;
     new_user_message: (userId: number) => void;
     new_global_post: () => void;
-    join_conversation_room: (conversationId: string) => void;
+    join_conversation_room: (conversationId: string, joinedUser: string) => void;
     new_conversation_message: (conversationId: string, message: { content: string, createdAt: Date, username: string }) => void;
-    conversation_typing_status: (conversationId: string, status: boolean) => void;
+    conversation_typing_status: (conversationId: string, typingUser: null | string) => void;
     conversation_seen_status: (conversationId: string, messageId: string) => void;
 };
 
@@ -121,30 +122,28 @@ const socketConnection = (server: HttpServer) => {
             socket.to(`user_${userId}`).emit('new_notification');
         });
 
-        socket.on('join_conversation_room', async (conversationId) => {
+        socket.on('join_conversation_room', async (conversationId, joinedUser) => {
             socket.join(`${conversationId}`);
+            socket.to(`${conversationId}`).emit('conversation_seen', joinedUser);
         });
 
-        socket.on('conversation_typing_status', async (conversationId, status) => {
-                socket.to(`${conversationId}`).emit('message_typing_status', status);
-            }
-        );
+        socket.on('conversation_typing_status', async (conversationId, typingUser) => {
+            socket.to(`${conversationId}`).emit('message_typing_status', typingUser); 
+        });
 
         socket.on('new_conversation_message', async (conversationId, message) => {
             socket.to(`${conversationId}`).emit('message_received', message);
-            }
-        );
+        });
 
         socket.on('conversation_seen_status', async (conversationId, messageId) => {
             // Update message read status to read
-            if (messageId) updateMessageReadStatus(conversationId, messageId)
+            updateMessageReadStatus(conversationId, messageId);
             socket.to(`${conversationId}`).emit('message_seen', messageId);
         });
 
         socket.on('new_user_message', async (receiverId) => {
             socket.to(`user_${receiverId}_messages`).emit('new_message');
-            }
-        );
+        });
 
         socket.on('disconnect', () => {
             console.log('user disconnected');

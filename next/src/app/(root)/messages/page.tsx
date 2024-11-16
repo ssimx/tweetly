@@ -3,8 +3,15 @@ import SearchInput from "@/components/messages/SearchInput";
 import { decryptSession, getToken } from "@/lib/session";
 import { redirect } from "next/navigation";
 
+
+
 export interface ConversationLastMessageType {
-    conversationId: string,
+    id: string,
+    participants: {
+        userA: string,
+        userB: string,
+    },
+    updatedAt: string,
     lastMessage: {
         id: string,
         content: string,
@@ -24,7 +31,12 @@ export interface ConversationLastMessageType {
                 profilePicture: string;
             } | null;
         }
-    }
+    },
+};
+
+export interface MessagesType {
+    conversations: ConversationLastMessageType[],
+    end: boolean,
 };
 
 export default async function Messages() {
@@ -40,11 +52,13 @@ export default async function Messages() {
             'Authorization': `Bearer ${token}`,
         },
     });
-    const conversations = await response.json() as ConversationLastMessageType[];
+    const messages = await response.json() as MessagesType;
 
+    console.log(messages);
+    
     return (
-        <section className='w-full h-fit'>
-            <SearchInput conversations={conversations} />
+        <section className='w-full h-auto'>
+            <SearchInput messages={messages} />
         </section >
     )
 }

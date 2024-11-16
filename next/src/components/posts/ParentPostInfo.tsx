@@ -13,7 +13,7 @@ export default function ParentPostInfo({ post }: { post: PostType }) {
     const [followersCount, setFollowersCount] = useState(post.author.followers.length);
 
     // state to show whether the profile follows logged in user
-    const [isFollowingTheUser, setIsFollowingTheUser] = useState(post.author.following.length === 1);
+    const [isFollowingTheUser,] = useState(post.author.following.length === 1);
 
     const router = useRouter();
 
@@ -34,10 +34,10 @@ export default function ParentPostInfo({ post }: { post: PostType }) {
                         alt='Post author profile pic' width={50} height={50} className='w-[50px] h-[50px] rounded-full group-hover:outline group-hover:outline-primary/10' />
                 </Link>
 
-                <div className='border-x h-full origin-top' style={{ transform: 'scaleY(1.23)' }}></div>
+                <div className='border-x h-full origin-top'></div>
             </div>
 
-            <div className='w-full flex flex-col gap-2'>
+            <div className='w-full flex flex-col gap-2 min-w-0' >
                 <div className='flex gap-2 text-gray-500'>
                     <UserHoverCard
                         author={{
@@ -54,7 +54,7 @@ export default function ParentPostInfo({ post }: { post: PostType }) {
                         isFollowingTheUser={isFollowingTheUser} />
                     <p>@{post.author.username}</p>
                     <p>·</p>
-                    <p>{formatPostDate(post.createdAt)}</p>
+                    <p className='whitespace-nowrap'>{formatPostDate(post.createdAt)}</p>
                 </div>
 
                 <div className='post-content'>

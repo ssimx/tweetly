@@ -86,7 +86,7 @@ export default function UserHoverCard({
 
     return (
         <HoverCard>
-            <HoverCardTrigger href={`/${author.username}`} className='text-black-1 w-fit font-bold hover:underline' onClick={(e) => handleLinkClick(e)}>{author.name}</HoverCardTrigger>
+            <HoverCardTrigger href={`/${author.username}`} className='text-black-1 w-fit whitespace-nowrap overflow-hidden font-bold hover:underline' onClick={(e) => handleLinkClick(e)}>{author.name}</HoverCardTrigger>
             <HoverCardContent>
                 <div className='user-hover-card-info '>
                     <div className='user-hover-card-header'>

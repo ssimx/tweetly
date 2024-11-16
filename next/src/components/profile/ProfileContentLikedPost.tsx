@@ -13,12 +13,12 @@ export default function ProfileContentLikedpost({ post }: { post: LikedPost }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
     const [followersCount, setFollowersCount] = useState(post.author['_count'].followers);
     // state to show whether the profile follows logged in user
-    const [isFollowingTheUser, setIsFollowingTheUser] = useState(post.author.following.length === 1);
+    const [isFollowingTheUser,] = useState(post.author.following.length === 1);
 
     const [replyIsFollowedByTheUser, setReplyIsFollowedByTheUser] = useState(post.replyTo?.author.followers.length === 1);
     const [replyFollowersCount, setReplyFollowersCount] = useState(post.replyTo?.author['_count'].followers);
-        // state to show whether the profile follows logged in user
-    const [replyIsFollowingTheUser, setReplyIsFollowingTheUser] = useState(post.replyTo?.author.following.length === 1);
+    // state to show whether the profile follows logged in user
+    const [replyIsFollowingTheUser,] = useState(post.replyTo?.author.following.length === 1);
 
     const [postIsVisible, setPostIsVisible] = useState(true);
     const router = useRouter();
@@ -83,7 +83,7 @@ export default function ProfileContentLikedpost({ post }: { post: LikedPost }) {
                             isFollowingTheUser={isFollowingTheUser} />
                         <p>@{post.author.username}</p>
                         <p>·</p>
-                        <p>{formatPostDate(post.createdAt)}</p>
+                        <p className='whitespace-nowrap'>{formatPostDate(post.createdAt)}</p>
                     </div>
                     <div className='feed-post-content'>
                         <p className='break-all'>{post.content}</p>

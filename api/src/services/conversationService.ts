@@ -3,8 +3,8 @@ const prisma = new PrismaClient();
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getAllConversations = async (userId: number) => {
-    const conversations = await prisma.conversation.findMany({
+export const getAllConversations = async (userId: number, cursor?: string) => {
+    return await prisma.conversation.findMany({
         where: {
             participants: {
                 some: {
@@ -12,8 +12,28 @@ export const getAllConversations = async (userId: number) => {
                     isDeleted: false, // Ensure the conversation is not deleted by the user
                 },
             },
+            messages: {
+                some: {}, // Ensures that at least one message exists in the conversation
+            },
         },
-        include: {
+        orderBy: {
+            updatedAt: 'desc'
+        },
+        take: 20,
+        skip: cursor ? 1 : 0,
+        cursor: cursor ? { id: cursor }: undefined,
+        select: {
+            id: true,
+            participants: {
+                select: {
+                    user: {
+                        select: {
+                            username: true,
+                        }
+                    }
+                }
+            },
+            updatedAt: true,
             messages: {
                 orderBy: {
                     createdAt: 'desc', // Order messages by createdAt in descending order
@@ -22,7 +42,6 @@ export const getAllConversations = async (userId: number) => {
                 select: {
                     id: true,
                     content: true,
-                    createdAt: true,
                     readStatus: true,
                     sender: {
                         select: {
@@ -50,11 +69,27 @@ export const getAllConversations = async (userId: number) => {
             },
         },
     });
+};
 
-    return conversations.map(conversation => ({
-        conversationId: conversation.id,
-        lastMessage: conversation.messages[0] || null,
-    }));
+// ---------------------------------------------------------------------------------------------------------
+
+export const getOldestConversation = async (userId: number) => {
+    return await prisma.conversation.findMany({
+        where: {
+            participants: {
+                some: {
+                    userId
+                }
+            }
+        },
+        orderBy: {
+            updatedAt: 'asc'
+        },
+        take: 1,
+        select: {
+            id: true,
+        }
+    });
 };
 
 // ---------------------------------------------------------------------------------------------------------
@@ -224,7 +259,8 @@ export const createMessage = async (senderId: number, receiverId: number, conten
             id: true,
             content: true,
             createdAt: true,
-            receiverId: true,
+            senderId: true,
+            receiverId: true
         }
     });
 };
@@ -244,6 +280,7 @@ export const getFirstReadMessage = async (conversationId: string, loggedInUserId
             createdAt: 'desc',
         },
         select: {
+            id: true,
             createdAt: true,
         },
     });
@@ -251,22 +288,37 @@ export const getFirstReadMessage = async (conversationId: string, loggedInUserId
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const updateMessagesReadStatus = async (conversationId: string, loggedInUserId: number, firstReadMessageTimestamp: Date) => {
-    return prisma.message.updateMany({
-        where: {
-            conversationId,
-            senderId: {
-                not: loggedInUserId,
+export const updateMessagesReadStatus = async (conversationId: string, loggedInUserId: number, firstReadMessageTimestamp?: Date) => {
+    if (firstReadMessageTimestamp) {
+        return prisma.message.updateMany({
+            where: {
+                conversationId,
+                // update status for messages of the other party
+                senderId: {
+                    not: loggedInUserId,
+                },
+                createdAt: {
+                    gt: firstReadMessageTimestamp,
+                },
+                readStatus: false,
             },
-            createdAt: {
-                gt: firstReadMessageTimestamp,
+            data: {
+                readStatus: true,
+            }
+        })
+    } else {
+        return prisma.message.updateMany({
+            where: {
+                conversationId,
+                senderId: {
+                    not: loggedInUserId,
+                },
             },
-            readStatus: false,
-        },
-        data: {
-            readStatus: true,
-        }
-    })
+            data: {
+                readStatus: true,
+            }
+        })
+    }
 };
 
 // ---------------------------------------------------------------------------------------------------------
@@ -279,6 +331,26 @@ export const updateMessageReadStatus = async (conversationId: string, messageId:
         },
         data: {
             readStatus: true
+        },
+        select: {
+            sender: {
+                select: {
+                    username: true,
+                }
+            },
+        }
+    })
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const updateConversationUpdatedAtTime = async (conversationId: string, time: Date) => {
+    return prisma.conversation.update({
+        where: {
+            id: conversationId
+        },
+        data: {
+            updatedAt: time,
         }
     })
 };

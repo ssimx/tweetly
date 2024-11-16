@@ -1,12 +1,13 @@
-import { extractToken, removeSession, verifySession } from "@/lib/session";
+import { extractToken, getToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
+        const searchParams = req.nextUrl.searchParams;
         const authHeader = req.headers.get('Authorization');
-        const token = extractToken(authHeader);
+        const token = extractToken(authHeader) || getToken();
 
         if (token) {
             const isValid = await verifySession(token);
@@ -19,24 +20,47 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ message: 'Not logged in, please log in first' }, { status: 401 });
         }
 
+        console.log(searchParams);
+        
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
-            const response = await fetch(`${apiUrl}/conversations`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
+            const query = searchParams.get('cursor');
+            console.log(query);
+            
+            if (query !== null) {
+                const response = await fetch(`${apiUrl}/conversations?cursor=${query}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
 
-            if (response.ok) {
-                const data = await response.json();
-                console.log(data);
-                
-                return NextResponse.json(data.conversations);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('older:', data);
+                    
+                    return NextResponse.json(data);
+                } else {
+                    const errorData = await response.json();
+                    return NextResponse.json({ error: errorData.error }, { status: response.status });
+                }
             } else {
-                const errorData = await response.json();
-                return NextResponse.json({ error: errorData.error }, { status: response.status });
+                const response = await fetch(`${apiUrl}/conversations`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    }
+                })
+
+                if (response.ok) {
+                    const data = await response.json();
+                    return NextResponse.json(data);
+                } else {
+                    const errorData = await response.json();
+                    return NextResponse.json({ error: errorData.error }, { status: response.status });
+                }
             }
         } catch (error) {
             // Handle other errors

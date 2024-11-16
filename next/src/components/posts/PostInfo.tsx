@@ -12,7 +12,7 @@ export default function PostInfo({ post }: { post: PostType }) {
     const [followersCount, setFollowersCount] = useState(post.author.followers.length);
 
     // state to show whether the profile follows logged in user
-    const [isFollowingTheUser, setIsFollowingTheUser] = useState(post.author.following.length === 1);
+    const [isFollowingTheUser,] = useState(post.author.following.length === 1);
 
     const postDate = new Date(post.createdAt);
     const postTime = `${postDate.getHours()}:${postDate.getMinutes()}`;

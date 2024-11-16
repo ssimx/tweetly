@@ -13,7 +13,7 @@ export default function FeedPost({ post }: { post: PostType }) {
     const [followersCount, setFollowersCount] = useState(post.author['_count'].followers);
 
     // state to show whether the profile follows logged in user
-    const [isFollowingTheUser, setIsFollowingTheUser] = useState(post.author.following.length === 1);
+    const [isFollowingTheUser,] = useState(post.author.following.length === 1);
 
     const router = useRouter();
 
@@ -54,11 +54,11 @@ export default function FeedPost({ post }: { post: PostType }) {
                         isFollowingTheUser={isFollowingTheUser} />
                     <p>@{post.author.username}</p>
                     <p>·</p>
-                    <p>{formatPostDate(post.createdAt)}</p>
+                    <p className='whitespace-nowrap'>{formatPostDate(post.createdAt)}</p>
                 </div>
 
-                <div className='feed-post-content'>
-                    <p className='break-all'>{post.content}</p>
+                <div className='feed-post-content post-content'>
+                    <p>{post.content}</p>
                 </div>
 
                 <div className='!border-t-0 post-btns'>

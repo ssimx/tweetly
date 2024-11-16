@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
+        const searchParams = req.nextUrl.searchParams;
         const token = getToken();
         if (token) {
             const isValid = await verifySession(token);
@@ -17,23 +18,40 @@ export async function GET(req: NextRequest) {
 
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
-            const response = await fetch(`${apiUrl}/posts/likedPosts`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
+            const query = searchParams.get('cursor');
+
+            if (query !== null) {
+                const response = await fetch(`${apiUrl}/posts/likedPosts?cursor=${query}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    }
+                });
+
+                if (response.ok) {
+                    const likedPosts = await response.json();
+                    return NextResponse.json(likedPosts);
+                } else {
+                    const errorData = await response.json();
+                    return NextResponse.json({ error: errorData.error }, { status: response.status });
                 }
-            });
-
-            console.log(response);
-            
-
-            if (response.ok) {
-                const likedPosts = await response.json();
-                return NextResponse.json(likedPosts);
             } else {
-                const errorData = await response.json();
-                return NextResponse.json({ error: errorData.error }, { status: response.status });
+                const response = await fetch(`${apiUrl}/posts/likedPosts`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    }
+                });
+
+                if (response.ok) {
+                    const likedPosts = await response.json();
+                    return NextResponse.json(likedPosts);
+                } else {
+                    const errorData = await response.json();
+                    return NextResponse.json({ error: errorData.error }, { status: response.status });
+                }
             }
         } catch (error) {
             return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

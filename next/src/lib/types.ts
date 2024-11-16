@@ -1,4 +1,3 @@
-import { Conversation } from './../../../api/node_modules/.prisma/client/index.d';
 export interface JwtPayload {
     id: string,
     email: string,
@@ -61,7 +60,7 @@ export interface ProfileInfo {
         blockedId: number,
     }[] | [],
     notifying: {
-        receivedId: number,
+        receiverId: number,
     }[] | [],
     conversationsParticipant: {
         conversation: {

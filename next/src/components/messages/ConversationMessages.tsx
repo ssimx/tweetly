@@ -68,7 +68,6 @@ export default function ConversationMessages({
     const lastMessage = allMessagesOrdered.slice(-1)[0];
     const lastMessageIndex = lastMessage ? allMessagesOrdered.length - 1 : 0;
 
-
     console.log(allMessagesOrdered);
     
     // Refresh last message sent time every minute for the first hour
@@ -112,7 +111,7 @@ export default function ConversationMessages({
                     </Link>
                 )}
 
-                <div className='flex flex-col px-3 py-4 gap-1'>
+                <div className='flex flex-col px-3 py-4 gap-1 min-w-[1%]'>
                     {!endReached && (
                         <div ref={loadingRef}>
                             <p>Loading...</p>
@@ -121,7 +120,7 @@ export default function ConversationMessages({
 
                     {allMessagesOrdered.map((msg, index) => (
                         <div key={msg.id}
-                            className={`break-all max-w-[90%] ${msg.sender ? 'self-end' : 'self-start'} ${firstUnreadMessage && firstUnreadMessage.id === msg.id ? 'w-full !max-w-[100%]' : ''}`}
+                            className={`message-content ${msg.sender ? 'self-end' : 'self-start'} ${firstUnreadMessage && firstUnreadMessage.id === msg.id ? 'w-full !max-w-[100%] mt-4' : ''}`}
                             ref={firstUnreadMessage && firstUnreadMessage.id === msg.id ? unreadMessageRef : null}>
                             <div></div>
                             {msg.sender
@@ -149,7 +148,8 @@ export default function ConversationMessages({
                                 )
                                 : (
                                     <>
-                                        {firstUnreadMessage && firstUnreadMessage.id === msg.id && <div className="unread-message w-full"><span>Unread messages</span></div>}
+                                        {firstUnreadMessage && firstUnreadMessage.id === msg.id 
+                                            && <div className={`unread-message w-full ${allMessagesOrdered[index === 0 ? 0 : index - 1].sender === msg.sender ? 'mb-4' : ''}`}><span>Unread messages</span></div>}
                                         <div className='flex flex-col'>
                                             <div className='flex items-center gap-2'>
                                                 {msg.status === 'failed' && <CircleAlert size={20} className='text-red-400' />}

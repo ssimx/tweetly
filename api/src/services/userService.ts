@@ -136,7 +136,26 @@ export const updateProfile = async (id: number, data: ProfileInfo) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getFollowers = async (userId: number, username: string) => {
+export const getFollowers = async (userId: number, username: string, cursor?: string) => {
+    let followerId: number | null | undefined;
+    let followeeId: number | null | undefined;
+    
+    if (cursor) {
+        followerId = await prisma.user.findUnique({
+            where: { username },
+            select: { id: true }
+        }).then(res => res?.id);
+
+        if (!followerId) return;
+
+        followeeId = await prisma.user.findUnique({
+            where: { username: cursor },
+            select: { id: true }
+        }).then(res => res?.id);
+
+        if (!followeeId) return;
+    }
+
     return await prisma.follow.findMany({
         where: {
             followee: {
@@ -146,6 +165,9 @@ export const getFollowers = async (userId: number, username: string) => {
         orderBy: {
             createdAt: 'desc'
         },
+        take: 25,
+        skip: followeeId ? 1 : 0,
+        cursor: followerId && followeeId ? { followId: { followerId, followeeId } } : undefined,
         select: {
             follower: {
                 select: {
@@ -191,6 +213,14 @@ export const getFollowers = async (userId: number, username: string) => {
                         },
                         select: {
                             blockedId: true,
+                        }
+                    },
+                    notifying: {
+                        where: {
+                            receiverId: userId,
+                        },
+                        select: {
+                            receiverId: true,
                         }
                     },
                     _count: {
@@ -207,7 +237,26 @@ export const getFollowers = async (userId: number, username: string) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getFollowing = async (userId: number, username: string) => {
+export const getFollowing = async (userId: number, username: string, cursor?: string) => {
+    let followerId: number | null | undefined;
+    let followeeId: number | null | undefined;
+
+    if (cursor) {
+        followerId = await prisma.user.findUnique({
+            where: { username },
+            select: { id: true }
+        }).then(res => res?.id);
+
+        if (!followerId) return;
+
+        followeeId = await prisma.user.findUnique({
+            where: { username: cursor },
+            select: { id: true }
+        }).then(res => res?.id);
+
+        if (!followeeId) return;
+    }
+
     return await prisma.follow.findMany({
         where: {
             follower: {
@@ -217,6 +266,9 @@ export const getFollowing = async (userId: number, username: string) => {
         orderBy: {
             createdAt: 'desc'
         },
+        take: 25,
+        skip: followeeId ? 1 : 0,
+        cursor: followerId && followeeId ? { followId: { followerId, followeeId } } : undefined,
         select: {
             followee: {
                 select: {
@@ -262,6 +314,14 @@ export const getFollowing = async (userId: number, username: string) => {
                         },
                         select: {
                             blockedId: true,
+                        }
+                    },
+                    notifying: {
+                        where: {
+                            receiverId: userId,
+                        },
+                        select: {
+                            receiverId: true,
                         }
                     },
                     _count: {

@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { socket } from '@/lib/socket';
 import { AllMessagesType } from './ConversationContent';
 import { v4 as uuidv4 } from 'uuid';
+import { useUserContext } from '@/context/UserContextProvider';
 
 export const newMessageSchema = z.object({
     text: z
@@ -24,35 +25,36 @@ interface ConversationInputType {
 };
 
 export default function ConversationInput({ conversationId, setAllMessagesOrdered, setScrollPosition }: ConversationInputType) {
-    const [text, setText] = useState('');
     const [typing, setTyping] = useState(false);
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const { loggedInUser } = useUserContext();
     const maxChars = 10000;
 
     const {
         register,
         handleSubmit,
         reset,
+        watch,
     } = useForm<MessageData>({ resolver: zodResolver(newMessageSchema) });
+
+    const inputText = watch("text");
 
     const stopTyping = () => {
         setTyping(false);
-        socket.emit('conversation_typing_status', conversationId, false);
+        socket.emit('conversation_typing_status', conversationId, null);
     };
 
-    const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setText(e.target.value);
-
+    const handleTextChange = () => {
         if (!typing) {
             setTyping(true);
-            socket.emit('conversation_typing_status', conversationId, true);
+            socket.emit('conversation_typing_status', conversationId, loggedInUser.username);
         }
 
         if (typingTimeoutRef.current) {
             clearTimeout(typingTimeoutRef.current);
         }
 
-        typingTimeoutRef.current = setTimeout(stopTyping, 5000);
+        typingTimeoutRef.current = setTimeout(stopTyping, 3000);
     };
 
     const onSubmitMessage = async (data: MessageData) => {
@@ -74,7 +76,6 @@ export default function ConversationInput({ conversationId, setAllMessagesOrdere
         };
         setAllMessagesOrdered((prevMessages) => [...prevMessages, tempMessage]);
 
-        setText('');
         reset();
         setScrollPosition(0);
 
@@ -96,6 +97,7 @@ export default function ConversationInput({ conversationId, setAllMessagesOrdere
                 id: string,
                 content: string,
                 createdAt: string,
+                senderId: number,
                 receiverId: number,
             };
 
@@ -138,7 +140,7 @@ export default function ConversationInput({ conversationId, setAllMessagesOrdere
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            if (text === '' || text.length > maxChars) return;
+            if (inputText === '' || inputText.length > maxChars) return;
             handleSubmit(onSubmitMessage)(); // Trigger form submission
         }
     };
@@ -155,13 +157,13 @@ export default function ConversationInput({ conversationId, setAllMessagesOrdere
                             className='h-[24px] w-full bg-transparent focus:outline-none text-16 resize-none'
                             placeholder='Type a new message'
                             {...register("text", {
-                                onChange: (e) => handleTextChange(e),
+                                onChange: handleTextChange,
                             })}
-                            onKeyDown={(e) => handleKeyDown(e)}
+                            onKeyDown={handleKeyDown}
                         />
                     </form>
                     <button type='submit' form='messagePostForm' className='disabled:opacity-50'
-                        disabled={text.length > 10000 || text.length === 0} >
+                        disabled={!inputText || inputText.length > maxChars} >
                             <SendHorizontal size={22} className='text-primary' />
                     </button>
                 </div>

@@ -27,10 +27,8 @@ export async function POST(req: NextRequest, { params }: { params: { username: s
             });
 
             if (response.ok) {
-                const conversationId = await response.json();
-                console.log(conversationId);
-                
-                return NextResponse.json(conversationId);
+                const conversation = await response.json();
+                return NextResponse.json(conversation.emptyConversationId);
             } else {
                 const errorData = await response.json();
                 return NextResponse.json({ error: errorData.error }, { status: response.status });

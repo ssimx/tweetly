@@ -14,7 +14,7 @@ export default function ProfileContentReply({ replyPost }: { replyPost: Reply })
     const [followersCount, setFollowersCount] = useState(replyPost.author.followers.length);
 
     // state to show whether the profile follows logged in user
-    const [isFollowingTheUser, setIsFollowingTheUser] = useState(replyPost.author.following.length === 1);
+    const [isFollowingTheUser,] = useState(replyPost.author.following.length === 1);
 
     const router = useRouter();
 
@@ -60,7 +60,7 @@ export default function ProfileContentReply({ replyPost }: { replyPost: Reply })
                                 isFollowingTheUser={isFollowingTheUser} />
                             <p>@{replyPost.author.username}</p>
                             <p>·</p>
-                            <p>{formatPostDate(replyPost.createdAt)}</p>
+                            <p className='whitespace-nowrap'>{formatPostDate(replyPost.createdAt)}</p>
                         </div>
                         <div className='feed-post-content'>
                             <p className='break-all'>{replyPost.content}</p>

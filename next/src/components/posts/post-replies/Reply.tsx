@@ -13,7 +13,7 @@ export default function ReplyPost({ post }: { post: PostType }) {
     const [followersCount, setFollowersCount] = useState(post.author.followers.length);
 
     // state to show whether the profile follows logged in user
-    const [isFollowingTheUser, setIsFollowingTheUser] = useState(post.author.following.length === 1);
+    const [isFollowingTheUser,] = useState(post.author.following.length === 1);
 
     const router = useRouter();
 
@@ -33,7 +33,7 @@ export default function ReplyPost({ post }: { post: PostType }) {
                         src={post.author.profile?.profilePicture}
                         alt='Post author profile pic' width={35} height={35} className='w-[35px] h-[35px] rounded-full group-hover:outline group-hover:outline-primary/10' />
                 </Link>
-                <div className='flex gap-2 text-dark-500'>
+                <div className='flex gap-2 min-w-0 text-dark-500'>
                     <UserHoverCard
                         author={{
                             username: post.author.username,
@@ -49,7 +49,7 @@ export default function ReplyPost({ post }: { post: PostType }) {
                         isFollowingTheUser={isFollowingTheUser} />
                     <p>@{post.author.username}</p>
                     <p>·</p>
-                    <p>{formatPostDate(post.createdAt)}</p>
+                    <p className='whitespace-nowrap'>{formatPostDate(post.createdAt)}</p>
                 </div>
             </div>
             <div className='post-content'>

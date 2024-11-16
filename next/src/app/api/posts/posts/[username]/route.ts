@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest, { params }: { params: { username: string }}) {
     if (req.method === 'GET') {
+        const searchParams = req.nextUrl.searchParams;
         const token = getToken();
         if (token) {
             const isValid = await verifySession(token);
@@ -17,20 +18,40 @@ export async function GET(req: NextRequest, { params }: { params: { username: st
 
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
-            const response = await fetch(`${apiUrl}/posts/${params.username}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                }
-            });
+            const query = searchParams.get('cursor');
 
-            if (response.ok) {
-                const posts = await response.json();
-                return NextResponse.json(posts);
+            if (query !== null) {
+                const response = await fetch(`${apiUrl}/posts/${params.username}?cursor=${query}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    }
+                });
+
+                if (response.ok) {
+                    const posts = await response.json();
+                    return NextResponse.json(posts);
+                } else {
+                    const errorData = await response.json();
+                    return NextResponse.json({ error: errorData.error }, { status: response.status });
+                }
             } else {
-                const errorData = await response.json();
-                return NextResponse.json({ error: errorData.error }, { status: response.status });
+                const response = await fetch(`${apiUrl}/posts/${params.username}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    }
+                });
+
+                if (response.ok) {
+                    const posts = await response.json();
+                    return NextResponse.json(posts);
+                } else {
+                    const errorData = await response.json();
+                    return NextResponse.json({ error: errorData.error }, { status: response.status });
+                }
             }
         } catch (error) {
             return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

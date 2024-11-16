@@ -1,6 +1,7 @@
-import 'server-only';
-import { UserInfo } from './types';
-import { getToken } from './session';
+import { UserInfo, JwtPayload } from './types';
+import { decryptSession, getToken, removeSession } from './session';
+import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 
 export async function fetchUserData() {
     try {
@@ -22,6 +23,15 @@ export async function fetchUserData() {
         }
 
         const userData = await response.json() as UserInfo;
+
+        const username = await decryptSession(token).then(res => res?.username);
+        console.log(username, userData.username);
+        
+        if (userData.username !== username) {
+            cookies().delete('access-token');
+            return null;
+        }
+
         return userData;
     } catch (error) {
         return;

@@ -20,24 +20,7 @@ export default function SidebarUserBtn() {
     const signOut = async (e: React.MouseEvent) => {
         e.preventDefault();
         console.log('Signing out...');
-
-        try {
-            const response = await fetch('/api/logout', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error);
-            }
-
-            router.push('/login');
-        } catch (error) {
-            console.error('Error signing out:', error);
-        }
+        router.push('/logout');
     };
 
     const handleClickOutside = (event: MouseEvent) => {

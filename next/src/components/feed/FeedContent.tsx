@@ -1,12 +1,11 @@
 'use client';
 import { PostType } from "@/lib/types";
 import { useEffect, useRef, useState } from "react";
-import FeedPost from "./FeedPost";
 import FeedHeaderTabs from "./FeedHeaderTabs";
 import NewPost from "./NewPost";
 import { socket } from '@/lib/socket';
 import { useUserContext } from "@/context/UserContextProvider";
-import FeedTab from "./FeedGlobalTab";
+import FeedTab from "./FeedTab";
 import { useInView } from "react-intersection-observer";
 
 export default function FeedContent() {
@@ -68,7 +67,7 @@ export default function FeedContent() {
                         return;
                     }
 
-                    setFollowingFeedCursor(olderFollowingPosts[olderFollowingPosts.length === 0 ? 0 : olderFollowingPosts.length - 1].id);
+                    setFollowingFeedCursor(olderFollowingPosts.length > 0 ? olderFollowingPosts[olderFollowingPosts.length - 1].id : 0);
                     setFollowingPosts(currentPosts => [...currentPosts as PostType[], ...olderFollowingPosts]);
                     setScrollPosition(scrollPositionRef.current);
                 }
@@ -97,7 +96,7 @@ export default function FeedContent() {
 
                         const globalFeed: PostType[] = await response.json();
                         setGlobalPosts(globalFeed);
-                        setGlobalFeedCursor(globalFeed[globalFeed.length === 0 ? 0 : globalFeed.length - 1].id);
+                        setGlobalFeedCursor(globalFeed.length > 0 ? globalFeed[globalFeed.length - 1].id : 0);
                     } catch (error) {
 
                     }
@@ -122,7 +121,7 @@ export default function FeedContent() {
 
                         const followingFeed: PostType[] = await response.json();
                         setFollowingPosts(followingFeed);
-                        setFollowingFeedCursor(followingFeed[followingFeed.length === 0 ? 0 : followingFeed.length - 1].id);
+                        setFollowingFeedCursor(followingFeed.length > 0 ? followingFeed[followingFeed.length - 1].id : 0)
                     } catch (error) {
 
                     }

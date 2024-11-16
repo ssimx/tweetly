@@ -38,6 +38,8 @@ interface NotificationType {
 }
 
 export default function NotificationPost({ post, type, isRead, notifier }: NotificationType) {
+    console.log(type);
+    
     const [postIsFollowedByTheUser, postSetIsFollowedByTheUser] = useState(post.author['_count'].followers === 1);
     const [postFollowersCount, postSetFollowersCount] = useState(post.author.followers.length);
 
@@ -45,12 +47,11 @@ export default function NotificationPost({ post, type, isRead, notifier }: Notif
     const [repostFollowersCount, repostSetFollowersCount] = useState(notifier.followers.length);
 
     // state to show whether the profile follows logged in user
-    const [postIsFollowingTheUser, postSetIsFollowingTheUser] = useState(post.author.following.length === 1);
-    const [repostIsFollowingTheUser, repostSetIsFollowingTheUser] = useState(notifier.following.length === 1);
+    const [postIsFollowingTheUser,] = useState(post.author.following.length === 1);
+    const [repostIsFollowingTheUser,] = useState(notifier.following.length === 1);
     const router = useRouter();
     const { loggedInUser } = useUserContext();
     const cardRef = useRef<HTMLDivElement>(null);
-
 
     const handleCardClick = (author: string, postId: number) => {
         router.push(`/${author}/status/${postId}`);
@@ -147,10 +148,10 @@ export default function NotificationPost({ post, type, isRead, notifier }: Notif
                                 isFollowingTheUser={postIsFollowingTheUser} />
                             <p>@{post.author.username}</p>
                             <p>·</p>
-                            <p>{formatPostDate(post.createdAt)}</p>
+                            <p className='whitespace-nowrap'>{formatPostDate(post.createdAt)}</p>
                         </div>
-                        <div className='feed-post-content'>
-                            <p className='break-all'>{post.content}</p>
+                        <div className='feed-post-content post-content'>
+                            <p>{post.content}</p>
                         </div>
 
                         { post.replyTo && (

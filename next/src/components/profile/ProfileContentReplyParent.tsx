@@ -51,7 +51,7 @@ export default function ProfileContentReplyParent({ post }: { post: Parent }) {
     const [followersCount, setFollowersCount] = useState(post.author['_count'].followers);
 
     // state to show whether the profile follows logged in user
-    const [isFollowingTheUser, setIsFollowingTheUser] = useState(post.author.following.length === 1);
+    const [isFollowingTheUser,] = useState(post.author.following.length === 1);
 
     const router = useRouter();
 
@@ -73,7 +73,7 @@ export default function ProfileContentReplyParent({ post }: { post: Parent }) {
                             alt='Post author profile pic' width={40} height={40} className='w-[40px] h-[40px] rounded-full group-hover:outline group-hover:outline-primary/10' />
                     </Link>
 
-                    <div className='border-x h-full origin-top' style={{ transform: 'scaleY(1.23)' }}></div>
+                    <div className='border-x h-full origin-top'></div>
                 </div>
 
                 <div className='feed-post-right-side'>
@@ -94,7 +94,7 @@ export default function ProfileContentReplyParent({ post }: { post: Parent }) {
                             />
                         <p>@{post.author.username}</p>
                         <p>·</p>
-                        <p>{formatPostDate(post.createdAt)}</p>
+                        <p className='whitespace-nowrap'>{formatPostDate(post.createdAt)}</p>
                     </div>
                     <div className='feed-post-content'>
                         <p className='break-all'>{post.content}</p>

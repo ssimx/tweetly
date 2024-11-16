@@ -1,19 +1,68 @@
 import { Request, Response } from 'express';
 import { UserProps } from '../lib/types';
 import { getUserId } from '../services/userService';
-import { createConversation, createMessage, getAllConversations, getConversation, getConversationParticipans, getFirstMessage, getFirstReadMessage, getMessages, updateMessagesReadStatus } from '../services/conversationService';
+import { createConversation, createMessage, getAllConversations, getConversation, getConversationParticipans, getFirstMessage, getFirstReadMessage, getMessages, getOldestConversation, updateConversationUpdatedAtTime, updateMessagesReadStatus } from '../services/conversationService';
 
 // ---------------------------------------------------------------------------------------------------------
 
 export const getUserConversations = async (req: Request, res: Response) => {
     const user = req.user as UserProps;
-
+    const cursor = req.query.cursor;
+    
     try {
-        const conversations = await getAllConversations(user.id);
+        if (cursor) {
+            const oldestConvo = await getOldestConversation(user.id).then(res => res[0].id);
+            if (oldestConvo) {
+                if (cursor === oldestConvo) {
+                    return res.status(200).json({
+                        olderConversations: [],
+                        end: true
+                    });
+                }
+            }
 
-        if (!conversations) return res.status(404).json({ error: 'User has no conversations' });
+            const olderConvos = await getAllConversations(user.id, cursor as string);
+            if (!olderConvos) return res.status(404).json({ error: "Couldn't find more posts" });
 
-        return res.status(201).json({ conversations });
+            const olderConversations = olderConvos.map((convo) => ({
+                id: convo.id,
+                updatedAt: convo.updatedAt,
+                lastMessage: convo.messages[0] || null,
+            }));
+
+            const lastOlderConversation = olderConversations.slice(-1);
+
+            return res.status(200).json({
+                olderConversations: olderConversations,
+                end: oldestConvo
+                    ? oldestConvo === lastOlderConversation[0].id ? true : false
+                    : true,
+            });
+        } else {
+            const convos = await getAllConversations(user.id);
+
+            // check if user has conversations
+            if (convos.length === 0) {
+                return res.status(200).json({
+                    conversations: [],
+                    end: true
+                });
+            }
+
+            // get last conversation by updatedAt timestamp
+            const oldestConvoId = await getOldestConversation(user.id).then(res => res[0].id as string);
+
+            const conversations = convos.map((convo) => ({
+                id: convo.id,
+                updatedAt: convo.updatedAt,
+                lastMessage: convo.messages[0] || null,
+            }));
+
+            return res.status(200).json({ 
+                conversations: [...conversations],
+                end: conversations.filter(convo => convo.id === oldestConvoId).length === 0 ? false : true,
+            });
+        }
     } catch (error) {
         console.error('Error getting conversations: ', error);
         return res.status(500).json({ error: 'Failed to process the request' });
@@ -54,12 +103,50 @@ export const getSpecificConversation = async (req: Request, res: Response) => {
             const conversation = await getConversation(conversationId);
             if (!conversation) return res.status(404).json({ error: "Couldn't find the conversation" });
 
-            const firstReadMessageTimestamp = await getFirstReadMessage(conversationId, user.id).then(res => res?.createdAt);
-            console.log(firstReadMessageTimestamp);
-            
-            if (firstReadMessageTimestamp) updateMessagesReadStatus(conversationId, user.id, firstReadMessageTimestamp);
+            // check if conversation is empty
+            if (conversation.messages.length === 0) {
+                return res.status(200).json({
+                    id: conversation.id,
+                    participants: conversation.participants,
+                    messages: [],
+                    end: true
+                });
+            }
 
-            return res.status(200).json({ conversation });
+            // if not, find first message and first read message
+            const firstMessageId = await getFirstMessage(conversationId).then(res => res?.messages[0].id as string);
+            const firstReadMessage = await getFirstReadMessage(conversationId, user.id) as { id: string, createdAt: Date } | null;
+
+            console.log(firstMessageId, firstReadMessage);
+            
+
+            // if there's a read message, aka conversation is NOT new and is a dialogue
+            // update read status of all messages from the other party, by using first read message timestamp
+            // if conversation IS new and a monologue, update read status for all messages logged in user RECEIVED
+            // firstReadMessage timestamp is optional, if there's a read message use that as a cursor,
+            //      if not, then update all messages
+            updateMessagesReadStatus(conversationId, user.id, firstReadMessage?.createdAt);
+
+            let olderMsgs;
+            if (firstReadMessage && conversation.messages.filter(msg => msg.id === firstReadMessage.id).length === 0) {
+                // if unread message is not in the conversation initial cluster, fetch more messages
+                olderMsgs = await getMessages(conversationId, firstReadMessage.id).then(res => res?.messages);
+                console.log('read message: ', olderMsgs);
+                
+            } else if (conversation.messages.filter(msg => msg.id === firstMessageId).length === 0) {
+                // if there's no unread message, fetch all messages by using first message as a cursor
+                olderMsgs = await getMessages(conversationId, firstMessageId).then(res => res?.messages);
+                console.log('first message: ', olderMsgs);
+            }
+
+            const allMsgs = olderMsgs ? [...olderMsgs, ...conversation.messages] : [...conversation.messages];
+
+            return res.status(200).json({
+                id: conversation.id,
+                participants: conversation.participants,
+                messages: allMsgs,
+                end: allMsgs.filter(msg => msg.id === firstMessageId).length === 0 ? false : true
+            });
         }
     } catch (error) {
         console.error('Error getting conversation / messages: ', error);
@@ -108,6 +195,9 @@ export const createConversationMessage = async (req: Request, res: Response) => 
     try {
         const newMessage = await createMessage(senderId, receiver[0].userId, content, conversationId );
         if (!newMessage) return res.status(404).json({ error: "Couldn't create new message" });
+
+        // update conversation updateAt time for sorting purposes
+        updateConversationUpdatedAtTime(conversationId, newMessage.createdAt);
 
         return res.status(201).json({ newMessage });
     } catch (error) {

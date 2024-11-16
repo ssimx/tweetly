@@ -1,6 +1,8 @@
 import { verifySession, extractToken, removeSession, getToken } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest, { params }: { params: { conversationId: string } }) {
     if (req.method === 'GET') {
         const searchParams = req.nextUrl.searchParams;
@@ -21,6 +23,9 @@ export async function GET(req: NextRequest, { params }: { params: { conversation
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
             const query = searchParams.get('cursor');
+
+            console.log(query);
+            
             
             if (query !== null) {
                 const response = await fetch(`${apiUrl}/conversations/${params.conversationId}?cursor=${query}`, {
@@ -41,6 +46,8 @@ export async function GET(req: NextRequest, { params }: { params: { conversation
                     return NextResponse.json({ error: errorData.error }, { status: response.status });
                 }
             } else {
+                console.log('test');
+                
                 const response = await fetch(`${apiUrl}/conversations/${params.conversationId}`, {
                     method: 'GET',
                     headers: {
@@ -51,7 +58,7 @@ export async function GET(req: NextRequest, { params }: { params: { conversation
 
                 if (response.ok) {
                     const data = await response.json();
-                    return NextResponse.json(data.conversation);
+                    return NextResponse.json(data);
                 } else {
                     const errorData = await response.json();
                     return NextResponse.json({ error: errorData.error }, { status: response.status });

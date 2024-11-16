@@ -173,6 +173,9 @@ export default async function Notifications() {
     });
     const notifications = await response.json() as NotificationType[];
 
+    console.log(notifications);
+    
+
     return (
         <section className='w-full h-fit'>
             <div className='feed-hr-line'></div>

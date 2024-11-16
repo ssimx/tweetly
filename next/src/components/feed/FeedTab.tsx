@@ -10,20 +10,19 @@ interface FeedTabType {
 }
 
 export default function FeedTab({ posts, loadingRef, scrollPositionRef, endReached }: FeedTabType) {
-    console.log(posts);
-
-    // Track scroll position on user scroll
-    function handleScroll() {
-        scrollPositionRef.current = window.scrollY;
-    }
 
     useEffect(() => {
+        // Track scroll position on user scroll
+        function handleScroll() {
+            scrollPositionRef.current = window.scrollY;
+        }
+
         window.addEventListener('scroll', handleScroll, { passive: true });
 
         return () => {
             window.removeEventListener('scroll', handleScroll);
         };
-    }, []);
+    }, [scrollPositionRef]);
     
     return (
         <div>

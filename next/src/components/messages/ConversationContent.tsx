@@ -30,7 +30,7 @@ export default function ConversationContent({ receiverInfo, conversation }: { re
 
     const [allMessagesOrdered, setAllMessagesOrdered] = useState<AllMessagesType[]>([]);
     const [cursor, setCursor] = useState<string>('');
-    const [endReached, setEndReached] = useState(false);
+    const [endReached, setEndReached] = useState(conversation.end);
     const [receiverIsTyping, setReceiverIsTyping] = useState(false);
     const { ref, inView } = useInView({
         threshold: 0,
@@ -78,41 +78,30 @@ export default function ConversationContent({ receiverInfo, conversation }: { re
         }
     }, [inView, conversation, cursor, loggedInUser, endReached, scrollPosition]);
 
-    // Initial message mapping and setting cursor
-    useEffect(() => {
-        const allMsgsOrdered = conversation.messages
-            .map((msg) => ({
-                id: msg.id,
-                content: msg.content,
-                createdAt: new Date(msg.createdAt).getTime(),
-                sender: msg.sender.username === loggedInUser.username,
-                readStatus: msg.readStatus,
-                status: 'sent'
-            }))
-            .sort((a, b) => a.createdAt - b.createdAt) as AllMessagesType[];
-
-        setAllMessagesOrdered(allMsgsOrdered);
-        setCursor(allMsgsOrdered[0].id);
-    }, [conversation, loggedInUser]);
-
     // Handle new messages via sockets
     useEffect(() => {
-        socket.on('message_received', (message) => {
-            if (message.sender === true) return;
-
+        socket.on('message_received', (message: {
+            id: string,
+            content: string,
+            createdAt: string,
+            senderId: number,
+            receiverId: number,
+        }) => {
             setAllMessagesOrdered((prevMessages) => [
                 ...prevMessages,
-                { ...message, createdAt: new Date(message.createdAt).getTime(), sender: false, readStatus: true, status: 'sent' }
+                { ...message, createdAt: new Date(message.createdAt).getTime(), sender: message.senderId === loggedInUser.id ? true : false, readStatus: message.senderId === loggedInUser.id ? false : true, status: 'sent' }
             ]);
 
-            socket.emit('conversation_seen_status', conversation.id, message.id);
+            message.senderId !== loggedInUser.id && socket.emit('conversation_seen_status', conversation.id, message.id);
         });
 
-        socket.on('message_typing_status', (status) => {
-            setReceiverIsTyping(status);
+        socket.on('message_typing_status', (typingUser: null | string ) => {
+            typingUser === loggedInUser.username || typingUser === null ? setReceiverIsTyping(false) : setReceiverIsTyping(true);
         });
 
-        socket.on('message_seen', (messageId: string) => {
+        socket.on('message_seen', (messageId) => {
+            console.log('test');
+            
             setAllMessagesOrdered((prevMessages) =>
                 prevMessages.map((msg) =>
                     (msg.id === messageId || (messageId === null && msg === prevMessages[prevMessages.length - 1]))
@@ -127,18 +116,47 @@ export default function ConversationContent({ receiverInfo, conversation }: { re
             socket.off('message_typing_status');
             socket.off('message_seen');
         };
-    }, [conversation]);
+    }, [conversation, loggedInUser]);
 
     // Connect to conversation room
     useEffect(() => {
         socket.connect();
-        socket.emit('join_conversation_room', conversation.id);
-        socket.emit('conversation_seen_status', conversation.id);
+        socket.emit('join_conversation_room', conversation.id, loggedInUser.username);
+
+        // Initial message mapping and setting cursor
+        if (conversation.messages.length !== 0) {
+            const allMsgsOrdered = conversation.messages
+                .map((msg) => ({
+                    id: msg.id,
+                    content: msg.content,
+                    createdAt: new Date(msg.createdAt).getTime(),
+                    sender: msg.sender.username === loggedInUser.username,
+                    readStatus: msg.readStatus,
+                    status: 'sent'
+                }))
+                .sort((a, b) => a.createdAt - b.createdAt) as AllMessagesType[];
+
+            setAllMessagesOrdered(allMsgsOrdered);
+            setCursor(allMsgsOrdered[0].id);
+        }
+
+        socket.on('conversation_seen', (joinedUser) => {
+            if (loggedInUser.username === joinedUser) return;
+
+            setAllMessagesOrdered((prevMessages) =>
+                prevMessages.map((msg) =>
+                    (msg.sender === true)
+                        ? { ...msg, readStatus: true }
+                        : msg
+                )
+            );
+        });
 
         return () => {
             socket.disconnect();
+            socket.off('conversation_seen');
         };
-    }, [conversation]);
+    }, [conversation, loggedInUser]);
 
     return (
         <div className="h-full grid grid-cols-1 grid-rows-conversation-content">
