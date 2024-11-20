@@ -5,7 +5,7 @@ import {
     getPost,
     getUserReplies,
     getUserLikes,
-    getPostReply,
+    postReplies,
     getUserPosts, 
     getUserReposts,
     global30DayPosts,
@@ -26,7 +26,7 @@ router.get('/replies/:username', getUserReplies);
 router.get('/likedPosts', getUserLikes);
 router.get('/bookmarks', getUserBookmarks);
 router.get('/status/:id', getPost);
-router.get('/postReplies/:id', getPostReply);
+router.get('/postReplies/:id', postReplies);
 router.get('/feed/global', global30DayPosts);
 router.get('/feed/following', following30DayPosts);
 router.post('/create', newPost);

@@ -297,14 +297,14 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
     // Initial posts/reposts fetch, save cursor
     useEffect(() => {
         const fetchPostsReposts = async () => {
-            const postsPromise = fetch(`/api/posts/posts/${userProfile.username}`, {
+            const postsPromise = fetch(`/api/posts/userPosts/${userProfile.username}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                 },
             });
 
-            const repostsPromise = fetch(`/api/posts/reposts/${userProfile.username}`, {
+            const repostsPromise = fetch(`/api/posts/userReposts/${userProfile.username}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -344,7 +344,7 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
     useEffect(() => {
         if (activeTab === 1 && replies === undefined) {
             const fetchReplies = async () => {
-                const repliesResponse = await fetch(`/api/posts/replies/${userProfile.username}`, {
+                const repliesResponse = await fetch(`/api/posts/userReplies/${userProfile.username}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -359,7 +359,7 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
             fetchReplies();
         } else if (activeTab === 3 && likedPosts === undefined) {
             const fetchLikedPosts = async () => {
-                const likedPostsResponse = await fetch(`/api/posts/likedPosts`, {
+                const likedPostsResponse = await fetch(`/api/posts/userLikes`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',

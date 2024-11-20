@@ -54,193 +54,98 @@ export const getGlobal30DayPosts = async (userId: number, cursor?: number) => {
     let date = new Date();
     date.setDate(date.getDate() - 30);
 
-    if (cursor) {
-        return await prisma.post.findMany({
-            where: {
-                AND: [
-                    {
-                        createdAt: {
-                            gte: date
+    return await prisma.post.findMany({
+        where: {
+            AND: [
+                {
+                    createdAt: {
+                        gte: date
+                    }
+                },
+                {
+                    replyToId: null
+                }
+            ]
+        },
+        orderBy: {
+            createdAt: 'desc'
+        },
+        cursor: cursor ? { id: cursor } : undefined,
+        skip: cursor ? 1 : 0,
+        take: 25,
+        select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            updatedAt: true,
+            replyToId: true,
+            author: {
+                select: {
+                    username: true,
+                    profile: {
+                        select: {
+                            name: true,
+                            bio: true,
+                            profilePicture: true,
                         }
                     },
-                    {
-                        replyToId: null
-                    }
-                ]
-            },
-            orderBy: {
-                createdAt: 'desc'
-            },
-            cursor: {
-                id: cursor
-            },
-            skip: 1,
-            take: 25,
-            select: {
-                id: true,
-                content: true,
-                createdAt: true,
-                updatedAt: true,
-                replyToId: true,
-                author: {
-                    select: {
-                        username: true,
-                        profile: {
-                            select: {
-                                name: true,
-                                bio: true,
-                                profilePicture: true,
-                            }
+                    followers: {
+                        where: {
+                            followerId: userId,
                         },
-                        followers: {
-                            where: {
-                                followerId: userId,
-                            },
-                            select: {
-                                followerId: true
-                            }
-                        },
-                        following: {
-                            where: {
-                                followeeId: userId,
-                            },
-                            select: {
-                                followeeId: true,
-                            }
-                        },
-                        _count: {
-                            select: {
-                                followers: true,
-                                following: true,
-                            }
+                        select: {
+                            followerId: true
                         }
-                    }
-                },
-                reposts: {
-                    where: {
-                        userId: userId,
                     },
-                    select: {
-                        userId: true,
-                    }
-                },
-                likes: {
-                    where: {
-                        userId: userId,
+                    following: {
+                        where: {
+                            followeeId: userId,
+                        },
+                        select: {
+                            followeeId: true,
+                        }
                     },
-                    select: {
-                        userId: true,
-                    }
-                },
-                bookmarks: {
-                    where: {
-                        userId: userId,
-                    },
-                    select: {
-                        userId: true,
-                    }
-                },
-                _count: {
-                    select: {
-                        likes: true,
-                        reposts: true,
-                        replies: true,
+                    _count: {
+                        select: {
+                            followers: true,
+                            following: true,
+                        }
                     }
                 }
-            }
-        });
-    } else {
-        return await prisma.post.findMany({
-            where: {
-                AND: [
-                    {
-                        createdAt: {
-                            gte: date
-                        }
-                    },
-                    {
-                        replyToId: null
-                    }
-                ]
             },
-            orderBy: {
-                createdAt: 'desc'
+            reposts: {
+                where: {
+                    userId: userId,
+                },
+                select: {
+                    userId: true,
+                }
             },
-            take: 25,
-            select: {
-                id: true,
-                content: true,
-                createdAt: true,
-                updatedAt: true,
-                replyToId: true,
-                author: {
-                    select: {
-                        username: true,
-                        profile: {
-                            select: {
-                                name: true,
-                                bio: true,
-                                profilePicture: true,
-                            }
-                        },
-                        followers: {
-                            where: {
-                                followerId: userId,
-                            },
-                            select: {
-                                followerId: true
-                            }
-                        },
-                        following: {
-                            where: {
-                                followeeId: userId,
-                            },
-                            select: {
-                                followeeId: true,
-                            }
-                        },
-                        _count: {
-                            select: {
-                                followers: true,
-                                following: true,
-                            }
-                        }
-                    }
+            likes: {
+                where: {
+                    userId: userId,
                 },
-                reposts: {
-                    where: {
-                        userId: userId,
-                    },
-                    select: {
-                        userId: true,
-                    }
+                select: {
+                    userId: true,
+                }
+            },
+            bookmarks: {
+                where: {
+                    userId: userId,
                 },
-                likes: {
-                    where: {
-                        userId: userId,
-                    },
-                    select: {
-                        userId: true,
-                    }
-                },
-                bookmarks: {
-                    where: {
-                        userId: userId,
-                    },
-                    select: {
-                        userId: true,
-                    }
-                },
-                _count: {
-                    select: {
-                        likes: true,
-                        reposts: true,
-                        replies: true,
-                    }
+                select: {
+                    userId: true,
+                }
+            },
+            _count: {
+                select: {
+                    likes: true,
+                    reposts: true,
+                    replies: true,
                 }
             }
-        });
-    }
+        }
+    });
 };
 
 // ---------------------------------------------------------------------------------------------------------
@@ -278,211 +183,107 @@ export const getFollowing30DayPosts = async (userId: number, cursor?: number) =>
     let date = new Date();
     date.setDate(date.getDate() - 30);
 
-    if (cursor) {
-        return await prisma.post.findMany({
-            where: {
-                AND: [
-                    {
-                        createdAt: {
-                            gte: date
-                        }
-                    },
-                    {
-                        replyToId: null
-                    },
-                    {
-                        author: {
-                            followers: {
-                                some: {
-                                    followerId: userId
-                                }
-                            }
-                        }
+    return await prisma.post.findMany({
+        where: {
+            AND: [
+                {
+                    createdAt: {
+                        gte: date
                     }
-                ]
-            },
-            orderBy: {
-                createdAt: 'desc'
-            },
-            cursor: {
-                id: cursor
-            },
-            skip: 1,
-            take: 25,
-            select: {
-                id: true,
-                content: true,
-                createdAt: true,
-                updatedAt: true,
-                replyToId: true,
-                author: {
-                    select: {
-                        username: true,
-                        profile: {
-                            select: {
-                                name: true,
-                                bio: true,
-                                profilePicture: true,
-                            }
-                        },
+                },
+                {
+                    replyToId: null
+                },
+                {
+                    author: {
                         followers: {
-                            where: {
-                                followerId: userId,
-                            },
-                            select: {
-                                followerId: true
-                            }
-                        },
-                        following: {
-                            where: {
-                                followeeId: userId,
-                            },
-                            select: {
-                                followeeId: true,
-                            }
-                        },
-                        _count: {
-                            select: {
-                                followers: true,
-                                following: true,
+                            some: {
+                                followerId: userId
                             }
                         }
-                    }
-                },
-                reposts: {
-                    where: {
-                        userId: userId,
-                    },
-                    select: {
-                        userId: true,
-                    }
-                },
-                likes: {
-                    where: {
-                        userId: userId,
-                    },
-                    select: {
-                        userId: true,
-                    }
-                },
-                bookmarks: {
-                    where: {
-                        userId: userId,
-                    },
-                    select: {
-                        userId: true,
-                    }
-                },
-                _count: {
-                    select: {
-                        likes: true,
-                        reposts: true,
-                        replies: true,
                     }
                 }
-            }
-        });
-    } else {
-        return await prisma.post.findMany({
-            where: {
-                AND: [
-                    {
-                        createdAt: {
-                            gte: date
+            ]
+        },
+        orderBy: {
+            createdAt: 'desc'
+        },
+        cursor: cursor ? { id: cursor } : undefined,
+        skip: cursor ? 1 : 0,
+        take: 25,
+        select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            updatedAt: true,
+            replyToId: true,
+            author: {
+                select: {
+                    username: true,
+                    profile: {
+                        select: {
+                            name: true,
+                            bio: true,
+                            profilePicture: true,
                         }
                     },
-                    {
-                        replyToId: null
-                    },
-                    {
-                        author: {
-                            followers: {
-                                some: {
-                                    followerId: userId
-                                }
-                            }
+                    followers: {
+                        where: {
+                            followerId: userId,
+                        },
+                        select: {
+                            followerId: true
                         }
-                    }
-                ]
-            },
-            orderBy: {
-                createdAt: 'desc'
-            },
-            take: 25,
-            select: {
-                id: true,
-                content: true,
-                createdAt: true,
-                updatedAt: true,
-                replyToId: true,
-                author: {
-                    select: {
-                        username: true,
-                        profile: {
-                            select: {
-                                name: true,
-                                bio: true,
-                                profilePicture: true,
-                            }
+                    },
+                    following: {
+                        where: {
+                            followeeId: userId,
                         },
-                        followers: {
-                            where: {
-                                followerId: userId,
-                            },
-                            select: {
-                                followerId: true
-                            }
-                        },
-                        following: {
-                            where: {
-                                followeeId: userId,
-                            },
-                            select: {
-                                followeeId: true,
-                            }
-                        },
-                        _count: {
-                            select: {
-                                followers: true,
-                                following: true,
-                            }
+                        select: {
+                            followeeId: true,
                         }
-                    }
-                },
-                reposts: {
-                    where: {
-                        userId: userId,
                     },
-                    select: {
-                        userId: true,
-                    }
-                },
-                likes: {
-                    where: {
-                        userId: userId,
-                    },
-                    select: {
-                        userId: true,
-                    }
-                },
-                bookmarks: {
-                    where: {
-                        userId: userId,
-                    },
-                    select: {
-                        userId: true,
-                    }
-                },
-                _count: {
-                    select: {
-                        likes: true,
-                        reposts: true,
-                        replies: true,
+                    _count: {
+                        select: {
+                            followers: true,
+                            following: true,
+                        }
                     }
                 }
+            },
+            reposts: {
+                where: {
+                    userId: userId,
+                },
+                select: {
+                    userId: true,
+                }
+            },
+            likes: {
+                where: {
+                    userId: userId,
+                },
+                select: {
+                    userId: true,
+                }
+            },
+            bookmarks: {
+                where: {
+                    userId: userId,
+                },
+                select: {
+                    userId: true,
+                }
+            },
+            _count: {
+                select: {
+                    likes: true,
+                    reposts: true,
+                    replies: true,
+                }
             }
-        });
-    }
+        }
+    });
 };
 
 // ---------------------------------------------------------------------------------------------------------
@@ -2149,11 +1950,34 @@ export const removePostBookmark = async (userId: number, postId: number) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getPostReplies = async (userId: number, postId: number) => {
+export const getPostReplies = async (userId: number, postId: number, cursor?: number) => {
     return await prisma.post.findMany({
         where: {
             replyToId: postId,
         },
+        orderBy: [
+            {
+                replies: {
+                    _count: 'desc'
+                },
+            },
+            {
+                reposts: {
+                    _count: 'desc'
+                }
+            },
+            {
+                likes: {
+                    _count: 'desc'
+                },
+            },
+            {
+                createdAt: 'desc'
+            },
+        ],
+        cursor: cursor ? { id: cursor } : undefined,
+        skip: cursor ? 1 : 0,
+        take: 15,
         select: {
             id: true,
             content: true,
@@ -2225,6 +2049,40 @@ export const getPostReplies = async (userId: number, postId: number) => {
                     replies: true,
                 }
             }
+        }
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getOldestReplyLeastEnegagement = async (parentPostId: number) => {
+    return await prisma.post.findMany({
+        where: {
+            replyToId: parentPostId
+        },
+        orderBy: [
+            {
+                replies: {
+                    _count: 'asc'
+                },
+            },
+            {
+                reposts: {
+                    _count: 'asc'
+                }
+            },
+            {
+                likes: {
+                    _count: 'asc'
+                },
+            },
+            {
+                createdAt: 'asc'
+            },
+        ],
+        take: 1,
+        select: {
+            id: true,
         }
     });
 };

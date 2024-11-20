@@ -6,6 +6,11 @@ import ReplyInfo from '@/components/posts/ReplyInfo';
 import { getToken } from '@/lib/session';
 import { PostType } from '@/lib/types';
 
+export interface RepliesType {
+    posts: PostType[],
+    end: boolean,
+};
+
 export default async function Status({ params }: { params: { postId: string } }) {
     let parentPost;
     const token = getToken();
@@ -41,7 +46,8 @@ export default async function Status({ params }: { params: { postId: string } })
         },
         cache: 'no-store',
     });
-    const replies = await repliesResponse.json() as PostType[];
+    const replies = await repliesResponse.json() as RepliesType;
+    console.log(replies);
 
     if (!post) return <div>loading...</div>
 

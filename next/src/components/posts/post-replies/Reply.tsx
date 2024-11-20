@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { formatPostDate } from '@/lib/utils';
 import PostBtns from '../PostBtns';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import UserHoverCard from '../../UserHoverCard';
 
 export default function ReplyPost({ post }: { post: PostType }) {

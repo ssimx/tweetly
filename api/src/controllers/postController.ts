@@ -15,6 +15,7 @@ import {
     getOldestLike,
     getOldestPost,
     getOldestReply,
+    getOldestReplyLeastEnegagement,
     getOldestRepost,
     getPostInfo,
     getPostReplies,
@@ -77,9 +78,9 @@ export const global30DayPosts = async (req: Request, res: Response) => {
 
     try {
         if (cursor) {
-            const oldestGlobalPost = await getOldestGlobal30DayPost().then(res => res[0].id);
-            if (oldestGlobalPost) {
-                if (cursor === oldestGlobalPost) {
+            const oldestGlobalPostId = await getOldestGlobal30DayPost().then(res => res[0].id);
+            if (oldestGlobalPostId) {
+                if (cursor === oldestGlobalPostId) {
                     return res.status(200).json({
                         olderGlobalPosts: [],
                         end: true
@@ -94,8 +95,8 @@ export const global30DayPosts = async (req: Request, res: Response) => {
 
             return res.status(200).json({
                 olderGlobalPosts: olderGlobalPosts,
-                end: oldestGlobalPost
-                    ? oldestGlobalPost === lastOlderGlobalPost[0].id ? true : false
+                end: oldestGlobalPostId
+                    ? oldestGlobalPostId === lastOlderGlobalPost[0].id ? true : false
                     : true,
             });
         } else {
@@ -116,9 +117,9 @@ export const following30DayPosts = async (req: Request, res: Response) => {
 
     try {
         if (cursor) {
-            const oldestFollowingPost = await getOldestFollowing30DayPost(user.id).then(res => res[0].id);
-            if (oldestFollowingPost) {
-                if (cursor === oldestFollowingPost) {
+            const oldestFollowingPostId = await getOldestFollowing30DayPost(user.id).then(res => res[0].id);
+            if (oldestFollowingPostId) {
+                if (cursor === oldestFollowingPostId) {
                     return res.status(200).json({
                         olderFollowingPosts: [],
                         end: true
@@ -133,8 +134,8 @@ export const following30DayPosts = async (req: Request, res: Response) => {
 
             return res.status(200).json({
                 olderFollowingPosts: olderFollowingPosts,
-                end: oldestFollowingPost
-                    ? oldestFollowingPost === lastOlderFollowingPost[0].id ? true : false
+                end: oldestFollowingPostId
+                    ? oldestFollowingPostId === lastOlderFollowingPost[0].id ? true : false
                     : true,
             });
         } else {
@@ -504,18 +505,53 @@ export const removeBookmark = async (req: Request, res: Response) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getPostReply = async (req: Request, res: Response) => {
+export const postReplies = async (req: Request, res: Response) => {
     const postId = Number(req.params.id);
     const user = req.user as UserProps;
 
+    const cursor = Number(req.query.cursor);
+
     try {
-        const response = await getPostReplies(user.id, postId);
+        if (cursor) { 
+            // order posts by likes and find the oldest one with no engagemenet
+            const oldestReplyLeastEnegagementId = await getOldestReplyLeastEnegagement(postId).then(res => res[0].id);
+            if (oldestReplyLeastEnegagementId) {
+                if (cursor === oldestReplyLeastEnegagementId) {
+                    return res.status(200).json({
+                        moreReplies: [],
+                        end: true
+                    });
+                }
+            }
 
-        if (!response) {
-            return res.status(404).json({ message: "No replies found" });
+            console.log(oldestReplyLeastEnegagementId);
+
+            const moreReplies = await getPostReplies(user.id, postId, Number(cursor));
+            if (moreReplies.length === 0) return res.status(200).json({
+                moreReplies: [],
+                end: true
+            });
+
+            const lastReplyInCurrentBatch = moreReplies.slice(-1);
+
+            return res.status(200).json({
+                moreReplies: moreReplies,
+                end: oldestReplyLeastEnegagementId
+                    ? oldestReplyLeastEnegagementId === lastReplyInCurrentBatch[0].id ? true : false
+                    : true,
+            });
+        } else {
+            const replies = await getPostReplies(user.id, postId);
+
+            if (!replies) {
+                return res.status(404).json({ message: "No replies found" });
+            }
+
+            return res.status(200).json({
+                posts: replies,
+                end: true
+            });
         }
-
-        return res.status(201).json(response);
     } catch (error) {
         console.error('Error: ', error);
         return res.status(500).json({ error: 'Failed to fetch post replies' });

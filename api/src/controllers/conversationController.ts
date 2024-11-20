@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { UserProps } from '../lib/types';
 import { getUserId } from '../services/userService';
-import { createConversation, createMessage, getAllConversations, getConversation, getConversationParticipans, getFirstMessage, getFirstReadMessage, getMessages, getOldestConversation, updateConversationUpdatedAtTime, updateMessagesReadStatus } from '../services/conversationService';
+import { createConversation, createMessage, getAllConversations, getConversation, getConversationParticipans, getFirstMessage, getFirstUnreadMessage, getMessages, getOldestConversation, updateConversationUpdatedAtTime, updateMessagesReadStatus } from '../services/conversationService';
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -113,24 +113,21 @@ export const getSpecificConversation = async (req: Request, res: Response) => {
                 });
             }
 
-            // if not, find first message and first read message
+            // if not, find first message and first unread message from not logged in user (other party)
             const firstMessageId = await getFirstMessage(conversationId).then(res => res?.messages[0].id as string);
-            const firstReadMessage = await getFirstReadMessage(conversationId, user.id) as { id: string, createdAt: Date } | null;
-
-            console.log(firstMessageId, firstReadMessage);
-            
+            const firstUnreadMessage = await getFirstUnreadMessage(conversationId, user.id) as { id: string, createdAt: Date } | null;
 
             // if there's a read message, aka conversation is NOT new and is a dialogue
             // update read status of all messages from the other party, by using first read message timestamp
             // if conversation IS new and a monologue, update read status for all messages logged in user RECEIVED
             // firstReadMessage timestamp is optional, if there's a read message use that as a cursor,
             //      if not, then update all messages
-            updateMessagesReadStatus(conversationId, user.id, firstReadMessage?.createdAt);
+            updateMessagesReadStatus(conversationId, user.id, firstUnreadMessage?.createdAt);
 
             let olderMsgs;
-            if (firstReadMessage && conversation.messages.filter(msg => msg.id === firstReadMessage.id).length === 0) {
+            if (firstUnreadMessage && conversation.messages.filter(msg => msg.id === firstUnreadMessage.id).length === 0) {
                 // if unread message is not in the conversation initial cluster, fetch more messages
-                olderMsgs = await getMessages(conversationId, firstReadMessage.id).then(res => res?.messages);
+                olderMsgs = await getMessages(conversationId, firstUnreadMessage.id).then(res => res?.messages);
                 console.log('read message: ', olderMsgs);
                 
             } else if (conversation.messages.filter(msg => msg.id === firstMessageId).length === 0) {

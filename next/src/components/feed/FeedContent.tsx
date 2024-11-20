@@ -59,9 +59,6 @@ export default function FeedContent() {
                     });
                     const { olderFollowingPosts, end }: { olderFollowingPosts: PostType[], end: boolean } = await response.json();
 
-                    console.log(olderFollowingPosts);
-                    
-
                     if (olderFollowingPosts.length === 0 && end === true) {
                         setEndReached(true);
                         return;

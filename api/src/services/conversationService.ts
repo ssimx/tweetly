@@ -267,14 +267,14 @@ export const createMessage = async (senderId: number, receiverId: number, conten
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getFirstReadMessage = async (conversationId: string, loggedInUserId: number) => {
+export const getFirstUnreadMessage = async (conversationId: string, loggedInUserId: number) => {
     return await prisma.message.findFirst({
         where: {
             conversationId,
             senderId: {
                 not: loggedInUserId,
             },
-            readStatus: true
+            readStatus: false
         },
         orderBy: {
             createdAt: 'desc',
@@ -288,8 +288,8 @@ export const getFirstReadMessage = async (conversationId: string, loggedInUserId
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const updateMessagesReadStatus = async (conversationId: string, loggedInUserId: number, firstReadMessageTimestamp?: Date) => {
-    if (firstReadMessageTimestamp) {
+export const updateMessagesReadStatus = async (conversationId: string, loggedInUserId: number, firstUnreadMessageTimestamp?: Date) => {
+    if (firstUnreadMessageTimestamp) {
         return prisma.message.updateMany({
             where: {
                 conversationId,
@@ -298,7 +298,7 @@ export const updateMessagesReadStatus = async (conversationId: string, loggedInU
                     not: loggedInUserId,
                 },
                 createdAt: {
-                    gt: firstReadMessageTimestamp,
+                    gte: firstUnreadMessageTimestamp,
                 },
                 readStatus: false,
             },
