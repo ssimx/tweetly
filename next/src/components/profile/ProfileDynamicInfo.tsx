@@ -2,7 +2,7 @@
 import { ProfileInfo } from "@/lib/types";
 import { CalendarDays } from "lucide-react";
 import { useState } from "react";
-import ProfileFollowBtn from "./ProfileFollowBtn";
+import FollowBtn from "../FollowBtn";
 import ProfileEditBtn from "./ProfileEditBtn";
 import ProfileNotificationBtn from "./ProfileNotificationBtn";
 import ProfileMenuBtn from "./ProfileMenuBtn";
@@ -34,7 +34,7 @@ export default function ProfileDynamicInfo({ user, loggedInUser }: { user: Profi
 
     return (
         <div>
-            { loggedInUser 
+            {loggedInUser
                 ? (
                     <div className='edit-profile'>
                         <ProfileEditBtn user={user} />
@@ -42,10 +42,10 @@ export default function ProfileDynamicInfo({ user, loggedInUser }: { user: Profi
                 )
                 : (
                     <div className='profile-interaction'>
-                        <ProfileMenuBtn 
+                        <ProfileMenuBtn
                             user={user.username}
                             isBlockedByTheUser={isBlockedByTheUser}
-                            setIsBlockedByTheUser={setIsBlockedByTheUser} 
+                            setIsBlockedByTheUser={setIsBlockedByTheUser}
 
                             isFollowedByTheUser={isFollowedByTheUser}
                             setIsFollowedByTheUser={setIsFollowedByTheUser}
@@ -54,7 +54,7 @@ export default function ProfileDynamicInfo({ user, loggedInUser }: { user: Profi
                             isFollowingTheUser={isFollowingTheUser}
                             setIsFollowingTheUser={setIsFollowingTheUser}
                             setFollowingCount={setFollowingCount}
-                             />
+                        />
                         {!hasBlockedTheUser && !isBlockedByTheUser && isFollowedByTheUser && (
                             <ProfileMessageBtn profileUser={user.username} conversationId={user.conversationsParticipant.length === 1 ? user.conversationsParticipant[0].conversation.id : undefined} />
                         )}
@@ -63,8 +63,8 @@ export default function ProfileDynamicInfo({ user, loggedInUser }: { user: Profi
                             <ProfileNotificationBtn username={user.username} notificationsEnabled={notificationsEnabled} setNotificationsEnabled={setNotificationsEnabled} />
                         )}
 
-                        { !hasBlockedTheUser && !isBlockedByTheUser && (
-                            <ProfileFollowBtn username={user.username} 
+                        {!hasBlockedTheUser && !isBlockedByTheUser && (
+                            <FollowBtn username={user.username}
                                 setFollowersCount={setFollowersCount}
                                 isFollowedByTheUser={isFollowedByTheUser}
                                 setIsFollowedByTheUser={setIsFollowedByTheUser}
@@ -80,7 +80,7 @@ export default function ProfileDynamicInfo({ user, loggedInUser }: { user: Profi
                     <p className='font-bold text-18'>{user.profile.name}</p>
                     <div className='flex gap-2 items-center text-dark-500'>
                         <p className='text-16'>@{user.username}</p>
-                        { isFollowingTheUser && (
+                        {isFollowingTheUser && (
                             <p className='bg-dark-300 text-12 px-1 rounded-sm h-fit mt-[2px] font-medium'>Follows you</p>
                         )}
                     </div>
@@ -110,8 +110,8 @@ export default function ProfileDynamicInfo({ user, loggedInUser }: { user: Profi
                     </Link>
                 </div>
             </div>
-            
-            { hasBlockedTheUser
+
+            {hasBlockedTheUser
                 ? (
                     <div>
                         <div className='mt-2 feed-hr-line'></div>
@@ -131,10 +131,10 @@ export default function ProfileDynamicInfo({ user, loggedInUser }: { user: Profi
                                     <p>Are you sure you want to view these posts?</p>
                                     <p className='mb-auto'>Viewing posts won&apos;t unblock @{`${user.username}`}</p>
                                 </div>
-                                <button 
+                                <button
                                     className='mt-2 border-primary border px-4 py-2 rounded-xl text-primary font-bold hover:bg-primary hover:text-white-1'
                                     onClick={handleViewPosts} >
-                                        View Posts
+                                    View Posts
                                 </button>
                             </div>
                         </div>

@@ -25,7 +25,7 @@ interface NotificationType {
     }
 }
 
-export default function NotificationFollow({ isRead, notifier }: { isRead: boolean, notifier: NotificationType }) {
+export default function NotificationNewFollow({ isRead, notifier }: { isRead: boolean, notifier: NotificationType }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(notifier['_count'].followers === 1);
     const [followersCount, setFollowersCount] = useState(notifier.followers.length);
 

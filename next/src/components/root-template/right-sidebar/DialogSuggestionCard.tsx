@@ -1,44 +1,15 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import FollowBtn from '../FollowBtn';
-import ProfileMenuBtn from './ProfileMenuBtn';
-import UserHoverCard from '../UserHoverCard';
 import { useUserContext } from '@/context/UserContextProvider';
 import { useRouter } from 'next/navigation';
+import UserHoverCard from '@/components/UserHoverCard';
+import { UserSuggestion, useSuggestionContext } from '@/context/SuggestionContextProvider';
+import FollowBtn from '@/components/FollowBtn';
 
-interface FollowerFolloweeUser {
-    username: string,
-    profile: {
-        name: string,
-        bio: string,
-        profilePicture: string,
-    },
-    followers: {
-        followerId: number,
-    }[] | [],
-    following: {
-        followeeId: number,
-    }[] | [],
-    blockedBy: {
-        blockerId: number,
-    }[] | [],
-    blockedUsers: {
-        blockedId: number,
-    }[] | [],
-    notifying: {
-        receiverId: number,
-    }[] | [],
-    _count: {
-        followers: number,
-        following: number,
-    },
-    type: 'follower' | 'followee',
-}
-
-export default function ProfileFollowersFollowingCard({ user }: { user: FollowerFolloweeUser }) {
+export default function DialogSuggestionCard({ user }: { user: UserSuggestion }) {
     // state for updating followers count when logged in user follows / blocks the profile
-    const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(user.followers.length === 1);
+    const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(user.isFollowing);
     const [followersCount, setFollowersCount] = useState(user['_count'].followers);
 
     // state to show whether the profile follows logged in user
@@ -46,14 +17,8 @@ export default function ProfileFollowersFollowingCard({ user }: { user: Follower
     const [isFollowingTheUser, setIsFollowingTheUser] = useState(user.following.length === 1);
     const [followingCount, setFollowingCount] = useState(user['_count'].following);
 
-    const [isBlockedByTheUser, setIsBlockedByTheUser] = useState(user.blockedBy.length === 1);
-    const [notificationsEnabled, setNotificationsEnabled] = useState(user.notifying.length === 1);
-
     const { loggedInUser } = useUserContext();
     const router = useRouter();
-
-    if (isBlockedByTheUser) return <></>;
-    if (user.type === 'followee' && !isFollowedByTheUser) return <></>;
 
     const handleCardClick = () => {
         router.push(`/${user.username}`);
@@ -99,30 +64,13 @@ export default function ProfileFollowersFollowingCard({ user }: { user: Follower
                 </div>
             </div>
 
-            {loggedInUser.username !== user.username && (
-                <>
-                    <div className='ml-auto [&_button]:py-1'>
-                        <FollowBtn
-                            username={user.username}
-                            setFollowersCount={setFollowersCount}
-                            isFollowedByTheUser={isFollowedByTheUser}
-                            setIsFollowedByTheUser={setIsFollowedByTheUser}
-                            setNotificationsEnabled={setNotificationsEnabled} />
-                    </div>
-                    <div className='[&_button]:border-none [&_svg]:w-[18px] [&_svg]:h-[18px]'>
-                        <ProfileMenuBtn
-                            user={user.username}
-                            isBlockedByTheUser={isBlockedByTheUser}
-                            setIsBlockedByTheUser={setIsBlockedByTheUser}
-                            isFollowedByTheUser={isFollowedByTheUser}
-                            setIsFollowedByTheUser={setIsFollowedByTheUser}
-                            setFollowersCount={setFollowersCount}
-                            isFollowingTheUser={isFollowingTheUser}
-                            setIsFollowingTheUser={setIsFollowingTheUser}
-                            setFollowingCount={setFollowingCount} />
-                    </div>
-                </>
-            )}
+            <div className='ml-auto [&_button]:py-1'>
+                <FollowBtn
+                    username={user.username}
+                    setFollowersCount={setFollowersCount}
+                    isFollowedByTheUser={isFollowedByTheUser}
+                    setIsFollowedByTheUser={setIsFollowedByTheUser} />
+            </div>
         </div>
     )
 }

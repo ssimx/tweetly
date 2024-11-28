@@ -213,7 +213,7 @@ body {
 
     .main-content {
         @apply min-h-screen h-auto
-            lg:grid lg:grid-cols-main-content-layout;
+            lg:grid lg:grid-cols-main-content-layout gap-8;
     }
 
     /* Left sidebar */
@@ -261,6 +261,12 @@ body {
             shadow-menu bg-[#ffffff] overflow-hidden
             absolute w-[200px] h-fit rounded-[20px] py-[10px] mb-2 translate-y-[-125%]
             xl:w-[110%] xl:translate-x-[-5%];
+    }
+
+    /* Right sidebar */
+    .right-sidebar-wrapper {
+        @apply max-h-screen max-w-full w-full box-border flex justify-center pt-5
+        /* border border-red-500 [&_*]:border [&_*]:border-red-500; */
     }
 
     /* Feed */
@@ -407,14 +413,6 @@ body {
 
     .user-hover-card-content {
 
-    }
-
-    /* Right sidebar */
-
-    .right-sidebar {
-        @apply 
-            hidden
-            lg:block;
     }
 
     /* Profile */

@@ -338,6 +338,122 @@ export const getFollowing = async (userId: number, username: string, cursor?: st
 
 // ---------------------------------------------------------------------------------------------------------
 
+interface SuggestionType {
+    id: number;
+    username: string;
+    profile: {
+        name: string;
+        bio: string;
+        profilePicture: string;
+    } | null;
+    followers: {
+        followerId: number;
+    }[];
+    following: {
+        followeeId: number;
+    }[];
+    _count: {
+        followers: number,
+        following: number
+    };
+}
+export const getFollowSuggestions = async (userId: number) => {
+    // Step 1: Fetch the last 20 users followed by the logged-in user
+    const recentFollowees = await prisma.follow.findMany({
+        where: {
+            followerId: userId,
+        },
+        orderBy: {
+            createdAt: "desc",
+        },
+        take: 20,
+        select: {
+            followeeId: true,
+        },
+    });
+
+    const recentFolloweeIds = recentFollowees.map((follow) => follow.followeeId);
+
+    // Step 2: Fetch the last 20 users followed by each of these 20 users
+    const suggestions = await prisma.follow.findMany({
+        where: {
+            followerId: {
+                in: recentFolloweeIds,
+            },
+        },
+        orderBy: {
+            createdAt: "desc",
+        },
+        take: 20 * recentFolloweeIds.length, // Fetch up to 20 for each user
+        select: {
+            followee: {
+                select: {
+                    id: true,
+                    username: true,
+                    profile: {
+                        select: {
+                            name: true,
+                            bio: true,
+                            profilePicture: true,
+                        }
+                    },
+                    followers: {
+                        where: {
+                            follower: {
+                                id: userId,
+                            }
+                        },
+                        select: {
+                            followerId: true
+                        }
+                    },
+                    following: {
+                        where: {
+                            followee: {
+                                id: userId,
+                            }
+                        },
+                        select: {
+                            followeeId: true
+                        }
+                    },
+                    _count: {
+                        select: {
+                            followers: true,
+                            following: true,
+                        }
+                    }
+                }
+            },
+        },
+    });
+
+    const filteredSuggestions = suggestions.filter((entry) => entry.followee.followers.length === 0 && entry.followee.id !== userId);
+    
+    // Step 3: Aggregate and count occurrences of users
+    const userFrequency: Record<number, { count: number; user: SuggestionType }> = {};
+    for (const { followee } of filteredSuggestions) {
+        if (!userFrequency[followee.id]) {
+            userFrequency[followee.id] = { count: 0, user: followee };
+        }
+        userFrequency[followee.id].count++;
+    }
+
+    // Step 4: Order by most frequent and return top 20
+    const sortedSuggestions = Object.values(userFrequency)
+        .sort((a, b) => b.count - a.count) // Sort by frequency (count)
+        .slice(0, 20) // Take top 20
+        .map(({ user }) => {
+            const { username, profile, followers, following, _count } = user;
+            return { username, profile, followers, following, _count };
+        });
+
+
+    return sortedSuggestions;
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
 export const getUserId = async (username: string) => {
     return await prisma.user.findUnique({
         where: {

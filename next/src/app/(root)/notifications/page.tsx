@@ -2,7 +2,7 @@
 import { decryptSession, getToken } from "@/lib/session";
 import { redirect } from "next/navigation";
 import NotificationPost from "@/components/notifications/NotificationPost";
-import NotificationFollow from "@/components/notifications/NotificationFollow";
+import NotificationNewFollow from "@/components/notifications/NotificationNewFollow";
 
 interface NotificationType {
     id: number;
@@ -173,9 +173,6 @@ export default async function Notifications() {
     });
     const notifications = await response.json() as NotificationType[];
 
-    console.log(notifications);
-    
-
     return (
         <section className='w-full h-fit'>
             <div className='feed-hr-line'></div>
@@ -195,7 +192,7 @@ export default async function Notifications() {
                             )
                             : (
                                 <>
-                                    <NotificationFollow isRead={item.isRead} notifier={item.notifier} />
+                                    <NotificationNewFollow isRead={item.isRead} notifier={item.notifier} />
                                     <div className='feed-hr-line'></div>
                                 </>
                             )

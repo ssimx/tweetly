@@ -49,7 +49,7 @@ const config: Config = {
                 'root-desktop-layout-xl': '18% 1fr',
 
                 // main content 2 col grid
-                'main-content-layout': '70% 30%',
+                'main-content-layout': '65% 1fr',
                 // Post modal columns
                 'post-layout': 'auto 1fr',
             },

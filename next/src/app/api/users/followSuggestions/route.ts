@@ -1,12 +1,10 @@
-import { decryptSession, extractToken, removeSession, verifySession } from "@/lib/session";
-import { UserInfo } from "@/lib/types";
+import { extractToken, getToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
         const authHeader = req.headers.get('Authorization');
-        const token = extractToken(authHeader);
-        const username = await decryptSession(token).then(res => res?.username);
+        const token = extractToken(authHeader) || getToken();
 
         if (token) {
             const isValid = await verifySession(token);
@@ -21,20 +19,16 @@ export async function GET(req: NextRequest) {
 
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
-            const response = await fetch(`${apiUrl}/users`, {
+            const response = await fetch(`${apiUrl}/users/followSuggestions`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,
                 },
             });
-            
+
             if (response.ok) {
-                const data = await response.json().then((res) => res.userData);
-                if (data.username !== username) {
-                    // Delete the cookie if usernames do not match
-                    return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 400 });
-                }
+                const data = await response.json().then((res) => res.followSuggestions);
                 return NextResponse.json(data);
             } else {
                 const errorData = await response.json();

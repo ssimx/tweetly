@@ -35,6 +35,8 @@ app.use(
             }
 
             if (!user) {
+                console.log('unauth');
+                
                 return res.status(401).json({ error: info.message || 'Unauthorized' });
             }
 

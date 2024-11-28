@@ -1,10 +1,17 @@
 import TemplateHeader from "@/components/root-template/Header";
 import LeftSidebar from "@/components/root-template/left-sidebar/LeftSidebar";
 import PhoneBottomNav from "@/components/root-template/PhoneBottomNav";
+import RightSidebar from "@/components/root-template/right-sidebar/RightSidebar";
 import UserContextProvider from "@/context/UserContextProvider";
+import SuggestionContextProvider from "@/context/SuggestionContextProvider";
 import { getToken } from "@/lib/session";
 import { UserInfo } from "@/lib/types";
 import { redirect } from "next/navigation";
+
+export interface UserData {
+    user: UserInfo,
+    followReccomendations: string,
+}
 
 export default async function RootTemplate({ children }: Readonly<{ children: React.ReactNode }>) {
     const token = getToken();
@@ -24,23 +31,27 @@ export default async function RootTemplate({ children }: Readonly<{ children: Re
         return redirect('/logout');
     }
 
-    const userData = await response.json() as UserInfo;
+    const user = await response.json();
 
     return (
-        <UserContextProvider userData={userData}>
+        <UserContextProvider userData={user}>
                 <main className="w-screen h-auto">
                     <div className="root-phone xs:root-desktop">
-                        <div className='left-sidebar-wrapper'>
-                            <LeftSidebar />
-                        </div>
-                        <div className='main-content'>
-                            <div className='border-x h-screen grid grid-cols-1 grid-rows-main-content'>
-                                <TemplateHeader />
-                                {children}
+                        <SuggestionContextProvider>
+                            <div className='left-sidebar-wrapper'>
+                                <LeftSidebar />
                             </div>
-                            <div className="right-sidebar">right sidebar</div>
-                        </div>
-                        <PhoneBottomNav />
+                            <div className='main-content'>
+                                <div className='border-x h-screen grid grid-cols-1 grid-rows-main-content'>
+                                    <TemplateHeader />
+                                    {children}
+                                </div>
+                                <div className='right-sidebar-wrapper'>
+                                    <RightSidebar />
+                                </div>
+                            </div>
+                            <PhoneBottomNav />
+                        </SuggestionContextProvider>
                     </div>
                 </main>
         </UserContextProvider>

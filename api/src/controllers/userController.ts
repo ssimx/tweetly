@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { addBlock, addFollow, addPushNotifications, getFollowers, getFollowing, getProfile, getUser, removeBlock, removeFollow, removePushNotfications, updateProfile } from '../services/userService';
+import { addBlock, addFollow, addPushNotifications, getFollowers, getFollowing, getFollowSuggestions, getProfile, getUser, removeBlock, removeFollow, removePushNotfications, updateProfile } from '../services/userService';
 import { ProfileInfo, UserProps } from '../lib/types';
 import { deleteImageFromCloudinary } from './uploadController';
 import { getNotifications, updateNotificationsToRead } from '../services/notificationService';
@@ -11,10 +11,29 @@ export const getUserInfo = async (req: Request, res: Response) => {
 
     try {
         const userData = await getUser(id);
-
         if (!userData) return res.status(404).json({ error: 'User does not exist' });
 
+        const followSuggestions = await getFollowSuggestions(id);
+
         return res.status(201).json({ userData });
+    } catch (error) {
+        console.error('Error getting user: ', error);
+        return res.status(500).json({ error: 'Failed to process the request' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getUserFollowSuggestions = async (req: Request, res: Response) => {
+    const { id } = req.user as UserProps;
+
+    try {
+        const userData = await getUser(id);
+        if (!userData) return res.status(404).json({ error: 'User does not exist' });
+
+        const followSuggestions = await getFollowSuggestions(id);
+
+        return res.status(201).json({ followSuggestions });
     } catch (error) {
         console.error('Error getting user: ', error);
         return res.status(500).json({ error: 'Failed to process the request' });
@@ -117,6 +136,28 @@ export const getProfileFollowing = async (req: Request, res: Response) => {
         return res.status(500).json({ error: 'Failed to process the request' });
     }
 };
+
+// ---------------------------------------------------------------------------------------------------------
+
+// export const followSuggestions = async (req: Request, res: Response) => {
+//     const user = req.user as UserProps;
+
+//     console.log('test');
+    
+
+//     try {
+//         const recommendations = await getFollowSuggestions(user.id);
+
+//         if (!recommendations) {
+//             return res.status(404).json({ message: "No recommendations found" });
+//         }
+
+//         return res.status(200).json(recommendations);
+//     } catch (error) {
+//         console.error('Error: ', error);
+//         return res.status(500).json({ error: 'Failed to fetch follow recommendations' });
+//     }
+// };
 
 // ---------------------------------------------------------------------------------------------------------
 

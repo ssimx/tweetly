@@ -88,11 +88,11 @@ export interface PostType {
             profilePicture: string,
         },
         following: {
-            followerId: number,
-        }[] | [],
-        followers: {
             followeeId: number,
-        }[] | [],
+        }[],
+        followers: {
+            followerId: number,
+        }[],
         _count: {
             followers: number,
             following: number,

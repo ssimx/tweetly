@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
 import UserHoverCard from '../../UserHoverCard';
 
 export default function ReplyPost({ post }: { post: PostType }) {
-    const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author['_count'].followers === 1);
+    const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
     const [followersCount, setFollowersCount] = useState(post.author.followers.length);
 
     // state to show whether the profile follows logged in user
