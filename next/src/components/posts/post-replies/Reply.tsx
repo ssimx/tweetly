@@ -5,8 +5,9 @@ import Image from 'next/image';
 import { formatPostDate } from '@/lib/utils';
 import PostBtns from '../PostBtns';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import UserHoverCard from '../../UserHoverCard';
+import PostContent from '@/components/PostContent';
 
 export default function ReplyPost({ post }: { post: PostType }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
@@ -53,7 +54,7 @@ export default function ReplyPost({ post }: { post: PostType }) {
                 </div>
             </div>
             <div className='post-content'>
-                <p>{post.content}</p>
+                <PostContent content={post.content} />
             </div>
             <div className='!border-t-0 post-btns'>
                 <PostBtns

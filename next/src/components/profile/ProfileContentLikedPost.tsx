@@ -8,6 +8,7 @@ import PostBtns from '../posts/PostBtns';
 import { SetStateAction, useState } from 'react';
 import { Reply } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import PostContent from '../PostContent';
 
 export default function ProfileContentLikedpost({ post }: { post: LikedPost }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
@@ -85,8 +86,8 @@ export default function ProfileContentLikedpost({ post }: { post: LikedPost }) {
                         <p>·</p>
                         <p className='whitespace-nowrap'>{formatPostDate(post.createdAt)}</p>
                     </div>
-                    <div className='feed-post-content'>
-                        <p className='break-all'>{post.content}</p>
+                    <div className='post-content'>
+                        <PostContent content={post.content} />
                     </div>
                     <div className='!border-t-0 post-btns'>
                         <PostBtns

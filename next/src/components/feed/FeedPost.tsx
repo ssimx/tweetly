@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import UserHoverCard from '../UserHoverCard';
 import { UserSuggestion, useSuggestionContext } from '@/context/SuggestionContextProvider';
+import PostContent from '../PostContent';
 
 export default function FeedPost({ post }: { post: PostType }) {
     const [postAuthor, setPostAuthor] = useState<UserSuggestion>({...post.author, isFollowing: post.author.followers.length === 1});
@@ -71,7 +72,7 @@ export default function FeedPost({ post }: { post: PostType }) {
                 </div>
 
                 <div className='feed-post-content post-content'>
-                    <p>{post.content}</p>
+                    <PostContent content={post.content} />
                 </div>
 
                 <div className='!border-t-0 post-btns'>

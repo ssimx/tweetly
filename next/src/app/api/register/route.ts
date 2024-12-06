@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ message: 'Already logged in!' }, { status: 400 });
             } else {
                 // Remove invalid session if the session is not valid
-                await removeSession();
+                removeSession();
             }
         }
 

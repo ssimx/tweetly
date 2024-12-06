@@ -22,6 +22,8 @@ import {
     getPosts,
     getReplies,
     getReposts,
+    getTrendingHastags,
+    handlePostHashtags,
     postExists,
     removePostBookmark,
     removePostLike,
@@ -39,7 +41,10 @@ interface NewPostProps {
 export const newPost = async (req: Request, res: Response) => {
     const { text, replyToId } = req.body as NewPostProps;
     const user = req.user as UserProps;
+
     const postData = { text, replyToId, user };
+    const hashtagRegex = /#(\w+)/g;
+    const hashtags = Array.from(new Set(postData.text.match(hashtagRegex)?.map((tag) => tag.slice(1)) || []));
 
     try {
         if (replyToId) {
@@ -55,11 +60,18 @@ export const newPost = async (req: Request, res: Response) => {
                 return res.status(400).json({ error: 'content' });
             }
         } else {
-            // handle notifications
-            if (postData.replyToId === undefined) {
-                createNotificationsForNewPost(response.post.id, user.id);
+            const postId = response.post.id;
+
+            // Delegate hashtag handling to service
+            if (hashtags.length > 0) {
+                await handlePostHashtags(postId, hashtags);
+            }
+
+            // Create notifications
+            if (!replyToId) {
+                createNotificationsForNewPost(postId, user.id);
             } else {
-                createNotificationsForNewReply(response.post.id, user.id);
+                createNotificationsForNewReply(postId, user.id);
             }
 
             return res.status(201).json({ response });
@@ -142,6 +154,21 @@ export const following30DayPosts = async (req: Request, res: Response) => {
             const response = await getFollowing30DayPosts(user.id);
             return res.status(200).json({ response });
         }
+    } catch (error) {
+        console.error('Error fetching data: ', error);
+        return res.status(500).json({ error: 'Failed to fetch the data' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const trendingHashtags = async (req: Request, res: Response) => {
+    try {
+        const hashtags = await getTrendingHastags();
+        if (!hashtags) return res.status(404).json({ error: "Couldn't find trending hashtags" });
+        console.log(hashtags);
+        
+        return res.status(200).json({ hashtags });
     } catch (error) {
         console.error('Error fetching data: ', error);
         return res.status(500).json({ error: 'Failed to fetch the data' });

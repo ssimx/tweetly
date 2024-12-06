@@ -7,6 +7,7 @@ import { formatPostDate } from '@/lib/utils';
 import PostBtns from './PostBtns';
 import { useRouter } from 'next/navigation';
 import UserHoverCard from '../UserHoverCard';
+import PostContent from '../PostContent';
 
 export default function ParentPostInfo({ post }: { post: PostType }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
@@ -58,7 +59,7 @@ export default function ParentPostInfo({ post }: { post: PostType }) {
                 </div>
 
                 <div className='post-content'>
-                    <p>{post.content}</p>
+                    <PostContent content={post.content} />
                 </div>
 
                 <div className='!border-t-0 post-btns'>

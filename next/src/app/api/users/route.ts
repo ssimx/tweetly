@@ -1,5 +1,4 @@
 import { decryptSession, extractToken, removeSession, verifySession } from "@/lib/session";
-import { UserInfo } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {

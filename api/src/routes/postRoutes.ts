@@ -15,6 +15,7 @@ import {
     removeRepost,
     following30DayPosts,
     getUserBookmarks,
+    trendingHashtags,
  } from "../controllers/postController";
 
 const express = require('express');
@@ -24,6 +25,7 @@ const router = express.Router();
 router.get('/reposts/:username', getUserReposts);
 router.get('/replies/:username', getUserReplies);
 router.get('/likedPosts', getUserLikes);
+router.get('/trending', trendingHashtags);
 router.get('/bookmarks', getUserBookmarks);
 router.get('/status/:id', getPost);
 router.get('/postReplies/:id', postReplies);

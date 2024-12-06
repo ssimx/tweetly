@@ -5,14 +5,12 @@ import PostBtns from './PostBtns';
 import Link from 'next/link';
 import UserHoverCard from '../UserHoverCard';
 import { useState } from 'react';
+import PostContent from '../PostContent';
 
 
 export default function PostInfo({ post }: { post: PostType }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
     const [followersCount, setFollowersCount] = useState(post.author.followers.length);
-
-    console.log(post);
-    
 
     // state to show whether the profile follows logged in user
     const [isFollowingTheUser,] = useState(post.author.following.length === 1);
@@ -48,7 +46,7 @@ export default function PostInfo({ post }: { post: PostType }) {
                     </div>
                 </div>
                 <div className='post-content'>
-                    <p>{post.content}</p>
+                    <PostContent content={post.content} />
                 </div>
                 <div className='post-footer'>
                     <p>{postTime}</p>

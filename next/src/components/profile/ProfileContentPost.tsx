@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { Repeat2 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useUserContext } from '@/context/UserContextProvider';
+import PostContent from '../PostContent';
 
 export default function ProfileContentPost({ post }: { post: PostRepost }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
@@ -73,8 +74,8 @@ export default function ProfileContentPost({ post }: { post: PostRepost }) {
                         <p>·</p>
                         <p className='whitespace-nowrap'>{formatPostDate(post.createdAt)}</p>
                     </div>
-                    <div className='feed-post-content'>
-                        <p className='break-all'>{post.content}</p>
+                    <div className='post-content'>
+                        <PostContent content={post.content} />
                     </div>
                     <div className='!border-t-0 post-btns'>
                         <PostBtns

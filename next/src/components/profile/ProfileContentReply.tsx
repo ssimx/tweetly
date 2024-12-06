@@ -8,6 +8,7 @@ import PostBtns from '../posts/PostBtns';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ProfileContentReplyParent from './ProfileContentReplyParent';
+import PostContent from '../PostContent';
 
 export default function ProfileContentReply({ replyPost }: { replyPost: Reply }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(replyPost.author['_count'].followers === 1);
@@ -62,8 +63,8 @@ export default function ProfileContentReply({ replyPost }: { replyPost: Reply })
                             <p>·</p>
                             <p className='whitespace-nowrap'>{formatPostDate(replyPost.createdAt)}</p>
                         </div>
-                        <div className='feed-post-content'>
-                            <p className='break-all'>{replyPost.content}</p>
+                        <div className='post-content'>
+                            <PostContent content={replyPost.content} />
                         </div>
                         <div className='!border-t-0 post-btns'>
                             <PostBtns

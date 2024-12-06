@@ -139,28 +139,6 @@ export const getProfileFollowing = async (req: Request, res: Response) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-// export const followSuggestions = async (req: Request, res: Response) => {
-//     const user = req.user as UserProps;
-
-//     console.log('test');
-    
-
-//     try {
-//         const recommendations = await getFollowSuggestions(user.id);
-
-//         if (!recommendations) {
-//             return res.status(404).json({ message: "No recommendations found" });
-//         }
-
-//         return res.status(200).json(recommendations);
-//     } catch (error) {
-//         console.error('Error: ', error);
-//         return res.status(500).json({ error: 'Failed to fetch follow recommendations' });
-//     }
-// };
-
-// ---------------------------------------------------------------------------------------------------------
-
 export const followUser = async (req: Request, res: Response) => {
     const username = req.params.username;
     const user = req.user as UserProps;
@@ -285,3 +263,5 @@ export const getUserNotifications = async (req: Request, res: Response) => {
         return res.status(500).json({ error: 'Failed to process the request' });
     }
 };
+
+// ---------------------------------------------------------------------------------------------------------

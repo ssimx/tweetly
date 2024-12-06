@@ -55,7 +55,7 @@ export default function SuggestionCard({ user }: { user: UserSuggestion }) {
                         isFollowingTheUser={isFollowingTheUser}
                     />
 
-                    <div className='flex-center gap-2'>
+                    <div className='flex gap-x-2 flex-wrap items-center text-dark-500'>
                         <p className='text-16'>@{user.username}</p>
                         {loggedInUser.username !== user.username && isFollowingTheUser && (
                             <p className='bg-dark-300 text-12 px-1 rounded-sm h-fit mt-[2px] font-medium'>Follows you</p>

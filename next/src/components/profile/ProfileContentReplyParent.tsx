@@ -6,10 +6,11 @@ import { formatPostDate } from '@/lib/utils';
 import PostBtns from '../posts/PostBtns';
 import { useRouter } from 'next/navigation';
 import UserHoverCard from '../UserHoverCard';
+import PostContent from '../PostContent';
 
 interface Parent {
     id: number,
-    content: true,
+    content: string,
     createdAt: string,
     updatedAt: string,
     author: {
@@ -96,8 +97,8 @@ export default function ProfileContentReplyParent({ post }: { post: Parent }) {
                         <p>·</p>
                         <p className='whitespace-nowrap'>{formatPostDate(post.createdAt)}</p>
                     </div>
-                    <div className='feed-post-content'>
-                        <p className='break-all'>{post.content}</p>
+                    <div className='post-content'>
+                        <PostContent content={post.content} />
                     </div>
                     <div className='!border-t-0 post-btns'>
                         <PostBtns

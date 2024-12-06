@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import authRouter from './routes/authRoutes';
 import postRouter from './routes/postRoutes';
 import userRouter from './routes/userRoutes';
+import searchRouter from './routes/searchRoutes';
 import conversationRouter from './routes/conversationRoutes';
 import { configurePassport } from './middleware/passport';
 import { User } from '@prisma/client';
@@ -50,6 +51,7 @@ app.use(
 app.use('/api/v1/posts', postRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/conversations', conversationRouter);
+app.use('/api/v1/search', searchRouter);
 
 const server = app.listen(port, () => {
     console.log(`[server]: Server is running at http://localhost:${port}`);

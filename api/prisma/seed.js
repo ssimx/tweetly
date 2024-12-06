@@ -11,6 +11,43 @@ const UserRole = {
 
 const date30daysAgo = new Date(new Date().setDate(new Date().getDate() - 30));
 
+const hashtags = [
+    // 50 total hashtags, with the first 20 being "popular"
+    'javascript', 'nodejs', 'reactjs', 'webdevelopment', 'coding', 'programming', 'developer', 'tech', 'angular', 'html',
+    'css', 'typescript', 'frontend', 'backend', 'webdev', 'devlife', 'opensource', 'computerscience', 'softwareengineering', 'fullstack',
+    'ai', 'machinelearning', 'data', 'bigdata', 'iot', 'cloudcomputing', 'security', 'databases', 'blockchain', 'web3',
+    'reactnative', 'flutter', 'expressjs', 'vuejs', 'nextjs', 'gatsby', 'tailwindcss', 'bootstrap', 'sass', 'webpack',
+    'redux', 'firebase', 'graphql', 'api', 'npm', 'yarn', 'jest', 'testing', 'docker', 'kubernetes', 'terraform',
+    'java', 'python', 'ruby', 'php', 'go', 'swift', 'csharp', 'dart', 'elixir', 'rust'
+];
+
+// Randomize hashtags
+function getRandomHashtags() {
+    // Select a random number of hashtags from the list, prioritizing popular hashtags
+    const popularHashtags = hashtags.slice(0, 20);
+    const allHashtags = hashtags;
+
+    // Ensure that popular hashtags are chosen more often
+    const hashtagsCount = faker.number.int({ min: 1, max: 2 });
+    let selectedHashtags = [];
+
+    // Add popular hashtags with higher frequency
+    for (let i = 0; i < hashtagsCount; i++) {
+        const hashtag = faker.helpers.arrayElement(popularHashtags);
+        selectedHashtags.push(`#${hashtag}`);
+    }
+
+    // Fill with additional random hashtags
+    if (selectedHashtags.length < 5) {
+        for (let i = selectedHashtags.length; i < Math.random() * (5 - selectedHashtags.length); i++) {
+            const hashtag = faker.helpers.arrayElement(allHashtags);
+            selectedHashtags.push(`#${hashtag}`);
+        }
+    }
+
+    return selectedHashtags.join(' '); // Return the hashtags as a string
+}
+
 function getRandomUsernameLength() {
     // Define possible lengths and their weights
     const lengthOptions = [
@@ -70,7 +107,7 @@ async function main() {
 
     const hashedPassword = await bcrypt.hash('tweetly', 10);
 
-    // Create 1000 users with profiles
+    // Create 100 users with profiles
     const users = await Promise.all(
         Array.from({ length: 100 }).map(async () => {
             const userCreatedAt = faker.date.recent({ days: 90, refDate: date30daysAgo });
@@ -208,12 +245,44 @@ async function main() {
             to: Date.now(),
         });
 
+        const hashtagRegex = /#(\w+)/g;
+        const shouldIncludeHashtags = Math.random() < 0.25;
+        let postContent = '';
+        if (shouldIncludeHashtags) {
+            postContent = `${faker.lorem.sentence()} ${getRandomHashtags()}`;
+        } else {
+            postContent = faker.lorem.sentence();
+        }
+        const hashtagsContent = Array.from(new Set(postContent.match(hashtagRegex)?.map((tag) => tag.slice(1)) || []));
+
         const post = await prisma.post.create({
             data: {
-                content: faker.lorem.sentence(),
+                content: postContent,
                 authorId: randomUser.id,
                 createdAt: postCreatedAt,
             },
+        });
+
+        const upsertedHashtags = await Promise.all(
+            hashtagsContent.map((tag) =>
+                prisma.hashtag.upsert({
+                    where: { name: tag },
+                    update: {}, // Ensure the tag exists without modifying it
+                    create: { name: tag },
+                })
+            )
+        );
+
+        // Now create the many-to-many relationships between Post and Hashtags
+        const hashtagOnPostData = upsertedHashtags.map((hashtag) => ({
+            postId: post.id,
+            hashtagId: hashtag.id, // Access the ID of the upserted hashtag
+        }));
+
+        // Perform the createMany operation
+        await prisma.hashtagOnPost.createMany({
+            data: hashtagOnPostData,
+            skipDuplicates: true, // Prevent duplicates
         });
 
         createdPosts.push(post); // Save created post
@@ -254,13 +323,45 @@ async function main() {
             select: { receiverId: true },
         });
 
+        const hashtagRegex = /#(\w+)/g;
+        const shouldIncludeHashtags = Math.random() < 0.25;
+        let replyContent = '';
+        if (shouldIncludeHashtags) {
+            replyContent = `${faker.lorem.sentence()} ${getRandomHashtags()}`;
+        } else {
+            replyContent = faker.lorem.sentence();
+        }
+        const hashtagsContent = Array.from(new Set(replyContent.match(hashtagRegex)?.map((tag) => tag.slice(1)) || []));
+
         const reply = await prisma.post.create({
             data: {
-                content: faker.lorem.sentence(),
+                content: replyContent,
                 replyToId: randomPost.id,
                 authorId: randomUser.id, // The user who created the reply
                 createdAt: replyCreatedAt,
             },
+        });
+
+        const upsertedHashtags = await Promise.all(
+            hashtagsContent.map((tag) =>
+                prisma.hashtag.upsert({
+                    where: { name: tag },
+                    update: {}, // Ensure the tag exists without modifying it
+                    create: { name: tag },
+                })
+            )
+        );
+
+        // Now create the many-to-many relationships between Post and Hashtags
+        const hashtagOnPostData = upsertedHashtags.map((hashtag) => ({
+            postId: reply.id,
+            hashtagId: hashtag.id, // Access the ID of the upserted hashtag
+        }));
+
+        // Perform the createMany operation
+        await prisma.hashtagOnPost.createMany({
+            data: hashtagOnPostData,
+            skipDuplicates: true, // Prevent duplicates
         });
 
         createdReplies.push(reply); // Save created reply

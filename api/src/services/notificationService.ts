@@ -16,7 +16,7 @@ export const createNotificationsForNewPost = async (postId: number, authorId: nu
 
     // create a notification for each follower
     const notifications = followers.map(follower => ({
-        typeId: 0,
+        typeId: 1,
         postId: postId,
         notifierId: authorId,
         receiverId: follower.receiverId,
@@ -42,7 +42,7 @@ export const createNotificationsForNewReply = async (postId: number, authorId: n
 
     // create a notification for each follower
     const notifications = followers.map(follower => ({
-        typeId: 1,
+        typeId: 2,
         postId: postId,
         notifierId: authorId,
         receiverId: follower.receiverId,
@@ -68,7 +68,7 @@ export const createNotificationsForNewRepost = async (postId: number, authorId: 
 
     // create a notification for each follower
     const notifications = followers.map(follower => ({
-        typeId: 2,
+        typeId: 3,
         postId: postId,
         notifierId: authorId,
         receiverId: follower.receiverId,
@@ -94,7 +94,7 @@ export const createNotificationsForNewLike = async (postId: number, authorId: nu
 
     // create a notification for each follower
     const notifications = followers.map(follower => ({
-        typeId: 3,
+        typeId: 4,
         postId: postId,
         notifierId: authorId,
         receiverId: follower.receiverId,
@@ -120,7 +120,7 @@ export const createNotificationsForNewFollower = async (postId: number, authorId
 
     // create a notification for each follower
     const notifications = followers.map(follower => ({
-        typeId: 4,
+        typeId: 5,
         postId: postId,
         notifierId: authorId,
         receiverId: follower.receiverId,
@@ -134,26 +134,6 @@ export const createNotificationsForNewFollower = async (postId: number, authorId
 // ---------------------------------------------------------------------------------------------------------
 
 export const removeNotificationsForPost = async (postId: number, notifierId: number) => {
-    return await prisma.notification.deleteMany({
-        where: {
-            AND: [
-                {
-                    typeId: 0
-                },
-                {
-                    postId
-                },
-                {
-                    notifierId: notifierId
-                }
-            ]
-        }
-    });
-};
-
-// ---------------------------------------------------------------------------------------------------------
-
-export const removeNotificationsForReply = async (postId: number, notifierId: number) => {
     return await prisma.notification.deleteMany({
         where: {
             AND: [
@@ -173,7 +153,7 @@ export const removeNotificationsForReply = async (postId: number, notifierId: nu
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const removeNotificationsForRepost = async (postId: number, notifierId: number) => {
+export const removeNotificationsForReply = async (postId: number, notifierId: number) => {
     return await prisma.notification.deleteMany({
         where: {
             AND: [
@@ -193,7 +173,7 @@ export const removeNotificationsForRepost = async (postId: number, notifierId: n
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const removeNotificationsForLike = async (postId: number, notifierId: number) => {
+export const removeNotificationsForRepost = async (postId: number, notifierId: number) => {
     return await prisma.notification.deleteMany({
         where: {
             AND: [
@@ -213,12 +193,32 @@ export const removeNotificationsForLike = async (postId: number, notifierId: num
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const removeNotificationsForFollow = async (postId: number, notifierId: number) => {
+export const removeNotificationsForLike = async (postId: number, notifierId: number) => {
     return await prisma.notification.deleteMany({
         where: {
             AND: [
                 {
                     typeId: 4
+                },
+                {
+                    postId
+                },
+                {
+                    notifierId: notifierId
+                }
+            ]
+        }
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const removeNotificationsForFollow = async (postId: number, notifierId: number) => {
+    return await prisma.notification.deleteMany({
+        where: {
+            AND: [
+                {
+                    typeId: 5
                 },
                 {
                     postId

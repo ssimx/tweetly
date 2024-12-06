@@ -657,3 +657,48 @@ export const removeBlock = async (blockerId: number, username: string) => {
         }
     })
 }
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getUsersByUsername = async (userId: number, searchTerms: string[]) => {
+    return await prisma.user.findMany({
+        where: {
+            OR: searchTerms.map((term) => ({
+                AND: [
+                    {
+                        OR: [
+                            { username: { contains: term, mode: 'insensitive' } },
+                            { profile: { name: { contains: term, mode: 'insensitive' } } },
+                        ],
+                    },
+                    {
+                        blockedBy: {
+                            none: {
+                                blockerId: userId,
+                            },
+                        },
+                    },
+                    {
+                        blockedUsers: {
+                            none: {
+                                blockedId: userId,
+                            },
+                        },
+                    },
+                ],
+            })),
+        },
+        take: 10,
+        select: {
+            username: true,
+            profile: {
+                select: {
+                    name: true,
+                    profilePicture: true,
+                }
+            },
+        }
+    })
+};
+
+// ---------------------------------------------------------------------------------------------------------

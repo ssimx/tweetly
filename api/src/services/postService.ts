@@ -50,6 +50,38 @@ export const createPost = async (postData: NewPostDataProps): Promise<NewPostRes
 
 // ---------------------------------------------------------------------------------------------------------
 
+export const handlePostHashtags = async (postId: number, hashtags: string[]) => {
+    try {
+        // First, upsert hashtags and get their IDs
+        const upsertedHashtags = await Promise.all(
+            hashtags.map((tag) =>
+                prisma.hashtag.upsert({
+                    where: { name: tag },
+                    update: {}, // Ensure the tag exists without modifying it
+                    create: { name: tag },
+                })
+            )
+        );
+
+        // Now create the many-to-many relationships between Post and Hashtags
+        const hashtagOnPostData = upsertedHashtags.map((hashtag) => ({
+            postId,
+            hashtagId: hashtag.id, // Access the ID of the upserted hashtag
+        }));
+
+        // Perform the createMany operation
+        await prisma.hashtagOnPost.createMany({
+            data: hashtagOnPostData,
+            skipDuplicates: true, // Prevent duplicates
+        });
+    } catch (error) {
+        console.error('Error handling post hashtags:', error);
+        throw new Error('Failed to process hashtags');
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
 export const getGlobal30DayPosts = async (userId: number, cursor?: number) => {
     let date = new Date();
     date.setDate(date.getDate() - 30);
@@ -175,6 +207,27 @@ export const getOldestGlobal30DayPost = async () => {
             id: true,
         }
     });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getTrendingHastags = async () => {
+    return await prisma.hashtag.findMany({
+        take: 20,
+        orderBy: {
+            posts: {
+                _count: 'desc',
+            }
+        },
+        select: {
+            name: true,
+            _count: {
+                select: {
+                    posts: true,
+                }
+            }
+        }
+    })
 };
 
 // ---------------------------------------------------------------------------------------------------------
