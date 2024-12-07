@@ -8,10 +8,15 @@ import { useUserContext } from "@/context/UserContextProvider";
 import FeedTab from "./FeedTab";
 import { useInView } from "react-intersection-observer";
 
+interface FeedType {
+    posts: PostType[],
+    end: boolean,
+}
+
 export default function FeedContent() {
     const [activeTab, setActiveTab] = useState(0);
-    const [followingPosts, setFollowingPosts] = useState<PostType[] | undefined>(undefined);
     const [globalPosts, setGlobalPosts] = useState<PostType[] | undefined>(undefined);
+    const [followingPosts, setFollowingPosts] = useState<PostType[] | undefined>(undefined);
     const [newGlobalPostCount, setNewGlobalPostCount] = useState(0);
     const [newFollowingPostCount, setNewFollowingPostCount] = useState(0);
     const { loggedInUser } = useUserContext();
@@ -19,19 +24,20 @@ export default function FeedContent() {
     // scroll and pagination
     const scrollPositionRef = useRef<number>(0);
     const [scrollPosition, setScrollPosition] = useState(0);
-    const [globalFeedCursor, setGlobalFeedCursor] = useState<number>();
-    const [followingFeedCursor, setFollowingFeedCursor] = useState<number>();
-    const [endReached, setEndReached] = useState(false);
+    const [globalFeedCursor, setGlobalFeedCursor] = useState<number | null>(null);
+    const [followingFeedCursor, setFollowingFeedCursor] = useState<number | null>(null);
+    const [globalFeedEndReached, setGlobalFeedEndReached] = useState(false);
+    const [followingFeedEndReached, setFollowingFeedEndReached] = useState(false);
     const { ref, inView } = useInView({
         threshold: 0,
         delay: 100,
     });
 
-    // Infinite scroll - fetch older messages when inView is true
+    // Infinite scroll - fetch older posts when inView is true
     useEffect(() => {
-        if (inView && !endReached && scrollPositionRef.current !== scrollPosition) {
+        if (inView && scrollPositionRef.current !== scrollPosition) {
             const fetchOldMsgs = async () => {
-                if (activeTab === 0) {
+                if (activeTab === 0 && !globalFeedEndReached) {
                     const response = await fetch(`api/posts/feed/global?cursor=${globalFeedCursor}`, {
                         method: 'GET',
                         headers: {
@@ -41,15 +47,14 @@ export default function FeedContent() {
                     });
                     const { olderGlobalPosts, end }: { olderGlobalPosts: PostType[], end: boolean } = await response.json();
 
-                    if (olderGlobalPosts.length === 0 && end === true) {
-                        setEndReached(true);
-                        return;
-                    }
-
-                    setGlobalFeedCursor(olderGlobalPosts[olderGlobalPosts.length === 0 ? 0 : olderGlobalPosts.length - 1].id);
+                    setGlobalFeedCursor(olderGlobalPosts.length !== 0 ? olderGlobalPosts.slice(-1)[0].id : null);
                     setGlobalPosts(currentPosts => [...currentPosts as PostType[], ...olderGlobalPosts]);
                     setScrollPosition(scrollPositionRef.current);
-                } else {
+
+                    if (olderGlobalPosts.length === 0 || end === true) {
+                        setGlobalFeedEndReached(true);
+                    }
+                } else if (activeTab === 1 && !followingFeedEndReached) {
                     const response = await fetch(`api/posts/feed/following?cursor=${followingFeedCursor}`, {
                         method: 'GET',
                         headers: {
@@ -58,21 +63,21 @@ export default function FeedContent() {
                         cache: 'no-cache',
                     });
                     const { olderFollowingPosts, end }: { olderFollowingPosts: PostType[], end: boolean } = await response.json();
+                    console.log(olderFollowingPosts, end);
 
-                    if (olderFollowingPosts.length === 0 && end === true) {
-                        setEndReached(true);
-                        return;
-                    }
-
-                    setFollowingFeedCursor(olderFollowingPosts.length > 0 ? olderFollowingPosts[olderFollowingPosts.length - 1].id : 0);
+                    setFollowingFeedCursor(olderFollowingPosts.length !== 0 ? olderFollowingPosts.slice(-1)[0].id : null);
                     setFollowingPosts(currentPosts => [...currentPosts as PostType[], ...olderFollowingPosts]);
                     setScrollPosition(scrollPositionRef.current);
+
+                    if (olderFollowingPosts.length === 0 || end === true) {
+                        setFollowingFeedEndReached(true);
+                    }
                 }
             };
 
             fetchOldMsgs();
         }
-    }, [inView, activeTab, globalFeedCursor, followingFeedCursor, endReached, scrollPosition]);
+    }, [inView, activeTab, globalFeedCursor, followingFeedCursor, globalFeedEndReached, followingFeedEndReached, scrollPosition]);
 
     // Initial data fetch, save cursor
     useEffect(() => {
@@ -86,14 +91,17 @@ export default function FeedContent() {
 
                         if (!response.ok) {
                             const errorData = await response.json();
-                            console.log(errorData);
-
                             throw new Error(errorData.error);
                         }
 
-                        const globalFeed: PostType[] = await response.json();
-                        setGlobalPosts(globalFeed);
-                        setGlobalFeedCursor(globalFeed.length > 0 ? globalFeed[globalFeed.length - 1].id : 0);
+                        const results = await response.json() as FeedType;
+                        
+                        setGlobalPosts([...results.posts]);
+                        setGlobalFeedCursor(results.posts.length !== 0 ? results.posts.slice(-1)[0].id : null);
+
+                        if (results.posts.length === 0 || results.end === true) {
+                            setFollowingFeedEndReached(() => true);
+                        }
                     } catch (error) {
 
                     }
@@ -111,14 +119,17 @@ export default function FeedContent() {
 
                         if (!response.ok) {
                             const errorData = await response.json();
-                            console.log(errorData);
-
                             throw new Error(errorData.error);
                         }
 
-                        const followingFeed: PostType[] = await response.json();
-                        setFollowingPosts(followingFeed);
-                        setFollowingFeedCursor(followingFeed.length > 0 ? followingFeed[followingFeed.length - 1].id : 0)
+                        const results = await response.json() as FeedType;
+
+                        setFollowingPosts([...results.posts] as PostType[]);
+                        setFollowingFeedCursor(results.posts.length !== 0 ? results.posts.slice(-1)[0].id : null);
+
+                        if (results.posts.length === 0 || results.end === true) {
+                            setFollowingFeedEndReached(() => true);
+                        }
                     } catch (error) {
 
                     }
@@ -128,6 +139,11 @@ export default function FeedContent() {
             fetchFeedPosts();
         }
     }, [activeTab, globalPosts, followingPosts]);
+
+    // Reset scroll position when switching tabs
+    useEffect(() => {
+        setScrollPosition(() => 0);
+    }, [activeTab]);
 
     useEffect(() => {
         socket.connect();
@@ -168,8 +184,6 @@ export default function FeedContent() {
         }
     };
 
-    if (globalPosts === undefined) return <div>loading...</div>
-
     return (
         <>
             <section className='feed-header'>
@@ -197,11 +211,13 @@ export default function FeedContent() {
 
             <section className='feed-posts-desktop'>
                 {activeTab === 0
-                    ? <FeedTab 
-                        posts={globalPosts as PostType[]}
-                        loadingRef={ref}
-                        scrollPositionRef={scrollPositionRef}
-                        endReached={endReached} />
+                    ? globalPosts === undefined
+                        ? <div>loading...</div>
+                        : <FeedTab 
+                            posts={globalPosts as PostType[]}
+                            loadingRef={ref}
+                            scrollPositionRef={scrollPositionRef}
+                            endReached={globalFeedEndReached} />
                     : null
                 }
 
@@ -214,7 +230,7 @@ export default function FeedContent() {
                                 posts={followingPosts as PostType[]}
                                 loadingRef={ref}
                                 scrollPositionRef={scrollPositionRef}
-                                endReached={endReached} />
+                                endReached={followingFeedEndReached} />
                     : null
                 }
             </section>

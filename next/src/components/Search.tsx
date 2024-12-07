@@ -4,7 +4,8 @@ import { Search as SearchIcon } from 'lucide-react';
 import Link from 'next/link';
 import { z } from "zod";
 import { searchSchema } from '@/lib/schemas';
-import SearchUserCard from './SearchUserCard';
+import { useRouter } from 'next/navigation';
+import SearchUserCard from './root-template/right-sidebar/SearchUserCard';
 
 export interface SearchResponseType {
     users: {
@@ -23,12 +24,13 @@ export interface SearchResponseType {
     }
 }
 
-export default function Search() {
-    const [text, setText] = useState('');
+export default function Search({ searchQuery }: { searchQuery?: string }) {
+    const [text, setText] = useState(searchQuery ? searchQuery : '');
     const [searched, setSearched] = useState(false);
     const [outputVisible, setOutputVisible] = useState(false);
     const [searchResponse, setSearchResponse] = useState<SearchResponseType | undefined>(undefined);
     const searchContainer = useRef<HTMLDivElement | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
         const timeout = setTimeout(async () => {
@@ -37,10 +39,18 @@ export default function Search() {
                 return;
             }
 
-            try {
-                searchSchema.parse({ q: text });
+            // hide output on the first render on the search page
+            if (text === searchQuery && searched === false) return;
 
-                const searchResponse = await fetch(`/api/search/users?q=${text}`, {
+            try {
+                // Decode query before validation
+                const decodedSearch = decodeURIComponent(text);
+                searchSchema.parse({ q: decodedSearch });
+
+                // Encode query for API requests
+                const encodedSearch = encodeURIComponent(decodedSearch);
+
+                const searchResponse = await fetch(`/api/search/users?q=${encodedSearch}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -48,7 +58,7 @@ export default function Search() {
                 });
 
                 const searchOutput = await searchResponse.json() as SearchResponseType;
-                
+
                 if (searchOutput.users.length !== 0) {
                     // Prioritize user results by match specificity
                     const prioritizedUsers = searchOutput.users.map((user) => {
@@ -87,18 +97,22 @@ export default function Search() {
                 setSearched(true);
                 setOutputVisible(true);
             } catch (error) {
+                if (error instanceof z.ZodError) {
+                    router.push('http://localhost:3000/');
+                }
+
                 console.error("Fetch error:", error);
             }
         }, 500);
 
-        return(() => {
+        return (() => {
             clearTimeout(timeout);
         });
-    }, [text]);
+    }, [text, router, searchQuery]);
 
     const handleClickOutside = (event: MouseEvent) => {
         console.log(event.target);
-        
+
         if (searchContainer.current && !searchContainer.current.contains(event.target as Node)) {
             setOutputVisible(false);
         }
@@ -118,8 +132,8 @@ export default function Search() {
 
     return (
         <div className='relative w-full'>
-            <div ref={searchContainer}>
-                <form action='search' className='h-fit'>
+            <div ref={searchContainer} className='w-full'>
+                <form action='search' className='h-fit w-full'>
                     <label className="h-[50px] w-full flex items-center gap-4 text-gray-400 rounded-[25px] border px-4">
                         <SearchIcon size={18} />
                         <input
@@ -128,29 +142,30 @@ export default function Search() {
                             className='outline-none text-black-1'
                             placeholder="Search"
                             autoComplete="off"
+                            value={text}
                             onChange={(e) => setText(e.target.value)}
-                            onClick={() => setOutputVisible(text.length === 0 ? false : true)} />
+                            onClick={() => setOutputVisible(text.length === 0 ? false : text === searchQuery ? false : true)} />
                     </label>
                 </form>
             </div>
 
-            { outputVisible && text.length !== 0 && (
+            {outputVisible && text.length !== 0 && (
                 <div className='search-output-container relative z-50'>
                     <Link href={`/search?q=${text}`} className='search-text-output'>
                         <SearchIcon size={26} color='#000000' strokeWidth={3} className='min-w-[26px]' />
                         <p>{text}</p>
                     </Link>
 
-                    { searched
+                    {searched
                         ? <div>
                             <div className='feed-hr-line'></div>
                             <div className=''>
-                                { searchResponse && 
+                                {searchResponse &&
                                     searchResponse.users.length === 0
-                                        ? <div className='p-3'>No users found</div>
-                                        : searchResponse && searchResponse.users.map((user, index) => (
-                                            <SearchUserCard key={index} user={user} />
-                                ))
+                                    ? <div className='p-3'>No users found</div>
+                                    : searchResponse && searchResponse.users.map((user, index) => (
+                                        <SearchUserCard key={index} user={user} />
+                                    ))
                                 }
                             </div>
                         </div>
@@ -160,7 +175,7 @@ export default function Search() {
                         </div>
                     }
                 </div>
-                )
+            )
             }
         </div>
     )

@@ -1,11 +1,10 @@
 import { Request, Response } from 'express';
 import { searchQueryCleanup } from '../utils/searchQueryCleanup';
-import { getUsersByUsername } from '../services/userService';
+import { getUsersBySearch } from '../services/userService';
 import { UserProps } from '../lib/types';
+import { getLastPostBySearch, getMorePostsBySearch, getPostsBySearch } from '../services/postService';
 
 export async function searchUsers(req: Request, res: Response) {
-    console.log('test');
-    
     const query = req.query.q as string;
     if (!query) return res.status(400).json({ error: "No search query provided" });
     const queryParams = searchQueryCleanup(query);
@@ -16,10 +15,10 @@ export async function searchUsers(req: Request, res: Response) {
         // fetch users
         let users = [];
         if (queryParams.usernames && queryParams.usernames.length > 0) {
-            const fetchedUsers = await getUsersByUsername(user.id, queryParams.usernames);
+            const fetchedUsers = await getUsersBySearch(user.id, queryParams.usernames);
             users.push(...fetchedUsers);
         } else if (queryParams.stringSegments && queryParams.stringSegments.length > 0) {
-            const fetchedUsers = await getUsersByUsername(user.id, queryParams.stringSegments);
+            const fetchedUsers = await getUsersBySearch(user.id, queryParams.stringSegments);
             users.push(...fetchedUsers);
         } 
         
@@ -28,30 +27,116 @@ export async function searchUsers(req: Request, res: Response) {
             queryParams
         })
     } catch (error) {
-        
+        console.error('Error fetching users: ', error);
+        return res.status(500).json({ error: 'Failed to process the request' });
     }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export async function searchPosts(req: Request, res: Response) {
-    // const query = req.query.q as string;
-    // if (!query) return res.status(400).json({ error: "No search query provided" });
-    // const queryParams = searchQueryCleanup(query);
+export async function searchPostsWithCursor(req: Request, res: Response) {
+    const query = req.query.q as string;
+    if (!query) return res.status(400).json({ error: "No search query provided" });
+    const cursor = Number(req.query.cursor);
+    if (!cursor) return res.status(400).json({ error: "No cursor provided" });
+    const queryParams = searchQueryCleanup(query);
 
-    // const user = req.user as UserProps;
+    const user = req.user as UserProps;
 
-    // try {
-    //     // fetch posts, users
-    //     let posts = [];
-    //     if (queryParams.segments && queryParams.segments.length > 0) {
-    //     }
+    try {
+        // fetch posts that contain either hastags, users or strings
+        const lastSearchPostId = await getLastPostBySearch(user.id, queryParams.segments).then(res => res[0].id);
+        if (lastSearchPostId) {
+            if (cursor === lastSearchPostId) {
+                return res.status(200).json({
+                    posts: [],
+                    end: true
+                });
+            }
+        }
 
-    //     return res.status(200).json({
-    //         posts,
-    //         queryParams
-    //     })
-    // } catch (error) {
+        const posts = await getMorePostsBySearch(user.id, queryParams.segments, cursor);
 
-    // }
+        console.log(cursor, lastSearchPostId, posts);
+        
+        if (lastSearchPostId && posts) {
+            if (posts.slice(-1)[0].id === lastSearchPostId) {
+                return res.status(200).json({
+                    posts: posts,
+                    end: true
+                });
+            } else {
+                return res.status(200).json({
+                    posts: posts,
+                    end: false
+                });
+            }
+        }
+
+        return res.status(200).json({
+            posts: [],
+            end: true
+        });
+    } catch (error) {
+        console.error('Error fetching posts: ', error);
+        return res.status(500).json({ error: 'Failed to process the request' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export async function searchUsersAndPosts(req: Request, res: Response) {
+    const query = req.query.q as string;
+    if (!query) return res.status(400).json({ error: "No search query provided" });
+    const queryParams = searchQueryCleanup(query);
+
+    const user = req.user as UserProps;
+
+    try {
+        // fetch users
+        let usersPromise;
+        if (queryParams.usernames && queryParams.usernames.length > 0) {
+            usersPromise = getUsersBySearch(user.id, queryParams.usernames);
+        } else if (queryParams.stringSegments && queryParams.stringSegments.length > 0) {
+            usersPromise = getUsersBySearch(user.id, queryParams.stringSegments);
+        }
+
+        // fetch posts
+        const lastSearchPostPromise = getLastPostBySearch(user.id, queryParams.segments);
+        const postsPromise = getPostsBySearch(user.id, queryParams.segments);
+
+        const [users, lastSearchPost, posts] = await Promise.all([
+            usersPromise || Promise.resolve([]),
+            lastSearchPostPromise || Promise.resolve([]),
+            postsPromise || Promise.resolve([])
+        ]);
+
+        if (lastSearchPost.length === 1 && posts) {
+            if (posts.slice(-1)[0].id === lastSearchPost[0].id) {
+                return res.status(200).json({
+                    users,
+                    posts,
+                    queryParams,
+                    end: true
+                });
+            } else {
+                return res.status(200).json({
+                    users,
+                    posts,
+                    queryParams,
+                    end: false
+                });
+            }
+        }
+
+        return res.status(200).json({
+            users,
+            posts: [],
+            queryParams,
+            end: true
+        })
+    } catch (error) {
+        console.error('Error fetching users and posts: ', error);
+        return res.status(500).json({ error: 'Failed to process the request' });
+    }
 };

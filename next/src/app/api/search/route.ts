@@ -27,6 +27,8 @@ export async function GET(req: NextRequest) {
             const query = searchParams.get('q');
             if (!query) return NextResponse.json({ message: 'No query provided' }, { status: 400 });
 
+            const cursor = searchParams.get('cursor');
+
             try {
                 // Decode and validate query
                 const decodedQuery = decodeURIComponent(query);
@@ -35,21 +37,38 @@ export async function GET(req: NextRequest) {
                 // Encode query for backend API call
                 const encodedQuery = encodeURIComponent(decodedQuery);
 
-                // Proceed with API request if valid
-                const response = await fetch(`${apiUrl}/search/users?q=${encodedQuery}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
-                    },
-                });
+                if (cursor !== null) {
+                    const response = await fetch(`${apiUrl}/search/posts?q=${encodedQuery}&cursor=${query}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                        },
+                    });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    return NextResponse.json(data);
+                    if (response.ok) {
+                        const data = await response.json();
+                        return NextResponse.json(data);
+                    } else {
+                        const errorData = await response.json();
+                        return NextResponse.json({ error: errorData.error }, { status: response.status });
+                    }
                 } else {
-                    const errorData = await response.json();
-                    return NextResponse.json({ error: errorData.error }, { status: response.status });
+                    const response = await fetch(`${apiUrl}/search?q=${encodedQuery}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                        }
+                    })
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        return NextResponse.json(data);
+                    } else {
+                        const errorData = await response.json();
+                        return NextResponse.json({ error: errorData.error }, { status: response.status });
+                    }
                 }
             } catch (error) {
                 if (error instanceof z.ZodError) {

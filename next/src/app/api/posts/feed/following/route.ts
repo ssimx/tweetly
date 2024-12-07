@@ -1,5 +1,4 @@
 import { getToken, removeSession, verifySession } from "@/lib/session";
-import { PostInfoType } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -48,8 +47,8 @@ export async function GET(req: NextRequest) {
                 })
 
                 if (response.ok) {
-                    const feedPosts: PostInfoType[] = await response.json().then((res) => res.response);
-                    return NextResponse.json(feedPosts);
+                    const data = await response.json();
+                    return NextResponse.json(data);
                 } else {
                     const errorData = await response.json();
                     return NextResponse.json({ error: errorData.error }, { status: response.status });

@@ -1,10 +1,15 @@
 import { redirect } from 'next/navigation';
 import React from 'react'
 
-export default function PostContent({ content }: { content: string }) {
+export default function PostContent({ content, searchSegments }: { content: string, searchSegments?: string[] }) {
     const parseContent = (text: string) => {
         // Regex to match hashtags
         const hashtagRegex = /#\w+/g;
+
+        const highlightWords = searchSegments?.map(segment => segment.toLowerCase()) || [];
+        const wordRegex = highlightWords.length
+            ? new RegExp(`\\b(${highlightWords.join("|")})\\b`, "gi")
+            : null;
 
         // Split text while keeping hashtags
         const parts = text.split(/(#[^\s]+)/g);
@@ -18,13 +23,25 @@ export default function PostContent({ content }: { content: string }) {
                     <a
                         key={index}
                         href={`/hashtag/${hashtag}`}
-                        className="text-blue-500 hover:underline"
+                        className={`text-blue-500 hover:underline ${searchSegments && searchSegments.some((word) => word.toLowerCase() === part.toLowerCase()) ? 'font-bold' : ''}`}
                         onClick={() => {
                             redirect(`http://localhost:3000/hashtag/${hashtag}`);
                         }}
                     >
                         {part}
                     </a>
+                );
+            } else if (wordRegex && wordRegex.test(part)) {
+                // If the part matches a search segment, split further to highlight words
+                const subParts = part.split(wordRegex);
+                return subParts.map((subPart, subIndex) =>
+                    wordRegex.test(subPart) ? (
+                        <span key={`${index}-${subIndex}`} className="font-bold">
+                            {subPart}
+                        </span>
+                    ) : (
+                        <span key={`${index}-${subIndex}`}>{subPart}</span>
+                    )
                 );
             }
             // Render non-hashtag parts as plain text

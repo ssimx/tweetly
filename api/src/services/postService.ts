@@ -2139,3 +2139,333 @@ export const getOldestReplyLeastEnegagement = async (parentPostId: number) => {
         }
     });
 };
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getPostsBySearch = async (userId: number, searchTerms: string[]) => {
+    return await prisma.post.findMany({
+        where: {
+            OR: searchTerms.map((term) => ({
+                AND: [
+                    {
+                        content: { contains: term, mode: 'insensitive' },
+                    },
+                    {
+                        author: {
+                            AND: [
+                                {
+                                    blockedBy: {
+                                        none: {
+                                            blockerId: userId,
+                                        },
+                                    },
+                                },
+                                {
+                                    blockedUsers: {
+                                        none: {
+                                            blockedId: userId,
+                                        },
+                                    },
+                                }
+                            ]
+                        }
+                    },
+                    {
+
+                    },
+                ],
+            })),
+        },
+        distinct: 'id',
+        orderBy: [
+            {
+                replies: {
+                    _count: 'asc'
+                },
+            },
+            {
+                reposts: {
+                    _count: 'asc'
+                }
+            },
+            {
+                likes: {
+                    _count: 'asc'
+                },
+            },
+            {
+                createdAt: 'asc'
+            },
+        ],
+        take: 15,
+        select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            updatedAt: true,
+            author: {
+                select: {
+                    username: true,
+                    profile: {
+                        select: {
+                            name: true,
+                            bio: true,
+                            profilePicture: true,
+                        }
+                    },
+                    followers: {
+                        where: {
+                            followerId: userId
+                        },
+                        select: {
+                            followerId: true
+                        }
+                    },
+                    following: {
+                        where: {
+                            followeeId: userId,
+                        },
+                        select: {
+                            followeeId: true,
+                        }
+                    },
+                    _count: {
+                        select: {
+                            followers: true,
+                            following: true,
+                        }
+                    }
+                }
+            },
+            reposts: {
+                where: {
+                    userId: userId,
+                },
+                select: {
+                    userId: true
+                }
+            },
+            likes: {
+                where: {
+                    userId: userId,
+                },
+                select: {
+                    userId: true
+                }
+            },
+            bookmarks: {
+                where: {
+                    userId: userId,
+                },
+                select: {
+                    userId: true
+                }
+            },
+            _count: {
+                select: {
+                    replies: true,
+                    reposts: true,
+                    likes: true,
+                }
+            }
+        }
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getLastPostBySearch = async (userId: number, searchTerms: string[]) => {
+    return await prisma.post.findMany({
+        where: {
+            OR: searchTerms.map((term) => ({
+                AND: [
+                    {
+                        content: { contains: term, mode: 'insensitive' },
+                    },
+                    {
+                        author: {
+                            AND: [
+                                {
+                                    blockedBy: {
+                                        none: {
+                                            blockerId: userId,
+                                        },
+                                    },
+                                },
+                                {
+                                    blockedUsers: {
+                                        none: {
+                                            blockedId: userId,
+                                        },
+                                    },
+                                }
+                            ]
+                        }
+                    },
+                    {
+
+                    },
+                ],
+            })),
+        },
+        distinct: 'id',
+        orderBy: [
+            {
+                replies: {
+                    _count: 'desc'
+                },
+            },
+            {
+                reposts: {
+                    _count: 'desc'
+                }
+            },
+            {
+                likes: {
+                    _count: 'desc'
+                },
+            },
+            {
+                createdAt: 'desc'
+            },
+        ],
+        take: 1,
+        select: {
+            id: true,
+        }
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getMorePostsBySearch = async (userId: number, searchTerms: string[], cursor: number) => {
+    return await prisma.post.findMany({
+        where: {
+            OR: searchTerms.map((term) => ({
+                AND: [
+                    {
+                        content: { contains: term, mode: 'insensitive' },
+                    },
+                    {
+                        author: {
+                            AND: [
+                                {
+                                    blockedBy: {
+                                        none: {
+                                            blockerId: userId,
+                                        },
+                                    },
+                                },
+                                {
+                                    blockedUsers: {
+                                        none: {
+                                            blockedId: userId,
+                                        },
+                                    },
+                                }
+                            ]
+                        }
+                    },
+                    {
+
+                    },
+                ],
+            })),
+        },
+        distinct: 'id',
+        orderBy: [
+            {
+                replies: {
+                    _count: 'asc'
+                },
+            },
+            {
+                reposts: {
+                    _count: 'asc'
+                }
+            },
+            {
+                likes: {
+                    _count: 'asc'
+                },
+            },
+            {
+                createdAt: 'asc'
+            },
+        ],
+        skip: 1,
+        cursor: { id: cursor },
+        take: 15,
+        select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            updatedAt: true,
+            author: {
+                select: {
+                    username: true,
+                    profile: {
+                        select: {
+                            name: true,
+                            bio: true,
+                            profilePicture: true,
+                        }
+                    },
+                    followers: {
+                        where: {
+                            followerId: userId
+                        },
+                        select: {
+                            followerId: true
+                        }
+                    },
+                    following: {
+                        where: {
+                            followeeId: userId,
+                        },
+                        select: {
+                            followeeId: true,
+                        }
+                    },
+                    _count: {
+                        select: {
+                            followers: true,
+                            following: true,
+                        }
+                    }
+                }
+            },
+            reposts: {
+                where: {
+                    userId: userId,
+                },
+                select: {
+                    userId: true
+                }
+            },
+            likes: {
+                where: {
+                    userId: userId,
+                },
+                select: {
+                    userId: true
+                }
+            },
+            bookmarks: {
+                where: {
+                    userId: userId,
+                },
+                select: {
+                    userId: true
+                }
+            },
+            _count: {
+                select: {
+                    replies: true,
+                    reposts: true,
+                    likes: true,
+                }
+            }
+        }
+    });
+};

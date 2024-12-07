@@ -41,9 +41,6 @@ export const useSuggestionContext = () => {
 export default function SuggestionContextProvider({ children }: { children: React.ReactNode }) {
     const [suggestions, setSuggestions] = useState<UserSuggestion[] | undefined>(undefined);
 
-    console.log(suggestions);
-    
-
     const fetchSuggestions = async () => {
         try {
             const response = await fetch('http://localhost:3000/api/users/followSuggestions', {

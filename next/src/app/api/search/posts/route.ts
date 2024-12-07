@@ -26,6 +26,8 @@ export async function GET(req: NextRequest) {
             const apiUrl = process.env.EXPRESS_API_URL;
             const query = searchParams.get('q');
             if (!query) return NextResponse.json({ message: 'No query provided' }, { status: 400 });
+            const cursor = searchParams.get('cursor');
+            if (!cursor) return NextResponse.json({ message: 'No cursor provided' }, { status: 400 });
 
             try {
                 // Decode and validate query
@@ -34,9 +36,9 @@ export async function GET(req: NextRequest) {
 
                 // Encode query for backend API call
                 const encodedQuery = encodeURIComponent(decodedQuery);
-
+                
                 // Proceed with API request if valid
-                const response = await fetch(`${apiUrl}/search/users?q=${encodedQuery}`, {
+                const response = await fetch(`${apiUrl}/search/posts?q=${encodedQuery}&cursor=${cursor}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',

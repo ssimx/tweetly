@@ -10,7 +10,7 @@ import UserHoverCard from '../UserHoverCard';
 import { UserSuggestion, useSuggestionContext } from '@/context/SuggestionContextProvider';
 import PostContent from '../PostContent';
 
-export default function FeedPost({ post }: { post: PostType }) {
+export default function FeedPost({ post, searchSegments }: { post: PostType, searchSegments?: string[] }) {
     const [postAuthor, setPostAuthor] = useState<UserSuggestion>({...post.author, isFollowing: post.author.followers.length === 1});
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState<boolean>(post.author.followers.length === 1);
     const [followersCount, setFollowersCount] = useState(post.author['_count'].followers);
@@ -22,8 +22,6 @@ export default function FeedPost({ post }: { post: PostType }) {
     const { suggestions } = useSuggestionContext();
 
     useEffect(() => {
-        console.log('test');
-        
         if (suggestions && suggestions.find((user) => user.username === post.author.username)) {
             const author = suggestions.find((user) => user.username === post.author.username) as UserSuggestion;
             setPostAuthor(author);
@@ -38,6 +36,7 @@ export default function FeedPost({ post }: { post: PostType }) {
     const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
         e.stopPropagation();
     };
+
 
     return (
         <div onClick={handleCardClick} className='feed-post'>
@@ -72,7 +71,7 @@ export default function FeedPost({ post }: { post: PostType }) {
                 </div>
 
                 <div className='feed-post-content post-content'>
-                    <PostContent content={post.content} />
+                    <PostContent content={post.content} searchSegments={searchSegments} />
                 </div>
 
                 <div className='!border-t-0 post-btns'>

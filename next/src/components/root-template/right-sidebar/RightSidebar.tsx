@@ -3,7 +3,7 @@ import FollowSuggestions from './FollowSuggestions'
 import Trending from './Trending'
 import { decryptSession, getToken } from '@/lib/session';
 import { redirect } from 'next/navigation';
-import Search from './Search';
+import RightSidebarSearch from './RightSidebarSearch';
 
 export default async function RightSidebar() {
     const token = getToken();
@@ -13,7 +13,7 @@ export default async function RightSidebar() {
 
     return (
         <div className='w-full flex flex-col gap-5'>
-            <Search />
+            <RightSidebarSearch />
 
             <FollowSuggestions />
 

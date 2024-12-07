@@ -660,7 +660,7 @@ export const removeBlock = async (blockerId: number, username: string) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getUsersByUsername = async (userId: number, searchTerms: string[]) => {
+export const getUsersBySearch = async (userId: number, searchTerms: string[]) => {
     return await prisma.user.findMany({
         where: {
             OR: searchTerms.map((term) => ({
@@ -685,6 +685,11 @@ export const getUsersByUsername = async (userId: number, searchTerms: string[]) 
                             },
                         },
                     },
+                    {
+                        id: {
+                            not: userId
+                        }
+                    }
                 ],
             })),
         },
@@ -694,10 +699,61 @@ export const getUsersByUsername = async (userId: number, searchTerms: string[]) 
             profile: {
                 select: {
                     name: true,
+                    bio: true,
                     profilePicture: true,
                 }
             },
-        }
+            followers: {
+                where: {
+                    follower: {
+                        id: userId
+                    }
+                },
+                select: {
+                    followerId: true
+                }
+            },
+            following: {
+                where: {
+                    followee: {
+                        id: userId
+                    }
+                },
+                select: {
+                    followeeId: true
+                }
+            },
+            blockedBy: {
+                where: {
+                    blockerId: userId,
+                },
+                select: {
+                    blockerId: true,
+                }
+            },
+            blockedUsers: {
+                where: {
+                    blockedId: userId,
+                },
+                select: {
+                    blockedId: true,
+                }
+            },
+            notifying: {
+                where: {
+                    receiverId: userId,
+                },
+                select: {
+                    receiverId: true,
+                }
+            },
+            _count: {
+                select: {
+                    followers: true,
+                    following: true,
+                }
+            }
+        },
     })
 };
 

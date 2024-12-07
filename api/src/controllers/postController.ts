@@ -112,8 +112,13 @@ export const global30DayPosts = async (req: Request, res: Response) => {
                     : true,
             });
         } else {
-            const response = await getGlobal30DayPosts(user.id);
-            return res.status(200).json({ response });
+            const oldestGlobalPostId = await getOldestGlobal30DayPost().then(res => res[0].id) || null;
+            const posts = await getGlobal30DayPosts(user.id);
+            
+            return res.status(200).json({
+                posts,
+                end: oldestGlobalPostId === null ? true : posts.slice(-1)[0].id === oldestGlobalPostId ? true : false
+            });
         }
     } catch (error) {
         console.error('Error fetching data: ', error);
@@ -151,8 +156,13 @@ export const following30DayPosts = async (req: Request, res: Response) => {
                     : true,
             });
         } else {
-            const response = await getFollowing30DayPosts(user.id);
-            return res.status(200).json({ response });
+            const oldestFollowingPostId = await getOldestFollowing30DayPost(user.id).then(res => res[0].id) || null;
+            const posts = await getFollowing30DayPosts(user.id);
+
+            return res.status(200).json({
+                posts,
+                end: oldestFollowingPostId === null ? true : posts.slice(-1)[0].id === oldestFollowingPostId ? true : false
+            });
         }
     } catch (error) {
         console.error('Error fetching data: ', error);

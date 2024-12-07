@@ -33,7 +33,7 @@ interface FollowerFolloweeUser {
         followers: number,
         following: number,
     },
-    type: 'follower' | 'followee',
+    type?: 'follower' | 'followee',
 }
 
 export default function ProfileFollowersFollowingCard({ user }: { user: FollowerFolloweeUser }) {
@@ -47,7 +47,7 @@ export default function ProfileFollowersFollowingCard({ user }: { user: Follower
     const [followingCount, setFollowingCount] = useState(user['_count'].following);
 
     const [isBlockedByTheUser, setIsBlockedByTheUser] = useState(user.blockedBy.length === 1);
-    const [notificationsEnabled, setNotificationsEnabled] = useState(user.notifying.length === 1);
+    const [, setNotificationsEnabled] = useState(user.notifying.length === 1);
 
     const { loggedInUser } = useUserContext();
     const router = useRouter();
