@@ -1,9 +1,9 @@
 import React from 'react'
 import FollowSuggestions from './FollowSuggestions'
-import Trending from './Trending'
 import { decryptSession, getToken } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import RightSidebarSearch from './RightSidebarSearch';
+import RightSidebarTrending from './RightSidebarTrending';
 
 export default async function RightSidebar() {
     const token = getToken();
@@ -17,7 +17,7 @@ export default async function RightSidebar() {
 
             <FollowSuggestions />
 
-            <Trending />
+            <RightSidebarTrending />
         </div>
     )
 }

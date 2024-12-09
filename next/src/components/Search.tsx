@@ -6,6 +6,7 @@ import { z } from "zod";
 import { searchSchema } from '@/lib/schemas';
 import { useRouter } from 'next/navigation';
 import SearchUserCard from './root-template/right-sidebar/SearchUserCard';
+import { useTrendingContext } from '@/context/TrendingContextProvider';
 
 export interface SearchResponseType {
     users: {
@@ -29,15 +30,26 @@ export default function Search({ searchQuery }: { searchQuery?: string }) {
     const [searched, setSearched] = useState(false);
     const [outputVisible, setOutputVisible] = useState(false);
     const [searchResponse, setSearchResponse] = useState<SearchResponseType | undefined>(undefined);
+    const [loading, setLoading] = useState(false);
     const searchContainer = useRef<HTMLDivElement | null>(null);
     const router = useRouter();
+    const { trendingHashtags } = useTrendingContext();
+
+    // Match trending hashtags based on the search text
+    const matchedHashtags = trendingHashtags && trendingHashtags.filter((hashtag) => {
+        const words = text.toLowerCase().replaceAll('#', '').split(' ');
+        return words.some((word) => hashtag.name.toLowerCase().includes(word));
+    }).map((hashtag) => hashtag.name);
 
     useEffect(() => {
         const timeout = setTimeout(async () => {
             if (!text) {
-                setSearched(false);
+                setSearched(() => false);
                 return;
-            }
+            } else if (text.includes('#')) {
+                setLoading(() => false);
+                return;
+            };
 
             // hide output on the first render on the search page
             if (text === searchQuery && searched === false) return;
@@ -96,6 +108,7 @@ export default function Search({ searchQuery }: { searchQuery?: string }) {
                 setSearchResponse(searchOutput);
                 setSearched(true);
                 setOutputVisible(true);
+                setLoading(() => false);
             } catch (error) {
                 if (error instanceof z.ZodError) {
                     router.push('http://localhost:3000/');
@@ -108,7 +121,7 @@ export default function Search({ searchQuery }: { searchQuery?: string }) {
         return (() => {
             clearTimeout(timeout);
         });
-    }, [text, router, searchQuery]);
+    }, [text, router, searchQuery, searched]);
 
     const handleClickOutside = (event: MouseEvent) => {
         console.log(event.target);
@@ -143,40 +156,54 @@ export default function Search({ searchQuery }: { searchQuery?: string }) {
                             placeholder="Search"
                             autoComplete="off"
                             value={text}
-                            onChange={(e) => setText(e.target.value)}
+                            onChange={(e) => {
+                                setLoading(() => true);
+                                setOutputVisible(() => true);
+                                setText(e.target.value);
+                            }}
                             onClick={() => setOutputVisible(text.length === 0 ? false : text === searchQuery ? false : true)} />
                     </label>
                 </form>
             </div>
 
-            {outputVisible && text.length !== 0 && (
-                <div className='search-output-container relative z-50'>
-                    <Link href={`/search?q=${text}`} className='search-text-output'>
-                        <SearchIcon size={26} color='#000000' strokeWidth={3} className='min-w-[26px]' />
-                        <p>{text}</p>
-                    </Link>
+            {outputVisible && text.length !== 0 
+                && (
+                    <div className='search-output-container relative z-50'>
+                        <div className='flex flex-col'>
+                            <Link href={`/search?q=${text}`} className='search-text-output'>
+                                <SearchIcon size={26} color='#000000' strokeWidth={3} className='min-w-[26px]' />
+                                <p>{text}</p>
+                            </Link>
+                            { matchedHashtags && matchedHashtags.length > 0 && matchedHashtags.slice(0, 3).map((hashtag, index) => (
+                                <Link key={index} href={`/hashtag/${hashtag}`} className='search-text-output'>
+                                    <p>#{hashtag}</p>
+                                </Link>
+                            ))}
+                        </div>
 
-                    {searched
-                        ? <div>
-                            <div className='feed-hr-line'></div>
-                            <div className=''>
-                                {searchResponse &&
-                                    searchResponse.users.length === 0
-                                    ? <div className='p-3'>No users found</div>
-                                    : searchResponse && searchResponse.users.map((user, index) => (
-                                        <SearchUserCard key={index} user={user} />
-                                    ))
-                                }
-                            </div>
-                        </div>
-                        : <div>
-                            <div className='feed-hr-line'></div>
-                            <div className='p-3'>Loading...</div>
-                        </div>
-                    }
-                </div>
-            )
-            }
+                        { !text.includes('#') && loading
+                            ?
+                                <div>
+                                    <div className='feed-hr-line'></div>
+                                    <div className='p-3'>Loading...</div>
+                                </div>
+                            : !loading && searched && !text.includes('#')
+                                && 
+                                <div>
+                                    <div className='feed-hr-line'></div>
+                                    <div className=''>
+                                        {searchResponse &&
+                                            searchResponse.users.length === 0
+                                            ? <div className='p-3'>No users found</div>
+                                            : searchResponse && searchResponse.users.slice(0, 5).map((user, index) => (
+                                                <SearchUserCard key={index} user={user} />
+                                            ))
+                                        }
+                                    </div>
+                                </div>
+                        }
+                    </div>
+                )}
         </div>
     )
 }

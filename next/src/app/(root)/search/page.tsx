@@ -60,7 +60,6 @@ type PostsType = SearchType['posts'];
 export default function Search() {
     const [users, setUsers] = useState<UsersType>([]);
     const [posts, setPosts] = useState<PostsType>([]);
-    const [searchSegments, setSearchSegments] = useState<string[]>([]);
     const searchParams = useSearchParams();
     const search = searchParams.get('q');
     const router = useRouter();
@@ -164,7 +163,6 @@ export default function Search() {
 
                 setPosts([...searchData.posts]);
                 setPostCursor(searchData.posts.length > 0 ? searchData.posts[searchData.posts.length - 1].id : 0);
-                setSearchSegments([...searchData.queryParams.segments]);
 
                 if (searchData.posts.length === 0 || searchData.end === true) {
                     setEndReached(() => true);
@@ -181,49 +179,51 @@ export default function Search() {
     }, [search, router]);
     
     return (
-        <div>
-            { users.length !== 0 && (
-                    <div className='px-4 pb-4'>
-                        <h1 className='text-24 font-bold mb-2'>People</h1>
-                        <div>
-                            {users.slice(0, 3).map((user, index) => (
-                                <ProfileFollowersFollowingCard key={index} user={user} />
-                            ))}
-                        </div>
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <button className='w-full text-primary text-start hover:font-semibold disabled:text-primary/50 disabled:hover:font-normal disabled:pointer-events-none' disabled={users.length < 3}>Show more</button>
-                            </DialogTrigger>
-                            {
-                                users.length > 3 && (
-                                    <DialogContent className="max-w-[600px] max-h-[90vh] overflow-hidden">
-                                        <DialogHeader className='mb-3'>
-                                            <DialogTitle className='text-20 font-bold'>Suggested for you</DialogTitle>
-                                        </DialogHeader>
-                                        <div className='flex-grow overflow-y-auto max-h-[calc(90vh-100px)]'>
-                                            {
-                                                users === undefined
-                                                    ? 'loading'
-                                                    : users.map((user, index) => (
-                                                        <ProfileFollowersFollowingCard key={index} user={user} />
-                                                    ))
-                                            }
-                                        </div>
-                                    </DialogContent>
-                                )
-                            }
-                        </Dialog>
-                    </div>
-                )
-            }
+        <section className='w-full h-fit'>
             <div className='feed-hr-line'></div>
             <div className=''>
-            <FeedTab
-                posts={posts as PostType[]}
-                loadingRef={ref}
-                scrollPositionRef={scrollPositionRef}
-                endReached={endReached} />
+                { users.length !== 0 && (
+                        <div className='px-4 pb-4 pt-2'>
+                            <h1 className='text-24 font-bold mb-2'>People</h1>
+                            <div>
+                                {users.slice(0, 3).map((user, index) => (
+                                    <ProfileFollowersFollowingCard key={index} user={user} />
+                                ))}
+                            </div>
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <button className='w-full text-primary text-start hover:font-semibold disabled:text-primary/50 disabled:hover:font-normal disabled:pointer-events-none' disabled={users.length < 4}>Show more</button>
+                                </DialogTrigger>
+                                {
+                                    users.length > 3 && (
+                                        <DialogContent className="max-w-[600px] max-h-[90vh] overflow-hidden">
+                                            <DialogHeader className='mb-3'>
+                                                <DialogTitle className='text-20 font-bold'>Suggested for you</DialogTitle>
+                                            </DialogHeader>
+                                            <div className='flex-grow overflow-y-auto max-h-[calc(90vh-100px)]'>
+                                                {
+                                                    users === undefined
+                                                        ? 'loading'
+                                                        : users.map((user, index) => (
+                                                            <ProfileFollowersFollowingCard key={index} user={user} />
+                                                        ))
+                                                }
+                                            </div>
+                                        </DialogContent>
+                                    )
+                                }
+                            </Dialog>
+                        </div>
+                    )
+                }
+                <div className=''>
+                    <FeedTab
+                        posts={posts as PostType[]}
+                        loadingRef={ref}
+                        scrollPositionRef={scrollPositionRef}
+                        endReached={endReached} />
+                </div>
             </div>
-        </div>
+        </section>
     )
 }

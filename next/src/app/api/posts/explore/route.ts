@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
-            const response = await fetch(`${apiUrl}/posts/trending`, {
+            const response = await fetch(`${apiUrl}/posts/explore`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',

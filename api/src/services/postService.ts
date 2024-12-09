@@ -2469,3 +2469,205 @@ export const getMorePostsBySearch = async (userId: number, searchTerms: string[]
         }
     });
 };
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getTopPosts = async (userId: number) => {
+    let day = 30;
+
+    // Infer the type of newPosts and assign it to posts
+    type PostWithRelations = Prisma.PostGetPayload<{
+        select: {
+            id: true;
+            content: true;
+            createdAt: true;
+            updatedAt: true;
+            author: {
+                select: {
+                    username: true;
+                    profile: {
+                        select: {
+                            name: true;
+                            bio: true;
+                            profilePicture: true;
+                        };
+                    };
+                    followers: {
+                        where: { followerId: number };
+                        select: { followerId: true };
+                    };
+                    following: {
+                        where: { followeeId: number };
+                        select: { followeeId: true };
+                    };
+                    _count: {
+                        select: {
+                            followers: true;
+                            following: true;
+                        };
+                    };
+                };
+            };
+            reposts: {
+                where: { userId: number };
+                select: { userId: true };
+            };
+            likes: {
+                where: { userId: number };
+                select: { userId: true };
+            };
+            bookmarks: {
+                where: { userId: number };
+                select: { userId: true };
+            };
+            _count: {
+                select: {
+                    replies: true;
+                    reposts: true;
+                    likes: true;
+                };
+            };
+        };
+    }>;
+    let posts: PostWithRelations[] = [];
+
+    do {
+        let date = new Date();
+        date.setDate(date.getDate() - day);
+
+        const newPosts = await prisma.post.findMany({
+            where: {
+                AND: [
+                    {
+                        author: {
+                            AND: [
+                                {
+                                    blockedBy: {
+                                        none: {
+                                            blockerId: userId,
+                                        },
+                                    },
+                                },
+                                {
+                                    blockedUsers: {
+                                        none: {
+                                            blockedId: userId,
+                                        },
+                                    },
+                                },
+                            ]
+                        },
+                    },
+                    {
+                        replyTo: null
+                    },
+                    {
+                        createdAt: {
+                            gte: date
+                        }
+                    }
+                ]
+
+
+            },
+            orderBy: [
+                {
+                    replies: {
+                        _count: 'desc',
+                    },
+                },
+                {
+                    reposts: {
+                        _count: 'desc',
+                    },
+                },
+                {
+                    likes: {
+                        _count: 'desc',
+                    },
+                },
+                {
+                    createdAt: 'desc',
+                },
+            ],
+            take: 30 - posts.length,
+            select: {
+                id: true,
+                content: true,
+                createdAt: true,
+                updatedAt: true,
+                author: {
+                    select: {
+                        username: true,
+                        profile: {
+                            select: {
+                                name: true,
+                                bio: true,
+                                profilePicture: true,
+                            }
+                        },
+                        followers: {
+                            where: {
+                                followerId: userId
+                            },
+                            select: {
+                                followerId: true
+                            }
+                        },
+                        following: {
+                            where: {
+                                followeeId: userId,
+                            },
+                            select: {
+                                followeeId: true,
+                            }
+                        },
+                        _count: {
+                            select: {
+                                followers: true,
+                                following: true,
+                            }
+                        }
+                    }
+                },
+                reposts: {
+                    where: {
+                        userId: userId,
+                    },
+                    select: {
+                        userId: true
+                    }
+                },
+                likes: {
+                    where: {
+                        userId: userId,
+                    },
+                    select: {
+                        userId: true
+                    }
+                },
+                bookmarks: {
+                    where: {
+                        userId: userId,
+                    },
+                    select: {
+                        userId: true
+                    }
+                },
+                _count: {
+                    select: {
+                        replies: true,
+                        reposts: true,
+                        likes: true,
+                    }
+                }
+            }
+        })
+
+        posts = [...posts, ...newPosts];
+        
+        day *= 2;
+    } while (posts.length !== 30);
+
+    return posts;
+};

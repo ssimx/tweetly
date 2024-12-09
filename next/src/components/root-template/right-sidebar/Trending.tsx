@@ -1,5 +1,4 @@
-import { decryptSession, getToken } from '@/lib/session';
-import { redirect } from 'next/navigation';
+'use client';
 import {
     Dialog,
     DialogContent,
@@ -9,29 +8,11 @@ import {
 } from "@/components/ui/dialog";
 import TrendingCard from './TrendingCard';
 import DialogTrendingCard from './DialogTrendingCard';
+import { useTrendingContext } from "@/context/TrendingContextProvider";
 
-export interface TrendingHashtagType {
-    name: string;
-    _count: {
-        posts: number;
-    };
-};
 
-export default async function Trending() {
-    const token = getToken();
-    const payload = await decryptSession(token);
-
-    if (!payload) return redirect('/login');
-
-    const trendingHashtagsResponse = await fetch('http://localhost:3000/api/posts/trending', {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        }
-    });
-
-    const trendingHashtags = await trendingHashtagsResponse.json().then(res => res.hashtags) as TrendingHashtagType[];
+export default function Trending() {
+    const { trendingHashtags } = useTrendingContext();
 
     return (
         <div className='w-full h-fit rounded-[15px] border p-3 flex flex-col gap-2'>

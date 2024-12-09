@@ -7,6 +7,7 @@ import SuggestionContextProvider from "@/context/SuggestionContextProvider";
 import { getToken } from "@/lib/session";
 import { UserInfo } from "@/lib/types";
 import { redirect } from "next/navigation";
+import TrendingContextProvider from "@/context/TrendingContextProvider";
 
 export interface UserData {
     user: UserInfo,
@@ -37,21 +38,23 @@ export default async function RootTemplate({ children }: Readonly<{ children: Re
         <UserContextProvider userData={user}>
                 <main className="w-screen h-auto">
                     <div className="root-phone xs:root-desktop">
-                        <SuggestionContextProvider>
-                            <div className='left-sidebar-wrapper'>
-                                <LeftSidebar />
-                            </div>
-                            <div className='main-content'>
-                                <div className='border-x h-screen grid grid-cols-1 grid-rows-main-content'>
-                                    <TemplateHeader />
-                                    {children}
+                        <TrendingContextProvider>
+                            <SuggestionContextProvider>
+                                <div className='left-sidebar-wrapper'>
+                                    <LeftSidebar />
                                 </div>
-                                <div className='right-sidebar-wrapper'>
-                                    <RightSidebar />
+                                <div className='main-content'>
+                                    <div className='border-x h-screen grid grid-cols-1 grid-rows-main-content'>
+                                        <TemplateHeader />
+                                        {children}
+                                    </div>
+                                    <div className='right-sidebar-wrapper'>
+                                        <RightSidebar />
+                                    </div>
                                 </div>
-                            </div>
-                            <PhoneBottomNav />
-                        </SuggestionContextProvider>
+                                <PhoneBottomNav />
+                            </SuggestionContextProvider>
+                        </TrendingContextProvider>
                     </div>
                 </main>
         </UserContextProvider>

@@ -48,7 +48,7 @@ export default function TemplateHeader() {
                     )
 
             }
-            {pathName.startsWith('search') && (
+            {(pathName.startsWith('search') || pathName.startsWith('explore')) && (
                 <div className='w-full [&_label]:h-[40px]'>
                     <Search searchQuery={query ? query : ''} />
                 </div>

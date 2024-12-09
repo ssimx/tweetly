@@ -22,6 +22,7 @@ import {
     getPosts,
     getReplies,
     getReposts,
+    getTopPosts,
     getTrendingHastags,
     handlePostHashtags,
     postExists,
@@ -167,6 +168,22 @@ export const following30DayPosts = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Error fetching data: ', error);
         return res.status(500).json({ error: 'Failed to fetch the data' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const exploreRandomPosts = async (req: Request, res: Response) => {
+    const user = req.user as UserProps;
+
+    try {
+        const posts = await getTopPosts(user.id);
+        
+        return res.status(200).json({
+            posts,
+        })
+    } catch (error) {
+        
     }
 };
 
