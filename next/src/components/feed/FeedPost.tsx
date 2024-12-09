@@ -29,7 +29,15 @@ export default function FeedPost({ post, searchSegments }: { post: PostType, sea
         }
     }, [post, suggestions]);
 
-    const handleCardClick = () => {
+    const handleCardClick = (event: React.MouseEvent<HTMLDivElement>) => {
+        const targetElement = event.target as HTMLElement;
+
+        // Check if the clicked element or any of its ancestors is a button
+        if (targetElement.closest('button')) {
+            return; // Do nothing if a button is clicked
+        }
+
+        // Otherwise, navigate to the post
         router.push(`/${postAuthor.username}/status/${post.id}`);
     };
 

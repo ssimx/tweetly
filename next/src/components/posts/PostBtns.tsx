@@ -27,7 +27,6 @@ export default function PostBtns({
 
     const handlePostBtnsInteraction = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>, postId: number) => {
         e.preventDefault();
-        e.stopPropagation();
 
         const btn = e.currentTarget;
         const type = btn.dataset.type as string;
@@ -104,6 +103,7 @@ export default function PostBtns({
         }
         btn.disabled = false;
     };
+
 
     return (
         <div className="flex gap-2 justify-center items-end">
