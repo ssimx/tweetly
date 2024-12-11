@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress"
 import { newPostSchema } from "@/lib/schemas";
 import { Image as Img, Loader2 } from "lucide-react";
 import Image from 'next/image';
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,6 +21,8 @@ type PostData = z.infer<typeof newPostSchema>;
 
 export default function NewPost({ reply, placeholder }: { reply?: number, placeholder?: string }) {
     const [text, setText] = useState('');
+    const [, setInputActive] = useState(false);
+    const formRef = useRef <HTMLFormElement | null>(null);
     const maxChars = 280;
     const charsPercentage = Math.min((text.length / maxChars) * 100, 100);
     const router = useRouter();
@@ -74,23 +76,40 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
         }
     };
 
+    const handleClickOutside = (e: MouseEvent) => {
+        e.stopPropagation();
+        if (e.target as Node !== document.activeElement) {
+            setInputActive(() => false);
+            window.removeEventListener('click', handleClickOutside);
+        }
+    };
+
+    function handleClick(e: React.MouseEvent<HTMLTextAreaElement, MouseEvent>) {
+        e.stopPropagation();
+        if (e.target === document.activeElement) {
+            setInputActive(() => true);
+            window.addEventListener('click', handleClickOutside);
+        } 
+    }
+
     return (
-        <div className={`border-y h-fit flex flex-col px-4 min-h-[130px]`}>
-            <div className="grid grid-cols-post-layout gap-2 my-2 h-full">
+        <div className={`border-y h-fit flex flex-col px-4 min-h-[100px]`}>
+            <div className="grid grid-cols-post-layout gap-4 my-2 h-full">
                 <Image src={loggedInUser.profile?.profilePicture}
                     alt='User profile'
-                    width={50} height={50}
-                    className="w-[50px] h-[50px] rounded-full" />
-                <form onSubmit={handleSubmit(onSubmitHeaderPost)} id='headerPostForm' className='min-h-full pr-4 flex items-center'>
+                    width={54} height={54}
+                    className="w-[54px] h-[54px] rounded-full" />
+                <form onSubmit={handleSubmit(onSubmitHeaderPost)} id='headerPostForm' className='min-h-full pr-4 flex items-center' ref={formRef}>
                     <TextareaAutosize maxLength={maxChars}
-                        className='h-[28px] w-full focus:outline-none text-xl resize-none'
+                        className='h-[28px] mt-3 mb-auto w-full focus:outline-none text-xl resize-none'
                         placeholder={placeholder ? placeholder : 'What is happening?!'}
+                        onClick={(e) => handleClick(e)}
                         {...register("text", {
                             onChange: (e) => handleTextChange(e),
                         })} />
                 </form>
             </div>
-            <Progress value={charsPercentage} className={`mt-auto ${text.length === 0 && 'hidden'}`} />
+            <Progress value={charsPercentage} className={`mt-auto ${text.length === 0 && 'invisible'}`} />
             {charsPercentage === 100 && <p className='text-center text-red-600 font-bold text-xs'>Max characters reached</p>}
             {errors.text && (
                 <p className="text-center text-red-600 font-bold text-xs">{`${errors.text.message}`}</p>

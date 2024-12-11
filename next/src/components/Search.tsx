@@ -124,8 +124,6 @@ export default function Search({ searchQuery }: { searchQuery?: string }) {
     }, [text, router, searchQuery, searched]);
 
     const handleClickOutside = (event: MouseEvent) => {
-        console.log(event.target);
-
         if (searchContainer.current && !searchContainer.current.contains(event.target as Node)) {
             setOutputVisible(false);
         }
@@ -166,41 +164,41 @@ export default function Search({ searchQuery }: { searchQuery?: string }) {
                 </form>
             </div>
 
-            {outputVisible && text.length !== 0 
+            {outputVisible && text.length !== 0
                 && (
                     <div className='search-output-container relative z-50'>
                         <div className='flex flex-col'>
-                            <Link href={`/search?q=${text}`} className='search-text-output'>
+                            <Link href={`/search?q=${encodeURIComponent(`${text}`)}`} className='search-text-output'>
                                 <SearchIcon size={26} color='#000000' strokeWidth={3} className='min-w-[26px]' />
                                 <p>{text}</p>
                             </Link>
-                            { matchedHashtags && matchedHashtags.length > 0 && matchedHashtags.slice(0, 3).map((hashtag, index) => (
-                                <Link key={index} href={`/hashtag/${hashtag}`} className='search-text-output'>
+                            {matchedHashtags && matchedHashtags.length > 0 && matchedHashtags.slice(0, 3).map((hashtag, index) => (
+                                <Link key={index} href={`/search?q=${encodeURIComponent(`#${hashtag}`)}`} className='search-text-output'>
                                     <p>#{hashtag}</p>
                                 </Link>
                             ))}
                         </div>
 
-                        { !text.includes('#') && loading
+                        {!text.includes('#') && loading
                             ?
-                                <div>
-                                    <div className='feed-hr-line'></div>
-                                    <div className='p-3'>Loading...</div>
-                                </div>
+                            <div>
+                                <div className='feed-hr-line'></div>
+                                <div className='p-3'>Loading...</div>
+                            </div>
                             : !loading && searched && !text.includes('#')
-                                && 
-                                <div>
-                                    <div className='feed-hr-line'></div>
-                                    <div className=''>
-                                        {searchResponse &&
-                                            searchResponse.users.length === 0
-                                            ? <div className='p-3'>No users found</div>
-                                            : searchResponse && searchResponse.users.slice(0, 5).map((user, index) => (
-                                                <SearchUserCard key={index} user={user} />
-                                            ))
-                                        }
-                                    </div>
+                            &&
+                            <div>
+                                <div className='feed-hr-line'></div>
+                                <div className=''>
+                                    {searchResponse &&
+                                        searchResponse.users.length === 0
+                                        ? <div className='p-3'>No users found</div>
+                                        : searchResponse && searchResponse.users.slice(0, 5).map((user, index) => (
+                                            <SearchUserCard key={index} user={user} />
+                                        ))
+                                    }
                                 </div>
+                            </div>
                         }
                     </div>
                 )}

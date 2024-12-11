@@ -1,7 +1,9 @@
-import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import React from 'react'
 
 export default function PostContent({ content, searchSegments }: { content: string, searchSegments?: string[] }) {
+    console.log(searchSegments);
+    
     const parseContent = (text: string) => {
         // Regex to match hashtags
         const hashtagRegex = /#\w+/g;
@@ -20,16 +22,12 @@ export default function PostContent({ content, searchSegments }: { content: stri
                 // If the part is a hashtag, render as a clickable link
                 const hashtag = part.slice(1); // Remove '#' for the URL
                 return (
-                    <a
-                        key={index}
-                        href={`/hashtag/${hashtag}`}
+                    <Link key={index} href={`http://localhost:3000/search?q=${encodeURIComponent(`#${hashtag}`)}`}
                         className={`text-blue-500 hover:underline ${searchSegments && searchSegments.some((word) => word.toLowerCase() === part.toLowerCase()) ? 'font-bold' : ''}`}
-                        onClick={() => {
-                            redirect(`http://localhost:3000/hashtag/${hashtag}`);
-                        }}
-                    >
-                        {part}
-                    </a>
+                        onClick={(e) => e.stopPropagation()}
+                        >
+                    {part}
+                    </Link>
                 );
             } else if (wordRegex && wordRegex.test(part)) {
                 // If the part matches a search segment, split further to highlight words

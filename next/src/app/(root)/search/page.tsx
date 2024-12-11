@@ -219,6 +219,7 @@ export default function Search() {
                 <div className=''>
                     <FeedTab
                         posts={posts as PostType[]}
+                        searchSegments={search ? search.split(' ') : undefined}
                         loadingRef={ref}
                         scrollPositionRef={scrollPositionRef}
                         endReached={endReached} />

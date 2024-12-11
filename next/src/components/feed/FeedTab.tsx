@@ -7,9 +7,10 @@ interface FeedTabType {
     loadingRef: (node?: Element | null) => void;
     scrollPositionRef: React.MutableRefObject<number>;
     endReached: boolean;
+    searchSegments?: string[]
 }
 
-export default function FeedTab({ posts, loadingRef, scrollPositionRef, endReached }: FeedTabType) {
+export default function FeedTab({ posts, loadingRef, scrollPositionRef, endReached, searchSegments }: FeedTabType) {
 
     useEffect(() => {
         // Track scroll position on user scroll
@@ -29,7 +30,7 @@ export default function FeedTab({ posts, loadingRef, scrollPositionRef, endReach
             {
                 posts.map((post, index) => (
                     <div key={index}>
-                        <FeedPost post={post} />
+                        <FeedPost post={post} searchSegments={searchSegments} />
                         <div className='feed-hr-line'></div>
                     </div>
                 ))

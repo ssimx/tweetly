@@ -1,5 +1,4 @@
 import FeedPost from '@/components/feed/FeedPost';
-import { TrendingHashtagType } from '@/components/root-template/right-sidebar/Trending';
 import TrendingCard from '@/components/root-template/right-sidebar/TrendingCard';
 import { decryptSession, getToken } from '@/lib/session';
 import { PostType } from '@/lib/types';
@@ -14,6 +13,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import React from 'react';
 import DialogTrendingCard from '@/components/root-template/right-sidebar/DialogTrendingCard';
+import { TrendingHashtagsType } from '@/context/TrendingContextProvider';
 
 export default async function Explore() {
     const token = getToken();
@@ -41,7 +41,7 @@ export default async function Explore() {
     const [topPostsResponse, trendingHashtagsResponse] = await Promise.all([topPostsPromise, trendingHashtagsPromise]);
 
     const topPosts = await topPostsResponse.json().then((res) => res.posts) as PostType[];
-    const trendingHashtags = await trendingHashtagsResponse.json().then((res) => res.hashtags) as TrendingHashtagType[];
+    const trendingHashtags = await trendingHashtagsResponse.json().then((res) => res.hashtags) as TrendingHashtagsType[];
 
     const orderedPosts = topPosts.sort((a, b) => (b['_count'].likes + b['_count'].replies + b['_count'].reposts) - (a['_count'].likes + a['_count'].replies + a['_count'].reposts));
 
