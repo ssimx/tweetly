@@ -100,7 +100,7 @@ export default function FeedContent() {
                         setGlobalFeedCursor(results.posts.length !== 0 ? results.posts.slice(-1)[0].id : null);
 
                         if (results.posts.length === 0 || results.end === true) {
-                            setFollowingFeedEndReached(() => true);
+                            setGlobalFeedEndReached(() => true);
                         }
                     } catch (error) {
 
@@ -211,14 +211,15 @@ export default function FeedContent() {
 
             <section className='feed-posts-desktop'>
                 {activeTab === 0
-                    ? globalPosts === undefined
-                        ? <div>loading...</div>
-                        : <FeedTab 
-                            posts={globalPosts as PostType[]}
-                            loadingRef={ref}
-                            scrollPositionRef={scrollPositionRef}
-                            endReached={globalFeedEndReached} />
-                    : null
+                    && globalPosts && globalPosts.length === 0
+                        ? <div>No recent posts</div>
+                        : globalPosts === undefined
+                            ? <div>loading...</div>
+                            : <FeedTab 
+                                posts={globalPosts as PostType[]}
+                                loadingRef={ref}
+                                scrollPositionRef={scrollPositionRef}
+                                endReached={globalFeedEndReached} />
                 }
 
                 {activeTab === 1

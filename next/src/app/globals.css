@@ -113,6 +113,15 @@ body {
     overflow-wrap: anywhere
 }
 
+.cr-viewport {
+    border: 4px solid #33A9F3 !important;
+    outline: white !important;
+}
+
+.cr-slider-wrap {
+    margin: 10px auto 0px auto !important;
+}
+
 input[type="search"]::-webkit-search-decoration,
 input[type="search"]::-webkit-search-cancel-button,
 input[type="search"]::-webkit-search-results-button,
@@ -455,7 +464,7 @@ input[type="search"]::-webkit-search-results-decoration {
     }
 
     .edit-profile-dialog {
-        @apply w-[95%] h-[95%] flex flex-col
+        @apply w-[550px] flex flex-col
     }
 
     #editProfileForm {

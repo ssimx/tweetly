@@ -91,7 +91,7 @@ export const global30DayPosts = async (req: Request, res: Response) => {
 
     try {
         if (cursor) {
-            const oldestGlobalPostId = await getOldestGlobal30DayPost().then(res => res[0].id);
+            const oldestGlobalPostId = await getOldestGlobal30DayPost().then(res => res[0] ? res[0].id : null);
             if (oldestGlobalPostId) {
                 if (cursor === oldestGlobalPostId) {
                     return res.status(200).json({
@@ -113,7 +113,7 @@ export const global30DayPosts = async (req: Request, res: Response) => {
                     : true,
             });
         } else {
-            const oldestGlobalPostId = await getOldestGlobal30DayPost().then(res => res[0].id) || null;
+            const oldestGlobalPostId = await getOldestGlobal30DayPost().then(res => res[0] ? res[0].id : null);
             const posts = await getGlobal30DayPosts(user.id);
             
             return res.status(200).json({
@@ -135,7 +135,7 @@ export const following30DayPosts = async (req: Request, res: Response) => {
 
     try {
         if (cursor) {
-            const oldestFollowingPostId = await getOldestFollowing30DayPost(user.id).then(res => res[0].id);
+            const oldestFollowingPostId = await getOldestFollowing30DayPost(user.id).then(res => res[0] ? res[0].id : null);
             if (oldestFollowingPostId) {
                 if (cursor === oldestFollowingPostId) {
                     return res.status(200).json({
@@ -157,7 +157,7 @@ export const following30DayPosts = async (req: Request, res: Response) => {
                     : true,
             });
         } else {
-            const oldestFollowingPostId = await getOldestFollowing30DayPost(user.id).then(res => res[0].id) || null;
+            const oldestFollowingPostId = await getOldestFollowing30DayPost(user.id).then(res => res[0] ? res[0].id : null) || null;
             const posts = await getFollowing30DayPosts(user.id);
 
             return res.status(200).json({
