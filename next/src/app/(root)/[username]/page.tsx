@@ -33,7 +33,7 @@ export default async function Profile({ params }: { params: { username: string }
                         ? <Image
                             src={user.profile.bannerPicture}
                             alt='User banner picture'
-                            height={100} width={100}
+                            height={1500} width={500}
                             className='w-full h-full' />
                         : <div className='w-full h-full bg-slate-200'></div>
                     }

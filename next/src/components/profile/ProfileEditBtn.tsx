@@ -69,8 +69,8 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
     const [bio, setBio] = useState(user.profile.bio);
     const [location, setLocation] = useState(user.profile.location);
     const [website, setWebsite] = useState(user.profile.websiteUrl);
-    const [bannerPicture, setBannerPicture] = useState<File | string | null>(null);
-    const [profilePicture, setProfilePicture] = useState<File | null>(null);
+    const [newBannerPicture, setNewBannerPicture] = useState<File | string | null>(null);
+    const [newProfilePicture, setNewProfilePicture] = useState<File | null>(null);
     const [bannerPicturePreview, setBannerPicturePreview] = useState<string>(user.profile.bannerPicture);
     const [profilePicturePreview, setProfilePicturePreview] = useState<string>(user.profile.profilePicture);
     const bannerInputRef = useRef<HTMLInputElement | null>(null);
@@ -104,63 +104,77 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
     }, []);
 
     const updateProfile = async (data: ProfileInfoData) => {
-        console.log(new File([profilePicturePreview], 'test'));
-        return
-        
         try {
             let bannerPicturePublicId = '';
             let profilePicturePublicId = '';
 
-            if (bannerPicturePreview !== null || profilePicturePreview !== null) {
-                const bannerPictureData: FormData | undefined = new FormData();
-                const profilePictureData: FormData | undefined = new FormData();
+            if (newBannerPicture !== null || newProfilePicture !== null) {
+                let bannerPictureData: FormData | undefined = undefined;
+                let profilePictureData: FormData | undefined = undefined;
+                let bannerPicturePromise: Promise<null> | Promise<Response> = Promise.resolve(null);
+                let profilePicturePromise: Promise<null> | Promise<Response> = Promise.resolve(null);
 
-                if (bannerPicturePreview) {
-                    bannerPictureData.append('file', new File([bannerPicturePreview], 'bannerPicture'));
-                    bannerPictureData.append('upload_preset', 'bannerPicture');
-                } else if (profilePicturePreview) {
-                    profilePictureData.append('file', new File([profilePicturePreview], 'profilePicture'));
+                if (newBannerPicture !== null) {
+                    if (newBannerPicture === '') {
+                        data.bannerPicture = '';
+                    } else {
+                        bannerPictureData = new FormData();
+                        bannerPictureData.append('file', new File([newBannerPicture], 'bannerPicture'));
+                        bannerPictureData.append('upload_preset', 'bannerPicture');
+                        bannerPicturePromise = fetch('https://api.cloudinary.com/v1_1/ddj6z1ptr/image/upload', {
+                            method: 'POST',
+                            body: bannerPictureData,
+                        });
+                    }
+                } 
+                
+                if (newProfilePicture !== null) {
+                    profilePictureData = new FormData();
+                    profilePictureData.append('file', new File([newProfilePicture], 'profilePicture'));
                     profilePictureData.append('upload_preset', 'profilePicture');
+                    profilePicturePromise = fetch('https://api.cloudinary.com/v1_1/ddj6z1ptr/image/upload', {
+                        method: 'POST',
+                        body: profilePictureData,
+                    });
                 }
-
-                const bannerPicturePromise = bannerPictureData ? fetch('https://api.cloudinary.com/v1_1/ddj6z1ptr/image/upload', {
-                    method: 'POST',
-                    body: bannerPictureData,
-                }) : Promise.resolve(null);
-
-                const profilePicturePromise = profilePicturePreview ? fetch('https://api.cloudinary.com/v1_1/ddj6z1ptr/image/upload', {
-                    method: 'POST',
-                    body: profilePictureData,
-                }) : Promise.resolve(null);
 
                 const promises: Promise<Response | null>[] = [bannerPicturePromise, profilePicturePromise]
                 const responses = await Promise.allSettled(promises);
                 const [bannerUploadResult, profileUploadResult] = responses;
 
-                if (bannerPicturePreview && bannerUploadResult.status === 'fulfilled') {
-                    const bannerResponse = await bannerUploadResult.value!.json();
-                    if (!bannerResponse.secure_url) {
-                        console.error('Banner image upload failed:', bannerResponse);
-                        return;
+                console.log(bannerPictureData, profilePictureData)
+                
+                if (bannerPictureData !== undefined) {
+                    if (bannerUploadResult.status === 'fulfilled') {
+                        const bannerResponse = await bannerUploadResult.value!.json();
+                        if (!bannerResponse.secure_url) {
+                            console.error('Banner image upload failed:', bannerResponse);
+                            return;
+                        }
+                        data.bannerPicture = bannerResponse.secure_url;
+                        bannerPicturePublicId = bannerResponse.public_id;
+                    } else {
+                        console.error('Banner image upload failed:', bannerUploadResult.reason);
                     }
-                    data.bannerPicture = bannerResponse.secure_url;
-                    bannerPicturePublicId = bannerResponse.public_id;
-                } else if (bannerUploadResult && bannerUploadResult.status === 'rejected') {
-                    console.error('Banner image upload failed:', bannerUploadResult.reason);
-                }
+                } 
 
-                if (profilePicturePreview && profileUploadResult.status === 'fulfilled') {
-                    const profileResponse = await profileUploadResult.value!.json();
-                    if (!profileResponse.secure_url) {
-                        console.error('Profile image upload failed:', profileResponse);
-                        return;
+                if (profilePictureData !== undefined) {
+                    if (profileUploadResult.status === 'fulfilled') {
+                        const profileResponse = await profileUploadResult.value!.json();
+                        if (!profileResponse.secure_url) {
+                            console.error('Profile image upload failed:', profileResponse);
+                            return;
+                        }
+                        data.profilePicture = profileResponse.secure_url;
+                        profilePicturePublicId = profileResponse.public_id;
+                    } else {
+                        console.error('Profile image upload failed:', profileUploadResult.reason);
                     }
-                    data.profilePicture = profileResponse.secure_url;
-                    profilePicturePublicId = profileResponse.public_id;
-                } else if (profileUploadResult && profileUploadResult.status === 'rejected') {
-                    console.error('Profile image upload failed:', profileUploadResult.reason);
                 }
             }
+
+            console.log(data);
+            
 
             const response = await fetch(`/api/users/updateProfile/${user.username}`, {
                 method: 'POST',
@@ -182,7 +196,7 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
     };
 
     const handleRemoveBanner = async () => {
-        setBannerPicture('');
+        setNewBannerPicture('');
         setBannerPicturePreview('');
     };
 
@@ -218,7 +232,7 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
             croppieRef.current = null;
             setIsFileUploaded(() => false);
             pictureType === 'profile' ? setProfilePicturePreview(base64) : setBannerPicturePreview(base64);
-            pictureType === 'profile' ? setProfilePicture(new File([base64], 'profile picture')) : setBannerPicture(new File([base64], 'banner picture'));
+            pictureType === 'profile' ? setNewProfilePicture(new File([base64], 'profile picture')) : setNewBannerPicture(new File([base64], 'banner picture'));
         });
     };
 

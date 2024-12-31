@@ -53,6 +53,17 @@ export default function LeftSidebarLink({ link, messages, notifications }: { lin
         )
     }
 
+    if (link.label === 'Profile') {
+        return (
+            <Link href={link.route === '/profile' ? `/${loggedInUser.username}` : link.route} className='flex gap-4 items-center'>
+                <Icon className='icon'
+                    color={pathname === '/' + loggedInUser.username ? 'hsl(var(--primary))' : 'hsl(var(--foreground))'}
+                />
+                <p className={`${pathname === '/' + loggedInUser.username && 'font-bold'} text-20`} >{link.label}</p>
+            </Link>
+        )
+    }
+
     return (
         <Link href={link.route === '/profile' ? `/${loggedInUser.username}` : link.route} className='flex gap-4 items-center'>
             <Icon className='icon'

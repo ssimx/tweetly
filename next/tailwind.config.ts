@@ -32,7 +32,7 @@ const config: Config = {
                 // 3 row grid for feed header
                 'feed-header-desktop-xs': '40% auto',
 
-                'profile-info': '135px auto auto',
+                'profile-info': '200px auto auto',
 
                 // conversation messages + input
                 'conversation-content': '1fr auto',
