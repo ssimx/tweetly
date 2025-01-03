@@ -6,9 +6,8 @@ import userRouter from './routes/userRoutes';
 import searchRouter from './routes/searchRoutes';
 import conversationRouter from './routes/conversationRoutes';
 import { configurePassport } from './middleware/passport';
-import { User } from '@prisma/client';
-import { PassportError } from './lib/types';
 import { socketConnection } from './utils/sockets';
+import { authenticateJWT } from './middleware/authenticateJWT';
 const passport = require('passport');
 const http = require("http");
 const cors = require('cors');
@@ -27,25 +26,7 @@ configurePassport(passport);
 app.use('/api/v1/auth', authRouter);
 
 // JWT authentication for all routes under /api/v1 except for /api/v1/auth
-app.use(
-    '/api/v1', (req: Request, res: Response, next: NextFunction) => {
-        passport.authenticate('jwt', { session: false }, (err: PassportError, user: User | false, info: { message: string | null | undefined }) => {
-            
-            if (err) {
-                return res.status(500).json({ error: 'Internal Server Error' });
-            }
-
-            if (!user) {
-                console.log('unauth');
-                
-                return res.status(401).json({ error: info.message || 'Unauthorized' });
-            }
-
-            req.user = user;
-            next();
-        })(req, res, next);
-    }
-);
+app.use('/api/v1', authenticateJWT);
 
 // JWT protected routes
 app.use('/api/v1/posts', postRouter);

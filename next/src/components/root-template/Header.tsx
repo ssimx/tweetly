@@ -2,6 +2,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from 'lucide-react';
 import Search from "../Search";
+import { settingsTabs } from "@/constants";
 
 export default function TemplateHeader() {
     const path = usePathname();
@@ -11,7 +12,7 @@ export default function TemplateHeader() {
 
     // don't include in messages, has it's own implementation
     if (/^\/messages\/.+/.test(path)) return <></>;
-    
+
     if (path === '/') {
         return (
             <div className='h-fit px-2 pt-4 pb-2'>
@@ -43,9 +44,13 @@ export default function TemplateHeader() {
                     ? (
                         <h1 className='text-20 font-bold'>{`${pathName.charAt(0).toUpperCase() + pathName.slice(1, pathName.indexOf('/'))}`}</h1>
                     )
-                    : (
-                        <h1 className='text-20 font-bold'>{`${pathName.charAt(0).toUpperCase() + pathName.slice(1)}`}</h1>
-                    )
+                    : pathName.includes('settings')
+                        ? (
+                            <h1 className='text-20 font-bold'>Settings</h1>
+                        )
+                        : (
+                            <h1 className='text-20 font-bold'>{`${pathName.charAt(0).toUpperCase() + pathName.slice(1)}`}</h1>
+                        )
 
             }
             {(pathName.startsWith('search') || pathName.startsWith('explore')) && (

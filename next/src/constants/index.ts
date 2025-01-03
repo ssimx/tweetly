@@ -80,3 +80,23 @@ export const profileContentTabs = [
         name: 'Likes'
     }
 ]
+
+// Settings tabs
+export const settingsTabs = [
+    {
+        name: 'Your account',
+        route: '/settings/account',
+    },
+    {
+        name: 'Notifications',
+        route: '/settings/notifications',
+    },
+    {
+        name: 'Premium',
+        route: '/settings/premium',
+    },
+    {
+        name: 'Theme',
+        route: '/settings/theme',
+    }
+]

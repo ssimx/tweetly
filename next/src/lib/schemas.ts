@@ -36,6 +36,12 @@ export const logInSchema = z.object({
         .min(1, "Please enter password"),
 });
 
+export const settingsPasswordSchema = z.object({
+    password: z
+        .string()
+        .min(1, "Please enter password"),
+})
+
 export const newPostSchema = z.object({
     text: z
         .string()
@@ -63,7 +69,7 @@ export const updateProfileSchema = z.object({
         .string()
         .max(100, "Website url can't exceed 30 characters")
         .optional()
-        .refine((val) => val === '' || /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?$/.test(val), {
+        .refine((val) => val === '' || /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?$/.test(val as string), {
             message: 'Invalid website URL',
         }),
     bannerPicture: z

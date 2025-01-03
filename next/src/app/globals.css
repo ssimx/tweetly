@@ -434,10 +434,6 @@ input[type="search"]::-webkit-search-results-decoration {
             bg-transparent hover:bg-red-300;
     }
 
-    .user-hover-card-content {
-
-    }
-
     /* Profile */
 
     .profile-info {

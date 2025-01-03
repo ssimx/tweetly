@@ -9,7 +9,7 @@ import {
     getFollowing30DayPosts,
     getGlobal30DayPosts,
     getLikes,
-    getOldestBookmark,
+    getOldestBookmark, 
     getOldestFollowing30DayPost,
     getOldestGlobal30DayPost,
     getOldestLike,
@@ -193,8 +193,6 @@ export const trendingHashtags = async (req: Request, res: Response) => {
     try {
         const hashtags = await getTrendingHastags();
         if (!hashtags) return res.status(404).json({ error: "Couldn't find trending hashtags" });
-        console.log(hashtags);
-        
         return res.status(200).json({ hashtags });
     } catch (error) {
         console.error('Error fetching data: ', error);
@@ -577,8 +575,6 @@ export const postReplies = async (req: Request, res: Response) => {
                     });
                 }
             }
-
-            console.log(oldestReplyLeastEnegagementId);
 
             const moreReplies = await getPostReplies(user.id, postId, Number(cursor));
             if (moreReplies.length === 0) return res.status(200).json({

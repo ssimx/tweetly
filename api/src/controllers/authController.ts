@@ -1,6 +1,9 @@
+import { User } from './../../../next/src/lib/types';
 import { Request, Response } from 'express';
 import { checkUserExsistence, createUserAndProfile, getUserLogin } from "../services/authService";
-import { generateToken } from '../utils/jwt';
+import { generateSettingsToken, generateToken } from '../utils/jwt';
+import { PassportError, UserProps } from '../lib/types';
+import passport from 'passport';
 const bcrypt = require('bcrypt');
 
 // ---------------------------------------------------------------------------------------------------------
@@ -100,6 +103,42 @@ export const loginUser = async (req: Request, res: Response) => {
 
         // Generate and send JWT token
         const token: string = generateToken(tokenPayload);
+        return res.status(200).json({ token });
+    } catch (error) {
+        console.error('Error: ', error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const settingsAccess = async (req: Request, res: Response) => {
+    console.log('test')
+    const { password } = req.body as { password: string };
+    const user = req.user as UserProps;
+
+    try {
+        // Find user in database
+        const userInfo = await getUserLogin(user.username);
+
+        if (!userInfo) {
+            return res.status(401).json({ error: 'User not found' });
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, userInfo.password);
+
+        if (!isPasswordValid) {
+            return res.status(401).json({ error: 'Incorrect password' });
+        }
+
+        const tokenPayload = {
+            id: userInfo.id,
+            username: userInfo.username,
+            email: userInfo.email,
+        }
+
+        // Generate and send settings JWT token with 15m expiry
+        const token: string = generateSettingsToken(tokenPayload);
         return res.status(200).json({ token });
     } catch (error) {
         console.error('Error: ', error);

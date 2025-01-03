@@ -27,7 +27,7 @@ export default function LogIn() {
         if (isSubmitting) return;
 
         try {
-            const response = await fetch('/api/login', {
+            const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -60,7 +60,7 @@ export default function LogIn() {
     return (
         <div className='flex flex-col justify-between gap-8 w-3/4 min-w-[300px] md:w-1/2'>
             <h1 className='text-30 font-bold text-center'>
-                    Sign in to Tweetly
+                Sign in to Tweetly
             </h1>
             <div className='flex flex-col justify-between items-center gap-8'>
                 <div className='flex flex-col gap-4 w-3/5'>
@@ -79,7 +79,7 @@ export default function LogIn() {
                     {errors.username && (
                         <p className="error-msg">{`${errors.username.message}`}</p>
                     )}
-                    <Input {...register("password")} type="password" placeholder="password"/>
+                    <Input {...register("password")} type="password" placeholder="password" />
                     {errors.password && (
                         <p className="error-msg">{`${errors.password.message}`}</p>
                     )}

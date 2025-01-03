@@ -14,6 +14,18 @@ export async function createSession(token: string) {
     })
 };
 
+export async function createSettingsSession(token: string) {
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000)
+
+    cookies().set('settings-token', token, {
+        httpOnly: true,
+        secure: true,
+        expires: expiresAt,
+        sameSite: 'lax',
+        path: '/settings/account',
+    })
+};
+
 const secretKey = process.env.JWT_SECRET;
 const encodedKey = new TextEncoder().encode(secretKey);
 
@@ -67,4 +79,26 @@ export function extractToken(authHeader: string | null) {
         }
     }
     return;
+};
+
+// settings token
+
+export function getSettingsToken() {
+    const token = cookies().get('settings-token')?.value;
+    return token;
+}
+
+
+export const verifySettingsToken = async (token: string | undefined) => {
+    const session = await decryptSession(token);
+
+    if (!session?.id) {
+        return { isAuth: false };
+    }
+
+    return { isAuth: true };
+};
+
+export function removeSettingsToken() {
+    cookies().delete('settings-token');
 };

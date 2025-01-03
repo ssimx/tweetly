@@ -6,7 +6,7 @@ export default function LogoutPage() {
 
     const logOut = async () => {
         try {
-            const response = await fetch('/api/logout', {
+            const response = await fetch('/api/auth/logout', {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
