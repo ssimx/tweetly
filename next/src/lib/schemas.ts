@@ -42,6 +42,35 @@ export const settingsPasswordSchema = z.object({
         .min(1, "Please enter password"),
 })
 
+export const settingsChangePassword = z.object({
+    currentPassword: z
+        .string()
+        .min(1, "Please enter current password"),
+    newPassword: z
+        .string()
+        .min(8, "New password must contain at least 8 characters"),
+    newConfirmPassword: z
+        .string(),
+}).superRefine((data, ctx) => {
+    // Check if currentPassword is the same as newPassword
+    if (data.currentPassword === data.newPassword) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "New password can't be the same as the old one",
+            path: ['newPassword'], // Path for error message
+        });
+    }
+
+    // Check if newPassword matches newConfirmPassword
+    if (data.newPassword !== data.newConfirmPassword) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Passwords do not match',
+            path: ['newConfirmPassword'], // Path for error message
+        });
+    }
+});
+
 export const newPostSchema = z.object({
     text: z
         .string()

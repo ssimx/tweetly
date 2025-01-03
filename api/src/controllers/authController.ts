@@ -8,7 +8,7 @@ const bcrypt = require('bcrypt');
 
 // ---------------------------------------------------------------------------------------------------------
 
-interface signUpDataProps {
+interface SignUpDataProps {
     username: string,
     dateOfBirth: string,
     email: string,
@@ -16,7 +16,7 @@ interface signUpDataProps {
 };
 
 export const registerUser = async (req: Request, res: Response) => {
-    const { username, email, dateOfBirth, password } = req.body as signUpDataProps;
+    const { username, email, dateOfBirth, password } = req.body as SignUpDataProps;
 
     try {
         // check if user already exists

@@ -22,3 +22,19 @@ export function formatPostDate(date: string | number) {
         return postDate.toLocaleDateString('en-US', options);
     }
 };
+
+export function formatDate(date: string) {
+    const postDate = new Date(date);
+    const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: "numeric" };
+    return postDate.toLocaleDateString('en-US', options);
+}
+
+export function getAge(date: string) {
+    const birthDate = new Date(date);
+    const now = new Date();
+    
+    let age = now.getFullYear() - birthDate.getFullYear();
+
+    // check if birthday occured this year
+    return (now.getMonth() < birthDate.getMonth()) && (now.getDay() < birthDate.getDay()) ? age : age--;
+}

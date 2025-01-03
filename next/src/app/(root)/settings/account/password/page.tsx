@@ -1,9 +1,9 @@
-import AccountInformation from '@/components/settings/AccountInformation';
+import ChangePassword from '@/components/settings/ChangePassword';
 import SettingsLogin from '@/components/settings/SettingsLogin';
 import { getSettingsToken, verifySettingsToken } from '@/lib/session';
 import React from 'react'
 
-export default async function SettingsAccountInformation() {
+export default async function SettingsAccountPassword() {
     // check for settings token, if not valid ask for password and store the token
     const token = getSettingsToken();
     const isAuth = await verifySettingsToken(token).then(res => res.isAuth);
@@ -15,6 +15,6 @@ export default async function SettingsAccountInformation() {
     )
 
     return (
-        <AccountInformation />
+        <ChangePassword />
     )
 }

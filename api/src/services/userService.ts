@@ -29,6 +29,28 @@ export const getUser = async (id: number) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
+export const getUserPassword = async (id: number) => {
+    return await prisma.user.findUnique({
+        where: { id },
+        select: {
+            password: true,
+        }
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const updateUserPassword = async (id: number, newPassword: string) => {
+    return await prisma.user.update({
+        where: { id },
+        data: {
+            password: newPassword,
+        }
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
 export const getProfile = async (userId: number, username: string) => {
     return await prisma.user.findUnique({
         where: {

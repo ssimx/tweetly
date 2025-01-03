@@ -1,10 +1,10 @@
-import { settingsPasswordSchema } from '@/lib/schemas';
-import { createSettingsSession, getSettingsToken, getToken, removeSession, removeSettingsToken, verifySession } from '@/lib/session';
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
+import { settingsChangePassword } from "@/lib/schemas";
+import { getSettingsToken, getToken, removeSession, removeSettingsToken, verifySession } from "@/lib/session";
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
-export async function POST(req: NextRequest) {
-    if (req.method === 'POST') {
+export async function PATCH(req: NextRequest) {
+    if (req.method === 'PATCH') {
         // Check for an existing session
         const sessionToken = getToken();
         const settingsToken = getSettingsToken();
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
                 removeSettingsToken();
                 return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 401 });
             }
-            
+
             if (!isSettingsTokenValid.isAuth) {
                 removeSettingsToken();
                 return NextResponse.json({ message: 'Invalid settings token' }, { status: 401 });
@@ -32,13 +32,12 @@ export async function POST(req: NextRequest) {
 
         try {
             // Validate incoming data
-            const body: z.infer<typeof settingsPasswordSchema> = await req.json();
-            const validatedData = settingsPasswordSchema.parse(body);
+            const body: z.infer<typeof settingsChangePassword> = await req.json();
+            const validatedData = settingsChangePassword.parse(body);
 
-            // Send a POST request to the backend
             const apiUrl = process.env.EXPRESS_API_URL;
-            const response = await fetch(`${apiUrl}/auth/settings`, {
-                method: 'POST',
+            const response = await fetch(`${apiUrl}/users/password`, {
+                method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${sessionToken}`,
@@ -47,9 +46,7 @@ export async function POST(req: NextRequest) {
             });
 
             if (response.ok) {
-                const data = await response.json();
-                await createSettingsSession(data.token);
-                return NextResponse.json(data);
+                return NextResponse.json(true);
             } else {
                 const errorData = await response.json();
                 return NextResponse.json({ error: errorData.error }, { status: response.status });
@@ -65,4 +62,4 @@ export async function POST(req: NextRequest) {
     } else {
         return NextResponse.json({ error: `Method ${req.method} Not Allowed` }, { status: 405 });
     }
-}
+};

@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
-import { addBlock, addFollow, addPushNotifications, getFollowers, getFollowing, getFollowSuggestions, getProfile, getUser, removeBlock, removeFollow, removePushNotfications, updateProfile } from '../services/userService';
+import { addBlock, addFollow, addPushNotifications, getFollowers, getFollowing, getFollowSuggestions, getProfile, getUser, getUserPassword, removeBlock, removeFollow, removePushNotfications, updateProfile, updateUserPassword } from '../services/userService';
 import { ProfileInfo, UserProps } from '../lib/types';
 import { deleteImageFromCloudinary } from './uploadController';
 import { getNotifications, updateNotificationsToRead } from '../services/notificationService';
+const bcrypt = require('bcrypt');
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -265,3 +266,30 @@ export const getUserNotifications = async (req: Request, res: Response) => {
 };
 
 // ---------------------------------------------------------------------------------------------------------
+
+interface ChangePasswordProps {
+    currentPassword: string,
+    newPassword: string,
+};
+
+export const changePassword = async (req: Request, res: Response) => {
+    const user = req.user as UserProps;
+    const { currentPassword, newPassword } = req.body as ChangePasswordProps;
+
+    try {
+        // Check if the current password is correct
+        const userCurrentPassword: string = await getUserPassword(user.id).then(res => res?.password) as string;
+
+        if (!(await bcrypt.compare(currentPassword, userCurrentPassword))) {
+            return res.status(401).json({ error: 'Incorrect current password' });
+        }
+
+        const hashedNewPassword: string = await bcrypt.hash(newPassword, 10);
+        await updateUserPassword(user.id, hashedNewPassword);
+
+        return res.status(201).json('success');
+    } catch (error) {
+        console.error('Error updating password: ', error);
+        return res.status(500).json({ error: 'Failed to process the request' });
+    }
+};

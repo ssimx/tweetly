@@ -25,7 +25,7 @@ export interface UserInfo {
     id: number,
     username: string;
     email: string;
-    dateOfBirth: Date;
+    dateOfBirth: string;
     profile: {
         name: string;
         bio: string;
