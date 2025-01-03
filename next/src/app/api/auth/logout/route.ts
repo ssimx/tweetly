@@ -1,10 +1,11 @@
-import { removeSession } from '@/lib/session';
+import { removeSession, removeSettingsToken } from '@/lib/session';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function DELETE(req: NextRequest) {
     if (req.method === 'DELETE') {
         try {
             removeSession();
+            removeSettingsToken();
             return NextResponse.json({ message: 'Session removed successfully' });
         } catch (error) {
             console.error('Error removing session:', error);

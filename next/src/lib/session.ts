@@ -2,6 +2,9 @@ import 'server-only';
 import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
 
+const secretKey = process.env.JWT_SECRET;
+const encodedKey = new TextEncoder().encode(secretKey);
+
 export async function createSession(token: string) {
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
 
@@ -13,21 +16,6 @@ export async function createSession(token: string) {
         path: '/',
     })
 };
-
-export async function createSettingsSession(token: string) {
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000)
-
-    cookies().set('settings-token', token, {
-        httpOnly: true,
-        secure: true,
-        expires: expiresAt,
-        sameSite: 'lax',
-        path: '/settings/account',
-    })
-};
-
-const secretKey = process.env.JWT_SECRET;
-const encodedKey = new TextEncoder().encode(secretKey);
 
 export async function decryptSession(token: string | undefined) {
     if (!token) {
@@ -64,7 +52,7 @@ export async function hasSession(): Promise<boolean> {
 
 export function getToken() {
     const token = cookies().get('access-token')?.value;
-    return token;    
+    return token;
 }
 
 export function removeSession() {
@@ -83,6 +71,18 @@ export function extractToken(authHeader: string | null) {
 
 // settings token
 
+export async function createSettingsSession(token: string) {
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000)
+
+    cookies().set('settings-token', token, {
+        httpOnly: true,
+        secure: true,
+        expires: expiresAt,
+        sameSite: 'lax',
+        path: '/settings/account',
+    })
+};
+
 export function getSettingsToken() {
     const token = cookies().get('settings-token')?.value;
     return token;
@@ -100,5 +100,8 @@ export const verifySettingsToken = async (token: string | undefined) => {
 };
 
 export function removeSettingsToken() {
-    cookies().delete('settings-token');
+    cookies().delete({
+        name: 'settings-token', 
+        path: '/settings/account',
+    });
 };
