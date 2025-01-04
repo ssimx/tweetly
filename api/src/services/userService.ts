@@ -45,6 +45,35 @@ export const updateUserPassword = async (id: number, newPassword: string) => {
         where: { id },
         data: {
             password: newPassword,
+        },
+        select: {
+            id: true,
+        }
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const isUserDeactivated = async (id: number) => {
+    return await prisma.user.findUnique({
+        where: { id },
+        select: {
+            deactivatedAt: true,
+        }
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const deactivateUser = async (id: number) => {
+    return await prisma.user.update({
+        where: { id },
+        data: {
+            deactivatedAt: new Date(Date.now()),
+        },
+        select: {
+            id: true,
+            deactivatedAt: true,
         }
     });
 };

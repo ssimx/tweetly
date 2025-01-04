@@ -84,7 +84,7 @@ export default function ChangePassword() {
                     {isSubmitting
                         ? <Button disabled>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Confirming
+                            Saving
                         </Button>
                         : <Button className='bg-primary font-bold'>Save</Button>
                     }

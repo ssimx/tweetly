@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { addBlock, addFollow, addPushNotifications, getFollowers, getFollowing, getFollowSuggestions, getProfile, getUser, getUserPassword, removeBlock, removeFollow, removePushNotfications, updateProfile, updateUserPassword } from '../services/userService';
+import { addBlock, addFollow, addPushNotifications, deactivateUser, getFollowers, getFollowing, getFollowSuggestions, getProfile, getUser, getUserPassword, isUserDeactivated, removeBlock, removeFollow, removePushNotfications, updateProfile, updateUserPassword } from '../services/userService';
 import { ProfileInfo, UserProps } from '../lib/types';
 import { deleteImageFromCloudinary } from './uploadController';
 import { getNotifications, updateNotificationsToRead } from '../services/notificationService';
@@ -290,6 +290,24 @@ export const changePassword = async (req: Request, res: Response) => {
         return res.status(201).json('success');
     } catch (error) {
         console.error('Error updating password: ', error);
+        return res.status(500).json({ error: 'Failed to process the request' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const deactivateAccount = async (req: Request, res: Response) => {
+    const user = req.user as UserProps;
+
+    try {
+        const isAlreadyDeactivated = await isUserDeactivated(user.id).then(res => res?.deactivatedAt);
+        if (isAlreadyDeactivated !== null) return res.status(404).json({ error: 'User already deactivated' });
+
+        await deactivateUser(user.id);
+
+        return res.status(201).json('success');
+    } catch (error) {
+        console.error('Error deactivating user: ', error);
         return res.status(500).json({ error: 'Failed to process the request' });
     }
 };
