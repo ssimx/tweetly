@@ -158,7 +158,7 @@ export interface NotificationPostType {
 
 
 export default async function Notifications() {
-    const token = getToken();
+    const token = await getToken();
     const payload = await decryptSession(token);
 
     if (!payload) return redirect('/login');

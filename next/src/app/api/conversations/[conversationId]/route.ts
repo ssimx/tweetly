@@ -8,12 +8,12 @@ export async function GET(req: NextRequest, { params }: { params: { conversation
         const searchParams = req.nextUrl.searchParams;
         const authHeader = req.headers.get('Authorization');
         const token = authHeader ? extractToken(authHeader) : getToken();
-        
+
         if (token) {
             const isValid = await verifySession(token);
 
             if (!isValid.isAuth) {
-                removeSession();
+                await removeSession();
                 return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 400 });
             }
         } else {
@@ -25,8 +25,8 @@ export async function GET(req: NextRequest, { params }: { params: { conversation
             const query = searchParams.get('cursor');
 
             console.log(query);
-            
-            
+
+
             if (query !== null) {
                 const response = await fetch(`${apiUrl}/conversations/${params.conversationId}?cursor=${query}`, {
                     method: 'GET',
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest, { params }: { params: { conversation
                 if (response.ok) {
                     const data = await response.json();
                     console.log(data);
-                    
+
                     return NextResponse.json(data);
                 } else {
                     const errorData = await response.json();
@@ -47,7 +47,7 @@ export async function GET(req: NextRequest, { params }: { params: { conversation
                 }
             } else {
                 console.log('test');
-                
+
                 const response = await fetch(`${apiUrl}/conversations/${params.conversationId}`, {
                     method: 'GET',
                     headers: {

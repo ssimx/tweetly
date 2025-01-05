@@ -1,10 +1,10 @@
 import { extractToken, getToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: NextRequest, { params }: { params: { slug: [ action: string, id: string ] }}) {
+export async function GET(req: NextRequest, { params }: { params: { slug: [action: string, id: string] } }) {
     if (req.method === 'GET') {
         const authHeader = req.headers.get('Authorization');
-        const token = extractToken(authHeader);
+        const token = await extractToken(authHeader);
 
         const action = params.slug[0];
         const postId = params.slug[1];
@@ -34,29 +34,29 @@ export async function GET(req: NextRequest, { params }: { params: { slug: [ acti
     }
 };
 
-export async function POST(req: NextRequest, { params }: { params: { slug: [ action: string, postId: string ] }}) {
+export async function POST(req: NextRequest, { params }: { params: { slug: [action: string, postId: string] } }) {
     if (req.method === 'POST') {
-        const token = getToken();
+        const token = await getToken();
 
         if (token) {
             const isValid = await verifySession(token);
 
             if (!isValid.isAuth) {
-                removeSession();
+                await removeSession();
                 return NextResponse.json({ message: 'Invalid session. Please re-log ' }, { status: 401 })
-            } 
+            }
         } else {
             return NextResponse.json({ error: 'Not logged in. Please log in first' }, { status: 401 })
         };
 
-        
+
         const action = params.slug[0];
         const postId = params.slug[1];
 
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
             console.log(`${apiUrl}/posts/${action}/${postId}`);
-            
+
             const response = await fetch(`${apiUrl}/posts/${action}/${postId}`, {
                 method: 'POST',
                 headers: {
@@ -79,17 +79,17 @@ export async function POST(req: NextRequest, { params }: { params: { slug: [ act
     }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { slug: [ action: string, postId: string ] } }) {
+export async function DELETE(req: NextRequest, { params }: { params: { slug: [action: string, postId: string] } }) {
     if (req.method === 'DELETE') {
-        const token = getToken();
+        const token = await getToken();
 
         if (token) {
             const isValid = await verifySession(token);
 
             if (!isValid.isAuth) {
-                removeSession();
+                await removeSession();
                 return NextResponse.json({ message: 'Invalid session. Please re-log ' }, { status: 401 })
-            } 
+            }
         } else {
             return NextResponse.json({ error: 'Not logged in. Please log in first' }, { status: 401 })
         }

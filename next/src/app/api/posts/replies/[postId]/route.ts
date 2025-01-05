@@ -4,13 +4,13 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest, { params }: { params: { postId: number } }) {
     if (req.method === 'GET') {
         const searchParams = req.nextUrl.searchParams;
-        const token = getToken();
+        const token = await getToken();
 
         if (token) {
             const isValid = await verifySession(token);
 
             if (!isValid.isAuth) {
-                removeSession();
+                await removeSession();
                 return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 401 });
             }
         } else {

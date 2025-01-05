@@ -7,13 +7,13 @@ import { z } from "zod";
 export async function POST(req: NextRequest) {
     if (req.method === 'POST') {
         // Check for an existing session
-        const token = getToken();
+        const token = await getToken();
         if (token) {
             // Check for session validity
             const isValid = await verifySession(token);
 
             if (!isValid.isAuth) {
-                removeSession();
+                await removeSession();
                 return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 401 });
             }
         } else {

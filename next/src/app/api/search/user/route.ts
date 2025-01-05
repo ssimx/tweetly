@@ -1,26 +1,38 @@
-import { extractToken, getToken, removeSession, verifySession } from "@/lib/session";
+import { getSettingsToken, getToken, removeSession, removeSettingsToken, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { searchSchema } from "@/lib/schemas";
+import { searchUsernameSchema } from "@/lib/schemas";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
-        const searchParams = req.nextUrl.searchParams;
-        const authHeader = req.headers.get('Authorization');
-        const token = await extractToken(authHeader) || await getToken();
+        // Check for an existing session
+        const sessionToken = await getToken();
+        const settingsToken = await getSettingsToken();
 
-        if (token) {
-            const isValid = await verifySession(token);
+        if (sessionToken && settingsToken) {
+            // Check for session validity
+            const isSessionValid = await verifySession(sessionToken);
+            const isSettingsTokenValid = await verifySession(settingsToken);
 
-            if (!isValid.isAuth) {
+            if (!isSessionValid.isAuth) {
                 await removeSession();
-                return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 400 });
+                removeSettingsToken();
+                return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 401 });
+            }
+
+            if (!isSettingsTokenValid.isAuth) {
+                removeSettingsToken();
+                return NextResponse.json({ message: 'Invalid settings token' }, { status: 401 });
+            } else {
+                return NextResponse.json({ message: 'Settings token is already valid' }, { status: 401 });
             }
         } else {
-            return NextResponse.json({ message: 'Not logged in, please log in first' }, { status: 401 });
+            if (!sessionToken) return NextResponse.json({ message: 'Not logged in, please log in first' }, { status: 401 });
         }
+
+        const searchParams = req.nextUrl.searchParams;
 
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
@@ -30,17 +42,17 @@ export async function GET(req: NextRequest) {
             try {
                 // Decode and validate query
                 const decodedQuery = decodeURIComponent(query);
-                searchSchema.parse({ q: decodedQuery });
+                searchUsernameSchema.parse({ q: decodedQuery });
 
                 // Encode query for backend API call
                 const encodedQuery = encodeURIComponent(decodedQuery);
 
                 // Proceed with API request if valid
-                const response = await fetch(`${apiUrl}/search/users?q=${encodedQuery}`, {
+                const response = await fetch(`${apiUrl}/search/user?q=${encodedQuery}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
+                        'Authorization': `Bearer ${sessionToken}`,
                     },
                 });
 

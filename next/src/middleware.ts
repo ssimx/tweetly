@@ -5,7 +5,7 @@ export async function middleware(request: NextRequest) {
     console.log('middleware');
 
     if (request.nextUrl.pathname.includes('/login') || request.nextUrl.pathname.includes('/signup')) {
-        const token = getToken();
+        const token = await getToken();
         const isValid = await verifySession(token);
         if (isValid.isAuth) {
             return NextResponse.redirect(new URL('/', request.url)); // Redirect to root if logged in

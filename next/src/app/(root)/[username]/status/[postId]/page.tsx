@@ -13,7 +13,7 @@ export interface RepliesType {
 
 export default async function Status({ params }: { params: { postId: string } }) {
     let parentPost;
-    const token = getToken();
+    const token = await getToken();
 
     const postResponse = await fetch(`http://localhost:3000/api/posts/status/${params.postId}`, {
         method: 'GET',

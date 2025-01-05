@@ -1,17 +1,19 @@
-import { decryptSession, extractToken, removeSession, verifySession } from "@/lib/session";
+import { decryptSession, extractToken, getToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
         const authHeader = req.headers.get('Authorization');
-        const token = extractToken(authHeader);
+        const token = await extractToken(authHeader) || await getToken();
         const username = await decryptSession(token).then(res => res?.username);
+
+        console.log('tokenUsername', username)
 
         if (token) {
             const isValid = await verifySession(token);
 
             if (!isValid.isAuth) {
-                removeSession();
+                await removeSession();
                 return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 400 });
             }
         } else {
@@ -27,9 +29,10 @@ export async function GET(req: NextRequest) {
                     'Authorization': `Bearer ${token}`,
                 },
             });
-            
+
             if (response.ok) {
                 const data = await response.json().then((res) => res.userData);
+                console.log('db username', data.username)
                 if (data.username !== username) {
                     // Delete the cookie if usernames do not match
                     return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 400 });

@@ -69,8 +69,8 @@ export interface ReceiverType {
     };
 };
 
-export default async function Conversation({ params }: { params: { conversationId: string }}) {
-    const token = getToken();
+export default async function Conversation({ params }: { params: { conversationId: string } }) {
+    const token = await getToken();
     const payload = await decryptSession(token);
 
     if (!payload) return redirect('/login');
@@ -87,7 +87,7 @@ export default async function Conversation({ params }: { params: { conversationI
     if (!conversation.participants.some(participant => participant.user.username === payload.username)) return redirect('/');
 
     console.log(conversation);
-    
+
 
     // filter out user on the other side of the conversation
     const receiver = conversation.participants.filter((participant) => participant.user.username !== payload.username);
@@ -95,9 +95,9 @@ export default async function Conversation({ params }: { params: { conversationI
     const receiverInfo: ReceiverType = receiver.length === 1 ? receiver[0].user : conversation.participants[0].user;
 
     return (
-        <div className='' style={{ height: 'calc(100vh - var(--header-size))'}}>
+        <div className='' style={{ height: 'calc(100vh - var(--header-size))' }}>
             <ConversationHeader receiverInfo={receiverInfo} />
-            <ConversationContent receiverInfo={receiverInfo} conversation={conversation}/>
+            <ConversationContent receiverInfo={receiverInfo} conversation={conversation} />
         </div>
     )
 }

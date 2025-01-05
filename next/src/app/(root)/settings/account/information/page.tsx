@@ -5,7 +5,7 @@ import React from 'react'
 
 export default async function SettingsAccountInformation() {
     // check for settings token, if not valid ask for password and store the token
-    const token = getSettingsToken();
+    const token = await getSettingsToken();
     const isAuth = await verifySettingsToken(token).then(res => res.isAuth);
 
     if (!isAuth) return (

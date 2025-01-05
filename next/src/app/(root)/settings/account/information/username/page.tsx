@@ -1,9 +1,9 @@
-import AccountDeactivate from '@/components/settings/AccountDeactivate';
+import ChangeUsername from '@/components/settings/ChangeUsername';
 import SettingsLogin from '@/components/settings/SettingsLogin';
 import { getSettingsToken, verifySettingsToken } from '@/lib/session';
 import React from 'react'
 
-export default async function SettingsAccountDeactivate() {
+export default async function SettingsAccountUsername() {
     // check for settings token, if not valid ask for password and store the token
     const token = await getSettingsToken();
     const isAuth = await verifySettingsToken(token).then(res => res.isAuth);
@@ -15,6 +15,6 @@ export default async function SettingsAccountDeactivate() {
     )
 
     return (
-        <AccountDeactivate />
+        <ChangeUsername />
     )
 }

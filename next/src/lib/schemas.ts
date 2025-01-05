@@ -4,7 +4,8 @@ export const signUpSchema = z.object({
     username: z
         .string()
         .min(2, "Username must contain at least 2 characters")
-        .max(15, "Username must contain less than 15 characters"),
+        .max(15, "Username must contain less than 15 characters")
+        .regex(/^[a-zA-Z0-9]+$/, "Username contains invalid characters."),
     email: z
         .string()
         .email(),
@@ -71,6 +72,14 @@ export const settingsChangePassword = z.object({
     }
 });
 
+export const settingsChangeUsername = z.object({
+    newUsername: z
+        .string()
+        .min(2, "Username must contain at least 2 characters")
+        .max(15, "Username must contain less than 15 characters")
+        .regex(/^[a-zA-Z0-9]+$/, "Username contains invalid characters.")
+})
+
 export const newPostSchema = z.object({
     text: z
         .string()
@@ -116,4 +125,13 @@ export const searchSchema = z.object({
         .min(1, "Search query cannot be empty.")
         .max(100, "Search query cannot exceed 100 characters.")
         .regex(/^[a-zA-Z0-9\s\-_'$#@]+$/, "Search query contains invalid characters.")
+});
+
+export const searchUsernameSchema = z.object({
+    q: z
+        .string()
+        .trim()
+        .min(2, "Username must contain at least 2 characters")
+        .max(15, "Username must contain less than 15 characters")
+        .regex(/^[a-zA-Z0-9]+$/, "Username contains invalid characters.")
 });

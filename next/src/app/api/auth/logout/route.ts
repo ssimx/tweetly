@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function DELETE(req: NextRequest) {
     if (req.method === 'DELETE') {
         try {
-            removeSession();
+            await removeSession();
             removeSettingsToken();
             return NextResponse.json({ message: 'Session removed successfully' });
         } catch (error) {

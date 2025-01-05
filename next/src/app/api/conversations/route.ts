@@ -7,13 +7,13 @@ export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
         const searchParams = req.nextUrl.searchParams;
         const authHeader = req.headers.get('Authorization');
-        const token = extractToken(authHeader) || getToken();
+        const token = await extractToken(authHeader) || await getToken();
 
         if (token) {
             const isValid = await verifySession(token);
 
             if (!isValid.isAuth) {
-                removeSession();
+                await removeSession();
                 return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 400 });
             }
         } else {
@@ -21,12 +21,12 @@ export async function GET(req: NextRequest) {
         }
 
         console.log(searchParams);
-        
+
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
             const query = searchParams.get('cursor');
             console.log(query);
-            
+
             if (query !== null) {
                 const response = await fetch(`${apiUrl}/conversations?cursor=${query}`, {
                     method: 'GET',
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
                 if (response.ok) {
                     const data = await response.json();
                     console.log('older:', data);
-                    
+
                     return NextResponse.json(data);
                 } else {
                     const errorData = await response.json();

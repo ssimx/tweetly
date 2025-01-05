@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 export async function POST(req: NextRequest) {
     if (req.method === 'POST') {
-        const token = getToken();
+        const token = await getToken();
         if (token) {
             const isValid = await verifySession(token);
 
@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ message: 'Already logged in!' }, { status: 400 });
             } else {
                 // Remove invalid session if the session is not valid
-                removeSession();
+                await removeSession();
             }
         }
 

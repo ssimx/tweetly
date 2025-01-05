@@ -1,10 +1,10 @@
-import { settingsPasswordSchema } from '@/lib/schemas';
-import { createSettingsSession, getSettingsToken, getToken, removeSession, removeSettingsToken, verifySession } from '@/lib/session';
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
+import { settingsChangeUsername } from "@/lib/schemas";
+import { getSettingsToken, getToken, removeSession, removeSettingsToken, updateSessionToken, verifySession } from "@/lib/session";
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
-export async function POST(req: NextRequest) {
-    if (req.method === 'POST') {
+export async function PATCH(req: NextRequest) {
+    if (req.method === 'PATCH') {
         // Check for an existing session
         const sessionToken = await getToken();
         const settingsToken = await getSettingsToken();
@@ -32,13 +32,12 @@ export async function POST(req: NextRequest) {
 
         try {
             // Validate incoming data
-            const body: z.infer<typeof settingsPasswordSchema> = await req.json();
-            const validatedData = settingsPasswordSchema.parse(body);
+            const body: z.infer<typeof settingsChangeUsername> = await req.json();
+            const validatedData = settingsChangeUsername.parse(body);
 
-            // Send a POST request to the backend
             const apiUrl = process.env.EXPRESS_API_URL;
-            const response = await fetch(`${apiUrl}/auth/settings`, {
-                method: 'POST',
+            const response = await fetch(`${apiUrl}/users/username`, {
+                method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${sessionToken}`,
@@ -47,9 +46,9 @@ export async function POST(req: NextRequest) {
             });
 
             if (response.ok) {
-                const data = await response.json();
-                await createSettingsSession(data.token);
-                return NextResponse.json(data);
+                const newSessionToken = await response.json().then(res => res.token);
+                await updateSessionToken(newSessionToken);
+                return NextResponse.json(true);
             } else {
                 const errorData = await response.json();
                 return NextResponse.json({ error: errorData.error }, { status: response.status });
@@ -65,4 +64,4 @@ export async function POST(req: NextRequest) {
     } else {
         return NextResponse.json({ error: `Method ${req.method} Not Allowed` }, { status: 405 });
     }
-}
+};

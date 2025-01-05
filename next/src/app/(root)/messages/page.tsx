@@ -40,7 +40,7 @@ export interface MessagesType {
 };
 
 export default async function Messages() {
-    const token = getToken();
+    const token = await getToken();
     const payload = await decryptSession(token);
 
     if (!payload) return redirect('/login');
@@ -55,7 +55,7 @@ export default async function Messages() {
     const messages = await response.json() as MessagesType;
 
     console.log(messages);
-    
+
     return (
         <section className='w-full h-auto'>
             <SearchInput messages={messages} />

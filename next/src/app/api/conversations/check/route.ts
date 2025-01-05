@@ -3,14 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
     if (req.method === 'POST') {
-        const token = getToken();
+        const token = await getToken();
         console.log(token);
 
         if (token) {
             const isValid = await verifySession(token);
 
             if (!isValid.isAuth) {
-                removeSession();
+                await removeSession();
                 return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 401 });
             }
         } else {
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
             if (response.ok) {
                 const conversationId = await response.json();
                 console.log(conversationId);
-                
+
                 return NextResponse.json(conversationId);
             } else {
                 const errorData = await response.json();

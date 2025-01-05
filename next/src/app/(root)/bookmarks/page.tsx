@@ -123,7 +123,7 @@ interface BookmarkedPostResponseType {
 };
 
 export default async function Bookmarks() {
-    const token = getToken();
+    const token = await getToken();
     const payload = await decryptSession(token);
 
     if (!payload) return redirect('/login');

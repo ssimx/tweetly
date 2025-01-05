@@ -12,7 +12,6 @@ export default function SidebarUserBtn() {
     const router = useRouter();
 
     const toggleMenu = (e: React.MouseEvent) => {
-        console.log('open');
         e.stopPropagation();
         setMenuOpen((prev) => !prev);
     };

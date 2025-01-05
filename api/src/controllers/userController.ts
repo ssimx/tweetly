@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
-import { addBlock, addFollow, addPushNotifications, deactivateUser, getFollowers, getFollowing, getFollowSuggestions, getProfile, getUser, getUserPassword, isUserDeactivated, removeBlock, removeFollow, removePushNotfications, updateProfile, updateUserPassword } from '../services/userService';
+import { addBlock, addFollow, addPushNotifications, deactivateUser, getFollowers, getFollowing, getFollowSuggestions, getProfile, getUser, getUserBySearch, getUserPassword, isUserDeactivated, removeBlock, removeFollow, removePushNotfications, updateProfile, updateUserPassword, updateUserUsername } from '../services/userService';
 import { ProfileInfo, UserProps } from '../lib/types';
 import { deleteImageFromCloudinary } from './uploadController';
 import { getNotifications, updateNotificationsToRead } from '../services/notificationService';
+import { generateToken } from '../utils/jwt';
 const bcrypt = require('bcrypt');
 
 // ---------------------------------------------------------------------------------------------------------
@@ -261,6 +262,37 @@ export const getUserNotifications = async (req: Request, res: Response) => {
         return res.status(201).json({ notifications });
     } catch (error) {
         console.error('Error getting notifications: ', error);
+        return res.status(500).json({ error: 'Failed to process the request' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const changeUsername = async (req: Request, res: Response) => {
+    const user = req.user as UserProps;
+    const { newUsername } = req.body;
+
+    try {
+        if (user.username === newUsername) return res.status(401).json({ error: 'New username must be different than the current one.' });
+
+        const fetchedUser = await getUserBySearch(newUsername);
+        if (fetchedUser) return res.status(401).json({ error: 'That username has been taken. Please choose another.' });
+
+        const updatedInfo = await updateUserUsername(user.id, newUsername);
+
+        const tokenPayload = {
+            id: updatedInfo.id,
+            username: updatedInfo.username,
+            email: updatedInfo.email,
+        }
+
+        // Generate and send JWT token
+        const token: string = generateToken(tokenPayload);
+        
+
+        return res.status(201).json({ token });
+    } catch (error) {
+        console.error('Error updating password: ', error);
         return res.status(500).json({ error: 'Failed to process the request' });
     }
 };

@@ -9,13 +9,13 @@ export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
         const searchParams = req.nextUrl.searchParams;
         const authHeader = req.headers.get('Authorization');
-        const token = extractToken(authHeader) || getToken();
+        const token = await extractToken(authHeader) || await getToken();
 
         if (token) {
             const isValid = await verifySession(token);
 
             if (!isValid.isAuth) {
-                removeSession();
+                await removeSession();
                 return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 400 });
             }
         } else {
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
 
                 // Encode query for backend API call
                 const encodedQuery = encodeURIComponent(decodedQuery);
-                
+
                 // Proceed with API request if valid
                 const response = await fetch(`${apiUrl}/search/posts?q=${encodedQuery}&cursor=${cursor}`, {
                     method: 'GET',

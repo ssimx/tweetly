@@ -16,7 +16,7 @@ import DialogTrendingCard from '@/components/root-template/right-sidebar/DialogT
 import { TrendingHashtagsType } from '@/context/TrendingContextProvider';
 
 export default async function Explore() {
-    const token = getToken();
+    const token = await getToken();
     const payload = await decryptSession(token);
 
     if (!payload) return redirect('/login');

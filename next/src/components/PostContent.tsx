@@ -2,8 +2,6 @@ import Link from 'next/link';
 import React from 'react'
 
 export default function PostContent({ content, searchSegments }: { content: string, searchSegments?: string[] }) {
-    console.log(searchSegments);
-    
     const parseContent = (text: string) => {
         // Regex to match hashtags
         const hashtagRegex = /#\w+/g;

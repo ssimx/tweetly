@@ -15,7 +15,7 @@ export interface UserData {
 }
 
 export default async function RootTemplate({ children }: Readonly<{ children: React.ReactNode }>) {
-    const token = getToken();
+    const token = await getToken();
     if (!token) {
         return redirect('/login');
     }
@@ -36,27 +36,27 @@ export default async function RootTemplate({ children }: Readonly<{ children: Re
 
     return (
         <UserContextProvider userData={user}>
-                <main className="w-screen h-auto">
-                    <div className="root-phone xs:root-desktop">
-                        <TrendingContextProvider>
-                            <SuggestionContextProvider>
-                                <div className='left-sidebar-wrapper'>
-                                    <LeftSidebar />
+            <main className="w-screen h-auto">
+                <div className="root-phone xs:root-desktop">
+                    <TrendingContextProvider>
+                        <SuggestionContextProvider>
+                            <div className='left-sidebar-wrapper'>
+                                <LeftSidebar />
+                            </div>
+                            <div className='main-content'>
+                                <div className='border-x h-screen grid grid-cols-1 grid-rows-main-content'>
+                                    <TemplateHeader />
+                                    {children}
                                 </div>
-                                <div className='main-content'>
-                                    <div className='border-x h-screen grid grid-cols-1 grid-rows-main-content'>
-                                        <TemplateHeader />
-                                        {children}
-                                    </div>
-                                    <div className='right-sidebar-wrapper'>
-                                        <RightSidebar />
-                                    </div>
+                                <div className='right-sidebar-wrapper'>
+                                    <RightSidebar />
                                 </div>
-                                <PhoneBottomNav />
-                            </SuggestionContextProvider>
-                        </TrendingContextProvider>
-                    </div>
-                </main>
+                            </div>
+                            <PhoneBottomNav />
+                        </SuggestionContextProvider>
+                    </TrendingContextProvider>
+                </div>
+            </main>
         </UserContextProvider>
     )
 }

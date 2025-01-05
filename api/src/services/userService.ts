@@ -40,6 +40,22 @@ export const getUserPassword = async (id: number) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
+export const updateUserUsername = async (id: number, newUsername: string) => {
+    return await prisma.user.update({
+        where: { id },
+        data: {
+            username: newUsername,
+        },
+        select: {
+            id: true,
+            username: true,
+            email: true,
+        }
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
 export const updateUserPassword = async (id: number, newPassword: string) => {
     return await prisma.user.update({
         where: { id },
@@ -408,6 +424,7 @@ interface SuggestionType {
         following: number
     };
 }
+
 export const getFollowSuggestions = async (userId: number) => {
     // Step 1: Fetch the last 20 users followed by the logged-in user
     const recentFollowees = await prisma.follow.findMany({
@@ -809,3 +826,14 @@ export const getUsersBySearch = async (userId: number, searchTerms: string[]) =>
 };
 
 // ---------------------------------------------------------------------------------------------------------
+
+export const getUserBySearch = async (username: string) => {
+    return await prisma.user.findUnique({
+        where: {
+            username
+        },
+        select: {
+            username: true,
+        },
+    })
+};

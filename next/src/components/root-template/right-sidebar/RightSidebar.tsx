@@ -6,7 +6,7 @@ import RightSidebarSearch from './RightSidebarSearch';
 import RightSidebarTrending from './RightSidebarTrending';
 
 export default async function RightSidebar() {
-    const token = getToken();
+    const token = await getToken();
     const payload = await decryptSession(token);
 
     if (!payload) return redirect('/login');

@@ -6,8 +6,8 @@ import { z } from "zod";
 export async function PATCH(req: NextRequest) {
     if (req.method === 'PATCH') {
         // Check for an existing session
-        const sessionToken = getToken();
-        const settingsToken = getSettingsToken();
+        const sessionToken = await getToken();
+        const settingsToken = await getSettingsToken();
 
         if (sessionToken && settingsToken) {
             // Check for session validity
@@ -15,7 +15,7 @@ export async function PATCH(req: NextRequest) {
             const isSettingsTokenValid = await verifySession(settingsToken);
 
             if (!isSessionValid.isAuth) {
-                removeSession();
+                await removeSession();
                 removeSettingsToken();
                 return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 401 });
             }

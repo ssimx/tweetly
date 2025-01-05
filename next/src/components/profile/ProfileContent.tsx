@@ -316,9 +316,6 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
             const posts: Post[] = await postsResponse.json();
             const reposts: Repost[] = await repostsResponse.json();
 
-            console.log(posts);
-            
-
             setPostsCursor(posts.length > 0 ? posts[posts.length - 1].id : 0);
             setRepostsCursor(reposts.length > 0 ? reposts[reposts.length - 1].id : 0)
 

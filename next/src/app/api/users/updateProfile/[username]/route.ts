@@ -4,13 +4,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest, { params }: { params: { username: string } }) {
     if (req.method === 'POST') {
-        const token = getToken();
+        const token = await getToken();
 
         if (token) {
             const payload = await decryptSession(token);
 
             if (!payload) {
-                removeSession();
+                await removeSession();
                 return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 400 });
             }
 

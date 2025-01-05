@@ -5,7 +5,7 @@ import Image from "next/image";
 import ProfileDynamicInfo from "@/components/profile/ProfileDynamicInfo";
 
 export default async function Profile({ params }: { params: { username: string } }) {
-    const token = getToken();
+    const token = await getToken();
     const payload = await decryptSession(token);
 
     if (!payload) return redirect('/login');

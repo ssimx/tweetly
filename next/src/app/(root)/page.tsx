@@ -3,7 +3,7 @@ import { getToken, verifySession } from "@/lib/session";
 import FeedContent from "@/components/feed/FeedContent";
 
 export default async function Feed() {
-    const token = getToken();
+    const token = await getToken();
     const isAuth = await verifySession(token).then(res => res.isAuth);
     if (!isAuth) redirect('/login');
 

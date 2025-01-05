@@ -6,7 +6,8 @@ const secretKey = process.env.JWT_SECRET;
 const encodedKey = new TextEncoder().encode(secretKey);
 
 export async function createSession(token: string) {
-    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    const jwtPayload = JSON.parse(atob(token.split('.')[1]));
+    const expiresAt = new Date(jwtPayload.exp * 1000);
 
     cookies().set('access-token', token, {
         httpOnly: true,
@@ -34,7 +35,7 @@ export async function decryptSession(token: string | undefined) {
     }
 };
 
-export const verifySession = async (token: string | undefined) => {
+export async function verifySession(token: string | undefined) {
     const session = await decryptSession(token);
 
     if (!session?.id) {
@@ -44,22 +45,35 @@ export const verifySession = async (token: string | undefined) => {
     return { isAuth: true };
 };
 
-export async function hasSession(): Promise<boolean> {
+export async function hasSession() {
     const cookieStore = cookies();
     const hasToken = cookieStore.has('access-token');
     return hasToken;
 };
 
-export function getToken() {
+export async function getToken() {
     const token = cookies().get('access-token')?.value;
     return token;
 }
 
-export function removeSession() {
+export async function removeSession() {
     cookies().delete('access-token');
 };
 
-export function extractToken(authHeader: string | null) {
+export async function updateSessionToken(newToken: string) {
+    const jwtPayload = JSON.parse(atob(newToken.split('.')[1]));
+    const expiresAt = new Date(jwtPayload.exp * 1000);
+
+    cookies().set('access-token', newToken, {
+        httpOnly: true,
+        secure: true,
+        expires: expiresAt,
+        sameSite: 'lax',
+        path: '/',
+    })
+}
+
+export async function extractToken(authHeader: string | null) {
     if (authHeader) {
         const parts = authHeader.split(' ');
         if (parts.length === 2 && parts[0] === 'Bearer') {
@@ -72,7 +86,8 @@ export function extractToken(authHeader: string | null) {
 // settings token
 
 export async function createSettingsSession(token: string) {
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000)
+    const jwtPayload = JSON.parse(atob(token.split('.')[1]));
+    const expiresAt = new Date(jwtPayload.exp * 1000);
 
     cookies().set('settings-token', token, {
         httpOnly: true,
@@ -83,13 +98,13 @@ export async function createSettingsSession(token: string) {
     })
 };
 
-export function getSettingsToken() {
+export async function getSettingsToken() {
     const token = cookies().get('settings-token')?.value;
     return token;
 }
 
 
-export const verifySettingsToken = async (token: string | undefined) => {
+export async function verifySettingsToken(token: string | undefined) {
     const session = await decryptSession(token);
 
     if (!session?.id) {
@@ -99,7 +114,7 @@ export const verifySettingsToken = async (token: string | undefined) => {
     return { isAuth: true };
 };
 
-export function removeSettingsToken() {
+export async function removeSettingsToken() {
     cookies().delete({
         name: 'settings-token', 
         path: '/settings/account',

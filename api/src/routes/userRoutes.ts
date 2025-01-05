@@ -1,10 +1,11 @@
-import { blockUser, changePassword, deactivateAccount, disablePushNotifications, enablePushNotifications, followUser, getProfileFollowers, getProfileFollowing, getProfileInfo, getUserFollowSuggestions, getUserInfo, getUserNotifications, unblockUser, unfollowUser, updateProfileInfo } from "../controllers/userController";
+import { blockUser, changePassword, changeUsername, deactivateAccount, disablePushNotifications, enablePushNotifications, followUser, getProfileFollowers, getProfileFollowing, getProfileInfo, getUserFollowSuggestions, getUserInfo, getUserNotifications, unblockUser, unfollowUser, updateProfileInfo } from "../controllers/userController";
 
 const express = require('express');
 const router = express.Router();
 
 router.get('/', getUserInfo);
 router.post('/updateProfile/:username', updateProfileInfo);
+router.patch('/username', changeUsername);
 router.patch('/password', changePassword);
 router.patch('/deactivate', deactivateAccount);
 router.get('/followers/:username', getProfileFollowers);

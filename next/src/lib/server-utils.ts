@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 
 export async function fetchUserData() {
     try {
-        const token = getToken();
+        const token = await getToken();
         if (!token) {
             throw new Error("Unauthorized: No token provided");
         }
@@ -26,7 +26,7 @@ export async function fetchUserData() {
 
         const username = await decryptSession(token).then(res => res?.username);
         console.log(username, userData.username);
-        
+
         if (userData.username !== username) {
             cookies().delete('access-token');
             return null;

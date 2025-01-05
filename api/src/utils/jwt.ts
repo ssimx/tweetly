@@ -19,8 +19,6 @@ export const generateToken = (user: UserTokenProps): string => {
 export const generateSettingsToken = (user: UserTokenProps): string => {
     return jwt.sign({
         id: user.id,
-        email: user.email,
-        username: user.username,
     }, SECRET_KEY, {
         expiresIn: '15m',
     });
