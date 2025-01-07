@@ -89,7 +89,11 @@ export default function SignUp() {
                         <p className="error-msg">{`${errors.email.message}`}</p>
                     )}
 
-                    <DateOfBirthSelect register={register} setValue={setValue} errors={errors} />
+                    <DateOfBirthSelect
+                        signUpRegister={register}
+                        signUpSetValues={setValue}
+                        errors={errors}
+                    />
 
                     <Input {...register("password")} type="password" placeholder="password" />
                     {errors.password && (

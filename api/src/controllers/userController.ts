@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { addBlock, addFollow, addPushNotifications, deactivateUser, getFollowers, getFollowing, getFollowSuggestions, getProfile, getUser, getUserBySearch, getUserPassword, isUserDeactivated, removeBlock, removeFollow, removePushNotfications, updateProfile, updateUserPassword, updateUserUsername } from '../services/userService';
+import { addBlock, addFollow, addPushNotifications, deactivateUser, getFollowers, getFollowing, getFollowSuggestions, getProfile, getUser, getUserBySearch, getUserPassword, isUserDeactivated, removeBlock, removeFollow, removePushNotfications, updateProfile, updateUserBirthday, updateUserPassword, updateUserUsername } from '../services/userService';
 import { ProfileInfo, UserProps } from '../lib/types';
 import { deleteImageFromCloudinary } from './uploadController';
 import { getNotifications, updateNotificationsToRead } from '../services/notificationService';
@@ -293,6 +293,43 @@ export const changeUsername = async (req: Request, res: Response) => {
         return res.status(201).json({ token });
     } catch (error) {
         console.error('Error updating password: ', error);
+        return res.status(500).json({ error: 'Failed to process the request' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const changeBirthday = async (req: Request, res: Response) => {
+    const user = req.user as UserProps;
+    const { year, month, day } = req.body as { year: String, month: String, day: String };
+
+    try {
+        const birthDate = new Date(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
+        const now = new Date();
+
+        let age = now.getFullYear() - birthDate.getFullYear();
+
+        // Adjust age if birthday hasn't occurred this year yet
+        if (now.getMonth() < birthDate.getMonth() ||
+            (now.getMonth() === birthDate.getMonth() && now.getDate() < birthDate.getDate())) {
+            age--;
+        }
+
+        if (age < 13) return res.status(401).json({ error: 'User must be older than 13' });
+
+        let currentBirthday = await getUser(user.id).then(res => res?.dateOfBirth);
+        if (!currentBirthday) return res.status(401).json({ error: 'User not found' });
+
+        const currentYear = String(currentBirthday.getFullYear());
+        const currentMonth = String(currentBirthday.getMonth() + 1);
+        const currentDay = String(currentBirthday.getDate());
+        if (currentYear == year && currentMonth === month && currentDay === day) return res.status(401).json({ error: 'New birth date must be different than the current one' });
+
+        await updateUserBirthday(user.id, new Date(Date.UTC(Number(year), Number(month) - 1, Number(day))));
+
+        return res.status(201).json(true);
+    } catch (error) {
+        console.error('Error updating birthday: ', error);
         return res.status(500).json({ error: 'Failed to process the request' });
     }
 };

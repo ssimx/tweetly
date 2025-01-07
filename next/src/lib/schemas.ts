@@ -1,57 +1,87 @@
 import { z } from "zod";
+import { getAge } from "./utils";
 
 export const signUpSchema = z.object({
     username: z
         .string()
+        .trim()
         .min(2, "Username must contain at least 2 characters")
         .max(15, "Username must contain less than 15 characters")
         .regex(/^[a-zA-Z0-9]+$/, "Username contains invalid characters."),
     email: z
         .string()
+        .trim()
         .email(),
     year: z
         .string()
+        .trim()
         .min(4, "Year is required"),
     month: z
         .string()
+        .trim()
         .min(1, "Month is required"),
     day: z
         .string()
+        .trim()
         .min(1, "Day is required"),
     password: z
         .string()
+        .trim()
         .min(8, "Password must contain at least 8 characters"),
     confirmPassword: z
-        .string(),
-}).refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
+        .string()
+        .trim(),
+}).superRefine((data, ctx) => {
+    // Check if DoB is older than 13
+    const birthDate = `${data.year}-${String(data.month).padStart(2, '0')}-${String(data.day).padStart(2, '0')}`;
+    if (getAge(birthDate) < 13) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'User must be older than 13',
+            path: ['year'], // Path for error message
+        });
+    }
+
+    // Check if currentPassword is the same as newPassword
+    if (data.password !== data.confirmPassword) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Passwords do not match',
+            path: ['confirmPassword'],
+        });
+    }
 });
 
 export const logInSchema = z.object({
     username: z
         .string()
+        .trim()
         .min(1, "Please enter username"),
     password: z
         .string()
+        .trim()
         .min(1, "Please enter password"),
 });
 
 export const settingsPasswordSchema = z.object({
     password: z
         .string()
+        .trim()
         .min(1, "Please enter password"),
 })
 
 export const settingsChangePassword = z.object({
     currentPassword: z
         .string()
+        .trim()
         .min(1, "Please enter current password"),
     newPassword: z
         .string()
+        .trim()
         .min(8, "New password must contain at least 8 characters"),
     newConfirmPassword: z
-        .string(),
+        .string()
+        .trim(),
 }).superRefine((data, ctx) => {
     // Check if currentPassword is the same as newPassword
     if (data.currentPassword === data.newPassword) {
@@ -75,14 +105,31 @@ export const settingsChangePassword = z.object({
 export const settingsChangeUsername = z.object({
     newUsername: z
         .string()
+        .trim()
         .min(2, "Username must contain at least 2 characters")
         .max(15, "Username must contain less than 15 characters")
         .regex(/^[a-zA-Z0-9]+$/, "Username contains invalid characters.")
-})
+});
+
+export const settingsChangeBirthday = z.object({
+    year: z
+        .string()
+        .trim()
+        .min(4, "Year is required"),
+    month: z
+        .string()
+        .trim()
+        .min(1, "Month is required"),
+    day: z
+        .string()
+        .trim()
+        .min(1, "Day is required"),
+});
 
 export const newPostSchema = z.object({
     text: z
         .string()
+        .trim()
         .min(1, 'Please enter the post content')
         .max(280, "Post can't exceed 280 characters"),
     replyToId: z
@@ -135,3 +182,4 @@ export const searchUsernameSchema = z.object({
         .max(15, "Username must contain less than 15 characters")
         .regex(/^[a-zA-Z0-9]+$/, "Username contains invalid characters.")
 });
+

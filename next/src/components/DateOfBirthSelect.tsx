@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { FieldErrors, UseFormRegister, UseFormSetValue } from "react-hook-form";
+import { useState } from "react";
+import { FieldErrors, UseFormGetValues, UseFormRegister, UseFormSetValue } from "react-hook-form";
 import {
     Select,
     SelectContent,
@@ -7,48 +7,83 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { signUpSchema } from "@/lib/schemas";
-import { z } from "zod";
 
-type FormData = z.infer<typeof signUpSchema>;
+type DateOfBirthDataProps = {
+    year: string;
+    month: string;
+    day: string;
+};
 
-type DateOfBirthSelectProps = {
-    register: UseFormRegister<FormData>;
-    setValue: UseFormSetValue<FormData>;
+type SignUpFormFields = DateOfBirthDataProps & {
+    username: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+};
+
+type SettingsFormFields = DateOfBirthDataProps;
+
+type DateOfBirthProps = {
+    signUpRegister?: UseFormRegister<SignUpFormFields>;
+    signUpSetValues?: UseFormSetValue<SignUpFormFields>;
+    settingsRegister?: UseFormRegister<SettingsFormFields>;
+    settingsGetValues?: UseFormGetValues<DateOfBirthDataProps>;
+    settingsSetValues?: UseFormSetValue<SettingsFormFields>;
     errors: FieldErrors;
 };
 
-export function DateOfBirthSelect({ register, setValue, errors }: DateOfBirthSelectProps) {
+export function DateOfBirthSelect({ signUpRegister, signUpSetValues, settingsRegister, settingsGetValues, settingsSetValues, errors }: DateOfBirthProps) {
     const [currentMonth, setCurrentMonth] = useState<string | null>(null);
+    const [currentYear, setCurrentYear] = useState<number | null>(null);
     
-    const years = Array.from(new Array(100), (_, i) => new Date().getFullYear() - i); // Last 100 years
+    const todayYear = new Date().getFullYear();
+    const years = Array.from(new Array(100), (_, i) => todayYear - i).filter(year => year <= todayYear - 13); // Last 100 years
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const months30 = ['4', '6', '9', '11'];
     const months31 = ['1', '3', '5', '6', '7', '8', '9', '10', '11', '12'];
+    const days28 = Array.from({ length: 28 }, (_, i) => i + 1);
     const days29 = Array.from({ length: 29 }, (_, i) => i + 1);
     const days30 = Array.from({ length: 30 }, (_, i) => i + 1);
     const days31 = Array.from({ length: 31 }, (_, i) => i + 1);
 
-    // Use useEffect to set the default values if needed
-    useEffect(() => {
-        setValue("year", ""); // Initialize empty values
-        setValue("month", "");
-        setValue("day", "");
-    }, [setValue]);
+    // registers
+    const yearRegister = signUpRegister
+        ? signUpRegister("year")
+        : settingsRegister
+            ? settingsRegister("year")
+            : undefined;
 
-    const onMonthChange = (value: string) => {
-        setValue("month", value);
-        setCurrentMonth(value);
+    const monthRegister = signUpRegister
+        ? signUpRegister("month")
+        : settingsRegister
+            ? settingsRegister("month")
+            : undefined;
+
+    const dayRegister = signUpRegister
+        ? signUpRegister("day")
+        : settingsRegister
+            ? settingsRegister("day")
+            : undefined;   
+
+    // Saved values for settings
+    const savedYear = settingsGetValues?.("year");
+    const savedMonth = settingsGetValues?.("month");
+    const savedDay = settingsGetValues?.("day");
+
+    const handleFieldChange = (value: string, type: 'year' | 'month' | 'day') => {
+        signUpSetValues?.(type, String(value)) ?? settingsSetValues?.(type, String(value));
+        type === 'year' ? setCurrentYear(Number(value)) : setCurrentMonth(String(value));
     };
 
     return (
         <div className='flex flex-col gap-2'>
-            <p className="font-bold">Date Of Birth</p>
-
+            {!settingsGetValues && <p className="font-bold">Date Of Birth</p>
+}
             <div className='flex gap-2 w-full'>
                 {/* Year Select */}
                 <div className='flex flex-col gap-2 w-full'>
-                    <Select {...register("year")} onValueChange={(value) => setValue("year", value)}>
+                    {/* {} */}
+                    <Select {...yearRegister} onValueChange={(value) => handleFieldChange(value, 'year')} defaultValue={savedYear}>
                         <SelectTrigger>
                             <SelectValue placeholder="Year" />
                         </SelectTrigger>
@@ -66,7 +101,8 @@ export function DateOfBirthSelect({ register, setValue, errors }: DateOfBirthSel
                 </div>
                 {/* Month Select */}
                 <div className='flex flex-col gap-2 w-full'>
-                    <Select {...register("month")} onValueChange={(value) => onMonthChange(value)}>
+                    {/* {onValueChange = {(value) => onMonthChange(value)} } */}
+                    <Select {...monthRegister} onValueChange={(value) => handleFieldChange(value, 'month')} defaultValue={savedMonth}>
                         <SelectTrigger>
                             <SelectValue placeholder="Month" />
                         </SelectTrigger>
@@ -85,34 +121,47 @@ export function DateOfBirthSelect({ register, setValue, errors }: DateOfBirthSel
                 
                 {/* Day Select */}
                 <div className='flex flex-col gap-2 w-full'>
-                    <Select {...register("day")} onValueChange={(value) => setValue("day", value)}>
+                    {/* {onValueChange = {(value) => setValue("day", value)} } */}
+                    <Select {...dayRegister} onValueChange={(value) => handleFieldChange(value, 'day')} defaultValue={savedDay}>
                         <SelectTrigger>
                             <SelectValue placeholder="Day" />
                         </SelectTrigger>
                         <SelectContent>
                             {currentMonth === null
                                 ? days31.map((day) => (
-                                    <SelectItem key={day} value={day.toString().padStart(2, '0')}>
+                                    <SelectItem key={day} value={day.toString()}>
                                         {day}
                                     </SelectItem>
                                 ))
                                 : months30.includes(currentMonth)
                                     ? days30.map((day) => (
-                                        <SelectItem key={day} value={day.toString().padStart(2, '0')}>
+                                        <SelectItem key={day} value={day.toString()}>
                                             {day}
                                         </SelectItem>
                                     ))
                                     : months31.includes(currentMonth)
                                         ? days31.map((day) => (
-                                            <SelectItem key={day} value={day.toString().padStart(2, '0')}>
+                                            <SelectItem key={day} value={day.toString()}>
                                                 {day}
                                             </SelectItem>
                                         ))
-                                        : days29.map((day) => (
-                                            <SelectItem key={day} value={day.toString().padStart(2, '0')}>
+                                        : currentYear
+                                            ? (((currentYear % 4 == 0) && (currentYear % 100 != 0)) || (currentYear % 400 == 0))
+                                                ? days29.map((day) => (
+                                                    <SelectItem key={day} value={day.toString()}>
+                                                        {day}
+                                                    </SelectItem>
+                                                ))
+                                                : days28.map((day) => (
+                                                    <SelectItem key={day} value={day.toString()}>
+                                                        {day}
+                                                    </SelectItem>
+                                                ))
+                                            : days28.map((day) => (
+                                            <SelectItem key={day} value={day.toString()}>
                                                 {day}
                                             </SelectItem>
-                                        ))
+                                            ))
                             }
                         </SelectContent>
                     </Select>

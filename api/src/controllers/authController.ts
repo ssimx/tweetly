@@ -37,7 +37,7 @@ export const registerUser = async (req: Request, res: Response) => {
         const hashedPassword: string = await bcrypt.hash(password, 10);
 
         // Convert date string to date
-        const birthDate = new Date(dateOfBirth);
+        const birthDate = new Date(Date.UTC(Number(new Date(dateOfBirth).getFullYear()), Number(new Date(dateOfBirth).getMonth() )- 1, Number(new Date(dateOfBirth).getDate())));
 
         // Try to save the new user
         const response = await createUserAndProfile({ username, email, birthDate, hashedPassword });

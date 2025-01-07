@@ -70,6 +70,21 @@ export const updateUserPassword = async (id: number, newPassword: string) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
+export const updateUserBirthday = async (id: number, newBirthday: Date) => {
+    return await prisma.user.update({
+        where: { id },
+        data: {
+            dateOfBirth: newBirthday,
+        },
+        select: {
+            id: true,
+            dateOfBirth: true,
+        }
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
 export const isUserDeactivated = async (id: number) => {
     return await prisma.user.findUnique({
         where: { id },
