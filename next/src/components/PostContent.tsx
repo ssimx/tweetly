@@ -6,13 +6,16 @@ export default function PostContent({ content, searchSegments }: { content: stri
         // Regex to match hashtags
         const hashtagRegex = /#\w+/g;
 
+        // Regex to match tags
+        const tagRegex = /@\w+/g;
+
         const highlightWords = searchSegments?.map(segment => segment.toLowerCase()) || [];
         const wordRegex = highlightWords.length
             ? new RegExp(`\\b(${highlightWords.join("|")})\\b`, "gi")
             : null;
 
-        // Split text while keeping hashtags
-        const parts = text.split(/(#[^\s]+)/g);
+        // Split text while keeping hashtags or tags (@)
+        const parts = text.split(/([#@][^\s]+)/g);
 
         // Map over the parts to render text and hashtags
         return parts.map((part, index) => {
@@ -21,10 +24,21 @@ export default function PostContent({ content, searchSegments }: { content: stri
                 const hashtag = part.slice(1); // Remove '#' for the URL
                 return (
                     <Link key={index} href={`http://localhost:3000/search?q=${encodeURIComponent(`#${hashtag}`)}`}
-                        className={`text-blue-500 hover:underline ${searchSegments && searchSegments.some((word) => word.toLowerCase() === part.toLowerCase()) ? 'font-bold' : ''}`}
+                        className={`text-primary hover:underline ${searchSegments && searchSegments.some((word) => word.toLowerCase() === part.toLowerCase()) ? 'font-bold' : ''}`}
                         onClick={(e) => e.stopPropagation()}
                         >
                     {part}
+                    </Link>
+                );
+            } else if (tagRegex.test(part)) {
+                // If the part is a tag, render as a clickable link
+                const tag = part.slice(1).toLowerCase(); // Remove '@' for the URL
+                return (
+                    <Link key={index} href={`http://localhost:3000/${tag}`}
+                        className='text-primary hover:underline'
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {part}
                     </Link>
                 );
             } else if (wordRegex && wordRegex.test(part)) {
