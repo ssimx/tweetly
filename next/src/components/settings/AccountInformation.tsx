@@ -51,7 +51,7 @@ export default function AccountInformation() {
 
             <div className='px-4 py-2'>
                 <h3>Account created</h3>
-                <p className='text-14 text-red-500'>Placeholder</p>
+                <p className='text-14 text-gray-500'>{formatDate(loggedInUser.createdAt)}</p>
             </div>
         </div>
     )

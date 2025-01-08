@@ -1,6 +1,6 @@
 'use client';
 import { UserInfo } from '@/lib/types';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 
 type UserContextType = {
     loggedInUser: UserInfo,
@@ -34,11 +34,6 @@ export default function UserContextProvider({ children, userData }: { children: 
             setLoggedInUser(() => ({...JSON.parse(JSON.stringify(updatedUser))})); // Update the context with the latest data
         }
     };
-
-    useEffect(() => {
-        // Optionally, you can refetch user data on mount to ensure freshness
-        refetchUserData();
-    }, []); // This ensures the data is refetched on initial mount
 
     return (
         <UserContext.Provider 

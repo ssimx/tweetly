@@ -5,12 +5,14 @@ export const signUpSchema = z.object({
     username: z
         .string()
         .trim()
+        .toLowerCase()
         .min(2, "Username must contain at least 2 characters")
         .max(15, "Username must contain less than 15 characters")
         .regex(/^[a-zA-Z0-9]+$/, "Username contains invalid characters."),
     email: z
         .string()
         .trim()
+        .toLowerCase()
         .email(),
     year: z
         .string()
@@ -106,9 +108,18 @@ export const settingsChangeUsername = z.object({
     newUsername: z
         .string()
         .trim()
+        .toLowerCase()
         .min(2, "Username must contain at least 2 characters")
         .max(15, "Username must contain less than 15 characters")
         .regex(/^[a-zA-Z0-9]+$/, "Username contains invalid characters.")
+});
+
+export const settingsChangeEmail = z.object({
+    newEmail: z
+        .string()
+        .trim()
+        .toLowerCase()
+        .email(),
 });
 
 export const settingsChangeBirthday = z.object({

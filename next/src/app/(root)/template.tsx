@@ -9,11 +9,6 @@ import { UserInfo } from "@/lib/types";
 import { redirect } from "next/navigation";
 import TrendingContextProvider from "@/context/TrendingContextProvider";
 
-export interface UserData {
-    user: UserInfo,
-    followReccomendations: string,
-}
-
 export default async function RootTemplate({ children }: Readonly<{ children: React.ReactNode }>) {
     const token = await getToken();
     if (!token) {
@@ -32,7 +27,7 @@ export default async function RootTemplate({ children }: Readonly<{ children: Re
         return redirect('/logout');
     }
 
-    const user = await response.json();
+    const user = await response.json() as UserInfo;
 
     return (
         <UserContextProvider userData={user}>

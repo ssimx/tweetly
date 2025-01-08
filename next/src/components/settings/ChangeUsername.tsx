@@ -24,7 +24,6 @@ export default function ChangeUsername() {
         formState: { errors, isSubmitting },
         setError,
         clearErrors,
-        resetField,
         watch,        
     } = useForm<FormData>({ 
         resolver: zodResolver(settingsChangeUsername),
@@ -103,10 +102,8 @@ export default function ChangeUsername() {
             if (error instanceof Error) {
                 if (error.message === 'That username has been taken. Please choose another.') {
                     setError("newUsername", { type: "manual", message: error.message });
-                    resetField("newUsername", { keepError: true });
                 } else if (error.message === "New username must be different than the current one.") {
                     setError("newUsername", { type: "manual", message: error.message });
-                    resetField("newUsername", { keepError: true });
                 } else {
                     console.error(error);
                     reset();

@@ -40,6 +40,8 @@ export const registerUser = async (req: Request, res: Response) => {
         const birthDate = new Date(Date.UTC(Number(new Date(dateOfBirth).getFullYear()), Number(new Date(dateOfBirth).getMonth() )- 1, Number(new Date(dateOfBirth).getDate())));
 
         // Try to save the new user
+        username.toLowerCase();
+        email.toLowerCase();
         const response = await createUserAndProfile({ username, email, birthDate, hashedPassword });
 
         // Check if there was a unique constraint violation

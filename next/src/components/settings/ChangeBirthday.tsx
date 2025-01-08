@@ -39,8 +39,6 @@ export default function ChangeBirthday() {
     const currentMonth = watch('month');
     const currentDay = watch('day');
 
-    console.log(String(new Date(loggedInUser.dateOfBirth).getDate()), currentDay, String(new Date(loggedInUser.dateOfBirth).getMonth()), currentMonth, String(new Date(loggedInUser.dateOfBirth).getFullYear()), currentYear)
-
     const onSubmit = async (data: FormData) => {
         if (isSubmitting) return;
 

@@ -26,6 +26,7 @@ export interface UserInfo {
     username: string;
     email: string;
     dateOfBirth: string;
+    createdAt: string,
     profile: {
         name: string;
         bio: string;

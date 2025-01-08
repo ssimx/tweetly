@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { addBlock, addFollow, addPushNotifications, deactivateUser, getFollowers, getFollowing, getFollowSuggestions, getProfile, getUser, getUserBySearch, getUserPassword, isUserDeactivated, removeBlock, removeFollow, removePushNotfications, updateProfile, updateUserBirthday, updateUserPassword, updateUserUsername } from '../services/userService';
+import { addBlock, addFollow, addPushNotifications, deactivateUser, getFollowers, getFollowing, getFollowSuggestions, getProfile, getUser, getUserByEmail, getUserBySearch, getUserPassword, isUserDeactivated, removeBlock, removeFollow, removePushNotfications, updateProfile, updateUserBirthday, updateUserEmail, updateUserPassword, updateUserUsername } from '../services/userService';
 import { ProfileInfo, UserProps } from '../lib/types';
 import { deleteImageFromCloudinary } from './uploadController';
 import { getNotifications, updateNotificationsToRead } from '../services/notificationService';
@@ -14,8 +14,6 @@ export const getUserInfo = async (req: Request, res: Response) => {
     try {
         const userData = await getUser(id);
         if (!userData) return res.status(404).json({ error: 'User does not exist' });
-
-        const followSuggestions = await getFollowSuggestions(id);
 
         return res.status(201).json({ userData });
     } catch (error) {
@@ -278,6 +276,7 @@ export const changeUsername = async (req: Request, res: Response) => {
         const fetchedUser = await getUserBySearch(newUsername);
         if (fetchedUser) return res.status(401).json({ error: 'That username has been taken. Please choose another.' });
 
+        newUsername.toLowerCase();
         const updatedInfo = await updateUserUsername(user.id, newUsername);
 
         const tokenPayload = {
@@ -289,6 +288,38 @@ export const changeUsername = async (req: Request, res: Response) => {
         // Generate and send JWT token
         const token: string = generateToken(tokenPayload);
         
+
+        return res.status(201).json({ token });
+    } catch (error) {
+        console.error('Error updating password: ', error);
+        return res.status(500).json({ error: 'Failed to process the request' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const changeEmail = async (req: Request, res: Response) => {
+    const user = req.user as UserProps;
+    const { newEmail } = req.body;
+
+    try {
+        if (user.email === newEmail) return res.status(401).json({ error: 'New email must be different than the current one.' });
+
+        const fetchedUser = await getUserByEmail(newEmail);
+        if (fetchedUser) return res.status(401).json({ error: 'That email has been taken. Please choose another.' });
+
+        newEmail.toLowerCase();
+        const updatedInfo = await updateUserEmail(user.id, newEmail);
+
+        const tokenPayload = {
+            id: updatedInfo.id,
+            username: updatedInfo.username,
+            email: updatedInfo.email,
+        }
+
+        // Generate and send JWT token
+        const token: string = generateToken(tokenPayload);
+
 
         return res.status(201).json({ token });
     } catch (error) {

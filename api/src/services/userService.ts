@@ -13,6 +13,7 @@ export const getUser = async (id: number) => {
             username: true,
             email: true,
             dateOfBirth: true,
+            createdAt: true,
             profile: { // include profile information
                 select: {
                     name: true,
@@ -45,6 +46,22 @@ export const updateUserUsername = async (id: number, newUsername: string) => {
         where: { id },
         data: {
             username: newUsername,
+        },
+        select: {
+            id: true,
+            username: true,
+            email: true,
+        }
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const updateUserEmail = async (id: number, newEmail: string) => {
+    return await prisma.user.update({
+        where: { id },
+        data: {
+            email: newEmail,
         },
         select: {
             id: true,
@@ -846,6 +863,19 @@ export const getUserBySearch = async (username: string) => {
     return await prisma.user.findUnique({
         where: {
             username
+        },
+        select: {
+            username: true,
+        },
+    })
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getUserByEmail = async (email: string) => {
+    return await prisma.user.findUnique({
+        where: {
+            email
         },
         select: {
             username: true,
