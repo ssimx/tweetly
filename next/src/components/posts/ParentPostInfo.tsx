@@ -39,7 +39,7 @@ export default function ParentPostInfo({ post }: { post: PostType }) {
             </div>
 
             <div className='w-full flex flex-col gap-2 min-w-0' >
-                <div className='flex gap-2 text-gray-500'>
+                <div className='flex gap-2 text-secondary-text'>
                     <UserHoverCard
                         author={{
                             username: post.author.username,

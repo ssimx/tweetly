@@ -386,7 +386,7 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
                                 return (
                                     <div key={index}>
                                         <ProfileContentPost post={post} />
-                                        <div className='feed-hr-line'></div>
+                                        {(index + 1) !== postsReposts.length && <div className='feed-hr-line'></div>}
                                     </div>
                                 )
                             })}
@@ -400,7 +400,7 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
                                     return (
                                         <div key={index}>
                                             <ProfileContentReply replyPost={reply} />
-                                            <div className='feed-hr-line'></div>
+                                            {(index + 1) !== replies.length && <div className='feed-hr-line'></div>}
                                         </div>
                                     )
                                 })}
@@ -414,7 +414,7 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
                                         return (
                                             <div key={index}>
                                                 <ProfileContentLikedPost post={post.post} />
-                                                <div className='feed-hr-line'></div>
+                                                {(index + 1) !== likedPosts.length && <div className='feed-hr-line'></div>}
                                             </div>
                                         )
                                     })}

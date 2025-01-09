@@ -45,7 +45,7 @@ export default function ProfileContentReply({ replyPost }: { replyPost: Reply })
                         </Link>
                     </div>
                     <div className='feed-post-right-side'>
-                        <div className='flex gap-2 text-gray-500'>
+                        <div className='flex gap-2 text-secondary-text'>
                             <UserHoverCard
                                 author={{
                                     username: replyPost.author.username,

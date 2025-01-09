@@ -84,12 +84,33 @@ const config: Config = {
                     '800': '#1C2733',
                     '900': '#17202A'
                 },
+                ['primary-color']: {
+                    'blue': 'hsl(var(--primary-color-blue))',
+                    'yellow': 'hsl(var(--primary-color-yellow))',
+                    'pink': 'hsl(var(--primary-color-pink))',
+                    'purple': 'hsl(var(--primary-color-purple))',
+                    'orange': 'hsl(var(--primary-color-orange))',
+                },
+                ['primary-theme']: {
+                    'white': 'hsl(var(--primary-theme-white))',
+                    'dim': 'hsl(var(--primary-theme-dim))',
+                    'dark': 'hsl(var(--primary-theme-dark))',
+                },
+                ['primary-text-color']: {
+                    'white': 'hsl(0, 0%, 100%)',
+                    'black': 'hsl(0, 0%, 0%)',
+                },
                 background: 'hsl(var(--background))',
                 foreground: 'hsl(var(--foreground))',
+                post: {
+                    DEFAULT: 'hsl(var(--card))',
+                    foreground: 'hsl(var(--card-foreground))',
+                    hover: 'hsl(var(--post-hover))',
+                },
                 card: {
                     DEFAULT: 'hsl(var(--card))',
                     foreground: 'hsl(var(--card-foreground))',
-                    hover: 'rgba(0, 0, 0, 0.03)'
+                    hover: 'hsl(var(--card-hover))',
                 },
                 popover: {
                     DEFAULT: 'hsl(var(--popover))',
@@ -97,11 +118,15 @@ const config: Config = {
                 },
                 primary: {
                     DEFAULT: 'hsl(var(--primary))',
-                    foreground: 'hsl(var(--primary-foreground))'
+                    dark: 'hsl(var(--primary-dark))',
+                    foreground: 'hsl(var(--primary-foreground))',
+                    text: 'hsl(var(--primary-text-color))',
+                    border: 'hsl(var(--border))',
                 },
                 secondary: {
                     DEFAULT: 'hsl(var(--secondary))',
-                    foreground: 'hsl(var(--secondary-foreground))'
+                    foreground: 'hsl(var(--secondary-foreground))',
+                    text: 'hsl(var(--secondary-text-color))',
                 },
                 muted: {
                     DEFAULT: 'hsl(var(--muted))',
@@ -115,7 +140,6 @@ const config: Config = {
                     DEFAULT: 'hsl(var(--destructive))',
                     foreground: 'hsl(var(--destructive-foreground))'
                 },
-                border: 'hsl(var(--border))',
                 input: 'hsl(var(--input))',
                 ring: 'hsl(var(--ring))',
                 chart: {

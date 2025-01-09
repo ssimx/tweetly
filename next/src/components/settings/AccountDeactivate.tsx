@@ -51,7 +51,7 @@ export default function AccountDeactivate() {
 
     return (
         <div className='flex flex-col gap-4'>
-            <Link href={'/' + loggedInUser.username} className='flex gap-2 mb-[-5] px-3 py-2 hover:bg-card-hover'>
+            <Link href={'/' + loggedInUser.username} className='flex gap-2 mb-[-5] px-3 py-2 hover:bg-post-hover'>
                 <Image
                     src={loggedInUser.profile.profilePicture}
                     alt='Post author profile pic' width={50} height={50} className='w-[50px] h-[50px] rounded-full group-hover:outline group-hover:outline-primary/10' />
@@ -64,10 +64,10 @@ export default function AccountDeactivate() {
             <div className='feed-hr-line mb-2'></div>
             <SettingsHeaderInfo header='What else you should know' desc="You can restore your Tweetly account if it was accidentally or wrongfully deactivated for up to 30 days after deactivation." />
             <div className='flex flex-col gap-2 mx-4'>
-                <p className='text-14 text-gray-500'>
+                <p className='text-14 text-secondary-text'>
                     If you just want to change your @username, you don’t need to deactivate your account — edit it in your <Link href='/settings/account/information' className='text-primary hover:underline'>settings</Link>.
                 </p>
-                <p className='text-14 text-gray-500'>
+                <p className='text-14 text-secondary-text'>
                     To use your current @username or email address with a different X account, <Link href='/settings/account/information' className='text-primary hover:underline'>change them</Link> before you deactivate this account.
                 </p>
             </div>

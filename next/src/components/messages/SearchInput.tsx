@@ -16,7 +16,6 @@ export default function SearchInput({ messages }: { messages: MessagesType }) {
     const [convos, setConvos] = useState<ConversationLastMessageType[] | undefined>();
     const commandEmptyRef = useRef<HTMLDivElement>(null);
 
-    
     // scroll and pagination
     const scrollPositionRef = useRef<number>(0);
     const [scrollPosition, setScrollPosition] = useState(0);
@@ -26,9 +25,6 @@ export default function SearchInput({ messages }: { messages: MessagesType }) {
         threshold: 0,
         delay: 100,
     });
-
-    console.log(messages, endReached);
-
 
     useEffect(() => {
         // Track scroll position on user scroll

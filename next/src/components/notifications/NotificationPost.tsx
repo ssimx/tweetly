@@ -39,7 +39,7 @@ interface NotificationType {
 
 export default function NotificationPost({ post, type, isRead, notifier }: NotificationType) {
     console.log(type);
-    
+
     const [postIsFollowedByTheUser, postSetIsFollowedByTheUser] = useState(post.author['_count'].followers === 1);
     const [postFollowersCount, postSetFollowersCount] = useState(post.author.followers.length);
 
@@ -66,32 +66,32 @@ export default function NotificationPost({ post, type, isRead, notifier }: Notif
     };
 
     return (
-        <div onClick={() => handleCardClick(post.author.username, post.id)} 
+        <div onClick={() => handleCardClick(post.author.username, post.id)}
             className={`notifications-post ${isRead === false ? "bg-[#f3f3f3]" : ""}`}
             ref={cardRef} onMouseLeave={changeCardColor}>
             <div className='w-full flex flex-col gap-1'>
                 {type.name === 'REPOST'
                     ? (
-                    <div className='flex items-center gap-1 text-14 font-bold text-dark-400'>
-                        <UserHoverCard
-                            author={{
-                                username: notifier.username,
-                                name: notifier.profile.name,
-                                profilePicture: notifier.profile.profilePicture,
-                                bio: notifier.profile.bio,
-                                following: notifier['_count'].following,
-                            }}
-                            followersCount={repostFollowersCount}
-                            setFollowersCount={repostSetFollowersCount}
-                            isFollowedByTheUser={repostIsFollowedByTheUser}
-                            setIsFollowedByTheUser={repostSetIsFollowedByTheUser}
-                            isFollowingTheUser={repostIsFollowingTheUser} />
+                        <div className='flex items-center gap-1 text-14 font-bold text-secondary-text'>
+                            <UserHoverCard
+                                author={{
+                                    username: notifier.username,
+                                    name: notifier.profile.name,
+                                    profilePicture: notifier.profile.profilePicture,
+                                    bio: notifier.profile.bio,
+                                    following: notifier['_count'].following,
+                                }}
+                                followersCount={repostFollowersCount}
+                                setFollowersCount={repostSetFollowersCount}
+                                isFollowedByTheUser={repostIsFollowedByTheUser}
+                                setIsFollowedByTheUser={repostSetIsFollowedByTheUser}
+                                isFollowingTheUser={repostIsFollowingTheUser} />
                             <p className='font-semibold'>reposted {post.author.username === loggedInUser.username && 'your post'}</p>
-                    </div>
+                        </div>
                     )
                     : type.name === 'LIKE'
                         ? (
-                            <div className='flex items-center gap-1 text-14 font-bold text-dark-400'>
+                            <div className='flex items-center gap-1 text-14 font-bold text-secondary-text'>
                                 <UserHoverCard
                                     author={{
                                         username: notifier.username,
@@ -132,7 +132,7 @@ export default function NotificationPost({ post, type, isRead, notifier }: Notif
                         </div>
                     </div>
                     <div className='feed-post-right-side'>
-                        <div className='flex gap-2 text-gray-500'>
+                        <div className='flex gap-2 text-secondary-text'>
                             <UserHoverCard
                                 author={{
                                     username: post.author.username,
@@ -154,20 +154,20 @@ export default function NotificationPost({ post, type, isRead, notifier }: Notif
                             <p>{post.content}</p>
                         </div>
 
-                        { post.replyTo && (
+                        {post.replyTo && (
                             <div onClick={() => handleCardClick(post.replyTo?.author.username as string, post.replyTo?.id as number)} className='notification-replied-post'>
                                 <div className="notifications-replied-post-content">
                                     <div className='feed-post-left-side'>
-                                                <Link href={`/${post.replyTo.author.username}`} className='flex group' onClick={(e) => handleLinkClick(e)}>
-                                                    <Image
-                                                        src={post.author.profile.profilePicture}
-                                                        alt='Post author profile pic'
-                                                        width={24} height={24}
-                                                        className='w-[24px] h-[24px] rounded-full group-hover:outline group-hover:outline-primary/10' />
-                                                </Link>
+                                        <Link href={`/${post.replyTo.author.username}`} className='flex group' onClick={(e) => handleLinkClick(e)}>
+                                            <Image
+                                                src={post.author.profile.profilePicture}
+                                                alt='Post author profile pic'
+                                                width={24} height={24}
+                                                className='w-[24px] h-[24px] rounded-full group-hover:outline group-hover:outline-primary/10' />
+                                        </Link>
                                     </div>
                                     <div className='feed-post-right-side'>
-                                        <div className='flex gap-2 text-gray-500'>
+                                        <div className='flex gap-2 text-secondary-text'>
                                             <UserHoverCard
                                                 author={{
                                                     username: post.replyTo.author.username,

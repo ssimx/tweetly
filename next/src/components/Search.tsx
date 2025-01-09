@@ -150,7 +150,7 @@ export default function Search({ searchQuery }: { searchQuery?: string }) {
                         <input
                             type="search"
                             name="q"
-                            className='outline-none text-black-1'
+                            className='outline-none text-primary-text'
                             placeholder="Search"
                             autoComplete="off"
                             value={text}
@@ -169,7 +169,7 @@ export default function Search({ searchQuery }: { searchQuery?: string }) {
                     <div className='search-output-container relative z-50'>
                         <div className='flex flex-col'>
                             <Link href={`/search?q=${encodeURIComponent(`${text}`)}`} className='search-text-output'>
-                                <SearchIcon size={26} color='#000000' strokeWidth={3} className='min-w-[26px]' />
+                                <SearchIcon size={26} strokeWidth={3} className='min-w-[26px] text-primary-text' />
                                 <p>{text}</p>
                             </Link>
                             {matchedHashtags && matchedHashtags.length > 0 && matchedHashtags.slice(0, 3).map((hashtag, index) => (

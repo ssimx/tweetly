@@ -1,7 +1,7 @@
 import { profileContentTabs } from '@/constants';
 import { SetStateAction } from 'react';
 
-export default function ProfileContentTabs({ 
+export default function ProfileContentTabs({
     activeTab,
     setActiveTab,
     loggedInUser
@@ -15,7 +15,7 @@ export default function ProfileContentTabs({
                 tabs.map((tab, index) => (
                     <div key={index} className='profile-content-header-btn'>
                         <button
-                            className={`w-full h-full z-10 absolute ${activeTab === index ? 'text-black-1 font-bold' : 'text-dark-500 font-medium'}`}
+                            className={`w-full h-full z-10 absolute ${activeTab === index ? 'text-primary-text font-bold' : 'text-secondary-text font-medium'}`}
                             onClick={() => setActiveTab(index)}>
                             {tab.name}
                         </button>

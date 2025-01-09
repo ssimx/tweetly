@@ -65,12 +65,12 @@ export default function ProfileNotificationBtn({ username, notificationsEnabled,
                         <button
                             className="notifications-btn notifications-enabled group"
                             onClick={(e) => handleNotification(e)} ref={notificationBtn}>
-                                <BellRing size={20} className='text-black-1 block group-hover:hidden' />
-                                <BellOff size={20} className='text-black-1 hidden group-hover:block' />
+                            <BellRing size={20} className='text-primary-text block group-hover:hidden' />
+                            <BellOff size={20} className='text-primary-text hidden group-hover:block' />
                         </button>
                     )
                     : <button className='notifications-btn' onClick={handleNotification} ref={notificationBtn}>
-                        <BellPlus size={20} className='text-black-1' />
+                        <BellPlus size={20} className='text-primary-text' />
                     </button>
 
             }

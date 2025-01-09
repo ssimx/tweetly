@@ -61,7 +61,7 @@ export default function SettingsLogin() {
             <div className='flex flex-col px-4 gap-y-4 mt-2'>
                 <div className='flex flex-col gap-y-1'>
                     <h3 className='text-16 font-semibold'>Confirm your password</h3>
-                    <p className='text-14 text-gray-500'>Please enter your password to continue.</p>
+                    <p className='text-14 text-secondary-text'>Please enter your password to continue.</p>
                 </div>
 
                 <div>

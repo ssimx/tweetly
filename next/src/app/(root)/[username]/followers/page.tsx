@@ -47,11 +47,11 @@ export default function Followers({ params }: { params: { username: string } }) 
                 const followers: FollowerType[] = await response.json();
 
                 console.log(followers);
-                
+
 
                 setFollowers(followers);
             } catch (error) {
-                
+
             }
         };
 
@@ -63,13 +63,13 @@ export default function Followers({ params }: { params: { username: string } }) 
             <div className='profile-content-header'>
                 <div className='profile-content-header-btn'>
                     <Link href={`/${username}/following`}
-                        className={`w-full h-full z-10 absolute text-dark-500 font-medium flex-center`}>
+                        className={`w-full h-full z-10 absolute text-secondary-text font-medium flex-center`}>
                         Following
                     </Link>
                 </div>
                 <div className='profile-content-header-btn'>
                     <button
-                        className={`w-full h-full z-10 absolute text-black-1 font-bold`}>
+                        className={`w-full h-full z-10 absolute text-primary-text font-bold`}>
                         Followers
                     </button>
                     <div className='w-full flex-center'>
@@ -81,15 +81,15 @@ export default function Followers({ params }: { params: { username: string } }) 
             <div className='feed-hr-line'></div>
 
 
-            { !followers 
+            {!followers
                 ? (
-                <div>loading...</div>
+                    <div>loading...</div>
                 )
-                : ( 
+                : (
                     <div className='w-full flex flex-col'>
-                        { followers.map((element, index) => (
-                            <ProfileFollowersFollowingCard key={index} user={{...element.follower, type: 'follower'}} />
-                            ))
+                        {followers.map((element, index) => (
+                            <ProfileFollowersFollowingCard key={index} user={{ ...element.follower, type: 'follower' }} />
+                        ))
                         }
                     </div>
                 )

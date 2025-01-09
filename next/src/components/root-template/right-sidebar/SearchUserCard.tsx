@@ -1,11 +1,6 @@
 'use client';
-import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { useUserContext } from '@/context/UserContextProvider';
 import { useRouter } from 'next/navigation';
-import UserHoverCard from '@/components/UserHoverCard';
-import { UserSuggestion } from '@/context/SuggestionContextProvider';
-import FollowBtn from '@/components/FollowBtn';
 
 interface SearchUserType {
     username: string;
@@ -18,6 +13,8 @@ interface SearchUserType {
 export default function SearchUserCard({ user }: { user: SearchUserType }) {
     const router = useRouter();
 
+    console.log(user)
+
     const handleCardClick = () => {
         router.push(`/${user.username}`);
     };
@@ -26,7 +23,7 @@ export default function SearchUserCard({ user }: { user: SearchUserType }) {
         <div onClick={handleCardClick} className='profile-follower-followee-card'>
             <div>
                 <Image
-                    src={user.profile.profilePicture}
+                    src={user.profile.profilePicture || 'https://res.cloudinary.com/ddj6z1ptr/image/upload/v1728503826/profilePictures/ynh7bq3eynvkv5xhivaf.png'}
                     height={40} width={40}
                     alt='Follower profile pic'
                     className='rounded-full min-w-[40px]' />

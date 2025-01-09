@@ -10,7 +10,6 @@ import TrendingCard from './TrendingCard';
 import DialogTrendingCard from './DialogTrendingCard';
 import { useTrendingContext } from "@/context/TrendingContextProvider";
 
-
 export default function Trending() {
     const { trendingHashtags } = useTrendingContext();
 

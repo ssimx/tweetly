@@ -27,14 +27,14 @@ export default function ReplyPost({ post }: { post: PostType }) {
     };
 
     return (
-        <div onClick={() => handleCardClick()} className='post hover:bg-card-hover hover:cursor-pointer'>
+        <div onClick={() => handleCardClick()} className='post hover:bg-post-hover hover:cursor-pointer'>
             <div className='post-header'>
                 <Link href={`/${post.author.username}`} className='group' onClick={(e) => handleLinkClick(e)}>
                     <Image
                         src={post.author.profile?.profilePicture}
                         alt='Post author profile pic' width={35} height={35} className='w-[35px] h-[35px] rounded-full group-hover:outline group-hover:outline-primary/10' />
                 </Link>
-                <div className='flex gap-2 min-w-0 text-dark-500'>
+                <div className='flex gap-2 min-w-0 text-secondary-text'>
                     <UserHoverCard
                         author={{
                             username: post.author.username,

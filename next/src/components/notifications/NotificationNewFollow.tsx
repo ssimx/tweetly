@@ -47,32 +47,32 @@ export default function NotificationNewFollow({ isRead, notifier }: { isRead: bo
     };
 
     return (
-        <div onClick={handleCardClick} 
-            className={`px-4 py-2 hover:cursor-pointer hover:bg-card-hover ${isRead === false ? "bg-[#f3f3f3]" : ""}`}
+        <div onClick={handleCardClick}
+            className={`px-4 py-2 hover:cursor-pointer hover:bg-post-hover ${isRead === false ? "bg-[#f3f3f3]" : ""}`}
             ref={cardRef} onMouseLeave={changeCardColor}>
             <div className='flex gap-2 items-center'>
-                    <UserRoundPlus size={20} className='text-primary' />
-                    <Link href={`/${notifier.username}`} className='flex group' onClick={(e) => handleLinkClick(e)}>
-                        <Image
-                            src={notifier.profile.profilePicture}
-                            alt='Post author profile pic'
-                            width={36} height={36}
-                            className='w-[36px] h-[36px] rounded-full group-hover:outline group-hover:outline-primary/10' />
-                    </Link>
-                    <UserHoverCard
-                        author={{
-                            username: notifier.username,
-                            name: notifier.profile.name,
-                            profilePicture: notifier.profile.profilePicture,
-                            bio: notifier.profile.bio,
-                            following: notifier['_count'].following,
-                        }}
-                        followersCount={followersCount}
-                        setFollowersCount={setFollowersCount}
-                        isFollowedByTheUser={isFollowedByTheUser}
-                        setIsFollowedByTheUser={setIsFollowedByTheUser}
-                        isFollowingTheUser={isFollowingTheUser} />
-                    <p>followed you</p>
+                <UserRoundPlus size={20} className='text-primary' />
+                <Link href={`/${notifier.username}`} className='flex group' onClick={(e) => handleLinkClick(e)}>
+                    <Image
+                        src={notifier.profile.profilePicture}
+                        alt='Post author profile pic'
+                        width={36} height={36}
+                        className='w-[36px] h-[36px] rounded-full group-hover:outline group-hover:outline-primary/10' />
+                </Link>
+                <UserHoverCard
+                    author={{
+                        username: notifier.username,
+                        name: notifier.profile.name,
+                        profilePicture: notifier.profile.profilePicture,
+                        bio: notifier.profile.bio,
+                        following: notifier['_count'].following,
+                    }}
+                    followersCount={followersCount}
+                    setFollowersCount={setFollowersCount}
+                    isFollowedByTheUser={isFollowedByTheUser}
+                    setIsFollowedByTheUser={setIsFollowedByTheUser}
+                    isFollowingTheUser={isFollowingTheUser} />
+                <p>followed you</p>
             </div>
         </div>
     )

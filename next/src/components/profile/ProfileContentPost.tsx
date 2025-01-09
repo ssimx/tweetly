@@ -14,7 +14,7 @@ import PostContent from '../PostContent';
 export default function ProfileContentPost({ post }: { post: PostRepost }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
     const [followersCount, setFollowersCount] = useState(post.author['_count'].followers);
-    
+
     // state to show whether the profile follows logged in user
     const [isFollowingTheUser,] = useState(post.author.following.length === 1);
 
@@ -36,8 +36,8 @@ export default function ProfileContentPost({ post }: { post: PostRepost }) {
     return (
         <div onClick={handleCardClick} className='profile-content-post'>
             {post.repost && (
-                <div className='flex items-center gap-1 text-14 font-bold text-dark-400'>
-                    <Repeat2 size={16} className='text-dark-400' />
+                <div className='flex items-center gap-1 text-14 font-bold text-secondary-text'>
+                    <Repeat2 size={16} className='text-secondary-text' />
                     {path === `/${loggedInUser.username}`
                         ? <p>You reposted</p>
                         : <p>Reposted</p>
@@ -56,7 +56,7 @@ export default function ProfileContentPost({ post }: { post: PostRepost }) {
                     </Link>
                 </div>
                 <div className='feed-post-right-side'>
-                    <div className='flex gap-2 text-gray-500'>
+                    <div className='flex gap-2 text-secondary-text'>
                         <UserHoverCard
                             author={{
                                 username: post.author.username,

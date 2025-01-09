@@ -16,12 +16,8 @@ import { Button } from "../ui/button";
 import { Loader2, ImagePlus, X, ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import ReactDOM from "react-dom";
 import Croppie, { CropType } from "croppie";
 import "croppie/croppie.css";
-
-// import { CropperRef, Cropper } from 'react-advanced-cropper';
-// import 'react-advanced-cropper/dist/style.css';
 
 type ProfileInfoData = z.infer<typeof updateProfileSchema>;
 
@@ -126,8 +122,8 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
                             body: bannerPictureData,
                         });
                     }
-                } 
-                
+                }
+
                 if (newProfilePicture !== null) {
                     profilePictureData = new FormData();
                     profilePictureData.append('file', new File([newProfilePicture], 'profilePicture'));
@@ -143,7 +139,7 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
                 const [bannerUploadResult, profileUploadResult] = responses;
 
                 console.log(bannerPictureData, profilePictureData)
-                
+
                 if (bannerPictureData !== undefined) {
                     if (bannerUploadResult.status === 'fulfilled') {
                         const bannerResponse = await bannerUploadResult.value!.json();
@@ -156,7 +152,7 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
                     } else {
                         console.error('Banner image upload failed:', bannerUploadResult.reason);
                     }
-                } 
+                }
 
                 if (profilePictureData !== undefined) {
                     if (profileUploadResult.status === 'fulfilled') {
@@ -174,7 +170,7 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
             }
 
             console.log(data);
-            
+
 
             const response = await fetch(`/api/users/updateProfile/${user.username}`, {
                 method: 'POST',
@@ -249,7 +245,7 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
         }
 
         console.log(file);
-        
+
 
         setPictureType(() => type);
         onFileUpload(type);
@@ -276,19 +272,19 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
                                                 className='w-full h-full absolute' />
                                             <button className=' z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30'
                                                 onClick={() => bannerInputRef.current?.click()}>
-                                                <ImagePlus size={20} className='text-white-1' />
+                                                <ImagePlus size={20} className='text-primary-text' />
                                             </button>
                                             <button className=' z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30'
                                                 onClick={handleRemoveBanner}>
-                                                <X size={20} className='text-white-1' />
+                                                <X size={20} className='text-primary-text' />
                                             </button>
                                         </>)
                                     : (
                                         <>
-                                            <div className='w-full h-full absolute bg-dark-300' ></div>
+                                            <div className='w-full h-full absolute bg-secondary-foreground' ></div>
                                             <button className=' z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30'
                                                 onClick={() => bannerInputRef.current?.click()}>
-                                                <ImagePlus size={20} className='text-white-1' />
+                                                <ImagePlus size={20} className='text-primary-text' />
                                             </button>
                                         </>)
                                 }
@@ -316,7 +312,7 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
                                     className='absolute top-0 left-0 z-0' />
                                 <button className='z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30'
                                     onClick={() => profileInputRef.current?.click()}>
-                                    <ImagePlus size={20} className='text-white-1' />
+                                    <ImagePlus size={20} className='text-primary-text' />
                                 </button>
                                 <input
                                     ref={profileInputRef}
@@ -333,9 +329,9 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
                             </div>
                         </div>
                     </div>
-                    <form onSubmit={handleSubmit(updateProfile)} id='editProfileForm' className='pr-4 mt-[75px]'>
+                    <form onSubmit={handleSubmit(updateProfile)} id='editProfileForm' className='mt-[75px]'>
                         <div className='profile-bio-input'>
-                            <label className='flex justify-between text-14 text-dark-500'>
+                            <label className='flex justify-between text-14 text-secondary-text'>
                                 <p>Name</p>
                                 <p className={`${name.length === maxNameChars ? 'text-red-500' : null}`}>{`${name.length} / ${maxNameChars}`}</p>
                             </label>
@@ -350,7 +346,7 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
                             )}
                         </div>
                         <div className='profile-bio-input'>
-                            <label className='flex justify-between text-14 text-dark-500'>
+                            <label className='flex justify-between text-14 text-secondary-text'>
                                 <p>Bio</p>
                                 <p className={`${bio.length === maxBioChars ? 'text-red-500' : null}`}>{`${bio.length} / ${maxBioChars}`}</p>
                             </label>
@@ -364,7 +360,7 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
                             />
                         </div>
                         <div className='profile-bio-input'>
-                            <label className='flex justify-between text-14 text-dark-500'>
+                            <label className='flex justify-between text-14 text-secondary-text'>
                                 <p>Location</p>
                                 <p className={`${location.length === maxLocationChars ? 'text-red-500' : null}`}>{`${location.length} / ${maxLocationChars}`}</p>
                             </label>
@@ -379,7 +375,7 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
                             )}
                         </div>
                         <div className='profile-bio-input'>
-                            <label className='flex justify-between text-14 text-dark-500'>
+                            <label className='flex justify-between text-14 text-secondary-text'>
                                 <p>Website</p>
                                 <p className={`${website.length === maxWebsiteChars ? 'text-red-500' : null}`}>{`${website.length} / ${maxWebsiteChars}`}</p>
                             </label>
@@ -396,12 +392,12 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
                     </form>
                     <DialogFooter>
                         {isSubmitting
-                            ? (<Button disabled className='ml-auto font-bold w-fit rounded-3xl text-white-1'>
+                            ? (<Button disabled className='ml-auto font-bold w-fit rounded-3xl text-primary-text'>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 Saving
                             </Button>)
                             : (<Button type="submit"
-                                className='ml-auto font-bold w-fit rounded-3xl text-white-1'
+                                className='ml-auto font-bold w-fit rounded-3xl text-primary-text'
                                 disabled={bio.length > 280}
                                 form='editProfileForm'
                             >
@@ -419,7 +415,7 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
                     </div>
                     <div ref={croppieContainerRef}></div>
                     <Button type="button"
-                        className='ml-auto mr-auto font-bold w-fit rounded-3xl text-white-1'
+                        className='ml-auto mr-auto font-bold w-fit rounded-3xl text-primary-text'
                         onClick={onResult}
                     >
                         Apply

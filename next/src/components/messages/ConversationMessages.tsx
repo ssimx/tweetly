@@ -63,13 +63,13 @@ export default function ConversationMessages({
         const target = event.target as HTMLDivElement;
         scrollPositionRef.current = target.scrollTop;
     }
-    
+
     // Get the last message and check whether sender is logged in user, check for read status, save message index for rendering
     const lastMessage = allMessagesOrdered.slice(-1)[0];
     const lastMessageIndex = lastMessage ? allMessagesOrdered.length - 1 : 0;
 
     console.log(allMessagesOrdered);
-    
+
     // Refresh last message sent time every minute for the first hour
     useEffect(() => {
         if (!lastMessage || lastMessage.readStatus === true) return;
@@ -89,13 +89,13 @@ export default function ConversationMessages({
 
         return () => clearInterval(intervalId);
     }, [lastMessage]);
-    
+
     // Get the last read message from receiver, to set the scroll to that message when logged in users opens the DMs
     const firstUnreadMessage = allMessagesOrdered
         .filter((msg) => msg.sender === false)
         .find((msg) => msg.readStatus === false);
 
-    
+
     return (
         <div
             className='overflow-y-auto flex flex-col-reverse custom-scrollbar'
@@ -105,7 +105,7 @@ export default function ConversationMessages({
                 {endReached && (
                     <Link
                         href={`/${receiverInfo.username}`}
-                        className='flex flex-col hover:bg-card-hover cursor-pointer'>
+                        className='flex flex-col hover:bg-post-hover cursor-pointer'>
                         <ConversationUser user={receiverInfo} />
                         <div className='feed-hr-line mt-auto'></div>
                     </Link>
@@ -134,9 +134,9 @@ export default function ConversationMessages({
                                             {msg.status === 'sending' && <MessageStatus status="sending" />}
                                             {
                                                 msg.status === 'sent' && index === lastMessageIndex
-                                                    ? lastMessage.readStatus 
-                                                        ? <MessageStatus status='seen' /> 
-                                                        : <p className='mt-1 mr-3 text-end text-dark-500 text-14'>
+                                                    ? lastMessage.readStatus
+                                                        ? <MessageStatus status='seen' />
+                                                        : <p className='mt-1 mr-3 text-end text-secondary-text text-14'>
                                                             {
                                                                 formatPostDate(msg.createdAt) === 'now' ? 'Sent' : `Sent ${formatPostDate(msg.createdAt)} ago`
                                                             }
@@ -148,7 +148,7 @@ export default function ConversationMessages({
                                 )
                                 : (
                                     <>
-                                        {firstUnreadMessage && firstUnreadMessage.id === msg.id 
+                                        {firstUnreadMessage && firstUnreadMessage.id === msg.id
                                             && <div className={`unread-message w-full ${allMessagesOrdered[index === 0 ? 0 : index - 1].sender === msg.sender ? 'mb-4' : ''}`}><span>Unread messages</span></div>}
                                         <div className='flex flex-col'>
                                             <div className='flex items-center gap-2'>
@@ -158,11 +158,11 @@ export default function ConversationMessages({
                                             <div>
                                                 {
                                                     index === lastMessageIndex
-                                                        && <p className='mt-1 ml-3 text-start text-dark-500 text-14'>
-                                                            {
-                                                                formatPostDate(msg.createdAt) === 'now' ? '' : `Received ${formatPostDate(msg.createdAt)} ago`
-                                                            }
-                                                        </p>
+                                                    && <p className='mt-1 ml-3 text-start text-secondary-text text-14'>
+                                                        {
+                                                            formatPostDate(msg.createdAt) === 'now' ? '' : `Received ${formatPostDate(msg.createdAt)} ago`
+                                                        }
+                                                    </p>
                                                 }
                                             </div>
                                         </div>

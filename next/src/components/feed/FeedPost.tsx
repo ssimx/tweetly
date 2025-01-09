@@ -11,7 +11,7 @@ import { UserSuggestion, useSuggestionContext } from '@/context/SuggestionContex
 import PostContent from '../PostContent';
 
 export default function FeedPost({ post, searchSegments }: { post: PostType, searchSegments?: string[] }) {
-    const [postAuthor, setPostAuthor] = useState<UserSuggestion>({...post.author, isFollowing: post.author.followers.length === 1});
+    const [postAuthor, setPostAuthor] = useState<UserSuggestion>({ ...post.author, isFollowing: post.author.followers.length === 1 });
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState<boolean>(post.author.followers.length === 1);
     const [followersCount, setFollowersCount] = useState(post.author['_count'].followers);
 
@@ -52,14 +52,14 @@ export default function FeedPost({ post, searchSegments }: { post: PostType, sea
                 <Link href={`/${postAuthor.username}`} className='flex group' onClick={(e) => handleLinkClick(e)}>
                     <Image
                         src={postAuthor.profile.profilePicture}
-                        alt='Post author profile pic' 
-                        width={40} height={40} 
+                        alt='Post author profile pic'
+                        width={40} height={40}
                         className='w-[40px] h-[40px] rounded-full group-hover:outline group-hover:outline-primary/10' />
                 </Link>
             </div>
 
             <div className='feed-post-right-side'>
-                <div className='flex gap-2 text-gray-500'>
+                <div className='flex gap-2 text-secondary-text'>
                     <UserHoverCard
                         author={{
                             username: postAuthor.username,

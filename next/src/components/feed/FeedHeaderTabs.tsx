@@ -7,7 +7,7 @@ export default function FeedHeaderTabs({ activeTab, setActiveTab }: { activeTab:
         <div className='w-full h-[50px] flex sticky'>
             <div className='feed-header-tab-btn relative'>
                 <button
-                    className={`z-10 absolute w-full h-full ${activeTab === 0 ? 'text-black-1 font-bold' : 'text-dark-500 font-medium'}`}
+                    className={`z-10 absolute w-full h-full ${activeTab === 0 ? 'text-primary-text font-bold' : 'text-secondary-text font-medium'}`}
                     onClick={() => setActiveTab(0)} >
                     Global
                 </button>
@@ -21,7 +21,7 @@ export default function FeedHeaderTabs({ activeTab, setActiveTab }: { activeTab:
 
             <div className='feed-header-tab-btn relative'>
                 <button
-                    className={`z-10 absolute w-full h-full ${activeTab === 1 ? 'text-black-1 font-bold' : 'text-dark-500 font-medium'}`}
+                    className={`z-10 absolute w-full h-full ${activeTab === 1 ? 'text-primary-text font-bold' : 'text-secondary-text font-medium'}`}
                     onClick={() => setActiveTab(1)} >
                     Following
                 </button>

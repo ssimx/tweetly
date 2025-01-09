@@ -1,6 +1,6 @@
-import { UserInfo, JwtPayload } from './types';
-import { decryptSession, getToken, removeSession } from './session';
-import { redirect } from 'next/navigation';
+import 'server-only';
+import { UserInfo } from './types';
+import { decryptSession, getToken } from './session';
 import { cookies } from 'next/headers';
 
 export async function fetchUserData() {
@@ -37,3 +37,30 @@ export async function fetchUserData() {
         return;
     }
 };
+
+
+export function getTheme(theme: number) {
+    switch (theme) {
+        case 1:
+            return 'dim';
+        case 2:
+            return 'dark';
+        default:
+            return 'default';
+    }
+}
+
+export function getColor(color: number) {
+    switch (color) {
+        case 1:
+            return 'yellow';
+        case 2:
+            return 'pink';
+        case 3:
+            return 'purple';
+        case 4:
+            return 'orange';
+        default:
+            return 'blue';
+    }
+}

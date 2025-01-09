@@ -98,9 +98,9 @@ export default function UserHoverCard({
 
     return (
         <HoverCard>
-            <HoverCardTrigger href={`/${author.username}`} className='text-black-1 w-fit whitespace-nowrap overflow-hidden font-bold hover:underline' onClick={(e) => handleLinkClick(e)}>{author.name}</HoverCardTrigger>
+            <HoverCardTrigger href={`/${author.username}`} className='text-primary-text w-fit whitespace-nowrap overflow-hidden font-bold hover:underline' onClick={(e) => handleLinkClick(e)}>{author.name}</HoverCardTrigger>
             <HoverCardContent>
-                <div className='user-hover-card-info '>
+                <div className='user-hover-card-info'>
                     <div className='user-hover-card-header'>
                         <Link href={`/${author.username}`} className='group w-fit' onClick={(e) => handleLinkClick(e)}>
                             <Image
@@ -131,10 +131,10 @@ export default function UserHoverCard({
 
                     <div className='flex flex-col'>
                         <Link href={`/${author.username}`} className='font-bold w-fit text-18 hover:underline' onClick={(e) => handleLinkClick(e)}>{author.name}</Link>
-                        <div className='flex gap-x-2 flex-wrap items-center text-dark-500'>
-                            <p className='text-dark-500'>@{author.username}</p>
+                        <div className='flex gap-x-2 flex-wrap items-center text-secondary-text'>
+                            <p className='text-secondary-text'>@{author.username}</p>
                             {loggedInUser.username !== author.username && isFollowingTheUser && (
-                                <p className='bg-dark-300 text-12 px-1 rounded-sm h-fit mt-[2px] font-medium'>Follows you</p>
+                                <p className='bg-secondary-foreground text-12 px-1 rounded-sm h-fit mt-[2px] font-medium'>Follows you</p>
                             )}
                         </div>
                     </div>
@@ -145,16 +145,16 @@ export default function UserHoverCard({
 
                     <div className='flex gap-4'>
                         <Link href={`/${author.username}/following`} className='hover:underline' onClick={(e) => handleLinkClick(e)}>
-                            <p className='font-bold'>{`${author.following}`} <span className='text-dark-500 font-normal'>Following</span></p>
+                            <p className='font-bold'>{`${author.following}`} <span className='text-secondary-text font-normal'>Following</span></p>
                         </Link>
 
                         <Link href={`/${author.username}/followers`} className='hover:underline' onClick={(e) => handleLinkClick(e)}>
-                            <p className='font-bold'>{`${followersCount}`} <span className='text-dark-500 font-normal'>Followers</span></p>
+                            <p className='font-bold'>{`${followersCount}`} <span className='text-secondary-text font-normal'>Followers</span></p>
                         </Link>
                     </div>
                 </div>
             </HoverCardContent>
         </HoverCard>
-        
+
     )
 }

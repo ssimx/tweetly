@@ -14,7 +14,7 @@ export const getUser = async (id: number) => {
             email: true,
             dateOfBirth: true,
             createdAt: true,
-            profile: { // include profile information
+            profile: {
                 select: {
                     name: true,
                     bio: true,

@@ -39,7 +39,7 @@ export default async function RootTemplate({ children }: Readonly<{ children: Re
                                 <LeftSidebar />
                             </div>
                             <div className='main-content'>
-                                <div className='border-x h-screen grid grid-cols-1 grid-rows-main-content'>
+                                <div className='border-x grid grid-cols-1 grid-rows-main-content border-b border-primary-border'>
                                     <TemplateHeader />
                                     {children}
                                 </div>

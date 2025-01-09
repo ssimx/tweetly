@@ -1,4 +1,5 @@
 'use client';
+import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 
 export interface UserSuggestion {
@@ -40,11 +41,17 @@ export const useSuggestionContext = () => {
 
 export default function SuggestionContextProvider({ children }: { children: React.ReactNode }) {
     const [suggestions, setSuggestions] = useState<UserSuggestion[] | undefined>(undefined);
+    const pathname = usePathname();
 
     const fetchSuggestions = async () => {
         try {
             const response = await fetch('http://localhost:3000/api/users/followSuggestions', {
                 method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                cache: "force-cache",
+                next: { revalidate: 1800 }
             });
 
             const data: UserSuggestion[] = await response.json().then((res) => {
@@ -70,8 +77,9 @@ export default function SuggestionContextProvider({ children }: { children: Reac
     };
 
     useEffect(() => {
+        if (pathname !== '/' && suggestions !== undefined) return;
         fetchSuggestions();
-    }, [children]);
+    }, [pathname, suggestions]);
 
     return (
         <SuggestionContext.Provider value={{ suggestions, updateFollowState, fetchSuggestions }}>

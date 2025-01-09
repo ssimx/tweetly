@@ -37,8 +37,8 @@ export default function ProfileContentLikedpost({ post }: { post: LikedPost }) {
     return (
         <div onClick={handleCardClick} className='profile-content-post'>
             {post.replyTo && (
-                <div className='flex items-center gap-1 text-14 text-dark-400'>
-                    <Reply size={16} className='text-dark-400' />
+                <div className='flex items-center gap-1 text-14 text-secondary-text'>
+                    <Reply size={16} className='text-secondary-text' />
                     <p className='flex items-center gap-1'>Reply to
                         <UserHoverCard
                             author={{
@@ -68,7 +68,7 @@ export default function ProfileContentLikedpost({ post }: { post: LikedPost }) {
                     </Link>
                 </div>
                 <div className='feed-post-right-side'>
-                    <div className='flex gap-2 text-gray-500'>
+                    <div className='flex gap-2 text-secondary-text'>
                         <UserHoverCard
                             author={{
                                 username: post.author.username,

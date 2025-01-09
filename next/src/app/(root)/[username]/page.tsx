@@ -25,7 +25,7 @@ export default async function Profile({ params }: { params: { username: string }
             <div className='profile-info'>
                 <div className='picture-banner-container'>
                     <Image
-                        src={user.profile.profilePicture}
+                        src={user.profile.profilePicture || 'https://res.cloudinary.com/ddj6z1ptr/image/upload/v1728503826/profilePictures/ynh7bq3eynvkv5xhivaf.png'}
                         alt='User profile picture'
                         height={100} width={100}
                         className='h-[100px] w-[100px] absolute bottom-0 left-5 translate-y-[50%] rounded-full border-[#ffffff] border-4' />

@@ -9,7 +9,7 @@ export async function createSession(token: string) {
     const jwtPayload = JSON.parse(atob(token.split('.')[1]));
     const expiresAt = new Date(jwtPayload.exp * 1000);
 
-    cookies().set('access-token', token, {
+    await cookies().set('access-token', token, {
         httpOnly: true,
         secure: true,
         expires: expiresAt,
@@ -46,25 +46,23 @@ export async function verifySession(token: string | undefined) {
 };
 
 export async function hasSession() {
-    const cookieStore = cookies();
-    const hasToken = cookieStore.has('access-token');
-    return hasToken;
+    const cookieStore = await cookies();
+    return cookieStore.has('access-token');
 };
 
 export async function getToken() {
-    const token = cookies().get('access-token')?.value;
-    return token;
+    return await cookies().get('access-token')?.value;
 }
 
 export async function removeSession() {
-    cookies().delete('access-token');
+    await cookies().delete('access-token');
 };
 
 export async function updateSessionToken(newToken: string) {
     const jwtPayload = JSON.parse(atob(newToken.split('.')[1]));
     const expiresAt = new Date(jwtPayload.exp * 1000);
 
-    cookies().set('access-token', newToken, {
+    await cookies().set('access-token', newToken, {
         httpOnly: true,
         secure: true,
         expires: expiresAt,
@@ -89,7 +87,7 @@ export async function createSettingsSession(token: string) {
     const jwtPayload = JSON.parse(atob(token.split('.')[1]));
     const expiresAt = new Date(jwtPayload.exp * 1000);
 
-    cookies().set('settings-token', token, {
+    await cookies().set('settings-token', token, {
         httpOnly: true,
         secure: true,
         expires: expiresAt,
@@ -99,8 +97,7 @@ export async function createSettingsSession(token: string) {
 };
 
 export async function getSettingsToken() {
-    const token = cookies().get('settings-token')?.value;
-    return token;
+    return await cookies().get('settings-token')?.value;
 }
 
 
@@ -115,7 +112,7 @@ export async function verifySettingsToken(token: string | undefined) {
 };
 
 export async function removeSettingsToken() {
-    cookies().delete({
+    await cookies().delete({
         name: 'settings-token', 
         path: '/settings/account',
     });

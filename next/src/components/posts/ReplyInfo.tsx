@@ -49,7 +49,7 @@ export default function ReplyInfo({ replyPost, parentPost }: { replyPost: PostTy
                             isFollowedByTheUser={isFollowedByTheUser}
                             setIsFollowedByTheUser={setIsFollowedByTheUser}
                             isFollowingTheUser={isFollowingTheUser} />
-                        <p className='text-dark-500'>@{replyPost.author.username}</p>
+                        <p className='text-secondary-text'>@{replyPost.author.username}</p>
                     </div>
                 </div>
                 <div className='post-content'>

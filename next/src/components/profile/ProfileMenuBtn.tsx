@@ -62,7 +62,7 @@ export default function ProfileMenuBtn({
 
         return () => {
             window.removeEventListener('click', handleClickOutside);
-            document.body.classList.remove('disable-interaction'); 
+            document.body.classList.remove('disable-interaction');
         };
     }, [menuOpen]);
 
@@ -134,20 +134,20 @@ export default function ProfileMenuBtn({
 
                     <div ref={menuBtn} className='profile-opened-menu'>
                         <button onClick={handleCopyLink}
-                            className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[10px] hover:bg-white-1'>
-                            <Link size={20} className='text-black-1' />
+                            className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[10px] hover:bg-card-hover'>
+                            <Link size={20} className='text-primary-text' />
                             Copy link to profile
                         </button>
                         {
                             isBlockedByTheUser
                                 ? (
-                                    <button className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[10px] hover:bg-white-1' onClick={handleBlock} ref={blockBtn}>
-                                        <CircleOff size={20} className='text-black-1' />
+                                    <button className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[10px] hover:bg-card-hover' onClick={handleBlock} ref={blockBtn}>
+                                        <CircleOff size={20} className='text-primary-text' />
                                         Unblock @{user}
                                     </button>
                                 )
-                                : <button className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[10px] hover:bg-white-1' onClick={handleBlock} ref={blockBtn}>
-                                    <Ban size={20} className='text-black-1' />
+                                : <button className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[10px] hover:bg-card-hover' onClick={handleBlock} ref={blockBtn}>
+                                    <Ban size={20} className='text-primary-text' />
                                     Block @{user}
                                 </button>
                         }
@@ -157,7 +157,7 @@ export default function ProfileMenuBtn({
 
             <button className='profile-menu-btn'
                 onClick={toggleMenu}>
-                <Ellipsis size={20} className='text-black-1' />
+                <Ellipsis size={20} className='text-primary-text' />
             </button>
 
             <div className='profile-copy-alert hidden'

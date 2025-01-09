@@ -111,7 +111,7 @@ export default function PostBtns({
                 <Link href={`/${author}/status/${postId}`} className='comment-btn group'>
                     <div className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-blue-1/10'>
                         <MessageCircle size={20}
-                            className='text-dark-400 group-hover:text-blue-1/70' />
+                            className='text-secondary-text group-hover:text-blue-1/70' />
                     </div>
                     <p>{replies}</p>
                 </Link>
@@ -121,7 +121,7 @@ export default function PostBtns({
                     data-status={`${reposted}`}
                     onClick={(e) => handlePostBtnsInteraction(e, postId)}>
                     <span className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-green-500/10'>
-                        <Repeat2 size={24} className='text-dark-400 group-hover:text-green-500/70' />
+                        <Repeat2 size={24} className='text-secondary-text group-hover:text-green-500/70' />
                     </span>
                     <p>{reposts}</p>
                 </button>
@@ -131,7 +131,7 @@ export default function PostBtns({
                     data-status={`${liked}`}
                     onClick={(e) => handlePostBtnsInteraction(e, postId)}>
                     <span className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-pink-500/10'>
-                        <Heart size={20} className='text-dark-400 group-hover:text-pink-500' />
+                        <Heart size={20} className='text-secondary-text group-hover:text-pink-500' />
                     </span>
                     <p>{likes}</p>
                 </button>
@@ -141,10 +141,10 @@ export default function PostBtns({
                 data-type='bookmark'
                 data-status={`${bookmarked}`}
                 onClick={(e) => handlePostBtnsInteraction(e, postId)}>
-                <Bookmark size={20} className='text-dark-400 text-primary' />
+                <Bookmark size={20} className='text-secondary-text text-primary' />
             </button>
             <button className='share-btn group'>
-                <Share size={20} className='text-dark-400 group-hover:text-blue-1/70' />
+                <Share size={20} className='text-secondary-text group-hover:text-blue-1/70' />
             </button>
         </div>
     )

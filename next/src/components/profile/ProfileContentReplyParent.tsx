@@ -78,7 +78,7 @@ export default function ProfileContentReplyParent({ post }: { post: Parent }) {
                 </div>
 
                 <div className='feed-post-right-side'>
-                    <div className='flex gap-2 text-gray-500'>
+                    <div className='flex gap-2 text-secondary-text'>
                         <UserHoverCard
                             author={{
                                 username: post.author.username,
@@ -92,7 +92,7 @@ export default function ProfileContentReplyParent({ post }: { post: Parent }) {
                             isFollowedByTheUser={isFollowedByTheUser}
                             setIsFollowedByTheUser={setIsFollowedByTheUser}
                             isFollowingTheUser={isFollowingTheUser}
-                            />
+                        />
                         <p>@{post.author.username}</p>
                         <p>·</p>
                         <p className='whitespace-nowrap'>{formatPostDate(post.createdAt)}</p>

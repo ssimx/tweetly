@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress"
 import { newPostSchema } from "@/lib/schemas";
 import { Feather, Image as Img, Loader2 } from "lucide-react";
 import Image from 'next/image';
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -113,7 +113,7 @@ export default function NewPostModal() {
                         </Button>)
                         : (<Button type="submit"
                             className='ml-auto font-bold w-fit rounded-3xl text-white-1'
-                            disabled={text.length > 280}
+                            disabled={text.length > 280 || text.length === 0}
                             form='modalPostForm'
                         >
                             Post

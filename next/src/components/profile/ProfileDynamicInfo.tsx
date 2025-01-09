@@ -78,10 +78,10 @@ export default function ProfileDynamicInfo({ user, loggedInUser }: { user: Profi
             <div className='px-4 flex flex-col gap-2'>
                 <div>
                     <p className='font-bold text-18'>{user.profile.name}</p>
-                    <div className='flex gap-2 items-center text-dark-500'>
+                    <div className='flex gap-2 items-center text-secondary-text'>
                         <p className='text-16'>@{user.username}</p>
                         {isFollowingTheUser && (
-                            <p className='bg-dark-300 text-12 px-1 rounded-sm h-fit mt-[2px] font-medium'>Follows you</p>
+                            <p className='bg-secondary-foreground text-12 px-1 rounded-sm h-fit mt-[2px] font-medium'>Follows you</p>
                         )}
                     </div>
                 </div>
@@ -90,8 +90,8 @@ export default function ProfileDynamicInfo({ user, loggedInUser }: { user: Profi
                 )}
 
                 <div className='flex gap-2'>
-                    <CalendarDays size={20} className='text-dark-500' />
-                    <p className='text-dark-500 text-14'>
+                    <CalendarDays size={20} className='text-secondary-text' />
+                    <p className='text-secondary-text text-14'>
                         Joined {joined}
                     </p>
                 </div>
@@ -99,13 +99,13 @@ export default function ProfileDynamicInfo({ user, loggedInUser }: { user: Profi
                 <div className='flex gap-4 text-14'>
                     <Link href={`/${user.username}/following`} className='hover:underline'>
                         <p className='font-bold'>{followingCount}
-                            <span className='text-dark-500 font-normal'> Following</span>
+                            <span className='text-secondary-text font-normal'> Following</span>
                         </p>
                     </Link>
 
                     <Link href={`/${user.username}/followers`} className='hover:underline'>
                         <p className='font-bold'>{followersCount}
-                            <span className='text-dark-500 font-normal'> Followers</span>
+                            <span className='text-secondary-text font-normal'> Followers</span>
                         </p>
                     </Link>
                 </div>
@@ -132,7 +132,7 @@ export default function ProfileDynamicInfo({ user, loggedInUser }: { user: Profi
                                     <p className='mb-auto'>Viewing posts won&apos;t unblock @{`${user.username}`}</p>
                                 </div>
                                 <button
-                                    className='mt-2 border-primary border px-4 py-2 rounded-xl text-primary font-bold hover:bg-primary hover:text-white-1'
+                                    className='mt-2 border-primary border px-4 py-2 rounded-xl text-primary font-bold hover:bg-primary hover:text-primary-text'
                                     onClick={handleViewPosts} >
                                     View Posts
                                 </button>

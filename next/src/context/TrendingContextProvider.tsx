@@ -1,4 +1,5 @@
 'use client';
+import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 
 export interface TrendingHashtagsType {
@@ -25,10 +26,18 @@ export const useTrendingContext = () => {
 
 export default function TrendingContextProvider({ children }: { children: React.ReactNode }) {
     const [trendingHashtags, setTrendingHashtags] = useState<TrendingHashtagsType[] | undefined>(undefined);
+    const pathname = usePathname();
 
     const fetchTrendings = async () => {
         try {
-            const response = await fetch('http://localhost:3000/api/posts/trending');
+            const response = await fetch('http://localhost:3000/api/posts/trending', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                cache: "force-cache",
+                next: { revalidate: 1800 }
+            });
 
             const trendingHashtagsData: TrendingHashtagsType[] = await response.json().then((res) => res.hashtags);
             setTrendingHashtags(() => trendingHashtagsData);
@@ -38,8 +47,9 @@ export default function TrendingContextProvider({ children }: { children: React.
     };
 
     useEffect(() => {
+        if (pathname !== '/' && trendingHashtags !== undefined) return;
         fetchTrendings();
-    }, [children]);
+    }, [pathname, trendingHashtags]);
 
     return (
         <TrendingContext.Provider value={{ trendingHashtags }}>

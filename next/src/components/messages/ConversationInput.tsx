@@ -85,7 +85,7 @@ export default function ConversationInput({ conversationId, setAllMessagesOrdere
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ content: data.text, conversationId}),
+                body: JSON.stringify({ content: data.text, conversationId }),
             })
 
             if (!response.ok) {
@@ -113,7 +113,7 @@ export default function ConversationInput({ conversationId, setAllMessagesOrdere
                     status: 'sent',
                 }]
             });
-            
+
             // emit new message to the receiver
             stopTyping();
             socket.emit('new_conversation_message', conversationId, confirmedMessage);
@@ -148,8 +148,8 @@ export default function ConversationInput({ conversationId, setAllMessagesOrdere
     return (
         <div className='min-h-[65px] h-auto'>
             <div className='h-full min-h-[50px] w-full px-3 py-2 '>
-                <div className='h-full w-full flex-center gap-4 bg-dark-300/70 rounded-[20px] p-2'>
-                    <Img size={22} className='text-primary'/>
+                <div className='h-full w-full flex-center gap-4 bg-[hsl(var(--post-hover))] rounded-[20px] p-2'>
+                    <Img size={22} className='text-primary' />
                     <form onSubmit={handleSubmit(onSubmitMessage)} id='messagePostForm' className='w-full flex-center'>
                         <TextareaAutosize
                             maxLength={maxChars}
@@ -164,7 +164,7 @@ export default function ConversationInput({ conversationId, setAllMessagesOrdere
                     </form>
                     <button type='submit' form='messagePostForm' className='disabled:opacity-50'
                         disabled={!inputText || inputText.length > maxChars} >
-                            <SendHorizontal size={22} className='text-primary' />
+                        <SendHorizontal size={22} className='text-primary' />
                     </button>
                 </div>
             </div>

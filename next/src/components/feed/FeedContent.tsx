@@ -95,7 +95,7 @@ export default function FeedContent() {
                         }
 
                         const results = await response.json() as FeedType;
-                        
+
                         setGlobalPosts([...results.posts]);
                         setGlobalFeedCursor(results.posts.length !== 0 ? results.posts.slice(-1)[0].id : null);
 
@@ -189,10 +189,10 @@ export default function FeedContent() {
             <section className='feed-header'>
                 <FeedHeaderTabs activeTab={activeTab} setActiveTab={setActiveTab} />
                 <NewPost />
-                { activeTab === 0
+                {activeTab === 0
                     ? newGlobalPostCount !== 0 && (
                         <>
-                            <button onClick={fetchNewPosts} className='text-primary py-3 hover:bg-card-hover'>
+                            <button onClick={fetchNewPosts} className='text-primary py-3 hover:bg-post-hover'>
                                 {newGlobalPostCount > 1 ? `Show ${newGlobalPostCount} posts` : 'Show new post'}
                             </button>
                             <div className='feed-hr-line'></div>
@@ -200,7 +200,7 @@ export default function FeedContent() {
                     )
                     : newFollowingPostCount !== 0 && (
                         <>
-                            <button onClick={fetchNewPosts} className='text-primary py-3 hover:bg-card-hover'>
+                            <button onClick={fetchNewPosts} className='text-primary py-3 hover:bg-post-hover'>
                                 {newGlobalPostCount > 1 ? `Show ${newGlobalPostCount} posts` : 'Show new post'}
                             </button>
                             <div className='feed-hr-line'></div>
@@ -212,14 +212,14 @@ export default function FeedContent() {
             <section className='feed-posts-desktop'>
                 {activeTab === 0
                     && globalPosts && globalPosts.length === 0
-                        ? <div>No recent posts</div>
-                        : globalPosts === undefined
-                            ? <div>loading...</div>
-                            : <FeedTab 
-                                posts={globalPosts as PostType[]}
-                                loadingRef={ref}
-                                scrollPositionRef={scrollPositionRef}
-                                endReached={globalFeedEndReached} />
+                    ? <div>No recent posts</div>
+                    : globalPosts === undefined
+                        ? <div>loading...</div>
+                        : <FeedTab
+                            posts={globalPosts as PostType[]}
+                            loadingRef={ref}
+                            scrollPositionRef={scrollPositionRef}
+                            endReached={globalFeedEndReached} />
                 }
 
                 {activeTab === 1

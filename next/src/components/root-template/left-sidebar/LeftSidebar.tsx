@@ -8,11 +8,15 @@ import LeftSidebarLink from './LeftSidebarLink';
 import { useEffect, useState } from 'react';
 import { useUserContext } from '@/context/UserContextProvider';
 import { socket } from '@/lib/socket';
+import TweetlyLogoWhite from '/home/linux/repos/tweetly/next/public/white.png';
+import TweetlyLogoBlack from '/home/linux/repos/tweetly/next/public/black.png';
+import { useDisplayContext } from '@/context/DisplayContextProvider';
 
 export default function LeftSidebar() {
     const [notifications, setNotifications] = useState(false);
     const [messages, setMessages] = useState(false);
     const { loggedInUser } = useUserContext();
+    const { savedTheme } = useDisplayContext();
 
     useEffect(() => {
         const onNewNotification = () => {
@@ -62,7 +66,7 @@ export default function LeftSidebar() {
     return (
         <nav className='left-sidebar'>
             <Link href='/'>
-                <Image src='/blackLogo.png' alt='Tweetly logo' width='30' height='30' className='mx-auto' />
+                <Image src={savedTheme === 0 ? TweetlyLogoBlack : TweetlyLogoWhite} alt='Tweetly logo' width='30' height='30' className='mx-auto' />
             </Link>
             <div className='left-sidebar-links'>
                 {leftSidebarLinks.map((link, index) => (

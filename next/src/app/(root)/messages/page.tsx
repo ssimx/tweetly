@@ -3,8 +3,6 @@ import SearchInput from "@/components/messages/SearchInput";
 import { decryptSession, getToken } from "@/lib/session";
 import { redirect } from "next/navigation";
 
-
-
 export interface ConversationLastMessageType {
     id: string,
     participants: {

@@ -96,7 +96,7 @@ export const settingsTabs = [
         route: '/settings/premium',
     },
     {
-        name: 'Theme',
-        route: '/settings/theme',
+        name: 'Display',
+        route: '/settings/display',
     }
 ]

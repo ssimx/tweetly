@@ -10,10 +10,17 @@
 }
 
 body {
-  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
-  width: 100wv;
-  display: flex;
-  justify-content: center;
+    font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+    width: 100wv;
+    display: flex;
+    justify-content: center;
+
+    color: hsl(var(--primary-text-color)) !important;
+    background-color: hsl(var(--primary-foreground)) !important;
+}
+
+input, textarea {
+    background-color: transparent;
 }
 
 .glassmorphism {
@@ -196,7 +203,7 @@ input[type="search"]::-webkit-search-results-decoration {
 
     /* Buttons */
     .social-media-connect-btn {
-        @apply rounded-2xl border border-gray-200 bg-transparent focus-visible:bg-none text-current hover:text-white-1;
+        @apply rounded-2xl border border-gray-200 bg-transparent focus-visible:bg-none text-current hover:text-primary-text;
     }
 
     /* Form error message */
@@ -214,46 +221,36 @@ input[type="search"]::-webkit-search-results-decoration {
     }
 
     .root-desktop {
-        @apply 
-            hidden h-auto min-h-full w-full
-            xs:max-w-[700px] xs:grid xs:mx-auto xs:grid-rows-1 xs:grid-cols-root-desktop-layout-xs
-            lg:w-[1000px] lg:max-w-none lg:grid-cols-root-desktop-layout-lg lg:ml-auto
-            xl:w-[1200px] xl:grid-cols-root-desktop-layout-xl xl:ml-auto xl:gap-4;
+        @apply hidden h-auto min-h-full w-full xs:max-w-[700px] xs:grid xs:mx-auto xs:grid-rows-1 xs:grid-cols-root-desktop-layout-xs lg:w-[1000px] lg:max-w-none lg:grid-cols-root-desktop-layout-lg lg:ml-auto xl:w-[1200px] xl:grid-cols-root-desktop-layout-xl xl:ml-auto xl:gap-4;
     }
 
     .main-content {
-        @apply min-h-screen h-auto
-            lg:grid lg:grid-cols-main-content-layout gap-8;
+        @apply min-h-screen h-fit lg:grid lg:grid-cols-main-content-layout gap-8 mb-[20px];
     }
 
     /* Left sidebar */
     .left-sidebar-wrapper {
-        @apply
-            max-h-screen max-w-full w-full box-border flex justify-center;
+        @apply max-h-screen max-w-full w-full box-border flex justify-center;
     }
 
     .left-sidebar {
-        @apply
-            hidden fixed h-full pt-4 pb-6
-            xs:flex xs:flex-col xs:items-center xs:gap-12 xs:[&_p]:hidden xs:[&_span]:hidden
-            xl:items-start xl:[&_p]:block xl:[&_span]:flex xl:w-[200px];
+        @apply hidden fixed h-full pt-4 pb-6 xs:flex xs:flex-col xs:items-center xs:gap-12 xs:[&_p]:hidden xs:[&_span]:hidden xl:items-start xl:[&_p]:block xl:[&_span]:flex xl:w-[200px];
     }
 
     .left-sidebar-links {
-        @apply
-            flex flex-col gap-6
-            xl:ml-4
+        @apply flex flex-col
+    }
+
+    .left-sidebar-link {
+        @apply w-fit flex gap-4 items-center hover:bg-card-hover px-3 py-4 pr-7 rounded-[30px];
     }
 
     .icon {
-        @apply
-            xs:w-7 xs:h-7;
+        @apply xs:w-7 xs:h-7;
     }
 
     .post-btn {
-        @apply
-            flex-center h-[50px] w-[50px] rounded-[50%] bg-[hsl(var(--primary))] text-white-1 font-bold 
-            xl:w-full xl:rounded-[30px]
+        @apply flex-center h-[50px] w-[50px] rounded-[50%] bg-primary text-white-1 font-bold xl:w-full xl:rounded-[30px]
     }
 
     .feather-icon {
@@ -261,110 +258,86 @@ input[type="search"]::-webkit-search-results-decoration {
     }
 
     .user-btn {
-        @apply
-            w-[40px] h-[40px] mt-auto relative [&_svg]:hidden
-            xl:w-full xl:[&_svg]:block;
+        @apply w-[40px] h-[40px] mt-auto relative [&_svg]:hidden xl:w-full xl:[&_svg]:block;
     }
 
     .user-menu {
-        @apply
-            shadow-menu bg-[#ffffff] overflow-hidden
-            absolute w-[200px] h-fit rounded-[20px] py-[10px] mb-2 translate-y-[-125%]
-            xl:w-[110%] xl:translate-x-[-5%];
+        @apply shadow-menu bg-primary-foreground overflow-hidden absolute w-[200px] h-fit rounded-[20px] py-[10px] mb-2 translate-y-[-125%] xl:w-[110%] xl:translate-x-[-5%] px-[20px];
     }
 
     /* Right sidebar */
     .right-sidebar-wrapper {
-        @apply max-h-screen max-w-full w-full box-border flex justify-center pt-5
+        @apply h-fit max-w-full w-full box-border flex justify-center pt-5
         /* border border-red-500 [&_*]:border [&_*]:border-red-500; */
     }
 
     .search-output-container {
-        @apply mt-1 absolute w-full h-fit
-        border border-gray-300 rounded-[10px] bg-[#ffffff] z-10 
-        break-words whitespace-normal post-content
-        flex flex-col overflow-hidden
-        shadow-menu;
+        @apply mt-1 absolute w-full h-fit border border-primary-border rounded-[10px] bg-primary-foreground z-10 break-words whitespace-normal post-content flex flex-col overflow-hidden shadow-menu;
     }
 
     .search-text-output {
-        @apply px-4 py-3 flex items-center gap-4 text-black-1
-        hover:bg-gray-100 hover:cursor-pointer;
+        @apply px-4 py-3 flex items-center gap-4 text-primary-text hover:bg-card-hover hover:cursor-pointer;
     }
 
     /* Feed */
     .feed-desktop {
-        @apply
-            grid grid-cols-1 grid-rows-feed-desktop-xs;
+        @apply grid grid-cols-1 grid-rows-feed-desktop-xs;
     }
 
     .feed-header {
-        @apply
-            w-full flex flex-col;
+        @apply w-full flex flex-col;
     }
 
     .feed-header-tab-btn {
-        @apply
-            w-full flex-center hover:bg-dark-300/70
+        @apply w-full flex-center hover:bg-card-hover
     }
 
     .feed-posts-desktop {
-        @apply
-            w-full flex flex-col h-fit;
+        @apply w-full flex flex-col h-fit;
     }
 
     /* Feed post */
 
     .feed-post {
-        @apply
-            w-full grid grid-cols-post-layout grid-rows-1 gap-2 px-4 pt-3 pb-1 hover:bg-white-1 cursor-pointer;
+        @apply w-full grid grid-cols-post-layout grid-rows-1 gap-2 px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer;
     }
 
     .feed-post-left-side {
-        @apply
-            w-auto h-full;
+        @apply w-auto h-full;
     }
 
     .feed-post-right-side {
-        @apply
-            w-full flex flex-col min-w-0;
+        @apply w-full flex flex-col min-w-0;
     }
 
     .feed-post-content {
-        @apply
-            w-full h-fit min-w-[1%];
+        @apply w-full h-fit min-w-[1%];
     }
 
     .feed-hr-line {
-        @apply w-full h-[1px] bg-[hsl(var(--border))];
-    }  
+        @apply w-full h-[1px] bg-primary-border;
+    }
 
     /* Post */
 
     .post {
-        @apply
-            w-full px-4 pt-4 flex flex-col gap-2;
+        @apply w-full px-4 pt-4 flex flex-col gap-2;
     }
 
     .post-header {
-        @apply
-            w-full grid grid-cols-post-layout grid-rows-1 gap-2
-            items-center;
+        @apply w-full grid grid-cols-post-layout grid-rows-1 gap-2 items-center;
     }
 
     .post-content {
-        @apply 
-            w-full min-w-[1%] flex break-words whitespace-normal;
+        @apply w-full min-w-[1%] flex break-words whitespace-normal;
     }
 
     .post-footer {
-        @apply
-            flex mb-2 text-dark-500;
+        @apply flex mb-2 text-secondary-text;
     }
 
     .post-btns {
-        @apply
-            py-1 border-t
+        @apply py-1 border-t
     }
 
     .comment-btn {
@@ -402,48 +375,39 @@ input[type="search"]::-webkit-search-results-decoration {
     /* Parent post */
 
     .parent-post {
-        @apply
-            w-full grid grid-cols-post-layout grid-rows-1 gap-2 h-full px-4 pt-4
-            hover:bg-card-hover hover:cursor-pointer;
+        @apply w-full grid grid-cols-post-layout grid-rows-1 gap-2 h-full px-4 pt-4 hover:bg-post-hover hover:cursor-pointer;
     }
 
     .parent-post-left-side {
-        @apply
-            w-auto flex flex-col items-center gap-1;
+        @apply w-auto flex flex-col items-center gap-1;
     }
 
     /* User Hover Card */
 
     .user-hover-card-info {
-        @apply
-           flex flex-col gap-2;
+        @apply flex flex-col gap-2 text-primary-text;
     }
 
     .user-hover-card-header {
-        @apply
-            flex justify-between
+        @apply flex justify-between
     }
 
     .follow-btn {
-        @apply w-[125px] bg-black-1 hover:bg-black-1/90 text-white-1
-            border border-border font-bold rounded-[25px] px-4 py-2;
+        @apply w-[125px] bg-primary text-white-1 hover:bg-primary-dark border border-primary-border font-bold rounded-[25px] px-4 py-2;
     }
 
     .following {
-        @apply text-black-1
-            bg-transparent hover:bg-red-300;
+        @apply text-primary-text bg-transparent hover:bg-red-500;
     }
 
     /* Profile */
 
     .profile-info {
-        @apply
-            w-full min-h-[300px] grid grid-rows-profile-info grid-cols-1;
+        @apply w-full min-h-[300px] grid grid-rows-profile-info grid-cols-1;
     }
 
     .picture-banner-container {
-        @apply  
-            relative
+        @apply relative
     }
 
     .banner {
@@ -455,8 +419,7 @@ input[type="search"]::-webkit-search-results-decoration {
     }
 
     .edit-profile-btn {
-        @apply w-fit h-fit py-1 px-4 rounded-[25px] border border-border font-semibold
-            hover:bg-card-hover;
+        @apply w-fit h-fit py-1 px-4 rounded-[25px] border border-primary-border font-semibold hover:bg-post-hover;
     }
 
     .edit-profile-dialog {
@@ -472,7 +435,7 @@ input[type="search"]::-webkit-search-results-decoration {
     }
 
     .profile-bio-input {
-        @apply flex flex-col border border-border rounded-md px-2 py-1;
+        @apply w-full flex flex-col border border-primary-border rounded-md px-2 py-1;
     }
 
     .profile-textarea {
@@ -484,7 +447,7 @@ input[type="search"]::-webkit-search-results-decoration {
     }
 
     .profile-content-header-btn {
-        @apply w-full flex-center relative hover:bg-dark-300/70;
+        @apply w-full flex-center relative hover:bg-post-hover;
     }
 
     .profile-content-feed {
@@ -492,7 +455,7 @@ input[type="search"]::-webkit-search-results-decoration {
     }
 
     .profile-content-post {
-        @apply w-full flex flex-col gap-2 px-4 pt-3 pb-1 hover:bg-white-1 cursor-pointer;
+        @apply w-full flex flex-col gap-2 px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer;
     }
 
     .profile-content-post-content {
@@ -504,24 +467,23 @@ input[type="search"]::-webkit-search-results-decoration {
     }
 
     .notifications-btn {
-        @apply w-fit hover:bg-dark-300 text-white-1 border border-border font-bold rounded-full p-2;
+        @apply w-fit hover:bg-secondary-foreground text-primary-text border border-primary-border font-bold rounded-full p-2;
     }
 
     .notifications-enabled {
-        @apply text-black-1 bg-transparent;
+        @apply text-primary-text bg-transparent;
     }
 
     .message-btn {
-        @apply w-fit cursor-pointer hover:bg-dark-300 text-white-1 border border-border font-bold rounded-full p-2;
+        @apply w-fit cursor-pointer hover:bg-secondary-foreground text-primary-text border border-primary-border font-bold rounded-full p-2;
     }
 
     .profile-menu {
-        @apply 
-            w-[38px] h-[38px] relative flex-center;
+        @apply w-[38px] h-[38px] relative flex-center;
     }
 
     .menu-overlay {
-        @apply fixed top-0 left-0 w-screen h-screen z-40 pointer-events-auto
+        @apply fixed top-0 left-0 w-screen h-screen z-40 pointer-events-auto;
     }
 
     .disable-interaction {
@@ -529,22 +491,19 @@ input[type="search"]::-webkit-search-results-decoration {
     }
 
     .profile-menu-btn {
-        @apply w-fit hover:bg-dark-300 text-white-1 border border-border font-bold rounded-full p-2;
+        @apply w-fit hover:bg-secondary-foreground text-primary-text border border-primary-border font-bold rounded-full p-2;
     }
 
     .profile-opened-menu {
-        @apply 
-            shadow-menu bg-[#ffffff] overflow-hidden 
-            absolute top-[125%] right-[0%] z-50 w-[250px] h-fit rounded-[20px] py-[10px];
+        @apply shadow-menu bg-primary-foreground border border-primary-border overflow-hidden absolute top-[125%] right-[0%] z-50 w-[250px] h-fit rounded-[20px] py-[10px];
     }
 
     .profile-copy-alert {
-        @apply fixed bottom-10 left-[50%] translate-x-[-50%]
-            bg-primary text-white-1 px-4 py-2 rounded-md;
+        @apply fixed bottom-10 left-[50%] translate-x-[-50%] bg-primary text-white-1 font-semibold px-4 py-2 rounded-md;
     }
 
     .profile-follower-followee-card {
-        @apply w-full h-fit px-4 py-3 flex gap-2 items-center hover:bg-white-1 cursor-pointer;
+        @apply w-full h-fit px-4 py-3 flex gap-2 items-center bg-primary-foreground hover:bg-card-hover cursor-pointer;
     }
 
     .profile-card-bio-overflow {
@@ -565,7 +524,7 @@ input[type="search"]::-webkit-search-results-decoration {
     /* Notifications */
 
     .notifications-post {
-        @apply w-full flex flex-row items-center gap-2 px-4 pt-3 pb-1 hover:bg-card-hover cursor-pointer;
+        @apply w-full flex flex-row items-center gap-2 px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer;
     }
 
     .notifications-post-content {
@@ -573,9 +532,7 @@ input[type="search"]::-webkit-search-results-decoration {
     }
 
     .notification-replied-post {
-        @apply 
-            mt-2 w-full border rounded-xl p-2
-            flex flex-row items-center gap-2 hover:bg-[#0000000d] cursor-pointer;
+        @apply mt-2 w-full border rounded-xl p-2 flex flex-row items-center gap-2 hover:bg-post-hover cursor-pointer;
     }
 
     .notifications-replied-post-content {
@@ -617,15 +574,39 @@ input[type="search"]::-webkit-search-results-decoration {
 }
 
 @layer base {
-  :root {
+    :root {
+        /* PRIMARY COLORS */
+        /* blue color #3498db */
+        --primary-color-blue: 204, 70%, 53%;
+        --primary-color-blue-dark: 204, 64%, 45%;
+        /* yellow color #FFD400 */
+        --primary-color-yellow: 50, 100%, 50%;
+        --primary-color-yellow-dark: 50, 97%, 44%;
+        /* pink color #F91880 */
+        --primary-color-pink: 332, 95%, 54%;
+        --primary-color-pink-dark: 332, 80%, 49%;
+        /* purple color #7856FF */
+        --primary-color-purple: 252, 100%, 67%;
+        --primary-color-purple-dark: 252, 67%, 58%;
+        /* orange color #FF7A00 */
+        --primary-color-orange: 29, 100%, 50%;
+        --primary-color-orange-dark: 29, 95%, 47%;
+
+        /* THEMES */
+        /* white theme #FFFFFF */
+        --primary-theme-white: 0, 0%, 100%;
+        /* dim theme #15202B */
+        --primary-theme-dim: 210, 34%, 13%;
+        /* dark theme #000000 */
+        --primary-theme-dark: 0, 0%, 0%;
+
+        --border: 0 0% 89.8%;
         --background: 0 0% 100%;
         --foreground: 0 0% 3.9%;
         --card: 0 0% 100%;
         --card-foreground: 0 0% 3.9%;
         --popover: 0 0% 100%;
         --popover-foreground: 0 0% 3.9%;
-        --primary: 203 89% 53%;
-        --primary-foreground: 30 8% 95%;
         --secondary: 0 0% 96.1%;
         --secondary-foreground: 0 0% 9%;
         --muted: 0 0% 96.1%;
@@ -634,7 +615,6 @@ input[type="search"]::-webkit-search-results-decoration {
         --accent-foreground: 0 0% 9%;
         --destructive: 0 84.2% 60.2%;
         --destructive-foreground: 0 0% 98%;
-        --border: 0 0% 89.8%;
         --input: 0 0% 89.8%;
         --ring: 0 0% 3.9%;
         --chart-1: 12 76% 61%;
@@ -644,40 +624,102 @@ input[type="search"]::-webkit-search-results-decoration {
         --chart-5: 27 87% 67%;
         --radius: 0.5rem;
         --header-size: 60px;
+        
     }
-  .dark {
-        --background: 212 29% 13%;
-        --foreground: 30 8% 95%;
-        --card: 0 0% 3.9%;
-        --card-foreground: 0 0% 98%;
-        --popover: 0 0% 3.9%;
-        --popover-foreground: 0 0% 98%;
-        --primary: 0 0% 98%;
-        --primary-foreground: 0 0% 9%;
-        --secondary: 0 0% 14.9%;
-        --secondary-foreground: 0 0% 98%;
-        --muted: 0 0% 14.9%;
-        --muted-foreground: 0 0% 63.9%;
-        --accent: 0 0% 14.9%;
-        --accent-foreground: 0 0% 98%;
-        --destructive: 0 62.8% 30.6%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 0 0% 14.9%;
-        --input: 0 0% 14.9%;
-        --ring: 0 0% 83.1%;
-        --chart-1: 220 70% 50%;
-        --chart-2: 160 60% 45%;
-        --chart-3: 30 80% 55%;
-        --chart-4: 280 65% 60%;
-        --chart-5: 340 75% 55%;
+
+    [data-theme="default"] {
+        /* Dark theme foreground color #000000 */
+        --primary-foreground: var(--primary-theme-white);
+        /* Foreground color for other stuff #eff3f4 */
+        --secondary-foreground: 192, 19%, 95%;
+        /* Most used text color #0f1419 */
+        --primary-text-color: 210, 25%, 8%;
+        /* Less used text color #536471 */
+        --secondary-text-color: 206, 15%, 38%;
+        /* Button text color #FFF */
+        --button-text-color: 0, 0%, 100%;
+        /* Button background color #0f1419 */
+        --button-bg-color: 210, 25%, 8%;
+        /* Post hover background #f4f3f2 */
+        --post-hover: 30, 8%, 95%;
+        /* Card hover background #E7E7E8 */
+        --card-hover: 240, 2%, 91%;
+    }
+
+    [data-theme="dim"] {
+        /* Dark theme foreground color #15202B */
+        --primary-foreground: var(--primary-theme-dim);
+        /* Foreground color for other stuff #273340 */
+        --secondary-foreground: 211, 24%, 20%;
+        /* Most used text color #f7f9f9 */
+        --primary-text-color: 180, 14%, 97%;
+        /* Less used text color #8b98a5 */
+        --secondary-text-color: 210, 13%, 60%;
+        /* Button text color #0f1419 */
+        --button-text-color: 210, 25%, 8%;
+        /* Button background color #eff3f4 */
+        --button-bg-color: 192, 19%, 95%;
+        /* Post hover background #ffffff08 */
+        --post-hover: 0, 0%, 100%, 0.031;
+        /* Card hover background #2C3640 */
+        --card-hover: 210, 19%, 21%;
+        /* Border #38444d */
+        --border: 206, 16%, 26%;
+    }
+
+    [data-theme="dark"] {
+        /* Dark theme foreground color #000000 */
+        --primary-foreground: var(--primary-theme-dark);
+        /* Foreground color for other stuff #202327 */
+        --secondary-foreground: 214, 10%, 14%;
+        /* Most used text color - slightly grey #e7e9ea */
+        --primary-text-color: 200, 7%, 91%;
+        /* Less used text color #71767b */
+        --secondary-text-color: 210, 4%, 46%;
+        /* Button text color #0f1419 */
+        --button-text-color: 210, 25%, 8%;
+        /* Button background color #eff3f4 */
+        --button-bg-color: 192, 19%, 95%;
+        /* Post hover background #ffffff08 */
+        --post-hover: 0, 0%, 100%, 0.031;
+        /* Tab hover background #181818 */
+        --card-hover: 0, 0%, 9%;
+        /* Border #2f3336 */
+        --border: 206, 7%, 20%;
+    }
+
+    [data-color="blue"] {
+        --primary: var(--primary-color-blue);
+        --primary-dark: var(--primary-color-blue-dark);
+    }
+
+    [data-color="yellow"] {
+        --primary: var(--primary-color-yellow);
+        --primary-dark: var(--primary-color-yellow-dark);
+    }
+
+    [data-color="pink"] {
+        --primary: var(--primary-color-pink);
+        --primary-dark: var(--primary-color-pink-dark);
+    }
+
+    [data-color="purple"] {
+        --primary: var(--primary-color-purple);
+        --primary-dark: var(--primary-color-purple-dark);
+    }
+
+    [data-color="orange"] {
+        --primary: var(--primary-color-orange);
+        --primary-dark: var(--primary-color-orange-dark);
     }
 }
 
 @layer base {
-  * {
-    @apply border-border;
+    * {
+        @apply border-primary-border;
     }
-  body {
-    @apply bg-background text-foreground;
+
+    body {
+        @apply bg-background text-foreground;
     }
 }

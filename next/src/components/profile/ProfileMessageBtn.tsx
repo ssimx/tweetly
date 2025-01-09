@@ -44,7 +44,7 @@ export default function ProfileMessageBtn({ profileUser, conversationId }: { pro
     return (
         <button className={`message-btn ${loading ? 'disabled' : null}`}
             onClick={handleConvoClick} >
-            <Mail size={20} className='text-black-1' />
+            <Mail size={20} className='text-primary-text' />
         </button>
     )
 };

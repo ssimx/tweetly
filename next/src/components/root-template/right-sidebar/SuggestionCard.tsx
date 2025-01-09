@@ -32,14 +32,14 @@ export default function SuggestionCard({ user }: { user: UserSuggestion }) {
         <div onClick={handleCardClick} className='profile-follower-followee-card'>
             <div>
                 <Image
-                    src={user.profile.profilePicture}
+                    src={user.profile.profilePicture || 'https://res.cloudinary.com/ddj6z1ptr/image/upload/v1728503826/profilePictures/ynh7bq3eynvkv5xhivaf.png'}
                     height={40} width={40}
                     alt='Follower profile pic'
                     className='rounded-full min-w-[40px]' />
             </div>
 
             <div className='flex flex-col leading-5'>
-                <div className='flex gap-x-2 flex-wrap items-center text-dark-500'>
+                <div className='flex gap-x-2 flex-wrap items-center text-secondary-text'>
                     <UserHoverCard
                         author={{
                             username: user.username,
@@ -55,10 +55,10 @@ export default function SuggestionCard({ user }: { user: UserSuggestion }) {
                         isFollowingTheUser={isFollowingTheUser}
                     />
 
-                    <div className='flex gap-x-2 flex-wrap items-center text-dark-500'>
+                    <div className='flex gap-x-2 flex-wrap items-center text-secondary-text'>
                         <p className='text-16'>@{user.username}</p>
                         {loggedInUser.username !== user.username && isFollowingTheUser && (
-                            <p className='bg-dark-300 text-12 px-1 rounded-sm h-fit mt-[2px] font-medium'>Follows you</p>
+                            <p className='bg-secondary-foreground text-12 px-1 rounded-sm h-fit mt-[2px] font-medium'>Follows you</p>
                         )}
                     </div>
                 </div>

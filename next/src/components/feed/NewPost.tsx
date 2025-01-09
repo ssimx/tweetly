@@ -22,7 +22,7 @@ type PostData = z.infer<typeof newPostSchema>;
 export default function NewPost({ reply, placeholder }: { reply?: number, placeholder?: string }) {
     const [text, setText] = useState('');
     const [, setInputActive] = useState(false);
-    const formRef = useRef <HTMLFormElement | null>(null);
+    const formRef = useRef<HTMLFormElement | null>(null);
     const maxChars = 280;
     const charsPercentage = Math.min((text.length / maxChars) * 100, 100);
     const router = useRouter();
@@ -65,7 +65,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
                 socket.emit('new_global_post');
                 socket.emit('new_following_post', postData.authorId)
             }
-            
+
             // send notification to users
             socket.emit('new_user_notification', postData.authorId);
 
@@ -89,7 +89,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
         if (e.target === document.activeElement) {
             setInputActive(() => true);
             window.addEventListener('click', handleClickOutside);
-        } 
+        }
     }
 
     return (
@@ -101,7 +101,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
                     className="w-[54px] h-[54px] rounded-full" />
                 <form onSubmit={handleSubmit(onSubmitHeaderPost)} id='headerPostForm' className='min-h-full pr-4 flex items-center' ref={formRef}>
                     <TextareaAutosize maxLength={maxChars}
-                        className='h-[28px] mt-3 mb-auto w-full focus:outline-none text-xl resize-none'
+                        className='h-[28px] mt-3 mb-auto w-full focus:outline-none text-xl resize-none bg-transparent'
                         placeholder={placeholder ? placeholder : 'What is happening?!'}
                         onClick={(e) => handleClick(e)}
                         {...register("text", {

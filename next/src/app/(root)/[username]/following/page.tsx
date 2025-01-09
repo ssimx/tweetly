@@ -63,7 +63,7 @@ export default function Following({ params }: { params: { username: string } }) 
             <div className='profile-content-header'>
                 <div className='profile-content-header-btn'>
                     <button
-                        className={`w-full h-full z-10 absolute text-black-1 font-bold`}>
+                        className={`w-full h-full z-10 absolute text-primary-text font-bold`}>
                         Following
                     </button>
 
@@ -74,7 +74,7 @@ export default function Following({ params }: { params: { username: string } }) 
                 </div>
                 <div className='profile-content-header-btn'>
                     <Link href={`/${username}/followers`}
-                        className={`w-full h-full z-10 absolute text-dark-500 font-medium flex-center`}>
+                        className={`w-full h-full z-10 absolute text-secondary-text font-medium flex-center`}>
                         Followers
                     </Link>
                 </div>
@@ -89,7 +89,7 @@ export default function Following({ params }: { params: { username: string } }) 
                 : (
                     <div className='w-full flex flex-col'>
                         {followees.map((element, index) => (
-                            <ProfileFollowersFollowingCard key={index} user={{...element.followee, type: 'followee'}} />
+                            <ProfileFollowersFollowingCard key={index} user={{ ...element.followee, type: 'followee' }} />
                         ))
                         }
                     </div>
