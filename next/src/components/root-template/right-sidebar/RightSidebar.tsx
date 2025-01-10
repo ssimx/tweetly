@@ -12,7 +12,7 @@ export default async function RightSidebar() {
     if (!payload) return redirect('/login');
 
     return (
-        <div className='w-full flex flex-col gap-5'>
+        <div className='w-[90%] flex flex-col gap-5'>
             <RightSidebarSearch />
 
             <FollowSuggestions />

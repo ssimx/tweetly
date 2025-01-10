@@ -46,7 +46,7 @@ const config: Config = {
                 'root-desktop-layout-xs': '15% 1fr',
                 // 3 col grid
                 'root-desktop-layout-lg': '10% 1fr',
-                'root-desktop-layout-xl': '18% 1fr',
+                'root-desktop-layout-xl': '20% 1fr',
 
                 // main content 2 col grid
                 'main-content-layout': '65% 1fr',

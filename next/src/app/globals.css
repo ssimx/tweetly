@@ -221,16 +221,19 @@ input[type="search"]::-webkit-search-results-decoration {
     }
 
     .root-desktop {
-        @apply hidden h-auto min-h-full w-full xs:max-w-[700px] xs:grid xs:mx-auto xs:grid-rows-1 xs:grid-cols-root-desktop-layout-xs lg:w-[1000px] lg:max-w-none lg:grid-cols-root-desktop-layout-lg lg:ml-auto xl:w-[1200px] xl:grid-cols-root-desktop-layout-xl xl:ml-auto xl:gap-4;
+        @apply hidden h-auto min-h-full w-full 
+            xs:max-w-[700px] xs:grid xs:mx-auto xs:grid-rows-1 xs:grid-cols-root-desktop-layout-xs 
+            lg:w-[1000px] lg:max-w-none lg:grid-cols-root-desktop-layout-lg lg:ml-auto 
+            xl:w-[1300px] xl:grid-cols-root-desktop-layout-xl xl:ml-auto;
     }
 
     .main-content {
-        @apply min-h-screen h-fit lg:grid lg:grid-cols-main-content-layout gap-8 mb-[20px];
+        @apply min-h-screen h-fit lg:grid lg:grid-cols-main-content-layout mb-[20px];
     }
 
     /* Left sidebar */
     .left-sidebar-wrapper {
-        @apply max-h-screen max-w-full w-full box-border flex justify-center;
+        @apply max-h-screen max-w-full w-full box-border flex justify-start;
     }
 
     .left-sidebar {
@@ -258,7 +261,7 @@ input[type="search"]::-webkit-search-results-decoration {
     }
 
     .user-btn {
-        @apply w-[40px] h-[40px] mt-auto relative [&_svg]:hidden xl:w-full xl:[&_svg]:block;
+        @apply w-full h-fit mt-auto relative [&_svg]:hidden xl:w-full xl:[&_svg]:block;
     }
 
     .user-menu {
@@ -267,7 +270,7 @@ input[type="search"]::-webkit-search-results-decoration {
 
     /* Right sidebar */
     .right-sidebar-wrapper {
-        @apply h-fit max-w-full w-full box-border flex justify-center pt-5
+        @apply h-fit max-w-full w-full box-border flex justify-end pt-5
         /* border border-red-500 [&_*]:border [&_*]:border-red-500; */
     }
 
@@ -511,6 +514,21 @@ input[type="search"]::-webkit-search-results-decoration {
         text-overflow: ellipsis;
         overflow: hidden;
 
+        @supports (-webkit-line-clamp: 2) {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: initial;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+    }
+
+    .overflow-fix {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        
         @supports (-webkit-line-clamp: 2) {
             overflow: hidden;
             text-overflow: ellipsis;

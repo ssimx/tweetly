@@ -35,7 +35,7 @@ export default function DialogSuggestionCard({ user }: { user: UserSuggestion })
             </div>
 
             <div className='flex flex-col leading-5'>
-                <div className='flex gap-x-2 flex-wrap items-center text-secondary-text'>
+                <div className='flex gap-x-2 flex-wrap items-center text-secondary-text '>
                     <UserHoverCard
                         author={{
                             username: user.username,

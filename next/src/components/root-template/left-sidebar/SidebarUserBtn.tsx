@@ -47,7 +47,7 @@ export default function SidebarUserBtn() {
             }
 
             <button type='button'
-                className='absolute top-0 left-0 w-full h-[50px] flex gap-4 items-center rounded-[25px] bg-transparent text-primary-text font-bold'
+                className='w-full h-[50px] flex gap-4 items-center rounded-[25px] bg-transparent text-primary-text font-bold'
                 onClick={toggleMenu}>
                 <Image width={50} height={50} src={loggedInUser?.profile.profilePicture} alt='User profile' className='w-[40px] h-[40px] xl:w-[50px] xl:h-[50px] rounded-full bg-[hsl(var(--primary))]' />
                 <span className='flex flex-col items-start leading-tight'><span className=''>{loggedInUser?.profile.name}</span> <span className='text-secondary-text font-medium'>@{loggedInUser?.username}</span></span>
