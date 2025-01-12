@@ -1,8 +1,7 @@
 'use client';
-import { usePathname } from "next/navigation";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState } from "react";
 
-export interface TrendingHashtagsType {
+export interface TrendingHashtagType {
     name: string;
     _count: {
         posts: number;
@@ -10,7 +9,7 @@ export interface TrendingHashtagsType {
 };
 
 interface TrendingContextType {
-    trendingHashtags: TrendingHashtagsType[] | undefined;
+    hashtags: TrendingHashtagType[] | undefined;
 };
 
 const TrendingContext = createContext<TrendingContextType | undefined>(undefined);
@@ -24,35 +23,11 @@ export const useTrendingContext = () => {
     return context;
 }
 
-export default function TrendingContextProvider({ children }: { children: React.ReactNode }) {
-    const [trendingHashtags, setTrendingHashtags] = useState<TrendingHashtagsType[] | undefined>(undefined);
-    const pathname = usePathname();
-
-    const fetchTrendings = async () => {
-        try {
-            const response = await fetch('http://localhost:3000/api/posts/trending', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                cache: "force-cache",
-                next: { revalidate: 1800 }
-            });
-
-            const trendingHashtagsData: TrendingHashtagsType[] = await response.json().then((res) => res.hashtags);
-            setTrendingHashtags(() => trendingHashtagsData);
-        } catch (error) {
-            console.error('Error fetching trendings:', error);
-        }
-    };
-
-    useEffect(() => {
-        if (pathname !== '/' && trendingHashtags !== undefined) return;
-        fetchTrendings();
-    }, [pathname, trendingHashtags]);
+export default function TrendingContextProvider({ trendingHashtags, children }: { trendingHashtags: TrendingHashtagType[], children: React.ReactNode }) {
+    const [hashtags, ] = useState<TrendingHashtagType[]>(trendingHashtags);
 
     return (
-        <TrendingContext.Provider value={{ trendingHashtags }}>
+        <TrendingContext.Provider value={{ hashtags }}>
             {children}
         </TrendingContext.Provider>
     )

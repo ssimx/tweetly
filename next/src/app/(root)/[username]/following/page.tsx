@@ -23,6 +23,9 @@ interface FolloweeType {
         blockedUsers: {
             blockedId: number,
         }[] | [],
+        notifying: {
+            receiverId: number,
+        }[] | [],
         _count: {
             followers: number,
             following: number,
@@ -43,11 +46,7 @@ export default function Following({ params }: { params: { username: string } }) 
                         'Content-Type': 'application/json',
                     }
                 })
-
                 const followees: FolloweeType[] = await response.json();
-
-                console.log(followees);
-
 
                 setFollowees(followees);
             } catch (error) {

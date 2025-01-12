@@ -128,12 +128,10 @@ export const getSpecificConversation = async (req: Request, res: Response) => {
             if (firstUnreadMessage && conversation.messages.filter(msg => msg.id === firstUnreadMessage.id).length === 0) {
                 // if unread message is not in the conversation initial cluster, fetch more messages
                 olderMsgs = await getMessages(conversationId, firstUnreadMessage.id).then(res => res?.messages);
-                console.log('read message: ', olderMsgs);
                 
             } else if (conversation.messages.filter(msg => msg.id === firstMessageId).length === 0) {
                 // if there's no unread message, fetch all messages by using first message as a cursor
                 olderMsgs = await getMessages(conversationId, firstMessageId).then(res => res?.messages);
-                console.log('first message: ', olderMsgs);
             }
 
             const allMsgs = olderMsgs ? [...olderMsgs, ...conversation.messages] : [...conversation.messages];

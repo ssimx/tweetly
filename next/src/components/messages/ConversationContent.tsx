@@ -100,8 +100,6 @@ export default function ConversationContent({ receiverInfo, conversation }: { re
         });
 
         socket.on('message_seen', (messageId) => {
-            console.log('test');
-            
             setAllMessagesOrdered((prevMessages) =>
                 prevMessages.map((msg) =>
                     (msg.id === messageId || (messageId === null && msg === prevMessages[prevMessages.length - 1]))

@@ -7,7 +7,6 @@ export async function POST(req: NextRequest) {
     if (req.method === 'POST') {
         // Check for an existing session
         const token = await getToken();
-        console.log(token)
         if (token) {
             const isValid = await verifySession(token);
 
@@ -19,8 +18,6 @@ export async function POST(req: NextRequest) {
                 await removeSession();
             }
         }
-
-        console.log('test')
 
         try {
             // Validate incoming data

@@ -154,12 +154,8 @@ export default function Search() {
 
                     // Sort by priority in descending order
                     searchData.users = prioritizedUsers.sort((a, b) => b.priority - a.priority);
-                    console.log(searchData);
                     setUsers([...searchData.users]);
                 };
-
-                console.log(searchData);
-                
 
                 setPosts([...searchData.posts]);
                 setPostCursor(searchData.posts.length > 0 ? searchData.posts[searchData.posts.length - 1].id : 0);

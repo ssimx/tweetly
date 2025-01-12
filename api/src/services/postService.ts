@@ -249,6 +249,9 @@ export const getFollowing30DayPosts = async (userId: number, cursor?: number) =>
                 },
                 {
                     author: {
+                        NOT: {
+                            id: userId,
+                        },
                         followers: {
                             some: {
                                 followerId: userId
@@ -358,6 +361,9 @@ export const getOldestFollowing30DayPost = async (userId: number) => {
                 },
                 {
                     author: {
+                        NOT: {
+                            id: userId,
+                        },
                         followers: {
                             some: {
                                 followerId: userId

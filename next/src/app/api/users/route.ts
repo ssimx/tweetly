@@ -7,8 +7,6 @@ export async function GET(req: NextRequest) {
         const token = await extractToken(authHeader) || await getToken();
         const username = await decryptSession(token).then(res => res?.username);
 
-        console.log('tokenUsername', username)
-
         if (token) {
             const isValid = await verifySession(token);
 
@@ -32,7 +30,6 @@ export async function GET(req: NextRequest) {
 
             if (response.ok) {
                 const data = await response.json().then((res) => res.userData);
-                console.log('db username', data.username)
                 if (data.username !== username) {
                     // Delete the cookie if usernames do not match
                     return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 400 });

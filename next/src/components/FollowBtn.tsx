@@ -1,6 +1,6 @@
 'use client';
 
-import { useSuggestionContext } from "@/context/SuggestionContextProvider";
+import { useFollowSuggestionContext } from "@/context/FollowSuggestionContextProvider";
 import { useEffect, useRef, useState } from "react";
 
 interface FollowBtnType {
@@ -20,11 +20,11 @@ export default function FollowBtn({
 }: FollowBtnType) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const followBtn = useRef<HTMLButtonElement>(null);
-    const { suggestions, updateFollowState } = useSuggestionContext();
+    const { suggestions, updateFollowState } = useFollowSuggestionContext();
     const [isFollowing, setIsFollowing] = useState(isFollowedByTheUser);
 
     useEffect(() => {
-        if (suggestions?.some((user) => user.username === username)) {  
+        if (suggestions?.some((user) => user.username === username)) {
             const following = suggestions.find((user) => user.username === username)?.isFollowing as boolean;
             setIsFollowing(following);
         }
@@ -41,6 +41,11 @@ export default function FollowBtn({
 
         try {
             if (isFollowing) {
+                // optimistic change
+                setIsFollowedByTheUser(false);
+                setFollowersCount((current) => current - 1);
+                updateFollowState(username, false);
+
                 const unfollow = await fetch(`/api/users/removeFollow/${username}`, {
                     method: 'DELETE',
                     headers: {
@@ -48,13 +53,18 @@ export default function FollowBtn({
                     }
                 });
 
-                if (!unfollow) throw new Error("Couldn't unfollow the user");
+                if (!unfollow.ok) {
+                    throw new Error("Couldn't unfollow the user");
+                }
 
-                setIsFollowedByTheUser(false);
-                setFollowersCount((current) => current - 1);
-                updateFollowState(username, false);
                 return;
             } else {
+                // optimistic change
+                setIsFollowedByTheUser(true);
+                setNotificationsEnabled && setNotificationsEnabled(false);
+                setFollowersCount((current) => current + 1);
+                updateFollowState(username, true);
+
                 const follow = await fetch(`/api/users/follow/${username}`, {
                     method: 'POST',
                     headers: {
@@ -62,22 +72,32 @@ export default function FollowBtn({
                     }
                 });
 
-                if (!follow) throw new Error("Couldn't follow the user");
+                if (!follow.ok) {
+                    throw new Error("Couldn't follow the user");
+                }
 
-                setIsFollowedByTheUser(true);
-                setNotificationsEnabled && setNotificationsEnabled(false);
-                setFollowersCount((current) => current + 1);
-                updateFollowState(username, true);
                 return;
             }
         } catch (error) {
             console.error(error);
+            if (isFollowing) {
+                // revert the changes in case of error
+                setIsFollowedByTheUser(true);
+                setFollowersCount((current) => current + 1);
+                updateFollowState(username, true);
+            } else {
+                // revert the changes in case of error
+                setIsFollowedByTheUser(false);
+                setNotificationsEnabled && setNotificationsEnabled(true);
+                setFollowersCount((current) => current - 1);
+                updateFollowState(username, false);
+            }
         } finally {
             followBtn.current && followBtn.current.removeAttribute('disabled');
             setIsSubmitting(false);
         }
     };
-    
+
     return (
         <div>
             {

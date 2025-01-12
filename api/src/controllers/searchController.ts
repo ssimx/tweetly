@@ -77,8 +77,6 @@ export async function searchPostsWithCursor(req: Request, res: Response) {
         }
 
         const posts = await getMorePostsBySearch(user.id, queryParams.segments, cursor);
-
-        console.log(cursor, lastSearchPostId, posts);
         
         if (lastSearchPostId && posts) {
             if (posts.slice(-1)[0].id === lastSearchPostId) {

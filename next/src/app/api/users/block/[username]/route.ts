@@ -17,8 +17,6 @@ export async function POST(req: NextRequest, { params }: { params: { username: s
         }
 
         try {
-            console.log('fetch');
-
             const apiUrl = process.env.EXPRESS_API_URL;
             const response = await fetch(`${apiUrl}/users/block/${params.username}`, {
                 method: 'POST',

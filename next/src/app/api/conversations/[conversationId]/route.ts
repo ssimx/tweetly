@@ -24,9 +24,6 @@ export async function GET(req: NextRequest, { params }: { params: { conversation
             const apiUrl = process.env.EXPRESS_API_URL;
             const query = searchParams.get('cursor');
 
-            console.log(query);
-
-
             if (query !== null) {
                 const response = await fetch(`${apiUrl}/conversations/${params.conversationId}?cursor=${query}`, {
                     method: 'GET',
@@ -38,16 +35,12 @@ export async function GET(req: NextRequest, { params }: { params: { conversation
 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log(data);
-
                     return NextResponse.json(data);
                 } else {
                     const errorData = await response.json();
                     return NextResponse.json({ error: errorData.error }, { status: response.status });
                 }
             } else {
-                console.log('test');
-
                 const response = await fetch(`${apiUrl}/conversations/${params.conversationId}`, {
                     method: 'GET',
                     headers: {

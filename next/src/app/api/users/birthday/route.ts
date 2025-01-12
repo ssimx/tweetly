@@ -35,8 +35,6 @@ export async function PATCH(req: NextRequest) {
             const body: z.infer<typeof settingsChangeBirthday> = await req.json();
             const validatedData = settingsChangeBirthday.parse(body);
 
-            console.log(validatedData)
-
             const apiUrl = process.env.EXPRESS_API_URL;
             const response = await fetch(`${apiUrl}/users/birthday`, {
                 method: 'PATCH',

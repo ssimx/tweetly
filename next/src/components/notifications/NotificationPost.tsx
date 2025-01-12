@@ -38,8 +38,6 @@ interface NotificationType {
 }
 
 export default function NotificationPost({ post, type, isRead, notifier }: NotificationType) {
-    console.log(type);
-
     const [postIsFollowedByTheUser, postSetIsFollowedByTheUser] = useState(post.author['_count'].followers === 1);
     const [postFollowersCount, postSetFollowersCount] = useState(post.author.followers.length);
 

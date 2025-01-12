@@ -24,7 +24,7 @@ export default async function RootLayout({
 
     return (
         <html lang="en">
-            <body className={`${inter.variable} ${ibm.variable} antialiased`} data-color={getColor(savedColor)} data-theme={getTheme(savedTheme)}>
+            <body className={`${inter.variable} ${ibm.variable} antialiased selection:bg-primary selection:text-[#ffffff]`} data-color={getColor(savedColor)} data-theme={getTheme(savedTheme)}>
                 <DisplayContextProvider savedTheme={savedTheme} savedColor={savedColor}>
                     {children}
                 </DisplayContextProvider>

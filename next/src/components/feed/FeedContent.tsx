@@ -63,7 +63,6 @@ export default function FeedContent() {
                         cache: 'no-cache',
                     });
                     const { olderFollowingPosts, end }: { olderFollowingPosts: PostType[], end: boolean } = await response.json();
-                    console.log(olderFollowingPosts, end);
 
                     setFollowingFeedCursor(olderFollowingPosts.length !== 0 ? olderFollowingPosts.slice(-1)[0].id : null);
                     setFollowingPosts(currentPosts => [...currentPosts as PostType[], ...olderFollowingPosts]);
@@ -211,15 +210,16 @@ export default function FeedContent() {
 
             <section className='feed-posts-desktop'>
                 {activeTab === 0
-                    && globalPosts && globalPosts.length === 0
-                    ? <div>No recent posts</div>
-                    : globalPosts === undefined
+                    ? globalPosts === undefined
                         ? <div>loading...</div>
-                        : <FeedTab
-                            posts={globalPosts as PostType[]}
-                            loadingRef={ref}
-                            scrollPositionRef={scrollPositionRef}
-                            endReached={globalFeedEndReached} />
+                        : globalPosts.length === 0
+                            ? <div>No recent posts</div>
+                            : <FeedTab
+                                posts={globalPosts as PostType[]}
+                                loadingRef={ref}
+                                scrollPositionRef={scrollPositionRef}
+                                endReached={globalFeedEndReached} />
+                    : null
                 }
 
                 {activeTab === 1

@@ -52,8 +52,6 @@ export default function SearchInput({ messages }: { messages: MessagesType }) {
                 });
                 const { olderConversations, end }: { olderConversations: ConversationLastMessageType[], end: boolean } = await response.json();
 
-                console.log(olderConversations);
-
                 if (olderConversations.length === 0 && end === true) {
                     setEndReached(true);
                     return;

@@ -21,8 +21,6 @@ export async function POST(req: NextRequest, { params }: { params: { username: s
 
         try {
             const body = await req.json();
-            console.log(body);
-
             const apiUrl = process.env.EXPRESS_API_URL;
             const response = await fetch(`${apiUrl}/users/updateProfile/${params.username}`, {
                 method: 'POST',

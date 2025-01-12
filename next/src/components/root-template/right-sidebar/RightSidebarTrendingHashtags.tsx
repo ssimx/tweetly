@@ -2,9 +2,8 @@
 import { usePathname } from 'next/navigation';
 import Trending from './Trending';
 
-export default function RightSidebarTrending() {
+export default function RightSidebarTrendingHashtags() {
     const pathname = usePathname();
-
     if (pathname.startsWith('/explore')) return <></>;
 
     return (

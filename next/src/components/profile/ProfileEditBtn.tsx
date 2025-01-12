@@ -18,6 +18,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Croppie, { CropType } from "croppie";
 import "croppie/croppie.css";
+import { revalidateTag } from "next/cache";
 
 type ProfileInfoData = z.infer<typeof updateProfileSchema>;
 
@@ -138,8 +139,6 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
                 const responses = await Promise.allSettled(promises);
                 const [bannerUploadResult, profileUploadResult] = responses;
 
-                console.log(bannerPictureData, profilePictureData)
-
                 if (bannerPictureData !== undefined) {
                     if (bannerUploadResult.status === 'fulfilled') {
                         const bannerResponse = await bannerUploadResult.value!.json();
@@ -168,9 +167,6 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
                     }
                 }
             }
-
-            console.log(data);
-
 
             const response = await fetch(`/api/users/updateProfile/${user.username}`, {
                 method: 'POST',
@@ -243,9 +239,6 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
             });
             return;
         }
-
-        console.log(file);
-
 
         setPictureType(() => type);
         onFileUpload(type);

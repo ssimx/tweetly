@@ -103,8 +103,6 @@ export default function Search({ searchQuery }: { searchQuery?: string }) {
                     searchOutput.users = prioritizedUsers.sort((a, b) => b.priority - a.priority);
                 }
 
-                console.log(searchOutput.users);
-
                 setSearchResponse(searchOutput);
                 setSearched(true);
                 setOutputVisible(true);

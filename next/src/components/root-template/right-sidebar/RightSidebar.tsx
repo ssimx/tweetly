@@ -1,23 +1,16 @@
 import React from 'react'
-import FollowSuggestions from './FollowSuggestions'
-import { decryptSession, getToken } from '@/lib/session';
-import { redirect } from 'next/navigation';
+import FollowSuggestions from './RightSidebarFollowSuggestions'
 import RightSidebarSearch from './RightSidebarSearch';
-import RightSidebarTrending from './RightSidebarTrending';
+import RightSidebarTrendingHashtags from './RightSidebarTrendingHashtags';
 
 export default async function RightSidebar() {
-    const token = await getToken();
-    const payload = await decryptSession(token);
-
-    if (!payload) return redirect('/login');
-
     return (
         <div className='w-[90%] flex flex-col gap-5'>
             <RightSidebarSearch />
 
             <FollowSuggestions />
 
-            <RightSidebarTrending />
+            <RightSidebarTrendingHashtags />
         </div>
     )
 }

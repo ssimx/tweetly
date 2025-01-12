@@ -26,9 +26,6 @@ export async function GET(req: NextRequest, { params }: { params: { username: st
                 },
             });
 
-            console.log(response);
-
-
             if (response.ok) {
                 const following = await response.json().then(res => res.profileData);
                 return NextResponse.json(following);

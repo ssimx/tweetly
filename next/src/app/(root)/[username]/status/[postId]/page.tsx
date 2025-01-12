@@ -47,7 +47,6 @@ export default async function Status({ params }: { params: { postId: string } })
         cache: 'no-store',
     });
     const replies = await repliesResponse.json() as RepliesType;
-    console.log(replies);
 
     if (!post) return <div>loading...</div>
 

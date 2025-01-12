@@ -33,7 +33,6 @@ export default function ProfileMenuBtn({
     const copyProfileUrlAlert = useRef<HTMLDivElement | null>(null);
 
     const toggleMenu = (e: React.MouseEvent) => {
-        console.log('open');
         e.stopPropagation();
         setMenuOpen((prev) => !prev);
 

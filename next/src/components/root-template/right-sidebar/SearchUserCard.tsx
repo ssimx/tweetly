@@ -13,8 +13,6 @@ interface SearchUserType {
 export default function SearchUserCard({ user }: { user: SearchUserType }) {
     const router = useRouter();
 
-    console.log(user)
-
     const handleCardClick = () => {
         router.push(`/${user.username}`);
     };

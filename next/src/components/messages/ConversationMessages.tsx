@@ -68,8 +68,6 @@ export default function ConversationMessages({
     const lastMessage = allMessagesOrdered.slice(-1)[0];
     const lastMessageIndex = lastMessage ? allMessagesOrdered.length - 1 : 0;
 
-    console.log(allMessagesOrdered);
-
     // Refresh last message sent time every minute for the first hour
     useEffect(() => {
         if (!lastMessage || lastMessage.readStatus === true) return;

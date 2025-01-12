@@ -20,12 +20,9 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ message: 'Not logged in, please log in first' }, { status: 401 });
         }
 
-        console.log(searchParams);
-
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
             const query = searchParams.get('cursor');
-            console.log(query);
 
             if (query !== null) {
                 const response = await fetch(`${apiUrl}/conversations?cursor=${query}`, {
@@ -38,8 +35,6 @@ export async function GET(req: NextRequest) {
 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('older:', data);
-
                     return NextResponse.json(data);
                 } else {
                     const errorData = await response.json();

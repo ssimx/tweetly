@@ -52,8 +52,6 @@ export default async function Messages() {
     });
     const messages = await response.json() as MessagesType;
 
-    console.log(messages);
-
     return (
         <section className='w-full h-auto'>
             <SearchInput messages={messages} />

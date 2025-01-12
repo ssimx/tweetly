@@ -1,5 +1,5 @@
 'use client';
-import { useSuggestionContext } from '@/context/SuggestionContextProvider';
+import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import DialogSuggestionCard from './DialogSuggestionCard';
 import SuggestionCard from './SuggestionCard';
 import {
@@ -10,8 +10,8 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 
-export default function FollowSuggestions() {
-    const { suggestions } = useSuggestionContext();
+export default function RightSidebarFollowSuggestions() {
+    const { suggestions } = useFollowSuggestionContext();
 
     return (
         <div className='w-full h-fit rounded-[15px] border p-3 flex flex-col gap-2'>
@@ -19,12 +19,12 @@ export default function FollowSuggestions() {
             <div className='flex-grow'>
                 {
                     suggestions === undefined
-                        ? 'loading' 
+                        ? 'loading'
                         : suggestions.slice(0, 4).length === 0
                             ? 'You are currently following everyone'
                             : suggestions.slice(0, 4).map((user, index) => (
-                                    <SuggestionCard key={index} user={user} />
-                                ))
+                                <SuggestionCard key={index} user={user} />
+                            ))
                 }
             </div>
             <Dialog>

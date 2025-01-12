@@ -4,8 +4,6 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
     if (req.method === 'POST') {
         const token = await getToken();
-        console.log(token);
-
         if (token) {
             const isValid = await verifySession(token);
 
@@ -32,8 +30,6 @@ export async function POST(req: NextRequest) {
 
             if (response.ok) {
                 const conversationId = await response.json();
-                console.log(conversationId);
-
                 return NextResponse.json(conversationId);
             } else {
                 const errorData = await response.json();

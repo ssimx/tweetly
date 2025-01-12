@@ -23,6 +23,9 @@ interface FollowerType {
         blockedUsers: {
             blockedId: number,
         }[] | [],
+        notifying: {
+            receiverId: number,
+        }[] | [],
         _count: {
             followers: number,
             following: number,
@@ -43,11 +46,7 @@ export default function Followers({ params }: { params: { username: string } }) 
                         'Content-Type': 'application/json',
                     }
                 })
-
                 const followers: FollowerType[] = await response.json();
-
-                console.log(followers);
-
 
                 setFollowers(followers);
             } catch (error) {

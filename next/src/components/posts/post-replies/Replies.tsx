@@ -42,11 +42,7 @@ export default function PostReplies({ replies }: { replies: RepliesType }) {
                     },
                     cache: 'no-cache',
                 });
-
                 const { moreReplies, end }: { moreReplies: PostType[], end: boolean } = await response.json();
-
-                console.log(end);
-                    
 
                 if (moreReplies.length === 0) {
                     setEndReached(currentValue => !currentValue);

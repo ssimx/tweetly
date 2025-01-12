@@ -1,4 +1,5 @@
 import { getToken, removeSession, verifySession } from "@/lib/session";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest, { params }: { params: { username: string } }) {
@@ -27,6 +28,7 @@ export async function POST(req: NextRequest, { params }: { params: { username: s
             });
 
             if (response.ok) {
+                revalidatePath('/(root)', 'layout');
                 return NextResponse.json(true);
             } else {
                 const errorData = await response.json();

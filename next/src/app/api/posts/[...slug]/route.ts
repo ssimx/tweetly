@@ -55,8 +55,6 @@ export async function POST(req: NextRequest, { params }: { params: { slug: [acti
 
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
-            console.log(`${apiUrl}/posts/${action}/${postId}`);
-
             const response = await fetch(`${apiUrl}/posts/${action}/${postId}`, {
                 method: 'POST',
                 headers: {

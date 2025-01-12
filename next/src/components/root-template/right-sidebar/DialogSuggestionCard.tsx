@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useUserContext } from '@/context/UserContextProvider';
 import { useRouter } from 'next/navigation';
 import UserHoverCard from '@/components/UserHoverCard';
-import { UserSuggestion } from '@/context/SuggestionContextProvider';
+import { UserSuggestion } from '@/context/FollowSuggestionContextProvider';
 import FollowBtn from '@/components/FollowBtn';
 
 export default function DialogSuggestionCard({ user }: { user: UserSuggestion }) {

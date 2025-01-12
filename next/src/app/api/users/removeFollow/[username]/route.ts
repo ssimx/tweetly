@@ -1,4 +1,5 @@
 import { getToken, removeSession, verifySession } from "@/lib/session";
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(req: NextRequest, { params }: { params: { username: string } }) {
@@ -27,6 +28,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { username:
             });
 
             if (response.ok) {
+                revalidateTag('followSuggestions');
                 return NextResponse.json(true);
             } else {
                 const errorData = await response.json();

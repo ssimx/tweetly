@@ -7,11 +7,11 @@ import PostBtns from '../posts/PostBtns';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import UserHoverCard from '../UserHoverCard';
-import { UserSuggestion, useSuggestionContext } from '@/context/SuggestionContextProvider';
+import { FollowSuggestionType, useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import PostContent from '../PostContent';
 
 export default function FeedPost({ post, searchSegments }: { post: PostType, searchSegments?: string[] }) {
-    const [postAuthor, setPostAuthor] = useState<UserSuggestion>({ ...post.author, isFollowing: post.author.followers.length === 1 });
+    const [postAuthor, setPostAuthor] = useState<FollowSuggestionType>({ ...post.author, isFollowing: post.author.followers.length === 1 });
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState<boolean>(post.author.followers.length === 1);
     const [followersCount, setFollowersCount] = useState(post.author['_count'].followers);
 
@@ -19,11 +19,11 @@ export default function FeedPost({ post, searchSegments }: { post: PostType, sea
     const [isFollowingTheUser,] = useState(post.author.following.length === 1);
 
     const router = useRouter();
-    const { suggestions } = useSuggestionContext();
+    const { suggestions } = useFollowSuggestionContext();
 
     useEffect(() => {
         if (suggestions && suggestions.find((user) => user.username === post.author.username)) {
-            const author = suggestions.find((user) => user.username === post.author.username) as UserSuggestion;
+            const author = suggestions.find((user) => user.username === post.author.username) as FollowSuggestionType;
             setPostAuthor(author);
             setIsFollowedByTheUser(author.isFollowing);
         }

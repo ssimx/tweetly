@@ -17,8 +17,6 @@ export async function DELETE(req: NextRequest, { params }: { params: { username:
         }
 
         try {
-            console.log(fetch);
-
             const apiUrl = process.env.EXPRESS_API_URL;
             const response = await fetch(`${apiUrl}/users/removeBlock/${params.username}`, {
                 method: 'DELETE',

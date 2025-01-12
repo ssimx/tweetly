@@ -741,3 +741,7 @@ input[type="search"]::-webkit-search-results-decoration {
         @apply bg-background text-foreground;
     }
 }
+
+/* base for css tags */
+/* components for tailwin classes */
+/* utilities for CSS classes */

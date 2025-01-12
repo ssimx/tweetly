@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card';
-import { useSuggestionContext } from '@/context/SuggestionContextProvider';
+import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 
 interface AuthorType {
     username: string,
@@ -34,7 +34,7 @@ export default function UserHoverCard({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const followBtn = useRef<HTMLButtonElement>(null);
     const { loggedInUser } = useUserContext();
-    const { suggestions, updateFollowState } = useSuggestionContext();
+    const { suggestions, updateFollowState } = useFollowSuggestionContext();
     const [isFollowing, setIsFollowing] = useState(isFollowedByTheUser);
     const userIsAuthor = author.username === loggedInUser.username;
 

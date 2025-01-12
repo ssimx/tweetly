@@ -3,38 +3,115 @@ import LeftSidebar from "@/components/root-template/left-sidebar/LeftSidebar";
 import PhoneBottomNav from "@/components/root-template/PhoneBottomNav";
 import RightSidebar from "@/components/root-template/right-sidebar/RightSidebar";
 import UserContextProvider from "@/context/UserContextProvider";
-import SuggestionContextProvider from "@/context/SuggestionContextProvider";
-import { getToken } from "@/lib/session";
+import FollowSuggestionContextProvider, { FollowSuggestionType } from "@/context/FollowSuggestionContextProvider";
+import { decryptSession, getToken } from "@/lib/session";
 import { UserInfo } from "@/lib/types";
 import { redirect } from "next/navigation";
-import TrendingContextProvider from "@/context/TrendingContextProvider";
+import TrendingContextProvider, { TrendingHashtagType } from "@/context/TrendingContextProvider";
+import { getErrorMessage } from "@/lib/utils";
+
+const fetchLoggedInUserData = async (token: string): Promise<UserInfo> => {
+    try {
+        const response = await fetch('http://localhost:3000/api/users', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            cache: 'force-cache',
+            next: { tags: ['user'] },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(getErrorMessage(errorData));
+        }
+
+        return await response.json() as UserInfo;
+    } catch (error) {
+        const errorMessage = getErrorMessage(error);
+        console.error(errorMessage);
+        return redirect('/logout');
+    }
+};
+
+const fetchFollowSuggestions = async (token: string): Promise<FollowSuggestionType[]> => {
+    try {
+        const response = await fetch('http://localhost:3000/api/users/followSuggestions', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            next: { 
+                revalidate: 500,
+                tags: ['followSuggestions'] 
+            }, // refetch every 5 minutes
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(getErrorMessage(errorData));
+        }
+
+        const followSuggestions: FollowSuggestionType[] = await response.json().then((res) => {
+            const mappedUsers = res.map((user: Omit<FollowSuggestionType, 'isFollowing'>) => {
+                return { ...user, isFollowing: false };
+            });
+
+            return mappedUsers;
+        });
+        return followSuggestions;
+    } catch (error) {
+        const errorMessage = getErrorMessage(error);
+        console.error('Error fetching trending hashtags:', errorMessage);
+        return [];
+    }
+};
+
+const fetchTrendingHashtags = async (token: string): Promise<TrendingHashtagType[]> => {
+    try {
+        const response = await fetch('http://localhost:3000/api/posts/trending', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            next: { revalidate: 300 }, // refetch every 5 minutes
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(getErrorMessage(errorData));
+        }
+
+        const hashtags = await response.json().then(res => res.hashtags) as TrendingHashtagType[];
+        return hashtags;
+    } catch (error) {
+        const errorMessage = getErrorMessage(error);
+        console.error('Error fetching follow suggestions:', errorMessage);
+        return [];
+    }
+};
 
 export default async function RootTemplate({ children }: Readonly<{ children: React.ReactNode }>) {
     const token = await getToken();
-    if (!token) {
-        return redirect('/login');
-    }
+    if (!token) return redirect('/login');
+    const payload = await decryptSession(token);
+    if (!payload) return redirect('/login');
 
-    const response = await fetch('http://localhost:3000/api/users', {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        },
-    });
+    const userPromise = fetchLoggedInUserData(token);
+    const followSuggestionsPromise = fetchFollowSuggestions(token);
+    const trendingHashtagsPromise = fetchTrendingHashtags(token);
 
-    if (!response.ok) {
-        return redirect('/logout');
-    }
-
-    const user = await response.json() as UserInfo;
+    const [user, followSuggestions, trendingHashtags] = await Promise.all([userPromise, followSuggestionsPromise, trendingHashtagsPromise]);
 
     return (
         <UserContextProvider userData={user}>
-            <main className="w-screen h-auto">
-                <div className="root-phone xs:root-desktop">
-                    <TrendingContextProvider>
-                        <SuggestionContextProvider>
+            <TrendingContextProvider trendingHashtags={trendingHashtags}>
+                <FollowSuggestionContextProvider followSuggestions={followSuggestions}>
+                    <main className="w-screen h-auto">
+                        <div className="root-phone xs:root-desktop">
                             <div className='left-sidebar-wrapper'>
                                 <LeftSidebar />
                             </div>
@@ -48,10 +125,10 @@ export default async function RootTemplate({ children }: Readonly<{ children: Re
                                 </div>
                             </div>
                             <PhoneBottomNav />
-                        </SuggestionContextProvider>
-                    </TrendingContextProvider>
-                </div>
-            </main>
+                        </div>
+                    </main>
+                </FollowSuggestionContextProvider>
+            </TrendingContextProvider>
         </UserContextProvider>
     )
 }

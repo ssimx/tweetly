@@ -23,9 +23,7 @@ export async function fetchUserData() {
         }
 
         const userData = await response.json() as UserInfo;
-
         const username = await decryptSession(token).then(res => res?.username);
-        console.log(username, userData.username);
 
         if (userData.username !== username) {
             cookies().delete('access-token');

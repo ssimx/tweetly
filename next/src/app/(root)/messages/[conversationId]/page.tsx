@@ -86,9 +86,6 @@ export default async function Conversation({ params }: { params: { conversationI
     const conversation = await response.json() as ConversationType;
     if (!conversation.participants.some(participant => participant.user.username === payload.username)) return redirect('/');
 
-    console.log(conversation);
-
-
     // filter out user on the other side of the conversation
     const receiver = conversation.participants.filter((participant) => participant.user.username !== payload.username);
     // if both participants share username with logged in user, it's self-conversation

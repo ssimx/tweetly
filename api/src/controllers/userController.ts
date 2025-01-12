@@ -27,6 +27,8 @@ export const getUserInfo = async (req: Request, res: Response) => {
 export const getUserFollowSuggestions = async (req: Request, res: Response) => {
     const { id } = req.user as UserProps;
 
+    console.log('test')
+
     try {
         const userData = await getUser(id);
         if (!userData) return res.status(404).json({ error: 'User does not exist' });
@@ -75,8 +77,6 @@ export const updateProfileInfo = async (req: Request, res: Response) => {
             bannerPicturePublicId?: string,
             profilePicturePublicId?: string,
         };
-
-    console.log(data, bannerPicturePublicId, profilePicturePublicId);
 
     try {
         const response = await updateProfile(user.id, data);
