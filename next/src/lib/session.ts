@@ -1,3 +1,4 @@
+import { JwtPayload } from './types';
 import 'server-only';
 import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
@@ -6,16 +7,16 @@ const secretKey = process.env.JWT_SECRET;
 const encodedKey = new TextEncoder().encode(secretKey);
 
 export async function createSession(token: string) {
-    const jwtPayload = JSON.parse(atob(token.split('.')[1]));
+    const jwtPayload = JSON.parse(atob(token.split('.')[1])) as JwtPayload;
     const expiresAt = new Date(jwtPayload.exp * 1000);
-
-    await cookies().set('access-token', token, {
+    const cookieStore = await cookies();
+    cookieStore.set('access-token', token, {
         httpOnly: true,
         secure: true,
         expires: expiresAt,
         sameSite: 'lax',
         path: '/',
-    })
+    });
 };
 
 export async function decryptSession(token: string | undefined) {
@@ -37,11 +38,9 @@ export async function decryptSession(token: string | undefined) {
 
 export async function verifySession(token: string | undefined) {
     const session = await decryptSession(token);
-
     if (!session?.id) {
         return { isAuth: false };
     }
-
     return { isAuth: true };
 };
 
@@ -51,18 +50,20 @@ export async function hasSession() {
 };
 
 export async function getToken() {
-    return await cookies().get('access-token')?.value;
+    const cookieStore = await cookies();
+    return cookieStore.get('access-token')?.value;
 }
 
 export async function removeSession() {
-    await cookies().delete('access-token');
+    const cookieStore = await cookies();
+    cookieStore.delete('access-token');
 };
 
 export async function updateSessionToken(newToken: string) {
-    const jwtPayload = JSON.parse(atob(newToken.split('.')[1]));
+    const jwtPayload = JSON.parse(atob(newToken.split('.')[1])) as JwtPayload;
     const expiresAt = new Date(jwtPayload.exp * 1000);
-
-    await cookies().set('access-token', newToken, {
+    const cookieStore = await cookies();
+    cookieStore.set('access-token', newToken, {
         httpOnly: true,
         secure: true,
         expires: expiresAt,
@@ -81,13 +82,13 @@ export async function extractToken(authHeader: string | null) {
     return;
 };
 
+
 // settings token
-
 export async function createSettingsSession(token: string) {
-    const jwtPayload = JSON.parse(atob(token.split('.')[1]));
+    const jwtPayload = JSON.parse(atob(token.split('.')[1])) as JwtPayload;
     const expiresAt = new Date(jwtPayload.exp * 1000);
-
-    await cookies().set('settings-token', token, {
+    const cookieStore = await cookies();
+    cookieStore.set('settings-token', token, {
         httpOnly: true,
         secure: true,
         expires: expiresAt,
@@ -97,22 +98,22 @@ export async function createSettingsSession(token: string) {
 };
 
 export async function getSettingsToken() {
-    return await cookies().get('settings-token')?.value;
+    const cookieStore = await cookies();
+    return cookieStore.get('settings-token')?.value;
 }
 
 
 export async function verifySettingsToken(token: string | undefined) {
     const session = await decryptSession(token);
-
     if (!session?.id) {
         return { isAuth: false };
     }
-
     return { isAuth: true };
 };
 
 export async function removeSettingsToken() {
-    await cookies().delete({
+    const cookieStore = await cookies();
+    cookieStore.delete({
         name: 'settings-token', 
         path: '/settings/account',
     });

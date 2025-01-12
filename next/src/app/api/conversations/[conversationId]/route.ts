@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: NextRequest, { params }: { params: { conversationId: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ conversationId: string }> }) {
+    const params = await props.params;
     if (req.method === 'GET') {
         const searchParams = req.nextUrl.searchParams;
         const authHeader = req.headers.get('Authorization');

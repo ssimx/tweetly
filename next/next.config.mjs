@@ -14,7 +14,15 @@ const nextConfig = {
         fetches: {
             fullUrl: true,
         }
-    }
+    },
+    experimental: {
+        turbo: {
+            root: '.', // root folder which is /next
+            resolveAlias: {
+                '@public/': ['./public/'], // public folder inside /next
+            }
+        },
+  },
 };
 
 export default nextConfig;

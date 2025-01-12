@@ -1,7 +1,8 @@
 import { getToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: NextRequest, { params }: { params: { username: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ username: string }> }) {
+    const params = await props.params;
     if (req.method === 'POST') {
         const token = await getToken();
 

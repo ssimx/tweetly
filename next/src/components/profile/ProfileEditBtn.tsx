@@ -18,7 +18,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Croppie, { CropType } from "croppie";
 import "croppie/croppie.css";
-import { revalidateTag } from "next/cache";
 
 type ProfileInfoData = z.infer<typeof updateProfileSchema>;
 

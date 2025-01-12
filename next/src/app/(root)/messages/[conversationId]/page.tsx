@@ -69,7 +69,8 @@ export interface ReceiverType {
     };
 };
 
-export default async function Conversation({ params }: { params: { conversationId: string } }) {
+export default async function Conversation(props: { params: Promise<{ conversationId: string }> }) {
+    const params = await props.params;
     const token = await getToken();
     const payload = await decryptSession(token);
 

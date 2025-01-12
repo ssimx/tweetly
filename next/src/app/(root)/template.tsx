@@ -44,7 +44,6 @@ const fetchFollowSuggestions = async (token: string): Promise<FollowSuggestionTy
                 'Authorization': `Bearer ${token}`,
             },
             next: { 
-                revalidate: 500,
                 tags: ['followSuggestions'] 
             }, // refetch every 5 minutes
         });
@@ -54,14 +53,12 @@ const fetchFollowSuggestions = async (token: string): Promise<FollowSuggestionTy
             throw new Error(getErrorMessage(errorData));
         }
 
-        const followSuggestions: FollowSuggestionType[] = await response.json().then((res) => {
-            const mappedUsers = res.map((user: Omit<FollowSuggestionType, 'isFollowing'>) => {
-                return { ...user, isFollowing: false };
-            });
-
-            return mappedUsers;
+        const followSuggestions = await response.json() as FollowSuggestionType[];
+        const mappedUsers: FollowSuggestionType[] = followSuggestions.map((user: Omit<FollowSuggestionType, 'isFollowing'>) => {
+            return { ...user, isFollowing: false };
         });
-        return followSuggestions;
+
+        return mappedUsers;
     } catch (error) {
         const errorMessage = getErrorMessage(error);
         console.error('Error fetching trending hashtags:', errorMessage);
@@ -85,7 +82,12 @@ const fetchTrendingHashtags = async (token: string): Promise<TrendingHashtagType
             throw new Error(getErrorMessage(errorData));
         }
 
-        const hashtags = await response.json().then(res => res.hashtags) as TrendingHashtagType[];
+        const hashtags = await response.json().then((res) => {
+            if (typeof res === 'object' && res !== null && 'hashtags' in res) {
+                return res.hashtags as TrendingHashtagType[];
+            }
+            return [];
+        });
         return hashtags;
     } catch (error) {
         const errorMessage = getErrorMessage(error);
@@ -99,6 +101,8 @@ export default async function RootTemplate({ children }: Readonly<{ children: Re
     if (!token) return redirect('/login');
     const payload = await decryptSession(token);
     if (!payload) return redirect('/login');
+
+    console.log('remount')
 
     const userPromise = fetchLoggedInUserData(token);
     const followSuggestionsPromise = fetchFollowSuggestions(token);

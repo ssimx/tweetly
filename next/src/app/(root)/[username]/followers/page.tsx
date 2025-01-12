@@ -1,7 +1,7 @@
 'use client';
 import ProfileFollowersFollowingCard from "@/components/profile/ProfileFollowersFollowingCard";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 
 interface FollowerType {
     follower: {
@@ -33,7 +33,8 @@ interface FollowerType {
     };
 };
 
-export default function Followers({ params }: { params: { username: string } }) {
+export default function Followers(props: { params: Promise<{ username: string }> }) {
+    const params = use(props.params);
     const [followers, setFollowers] = useState<FollowerType[] | undefined>(undefined);
     const username = params.username;
 

@@ -9,9 +9,14 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
+import { useEffect } from 'react';
 
 export default function RightSidebarFollowSuggestions() {
     const { suggestions } = useFollowSuggestionContext();
+
+    useEffect(() => {
+        console.log('remounting suggestions')
+    }, []);
 
     return (
         <div className='w-full h-fit rounded-[15px] border p-3 flex flex-col gap-2'>

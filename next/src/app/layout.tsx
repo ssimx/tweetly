@@ -19,12 +19,12 @@ export default async function RootLayout({
     children: React.ReactNode;
 }>) {
     // Read theme and color from cookies
-    const savedTheme = Number(await cookies().get("theme")?.value) || 0;
-    const savedColor = Number(await cookies().get("color")?.value) || 0;
+    const savedTheme = Number((await cookies()).get("theme")?.value) || 0;
+    const savedColor = Number((await cookies()).get("color")?.value) || 0;
 
     return (
         <html lang="en">
-            <body className={`${inter.variable} ${ibm.variable} antialiased selection:bg-primary selection:text-[#ffffff]`} data-color={getColor(savedColor)} data-theme={getTheme(savedTheme)}>
+            <body suppressHydrationWarning className={`${inter.variable} ${ibm.variable} antialiased selection:bg-primary selection:text-[#ffffff]`} data-color={getColor(savedColor)} data-theme={getTheme(savedTheme)}>
                 <DisplayContextProvider savedTheme={savedTheme} savedColor={savedColor}>
                     {children}
                 </DisplayContextProvider>

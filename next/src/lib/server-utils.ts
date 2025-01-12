@@ -2,6 +2,7 @@ import 'server-only';
 import { UserInfo } from './types';
 import { decryptSession, getToken } from './session';
 import { cookies } from 'next/headers';
+import { revalidateTag } from 'next/cache';
 
 export async function fetchUserData() {
     try {
@@ -26,7 +27,7 @@ export async function fetchUserData() {
         const username = await decryptSession(token).then(res => res?.username);
 
         if (userData.username !== username) {
-            cookies().delete('access-token');
+            (await cookies()).delete('access-token');
             return null;
         }
 
@@ -61,4 +62,8 @@ export function getColor(color: number) {
         default:
             return 'blue';
     }
+}
+
+export function revalidate(tag: string) {
+    revalidateTag(tag);
 }

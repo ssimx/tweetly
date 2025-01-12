@@ -1,7 +1,11 @@
 import { extractToken, getToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: NextRequest, { params }: { params: { slug: [action: string, id: string] } }) {
+export async function GET(
+    req: NextRequest,
+    props: { params: Promise<{ slug: [action: string, id: string] }> }
+) {
+    const params = await props.params;
     if (req.method === 'GET') {
         const authHeader = req.headers.get('Authorization');
         const token = await extractToken(authHeader);
@@ -34,7 +38,11 @@ export async function GET(req: NextRequest, { params }: { params: { slug: [actio
     }
 };
 
-export async function POST(req: NextRequest, { params }: { params: { slug: [action: string, postId: string] } }) {
+export async function POST(
+    req: NextRequest,
+    props: { params: Promise<{ slug: [action: string, postId: string] }> }
+) {
+    const params = await props.params;
     if (req.method === 'POST') {
         const token = await getToken();
 
@@ -77,7 +85,11 @@ export async function POST(req: NextRequest, { params }: { params: { slug: [acti
     }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { slug: [action: string, postId: string] } }) {
+export async function DELETE(
+    req: NextRequest,
+    props: { params: Promise<{ slug: [action: string, postId: string] }> }
+) {
+    const params = await props.params;
     if (req.method === 'DELETE') {
         const token = await getToken();
 

@@ -1,8 +1,10 @@
+import { revalidate } from "@/lib/server-utils";
 import { getToken, removeSession, verifySession } from "@/lib/session";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: NextRequest, { params }: { params: { username: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ username: string }> }) {
+    const params = await props.params;
     if (req.method === 'POST') {
         const token = await getToken();
 
@@ -28,7 +30,7 @@ export async function POST(req: NextRequest, { params }: { params: { username: s
             });
 
             if (response.ok) {
-                revalidatePath('/(root)', 'layout');
+                revalidate('followSuggestions');
                 return NextResponse.json(true);
             } else {
                 const errorData = await response.json();

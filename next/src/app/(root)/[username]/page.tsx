@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import Image from "next/image";
 import ProfileDynamicInfo from "@/components/profile/ProfileDynamicInfo";
 
-export default async function Profile({ params }: { params: { username: string } }) {
+export default async function Profile(props: { params: Promise<{ username: string }> }) {
+    const params = await props.params;
     const token = await getToken();
     const payload = await decryptSession(token);
 

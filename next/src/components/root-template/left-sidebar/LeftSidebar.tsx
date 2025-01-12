@@ -8,8 +8,8 @@ import LeftSidebarLink from './LeftSidebarLink';
 import { useEffect, useState } from 'react';
 import { useUserContext } from '@/context/UserContextProvider';
 import { socket } from '@/lib/socket';
-import TweetlyLogoWhite from '/home/linux/repos/tweetly/next/public/white.png';
-import TweetlyLogoBlack from '/home/linux/repos/tweetly/next/public/black.png';
+import TweetlyLogoWhite from '@public/white.png';
+import TweetlyLogoBlack from '@public/black.png';
 import { useDisplayContext } from '@/context/DisplayContextProvider';
 
 export default function LeftSidebar() {

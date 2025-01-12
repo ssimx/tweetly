@@ -1,7 +1,8 @@
 import { getToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: NextRequest, { params }: { params: { username: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ username: string }> }) {
+    const params = await props.params;
     if (req.method === 'GET') {
         const token = await getToken();
 

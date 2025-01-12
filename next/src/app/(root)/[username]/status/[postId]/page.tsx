@@ -11,7 +11,8 @@ export interface RepliesType {
     end: boolean,
 };
 
-export default async function Status({ params }: { params: { postId: string } }) {
+export default async function Status(props: { params: Promise<{ postId: string }> }) {
+    const params = await props.params;
     let parentPost;
     const token = await getToken();
 
