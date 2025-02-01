@@ -1,5 +1,4 @@
 'use client';
-import { ReceiverType } from "@/app/(root)/messages/[conversationId]/page";
 import { AllMessagesType } from "./ConversationContent";
 import { formatPostDate } from "@/lib/utils";
 import { CircleAlert } from 'lucide-react';
@@ -9,12 +8,13 @@ import Link from "next/link";
 import MessageBubble from "./ConversationMessageBubble";
 import MessageStatus from "./ConversationMessageStatus";
 import TypingIndicator from "./ConversationTypingIndicator";
+import { ReceiverType } from "@/app/(root)/messages/[conversationId]/page";
 
 interface ConversationMessagesProps {
     allMessagesOrdered: AllMessagesType[];
     receiverInfo: ReceiverType;
     loadingRef: (node?: Element | null) => void;
-    scrollPositionRef: React.MutableRefObject<number>;
+    scrollPositionRef: React.RefObject<number>;
     scrollPosition: number,
     endReached: boolean;
     receiverIsTyping: boolean;

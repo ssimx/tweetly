@@ -7,7 +7,8 @@ import PostBtns from '../PostBtns';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import UserHoverCard from '../../UserHoverCard';
-import PostContent from '@/components/PostContent';
+import PostText from '@/components/posts/PostText';
+import PostImages from '../PostImages';
 
 export default function ReplyPost({ post }: { post: PostType }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
@@ -53,8 +54,9 @@ export default function ReplyPost({ post }: { post: PostType }) {
                     <p className='whitespace-nowrap'>{formatPostDate(post.createdAt)}</p>
                 </div>
             </div>
-            <div className='post-content'>
-                <PostContent content={post.content} />
+            <div className='post-content flex-col'>
+                <PostText content={post.content} />
+                <PostImages images={post.images} />
             </div>
             <div className='!border-t-0 post-btns'>
                 <PostBtns

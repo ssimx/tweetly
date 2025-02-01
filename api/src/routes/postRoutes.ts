@@ -17,6 +17,7 @@ import {
     getUserBookmarks,
     trendingHashtags,
     exploreRandomPosts,
+    getUserMedia,
  } from "../controllers/postController";
 
 const express = require('express');
@@ -25,6 +26,7 @@ const router = express.Router();
 
 router.get('/reposts/:username', getUserReposts);
 router.get('/replies/:username', getUserReplies);
+router.get('/media/:username', getUserMedia);
 router.get('/likedPosts', getUserLikes);
 router.get('/trending', trendingHashtags);
 router.get('/explore', exploreRandomPosts);

@@ -1,4 +1,6 @@
 import { extractToken, removeSession, verifySession } from "@/lib/session";
+import { NotificationType } from "@/lib/types";
+import { getErrorMessage } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -28,11 +30,13 @@ export async function GET(req: NextRequest) {
             });
 
             if (response.ok) {
-                const data = await response.json();
-                return NextResponse.json(data.notifications);
+                const notifications = await response.json() as NotificationType[];
+                return NextResponse.json(notifications);
             } else {
-                const errorData = await response.json();
-                return NextResponse.json({ error: errorData.error }, { status: response.status });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(getErrorMessage(errorData));
+                }
             }
         } catch (error) {
             // Handle other errors

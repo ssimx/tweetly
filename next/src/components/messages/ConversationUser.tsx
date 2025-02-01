@@ -1,4 +1,4 @@
-import { ReceiverType } from '@/app/(root)/messages/[conversationId]/page';
+import { ReceiverType } from '@/app/(root)/conversations/[conversationId]/page';
 import Image from 'next/image';
 
 export default function ConversationUser({ user }: { user: ReceiverType }) {

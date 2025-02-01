@@ -60,6 +60,9 @@ export default function ChangeEmail() {
                     console.error(error);
                     reset();
                 }
+            } else {
+                console.error(error);
+                reset();
             }
         }
     };

@@ -1,25 +1,10 @@
-import { decryptSession, getToken } from "@/lib/session";
-import { ProfileInfo } from "@/lib/types";
-import { redirect } from "next/navigation";
 import Image from "next/image";
 import ProfileDynamicInfo from "@/components/profile/ProfileDynamicInfo";
+import { getUserProfile } from "@/data-acess-layer/user-dto";
 
 export default async function Profile(props: { params: Promise<{ username: string }> }) {
     const params = await props.params;
-    const token = await getToken();
-    const payload = await decryptSession(token);
-
-    if (!payload) return redirect('/login');
-
-    const response = await fetch(`http://localhost:3000/api/users/${params.username}`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        },
-        cache: 'no-store',
-    });
-    const user = await response.json() as ProfileInfo;
+    const user = await getUserProfile(params.username);
 
     return (
         <section className='w-full h-fit'>
@@ -40,7 +25,7 @@ export default async function Profile(props: { params: Promise<{ username: strin
                     }
                 </div>
 
-                <ProfileDynamicInfo user={user} loggedInUser={payload.username === params.username} />
+                <ProfileDynamicInfo user={user} loggedInUser={user.authorized} />
             </div>
         </section>
     )

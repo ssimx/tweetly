@@ -9,7 +9,8 @@ export interface TrendingHashtagType {
 };
 
 interface TrendingContextType {
-    hashtags: TrendingHashtagType[] | undefined;
+    hashtags: TrendingHashtagType[] | undefined,
+    setHashtags: React.Dispatch<React.SetStateAction<TrendingHashtagType[] | undefined>>,
 };
 
 const TrendingContext = createContext<TrendingContextType | undefined>(undefined);
@@ -19,15 +20,14 @@ export const useTrendingContext = () => {
     if (!context) {
         throw new Error('useTrendingContext must be used within TrendingContextProvider');
     }
-
     return context;
-}
+};
 
-export default function TrendingContextProvider({ trendingHashtags, children }: { trendingHashtags: TrendingHashtagType[], children: React.ReactNode }) {
-    const [hashtags, ] = useState<TrendingHashtagType[]>(trendingHashtags);
+export default function TrendingContextProvider({ children }: { children: React.ReactNode }) {
+    const [hashtags, setHashtags] = useState<TrendingHashtagType[] | undefined>(undefined);
 
     return (
-        <TrendingContext.Provider value={{ hashtags }}>
+        <TrendingContext.Provider value={{ hashtags, setHashtags }}>
             {children}
         </TrendingContext.Provider>
     )

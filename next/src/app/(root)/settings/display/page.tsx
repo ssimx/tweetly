@@ -1,14 +1,14 @@
 'use client';
 import SettingsHeaderInfo from '@/components/settings/SettingsHeaderInfo';
 import React, { useState } from 'react';
-import TweetlyLogo from '/home/linux/repos/tweetly/next/public/blackWhiteLogo.png';
+import TweetlyLogo from '@public/blackWhiteLogo.png';
 import Image from 'next/image';
-import PostContent from '@/components/PostContent';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { useDisplayContext } from '@/context/DisplayContextProvider';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
+import PostText from '@/components/posts/PostText';
 
 export default function SettingsDisplay() {
     const { savedTheme, savedColor } = useDisplayContext();
@@ -51,7 +51,7 @@ export default function SettingsDisplay() {
                             <p className='whitespace-nowrap'>13m</p>
                         </div>
                         <div className='post-content'>
-                            <PostContent content={'At the heart of Tweetly are short messages called posts - just like this one - which can include photos, links, text, #hashtags and mentions like @Tweetly'} />
+                            <PostText content={'At the heart of Tweetly are short messages called posts - just like this one - which can include photos, links, text, #hashtags and mentions like @Tweetly'} />
                         </div>
                     </div>
                 </div>

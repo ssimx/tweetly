@@ -9,6 +9,7 @@ import { socket } from '@/lib/socket';
 import { AllMessagesType } from './ConversationContent';
 import { v4 as uuidv4 } from 'uuid';
 import { useUserContext } from '@/context/UserContextProvider';
+import { getErrorMessage } from '@/lib/utils';
 
 export const newMessageSchema = z.object({
     text: z
@@ -90,7 +91,7 @@ export default function ConversationInput({ conversationId, setAllMessagesOrdere
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error);
+                throw new Error(getErrorMessage(errorData));
             }
 
             const confirmedMessage = await response.json() as {

@@ -1,11 +1,11 @@
-import { PostType } from '@/lib/types'
 import React, { useEffect } from 'react'
 import FeedPost from './FeedPost'
+import { BasicPostType } from '@/lib/types';
 
 interface FeedTabType {
-    posts: PostType[],
+    posts: BasicPostType[],
     loadingRef: (node?: Element | null) => void;
-    scrollPositionRef: React.MutableRefObject<number>;
+    scrollPositionRef: React.RefObject<number>;
     endReached: boolean;
     searchSegments?: string[]
 }
@@ -24,14 +24,14 @@ export default function FeedTab({ posts, loadingRef, scrollPositionRef, endReach
             window.removeEventListener('scroll', handleScroll);
         };
     }, [scrollPositionRef]);
-    
+
     return (
         <div>
             {
                 posts.map((post, index) => (
                     <div key={index}>
                         <FeedPost post={post} searchSegments={searchSegments} />
-                        { (index + 1) !== posts.length && <div className='feed-hr-line'></div>}
+                        {(index + 1) !== posts.length && <div className='feed-hr-line'></div>}
                     </div>
                 ))
             }

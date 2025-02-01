@@ -2,20 +2,26 @@ import { extractToken, getToken, removeSession, verifySession } from "@/lib/sess
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-    req: NextRequest,
-    props: { params: Promise<{ slug: [action: string, id: string] }> }
-) {
-    const params = await props.params;
+    req: NextRequest, props: { params: Promise<{ id: string }> }) {
     if (req.method === 'GET') {
         const authHeader = req.headers.get('Authorization');
-        const token = await extractToken(authHeader);
+        const token = await extractToken(authHeader) || await getToken();
+        if (token) {
+            const isValid = await verifySession(token);
 
-        const action = params.slug[0];
-        const postId = params.slug[1];
+            if (!isValid.isAuth) {
+                await removeSession();
+                return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 401 });
+            }
+        } else {
+            return NextResponse.json({ error: 'Not logged in. Please log in first' }, { status: 401 })
+        }
 
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
-            const response = await fetch(`${apiUrl}/posts/${action}/${postId}`, {
+            const params = await props.params;
+
+            const response = await fetch(`${apiUrl}/posts/status/${params.id}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -24,8 +30,8 @@ export async function GET(
             });
 
             if (response.ok) {
-                const info = await response.json();
-                return NextResponse.json(info, { status: 200 });
+                const post = await response.json();
+                return NextResponse.json(post);
             } else {
                 const errorData = await response.json();
                 return NextResponse.json({ error: errorData.error }, { status: response.status });

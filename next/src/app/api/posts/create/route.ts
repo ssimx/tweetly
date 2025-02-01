@@ -22,12 +22,12 @@ export async function POST(req: NextRequest) {
 
         try {
             // validate the data
-            const body: z.infer<typeof newPostSchema> = await req.json();
+            const body = await req.json() as z.infer<typeof newPostSchema>;
+            console.log(body)
             const validatedData = newPostSchema.parse(body);
 
             // send POST request to the backend
             const apiUrl = process.env.EXPRESS_API_URL;
-
             const response = await fetch(`${apiUrl}/posts/create`, {
                 method: 'POST',
                 headers: {
@@ -39,7 +39,6 @@ export async function POST(req: NextRequest) {
 
             if (response.ok) {
                 const data = await response.json();
-
                 return NextResponse.json(data.response.post as Post);
             } else {
                 const errorData = await response.json();

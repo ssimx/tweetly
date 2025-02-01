@@ -115,7 +115,6 @@ export const loginUser = async (req: Request, res: Response) => {
 // ---------------------------------------------------------------------------------------------------------
 
 export const settingsAccess = async (req: Request, res: Response) => {
-    console.log('test')
     const { password } = req.body as { password: string };
     const user = req.user as UserProps;
 

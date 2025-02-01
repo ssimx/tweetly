@@ -1,5 +1,5 @@
 'use client';
-import { ConversationLastMessageType } from '@/app/(root)/messages/page';
+import { ConversationLastMessageType } from '@/app/(root)/conversations/page';
 import { useUserContext } from '@/context/UserContextProvider';
 import { formatPostDate } from '@/lib/utils';
 import Image from 'next/image';

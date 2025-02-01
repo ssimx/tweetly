@@ -4,8 +4,10 @@ import { createContext, useContext, useState } from 'react';
 
 type UserContextType = {
     loggedInUser: UserInfo,
-    setLoggedInUser: (user: UserInfo) => void,
+    setLoggedInUser: React.Dispatch<React.SetStateAction<UserInfo>>
     refetchUserData: () => void;
+    newFollowing: boolean,
+    setNewFollowing: React.Dispatch<React.SetStateAction<boolean>>
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -18,6 +20,7 @@ export const useUserContext = () => {
 
 export default function UserContextProvider({ children, userData }: { children: React.ReactNode, userData: UserInfo }) {
     const [loggedInUser, setLoggedInUser] = useState<UserInfo>(userData);
+    const [newFollowing, setNewFollowing] = useState(false);
 
     const refetchUserData = async () => {
         // Call the backend API again to get the updated user data
@@ -30,14 +33,14 @@ export default function UserContextProvider({ children, userData }: { children: 
         });
 
         if (response.ok) {
-            const updatedUser = await response.json();
-            setLoggedInUser(() => ({...JSON.parse(JSON.stringify(updatedUser))})); // Update the context with the latest data
+            const updatedUser = await response.json() as UserInfo;
+            setLoggedInUser(() => ({...updatedUser})); // Update the context with the latest data
         }
     };
 
     return (
         <UserContext.Provider 
-            value={{ loggedInUser, setLoggedInUser, refetchUserData }}>
+            value={{ loggedInUser, setLoggedInUser, refetchUserData, newFollowing, setNewFollowing }}>
             {children}
         </UserContext.Provider>
     )

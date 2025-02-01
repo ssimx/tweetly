@@ -1,13 +1,10 @@
-import { revalidate } from "@/lib/server-utils";
-import { getToken, removeSession, verifySession } from "@/lib/session";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { extractToken, getToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest, props: { params: Promise<{ username: string }> }) {
-    const params = await props.params;
     if (req.method === 'POST') {
-        const token = await getToken();
-
+        const authHeader = req.headers.get('Authorization');
+        const token = await extractToken(authHeader) || await getToken();
         if (token) {
             const session = await verifySession(token);
 
@@ -21,6 +18,8 @@ export async function POST(req: NextRequest, props: { params: Promise<{ username
 
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
+            const params = await props.params;
+            
             const response = await fetch(`${apiUrl}/users/follow/${params.username}`, {
                 method: 'POST',
                 headers: {
@@ -30,7 +29,6 @@ export async function POST(req: NextRequest, props: { params: Promise<{ username
             });
 
             if (response.ok) {
-                revalidate('followSuggestions');
                 return NextResponse.json(true);
             } else {
                 const errorData = await response.json();

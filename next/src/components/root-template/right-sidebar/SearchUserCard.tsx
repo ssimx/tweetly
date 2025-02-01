@@ -29,7 +29,7 @@ export default function SearchUserCard({ user }: { user: SearchUserType }) {
 
             <div className='flex flex-col leading-5'>
                     <p className='text-16 font-bold'>{user.profile.name}</p>
-                    <p className='text-16 text-gray-600 font-light'>@{user.username}</p>
+                    <p className='text-16 text-secondary-text font-light'>@{user.username}</p>
             </div>
         </div>
     )

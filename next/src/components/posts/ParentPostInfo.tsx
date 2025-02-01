@@ -7,7 +7,8 @@ import { formatPostDate } from '@/lib/utils';
 import PostBtns from './PostBtns';
 import { useRouter } from 'next/navigation';
 import UserHoverCard from '../UserHoverCard';
-import PostContent from '../PostContent';
+import PostText from './PostText';
+import PostImages from './PostImages';
 
 export default function ParentPostInfo({ post }: { post: PostType }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
@@ -58,8 +59,9 @@ export default function ParentPostInfo({ post }: { post: PostType }) {
                     <p className='whitespace-nowrap'>{formatPostDate(post.createdAt)}</p>
                 </div>
 
-                <div className='post-content'>
-                    <PostContent content={post.content} />
+                <div className='post-content flex-col'>
+                    <PostText content={post.content} />
+                    <PostImages images={post.images} />
                 </div>
 
                 <div className='!border-t-0 post-btns'>

@@ -10,12 +10,12 @@ const bcrypt = require('bcrypt');
 
 export const getUserInfo = async (req: Request, res: Response) => {
     const { id } = req.user as UserProps;
-
+    
     try {
-        const userData = await getUser(id);
-        if (!userData) return res.status(404).json({ error: 'User does not exist' });
+        const user = await getUser(id);
+        if (!user) return res.status(404).json({ error: 'User does not exist' });
 
-        return res.status(201).json({ userData });
+        return res.status(201).json({ user });
     } catch (error) {
         console.error('Error getting user: ', error);
         return res.status(500).json({ error: 'Failed to process the request' });
@@ -27,13 +27,13 @@ export const getUserInfo = async (req: Request, res: Response) => {
 export const getUserFollowSuggestions = async (req: Request, res: Response) => {
     const { id } = req.user as UserProps;
 
-    console.log('test')
-
     try {
         const userData = await getUser(id);
         if (!userData) return res.status(404).json({ error: 'User does not exist' });
 
         const followSuggestions = await getFollowSuggestions(id);
+
+        console.log('fetch')
 
         return res.status(201).json({ followSuggestions });
     } catch (error) {
@@ -49,11 +49,11 @@ export const getProfileInfo = async (req: Request, res: Response) => {
     const user = req.user as UserProps;
 
     try {
-        const profileData = await getProfile(user.id, username);
+        const profile = await getProfile(user.id, username);
 
-        if (!profileData) return res.status(404).json({ error: 'Profile does not exist' });
+        if (!profile) return res.status(404).json({ error: 'Profile does not exist' });
 
-        return res.status(201).json({ profileData });
+        return res.status(201).json({ profile });
     } catch (error) {
         console.error('Error getting profile: ', error);
         return res.status(500).json({ error: 'Failed to process the request' });

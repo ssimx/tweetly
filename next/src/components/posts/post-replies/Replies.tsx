@@ -1,18 +1,17 @@
 'use client';
-import { PostType } from '@/lib/types';
+import { BasicPostType } from '@/lib/types';
 import ReplyPost from './Reply';
 import { useEffect, useRef, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
-import { RepliesType } from '@/app/(root)/[username]/status/[postId]/page';
 
-export default function PostReplies({ replies }: { replies: RepliesType }) {
-    const [replyPosts, setReplyPosts] = useState<PostType[]>(replies.posts);
+export default function PostReplies({ replies, repliesEnd }: { replies: BasicPostType[], repliesEnd: boolean }) {
+    const [replyPosts, setReplyPosts] = useState<BasicPostType[]>(replies);
 
     // scroll and pagination
     const scrollPositionRef = useRef<number>(0);
     const [scrollPosition, setScrollPosition] = useState(0);
-    const [repliesCursor, setRepliesCursor] = useState<number | undefined>(replies.posts.length > 0 ? replies.posts.slice(-1)[0].id : undefined);
-    const [endReached, setEndReached] = useState(replies.end ? true : false);
+    const [repliesCursor, setRepliesCursor] = useState<number | null>(replies.length > 0 ? replies.slice(-1)[0].id : null);
+    const [endReached, setEndReached] = useState(repliesEnd);
     const { ref, inView } = useInView({
         threshold: 0,
         delay: 100,

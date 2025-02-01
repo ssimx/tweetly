@@ -1,4 +1,6 @@
 import { verifySession, extractToken, removeSession, getToken } from "@/lib/session";
+import { ConversationsListType } from "@/lib/types";
+import { getErrorMessage } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
@@ -6,13 +8,11 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest, props: { params: Promise<{ conversationId: string }> }) {
     const params = await props.params;
     if (req.method === 'GET') {
-        const searchParams = req.nextUrl.searchParams;
         const authHeader = req.headers.get('Authorization');
-        const token = authHeader ? extractToken(authHeader) : getToken();
-
+        // need getToken() to extract the token from client component for infinite scroll
+        const token = await extractToken(authHeader) || await getToken();
         if (token) {
             const isValid = await verifySession(token);
-
             if (!isValid.isAuth) {
                 await removeSession();
                 return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 400 });
@@ -23,6 +23,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ conversat
 
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
+            const searchParams = req.nextUrl.searchParams;
             const query = searchParams.get('cursor');
 
             if (query !== null) {
@@ -34,13 +35,13 @@ export async function GET(req: NextRequest, props: { params: Promise<{ conversat
                     },
                 });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    return NextResponse.json(data);
-                } else {
+                if (!response.ok) {
                     const errorData = await response.json();
-                    return NextResponse.json({ error: errorData.error }, { status: response.status });
+                    return NextResponse.json({ error: getErrorMessage(errorData) }, { status: response.status });
                 }
+
+                const conversations = await response.json() as ConversationsListType;
+                return NextResponse.json(conversations);
             } else {
                 const response = await fetch(`${apiUrl}/conversations/${params.conversationId}`, {
                     method: 'GET',
@@ -55,7 +56,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ conversat
                     return NextResponse.json(data);
                 } else {
                     const errorData = await response.json();
-                    return NextResponse.json({ error: errorData.error }, { status: response.status });
+                    return NextResponse.json({ error: getErrorMessage(errorData) }, { status: response.status });
                 }
             }
         } catch (error) {

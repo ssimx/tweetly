@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
+    "@radix-ui/react-visually-hidden": "^1.1.1",
     "croppie": "^2.6.5",
     "react-hook-form": "^7.53.0",
     "server-only": "^0.0.1",

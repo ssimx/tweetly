@@ -32,6 +32,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ username:
 
                 if (response.ok) {
                     const posts = await response.json();
+                    console.log('test', posts)
                     return NextResponse.json(posts);
                 } else {
                     const errorData = await response.json();

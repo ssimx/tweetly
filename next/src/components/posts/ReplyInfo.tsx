@@ -6,7 +6,8 @@ import Link from 'next/link';
 import ParentPostInfo from './ParentPostInfo';
 import { useEffect, useRef, useState } from 'react';
 import UserHoverCard from '../UserHoverCard';
-import PostContent from '../PostContent';
+import PostText from './PostText';
+import PostImages from './PostImages';
 
 export default function ReplyInfo({ replyPost, parentPost }: { replyPost: PostType, parentPost: PostType }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(replyPost.author.followers.length === 1);
@@ -52,8 +53,9 @@ export default function ReplyInfo({ replyPost, parentPost }: { replyPost: PostTy
                         <p className='text-secondary-text'>@{replyPost.author.username}</p>
                     </div>
                 </div>
-                <div className='post-content'>
-                    <PostContent content={replyPost.content} />
+                <div className='post-content flex-col'>
+                    <PostText content={replyPost.content} />
+                    <PostImages images={replyPost.images} />
                 </div>
                 <div className='post-footer'>
                     <p>{replyTime}</p>

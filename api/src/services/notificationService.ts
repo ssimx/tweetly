@@ -56,7 +56,6 @@ export const createNotificationsForNewReply = async (postId: number, authorId: n
 // ---------------------------------------------------------------------------------------------------------
 
 export const createNotificationsForNewRepost = async (postId: number, authorId: number) => {
-    // fetch all followers who have notifications enabled for the author
     const followers = await prisma.pushNotification.findMany({
         where: {
             notifierId: authorId,
@@ -234,14 +233,9 @@ export const removeNotificationsForFollow = async (postId: number, notifierId: n
 // ---------------------------------------------------------------------------------------------------------
 
 export const getNotifications = async (userId: number) => {
-    let date = new Date();
-    date.setDate(date.getDate() - 30);
     return await prisma.notification.findMany({
         where: {
             receiverId: userId,
-            createdAt: {
-                gte: date,
-            }
         },
         orderBy: {
             createdAt: 'desc'

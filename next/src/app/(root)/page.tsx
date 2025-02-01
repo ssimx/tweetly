@@ -1,15 +1,18 @@
-import { redirect } from "next/navigation";
-import { getToken, verifySession } from "@/lib/session";
 import FeedContent from "@/components/feed/FeedContent";
+import { getHomeGlobalFeed } from "@/data-acess-layer/user-dto";
+import { BasicPostType } from "@/lib/types";
+
+export type FeedPostsType = {
+    posts: BasicPostType[];
+    end: boolean;
+} | undefined;
 
 export default async function Feed() {
-    const token = await getToken();
-    const isAuth = await verifySession(token).then(res => res.isAuth);
-    if (!isAuth) redirect('/login');
+    const globalFeedPosts = await getHomeGlobalFeed() as FeedPostsType;
 
     return (
         <section className='feed-desktop'>
-            <FeedContent />
+            <FeedContent initialPosts={globalFeedPosts} />
         </section>
     )
 }

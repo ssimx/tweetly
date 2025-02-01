@@ -23,7 +23,7 @@ export default async function RootLayout({
     const savedColor = Number((await cookies()).get("color")?.value) || 0;
 
     return (
-        <html lang="en">
+        <html lang="en" suppressHydrationWarning>
             <body suppressHydrationWarning className={`${inter.variable} ${ibm.variable} antialiased selection:bg-primary selection:text-[#ffffff]`} data-color={getColor(savedColor)} data-theme={getTheme(savedTheme)}>
                 <DisplayContextProvider savedTheme={savedTheme} savedColor={savedColor}>
                     {children}

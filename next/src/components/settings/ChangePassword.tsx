@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Loader2 } from 'lucide-react';
+import { getErrorMessage } from '@/lib/utils';
 
 type FormData = z.infer<typeof settingsChangePassword>;
 
@@ -38,7 +39,7 @@ export default function ChangePassword() {
             if (!response.ok) {
                 const errorData = await response.json();
                 setPasswordChanged(false);
-                throw new Error(errorData.error);
+                throw new Error(getErrorMessage(errorData));
             }
 
             reset();
@@ -52,6 +53,9 @@ export default function ChangePassword() {
                     console.error(error);
                     reset();
                 }
+            } else {
+                console.error(error);
+                reset();
             }
         }
     };
@@ -82,11 +86,11 @@ export default function ChangePassword() {
 
                     }
                     {isSubmitting
-                        ? <Button disabled>
+                        ? <Button className='bg-primary text-white-1 font-bold' disabled>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Saving
                         </Button>
-                        : <Button className='bg-primary font-bold'>Save</Button>
+                        : <Button className='bg-primary text-white-1 font-bold'>Save</Button>
                     }
                 </form>
             </div>

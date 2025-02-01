@@ -38,6 +38,8 @@ export interface UserInfo {
     },
 };
 
+export type UserProfileInfoType = Pick<UserInfo, 'profile'>['profile'];
+
 export interface ProfileInfo {
     username: string,
     createdAt: string,
@@ -76,12 +78,14 @@ export interface ProfileInfo {
     },
 };
 
-export interface PostType {
+// ------ POST TYPES -------------------------------------------------------------------------------------------------------------
+
+interface BasePostType {
     id: number,
-    content: string,
+    content?: string,
+    images?: string[],
     createdAt: string,
     updatedAt: string,
-    replyToId: number | null,
     author: {
         username: string,
         profile: {
@@ -95,6 +99,9 @@ export interface PostType {
         followers: {
             followerId: number,
         }[],
+        blockedBy: {
+            blockerId: number,
+        }[],
         _count: {
             followers: number,
             following: number,
@@ -102,12 +109,15 @@ export interface PostType {
     },
     reposts: {
         userId?: number,
+        createdAt?: string,
     }[],
     likes: {
         userId?: number,
+        createdAt?: string,
     }[],
     bookmarks: {
         userId?: number,
+        createdAt?: string,
     }[],
     _count: {
         likes: number,
@@ -115,6 +125,41 @@ export interface PostType {
         replies: number,
     }
 };
+
+// general post info, no reply info
+export type BasicPostType = BasePostType;
+
+// when post is visited, fetch post, parent post (if reply) and replies
+export type VisitedPostType = BasePostType & {
+    replyTo: BasePostType;
+    replies: BasePostType[];
+    repliesEnd: boolean,
+};
+
+// on profile we fetch non-reply posts and reposts, then they're mapped together and sorted by the time
+export type ProfilePostOrRepostType = BasePostType & {
+    type: 'POST' | 'REPOST',
+    timeForSorting: number,
+    replyTo?: BasePostType,
+};
+
+// on profile Replies tab fetches only posts by user that were a reply to other post
+export type ProfileReplyPostType = BasePostType & {
+    replyTo: BasePostType,
+};
+
+// on profile Likes tab fetches all posts that were liked by the user, can be reply or non reply
+export type ProfileLikedPostType = BasePostType & {
+    replyTo?: BasePostType,
+};
+
+// -------------------------------------------------------------------------------------------------------------------------------------
+
+// bookmarked post can be either reply or non reply
+export type BookmarkedPostType = BasePostType & {
+    replyTo?: BasePostType,
+};
+
 
 export interface PostInfoType {
     id: number,
@@ -186,4 +231,444 @@ export interface PostInfoType {
     bookmarks: {
         userId: number;
     }[],
+};
+
+export interface PostRepostType {
+    id: number,
+    content?: string,
+    images?: string[],
+    createdAt: string,
+    updatedAt: string,
+    repost: boolean,
+    timeForSorting: number,
+    author: {
+        username: string,
+        profile: {
+            name: string,
+            bio: string,
+            profilePicture: string,
+        },
+        followers: {
+            followerId: number,
+        }[] | [],
+        following: {
+            followeeId: number,
+        }[] | [],
+        _count: {
+            followers: number,
+            following: number,
+        }
+    },
+    reposts: {
+        userId: number,
+        createdAt?: string,
+    }[] | [],
+    likes: {
+        userId: number,
+    }[] | [],
+    bookmarks: {
+        userId: number,
+    }[] | [],
+    _count: {
+        replies: number,
+        reposts: number,
+        likes: number,
+    }
+};
+
+export interface ReplyPostType {
+    id: number,
+    content?: string,
+    images?: string[],
+    createdAt: string,
+    updatedAt: string,
+    replyTo: {
+        id: number,
+        content: true,
+        createdAt: string,
+        updatedAt: string,
+        author: {
+            username: string,
+            profile: {
+                name: string,
+                profilePicture: string,
+                bio: string,
+            },
+            followers: {
+                followerId: number,
+            }[] | [],
+            following: {
+                followeeId: number,
+            }[] | [],
+            _count: {
+                select: {
+                    followers: true,
+                    following: true,
+                }
+            }
+        },
+        reposts: {
+            userId: number,
+        }[] | [],
+        likes: {
+            userId: number,
+        }[] | [],
+        bookmarks: {
+            userId: number,
+        }[] | [],
+        _count: {
+            replies: number,
+            reposts: number,
+            likes: number,
+        },
+    },
+    author: {
+        username: string,
+        profile: {
+            name: string,
+            bio: string,
+            profilePicture: string,
+        },
+        followers: {
+            followerId: number,
+        }[] | [],
+        following: {
+            followeeId: number,
+        }[] | [],
+        _count: {
+            followers: number,
+            following: number,
+        }
+    },
+    reposts: {
+        userId: number,
+    }[] | [],
+    likes: {
+        userId: number,
+    }[] | [],
+    bookmarks: {
+        userId: number,
+    }[] | [],
+    _count: {
+        replies: number,
+        reposts: number,
+        likes: number,
+    }
+};
+
+export interface MediaPostType {
+    id: number,
+    content?: string,
+    images: string[],
+    createdAt: string,
+    updatedAt: string,
+    replyTo?: {
+        id: number,
+        content: true,
+        createdAt: string,
+        updatedAt: string,
+        author: {
+            username: string,
+            profile: {
+                name: string,
+                profilePicture: string,
+                bio: string,
+            },
+            followers: {
+                followerId: number,
+            }[] | [],
+            following: {
+                followeeId: number,
+            }[] | [],
+            _count: {
+                select: {
+                    followers: true,
+                    following: true,
+                }
+            }
+        },
+        reposts: {
+            userId: number,
+        }[] | [],
+        likes: {
+            userId: number,
+        }[] | [],
+        bookmarks: {
+            userId: number,
+        }[] | [],
+        _count: {
+            replies: number,
+            reposts: number,
+            likes: number,
+        },
+    },
+    author: {
+        username: string,
+        profile: {
+            name: string,
+            bio: string,
+            profilePicture: string,
+        },
+        followers: {
+            followerId: number,
+        }[] | [],
+        following: {
+            followeeId: number,
+        }[] | [],
+        _count: {
+            followers: number,
+            following: number,
+        }
+    },
+    reposts: {
+        userId: number,
+    }[] | [],
+    likes: {
+        userId: number,
+    }[] | [],
+    bookmarks: {
+        userId: number,
+    }[] | [],
+    _count: {
+        replies: number,
+        reposts: number,
+        likes: number,
+    }
+};
+
+export interface LikedPostType {
+    id: number,
+    content?: string,
+    images?: string[],
+    createdAt: string,
+    updatedAt: string,
+    replyTo: {
+        author: {
+            username: string,
+            profile: {
+                name: string,
+                profilePicture: string,
+                bio: string
+            },
+            followers: {
+                followerId: number,
+            }[] | [],
+            following: {
+                followeeId: number,
+            }[] | [],
+            _count: {
+                followers: number,
+                following: number,
+            }
+        }
+    } | null,
+    author: {
+        username: string,
+        profile: {
+            name: string,
+            bio: string,
+            profilePicture: string,
+        },
+        followers: {
+            followerId: number,
+        }[] | [],
+        following: {
+            followeeId: number,
+        }[] | [],
+        _count: {
+            followers: number,
+            following: number,
+        }
+    },
+    reposts: {
+        userId: number,
+    }[] | [],
+    likes: {
+        userId: number,
+    }[] | [],
+    bookmarks: {
+        userId: number,
+    }[] | [],
+    _count: {
+        replies: number,
+        reposts: number,
+        likes: number,
+    }
+};
+
+export interface BookmarkType {
+    id: number,
+    content: string,
+    createdAt: string,
+    updatedAt: string,
+    replyTo?: {
+        author: {
+            username: string,
+            profile: {
+                name: string,
+                profilePicture: string,
+                bio: string
+            },
+            followers: {
+                followerId: number,
+            }[] | [],
+            following: {
+                followeeId: number,
+            }[] | [],
+            _count: {
+                followers: number,
+                following: number,
+            }
+        }
+    },
+    author: {
+        username: string,
+        profile: {
+            name: string,
+            bio: string,
+            profilePicture: string,
+        },
+        followers: {
+            followerId: number,
+        }[] | [],
+        following: {
+            followeeId: number,
+        }[] | [],
+        _count: {
+            followers: number,
+            following: number,
+        }
+    },
+    reposts: {
+        userId: number,
+    }[] | [],
+    likes: {
+        userId: number,
+    }[] | [],
+    bookmarks: {
+        userId: number,
+    }[] | [],
+    _count: {
+        replies: number,
+        reposts: number,
+        likes: number,
+    }
+};
+
+export interface NotificationType {
+    id: number;
+    type: {
+        name: string;
+        description: string;
+    };
+    isRead: boolean,
+    notifier: {
+        username: string,
+        profile: {
+            name: string,
+            profilePicture: string,
+            bio: string
+        },
+        followers: {
+            followerId: number,
+        }[] | [],
+        following: {
+            followeeId: number,
+        }[] | [],
+        _count: {
+            followers: number,
+            following: number,
+        }
+    };
+    post?: 
+};
+
+export interface ConversationsListType {
+    conversations: {
+        id: string,
+        participants: {
+            userA: string,
+            userB: string,
+        },
+        updatedAt: string,
+        lastMessage: {
+            id: string,
+            content: string,
+            createdAt: string;
+            readStatus: boolean,
+            sender: {
+                username: string;
+                profile: {
+                    name: string;
+                    profilePicture: string;
+                } | null;
+            };
+            receiver: {
+                username: string;
+                profile: {
+                    name: string;
+                    profilePicture: string;
+                } | null;
+            }
+        }
+    }[],
+    end: boolean,
+};
+
+export interface ConversationType {
+    conversation: {
+        id: string,
+        participants: {
+            user: {
+                username: string,
+                createdAt: string,
+                profile: {
+                    profilePicture: string,
+                    name: string,
+                    bio: string,
+                },
+                _count: {
+                    followers: number,
+                }
+            }
+        }[],
+        messages: {
+            id: string,
+            content: string,
+            readStatus: boolean,
+            createdAt: string,
+            updatedAt: string,
+            sender: {
+                username: string
+            }
+        }[] | [],
+    },
+    end: boolean,
+};
+
+export interface TrendingHashtagType {
+    name: string;
+    _count: {
+        posts: number;
+    };
+};
+
+export interface FollowSuggestionType {
+    username: string;
+    profile: {
+        name: string;
+        bio: string;
+        profilePicture: string;
+    };
+    following: {
+        followeeId: number;
+    }[];
+    followers: {
+        followerId: number;
+    }[];
+    _count: {
+        followers: number;
+        following: number;
+    };
+    isFollowing: boolean,
 };

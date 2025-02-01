@@ -1,4 +1,5 @@
 import { extractToken, removeSession, verifySession } from "@/lib/session";
+import { getErrorMessage } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
@@ -28,13 +29,13 @@ export async function GET(req: NextRequest) {
                 },
             });
 
-            if (response.ok) {
-                const bookmarkedPosts = await response.json();
-                return NextResponse.json(bookmarkedPosts);
-            } else {
+            if (!response.ok) {
                 const errorData = await response.json();
-                return NextResponse.json({ error: errorData.error }, { status: response.status });
+                return NextResponse.json({ error: getErrorMessage(errorData) }, { status: response.status });
             }
+
+            const bookmarks = await response.json();
+            return NextResponse.json(bookmarks);
         } catch (error) {
             return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
         }

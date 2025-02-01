@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
     // reactStrictMode: false,
     images: {
         remotePatterns: [
@@ -22,7 +24,12 @@ const nextConfig = {
                 '@public/': ['./public/'], // public folder inside /next
             }
         },
-  },
+    },
+    devIndicators: {
+        appIsrStatus: true,
+        buildActivity: true,
+        buildActivityPosition: 'bottom-left',
+    },
 };
 
 export default nextConfig;

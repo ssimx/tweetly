@@ -31,7 +31,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ username:
 
             if (response.ok) {
                 const data = await response.json();
-                return NextResponse.json(data.profileData as ProfileInfo);
+                return NextResponse.json(data);
             } else {
                 const errorData = await response.json();
                 return NextResponse.json({ error: errorData.error }, { status: response.status });

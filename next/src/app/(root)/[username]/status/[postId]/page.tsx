@@ -4,59 +4,26 @@ import PostInfo from '@/components/posts/PostInfo';
 import PostReplies from '@/components/posts/post-replies/Replies';
 import ReplyInfo from '@/components/posts/ReplyInfo';
 import { getToken } from '@/lib/session';
-import { PostType } from '@/lib/types';
+import { getPostInfo } from '@/data-acess-layer/user-dto';
 
 export interface RepliesType {
     posts: PostType[],
     end: boolean,
 };
 
-export default async function Status(props: { params: Promise<{ postId: string }> }) {
+export default async function Status(props: { params: Promise<{ postId: number }> }) {
     const params = await props.params;
-    let parentPost;
-    const token = await getToken();
+    const post = await getPostInfo(params.postId);
+    if (!post) return <div>Post doesn&apos;t exist</div>
 
-    const postResponse = await fetch(`http://localhost:3000/api/posts/status/${params.postId}`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        },
-        cache: 'no-store',
-    });
-    const post = await postResponse.json() as PostType;
-
-    if (post.replyToId) {
-        const parentPostResponse = await fetch(`http://localhost:3000/api/posts/status/${post.replyToId}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-            cache: 'no-store',
-        });
-
-        parentPost = await parentPostResponse.json() as PostType;
-    }
-
-    const repliesResponse = await fetch(`http://localhost:3000/api/posts/postReplies/${params.postId}`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        },
-        cache: 'no-store',
-    });
-    const replies = await repliesResponse.json() as RepliesType;
-
-    if (!post) return <div>loading...</div>
+    console.log(post);
 
     return (
         <section>
             <div>
                 {
-                    parentPost
-                        ? <ReplyInfo replyPost={post} parentPost={parentPost} />
+                    post.replyTo !== null
+                        ? <ReplyInfo replyPost={post} parentPost={post.replyTo} />
                         : <PostInfo post={post} />
                 }
                 <div className='reply'>
@@ -64,7 +31,7 @@ export default async function Status(props: { params: Promise<{ postId: string }
                 </div>
             </div>
 
-            <PostReplies replies={replies} />
+            <PostReplies replies={post.replies} repliesEnd={post.repliesEnd} />
         </section>
     )
 }

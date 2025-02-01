@@ -83,9 +83,8 @@ export default function Search() {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    cache: 'no-cache',
                 });
-                const { posts, end }: { posts: PostType[], end: boolean } = await response.json();
+                const { posts, end } = await response.json() as { posts: PostType[], end: boolean };
 
                 if (posts.length === 0 || end === true) {
                     setEndReached(() => true);

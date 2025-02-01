@@ -1,5 +1,5 @@
 'use client';
-import { PostType } from '@/lib/types';
+import { FollowSuggestionType, BasicPostType } from '@/lib/types';
 import Link from 'next/link';
 import Image from 'next/image';
 import { formatPostDate } from '@/lib/utils';
@@ -7,19 +7,22 @@ import PostBtns from '../posts/PostBtns';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import UserHoverCard from '../UserHoverCard';
-import { FollowSuggestionType, useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
-import PostContent from '../PostContent';
+import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
+import PostText from '../posts/PostText';
+import PostImages from '../posts/PostImages';
+import PostMenu from '../posts/PostMenu';
+import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
 
-export default function FeedPost({ post, searchSegments }: { post: PostType, searchSegments?: string[] }) {
+export default function FeedPost({ post, searchSegments }: { post: BasicPostType, searchSegments?: string[] }) {
     const [postAuthor, setPostAuthor] = useState<FollowSuggestionType>({ ...post.author, isFollowing: post.author.followers.length === 1 });
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState<boolean>(post.author.followers.length === 1);
     const [followersCount, setFollowersCount] = useState(post.author['_count'].followers);
-
+    const { suggestions } = useFollowSuggestionContext();
+    const { blockedUsers } = useBlockedUsersContext();
     // state to show whether the profile follows logged in user
     const [isFollowingTheUser,] = useState(post.author.following.length === 1);
 
     const router = useRouter();
-    const { suggestions } = useFollowSuggestionContext();
 
     useEffect(() => {
         if (suggestions && suggestions.find((user) => user.username === post.author.username)) {
@@ -29,25 +32,50 @@ export default function FeedPost({ post, searchSegments }: { post: PostType, sea
         }
     }, [post, suggestions]);
 
-    const handleCardClick = (event: React.MouseEvent<HTMLDivElement>) => {
-        const targetElement = event.target as HTMLElement;
+    const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        const targetElement = e.target as HTMLElement;
 
-        // Check if the clicked element or any of its ancestors is a button
-        if (targetElement.closest('button')) {
-            return; // Do nothing if a button is clicked
+        // skip any clicks that are not coming from the card element
+        if (!targetElement.closest('main') || targetElement.closest('button') || targetElement.closest('img') || targetElement.closest('a')) {
+            e.stopPropagation();
+            e.preventDefault();
+            return; 
         }
 
-        // Otherwise, navigate to the post
-        router.push(`/${postAuthor.username}/status/${post.id}`);
+        console.log(targetElement)
+
+        // Otherwise, navigate to the post in new tab
+        if (e.button === 1) {
+            // Check if it's a middle mouse button click
+            e.preventDefault(); // Prevent default middle-click behavior
+            const newWindow = window.open(`/${postAuthor.username}/status/${post.id}`, '_blank', 'noopener,noreferrer');
+            if (newWindow) newWindow.opener = null;
+        } else if (e.button === 0){
+            // Check if it's a left mouse button click
+            router.push(`/${postAuthor.username}/status/${post.id}`);
+        }
     };
 
     const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
         e.stopPropagation();
     };
 
+    if (blockedUsers.some((user) => user === postAuthor.username)) {
+        return (
+            <div className="w-full px-4 py-2 flex">
+                <p className="text-secondary-text">You&apos;ve blocked this user. <span>Unblock to see their posts.</span></p>
+                <PostMenu
+                    post={post}
+                    isFollowedByTheUser={isFollowedByTheUser}
+                    setIsFollowedByTheUser={setIsFollowedByTheUser}
+                    setFollowersCount={setFollowersCount}
+                />
+            </div>
+        )
+    }
 
     return (
-        <div onClick={handleCardClick} className='feed-post'>
+        <div onMouseDown={handleCardClick} className='feed-post' role="link" tabIndex={0} aria-label={`View post by ${postAuthor.username}`}>
             <div className='feed-post-left-side'>
                 <Link href={`/${postAuthor.username}`} className='flex group' onClick={(e) => handleLinkClick(e)}>
                     <Image
@@ -76,10 +104,17 @@ export default function FeedPost({ post, searchSegments }: { post: PostType, sea
                     <p>@{postAuthor.username}</p>
                     <p>·</p>
                     <p className='whitespace-nowrap'>{formatPostDate(post.createdAt)}</p>
+                    <PostMenu
+                        post={post}
+                        isFollowedByTheUser={isFollowedByTheUser}
+                        setIsFollowedByTheUser={setIsFollowedByTheUser}
+                        setFollowersCount={setFollowersCount}
+                    />
                 </div>
 
-                <div className='feed-post-content post-content'>
-                    <PostContent content={post.content} searchSegments={searchSegments} />
+                <div className='feed-post-content post-content flex-col'>
+                    <PostText content={post.content} searchSegments={searchSegments} />
+                    <PostImages images={post.images} />
                 </div>
 
                 <div className='!border-t-0 post-btns'>

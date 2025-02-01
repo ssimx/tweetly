@@ -8,6 +8,7 @@ import { Button } from "../ui/button";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 import SettingsHeaderInfo from "./SettingsHeaderInfo";
+import { getErrorMessage } from "@/lib/utils";
 
 type FormData = z.infer<typeof settingsPasswordSchema>;
 
@@ -37,7 +38,7 @@ export default function SettingsLogin() {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error);
+                throw new Error(getErrorMessage(errorData));
             }
 
             router.refresh();
@@ -46,10 +47,14 @@ export default function SettingsLogin() {
                 if (error.message === 'Incorrect password') {
                     setError("password", { type: "manual", message: error.message });
                     resetField("password", { keepError: true });
-                } else {
+                }
+                else {
                     console.error(error);
                     reset();
                 }
+            } else {
+                console.error(error);
+                reset();
             }
         }
     };
@@ -66,16 +71,16 @@ export default function SettingsLogin() {
 
                 <div>
                     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
-                        <Input {...register("password")} type="password" placeholder="password" />
+                        <Input {...register("password")} type="password" placeholder="password" className='bg-transparent' />
                         {errors.password && (
                             <p className="error-msg">{`${errors.password.message}`}</p>
                         )}
                         {isSubmitting
-                            ? <Button disabled>
+                            ? <Button className='text-white-1' disabled>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 Confirming
                             </Button>
-                            : <Button className='bg-primary font-bold'>Confirm</Button>
+                            : <Button className='bg-primary text-white-1 font-bold'>Confirm</Button>
                         }
                     </form>
                 </div>

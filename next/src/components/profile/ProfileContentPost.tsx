@@ -1,5 +1,4 @@
 'use client';
-import { PostRepost } from './ProfileContent';
 import Link from 'next/link';
 import Image from 'next/image';
 import UserHoverCard from '../UserHoverCard';
@@ -9,9 +8,11 @@ import { useState } from 'react';
 import { Repeat2 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useUserContext } from '@/context/UserContextProvider';
-import PostContent from '../PostContent';
+import PostText from '../posts/PostText';
+import PostImages from '../posts/PostImages';
+import { ProfilePostOrRepostType } from '@/lib/types';
 
-export default function ProfileContentPost({ post }: { post: PostRepost }) {
+export default function ProfileContentPost({ post }: { post: ProfilePostOrRepostType }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
     const [followersCount, setFollowersCount] = useState(post.author['_count'].followers);
 
@@ -35,7 +36,7 @@ export default function ProfileContentPost({ post }: { post: PostRepost }) {
 
     return (
         <div onClick={handleCardClick} className='profile-content-post'>
-            {post.repost && (
+            {post.type === 'REPOST' && (
                 <div className='flex items-center gap-1 text-14 font-bold text-secondary-text'>
                     <Repeat2 size={16} className='text-secondary-text' />
                     {path === `/${loggedInUser.username}`
@@ -74,8 +75,9 @@ export default function ProfileContentPost({ post }: { post: PostRepost }) {
                         <p>·</p>
                         <p className='whitespace-nowrap'>{formatPostDate(post.createdAt)}</p>
                     </div>
-                    <div className='post-content'>
-                        <PostContent content={post.content} />
+                    <div className='post-content flex-col'>
+                        <PostText content={post.content} />
+                        <PostImages images={post.images} />
                     </div>
                     <div className='!border-t-0 post-btns'>
                         <PostBtns

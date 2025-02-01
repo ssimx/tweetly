@@ -102,13 +102,16 @@ export const getSpecificConversation = async (req: Request, res: Response) => {
         } else {
             const conversation = await getConversation(conversationId);
             if (!conversation) return res.status(404).json({ error: "Couldn't find the conversation" });
+            if (!conversation.participants.some(participant => participant.user.username === user.username)) return res.status(401).json({ error: "User not authorized" });
 
             // check if conversation is empty
             if (conversation.messages.length === 0) {
                 return res.status(200).json({
-                    id: conversation.id,
-                    participants: conversation.participants,
-                    messages: [],
+                    conversation: {
+                        id: conversation.id,
+                        participants: conversation.participants,
+                        messages: [],
+                    },
                     end: true
                 });
             }

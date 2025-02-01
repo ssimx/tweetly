@@ -129,6 +129,19 @@ input, textarea {
     margin: 10px auto 0px auto !important;
 }
 
+.PhotoView-Portal {
+    display: grid;
+    grid-template-columns: 75% 1fr;
+}
+
+.image-preview>div {
+    width: 75%;
+}
+
+.post-preview {
+    background-color: hsl(var(--primary-foreground));
+}
+
 input[type="search"]::-webkit-search-decoration,
 input[type="search"]::-webkit-search-cancel-button,
 input[type="search"]::-webkit-search-results-button,
@@ -680,7 +693,7 @@ input[type="search"]::-webkit-search-results-decoration {
         /* Post hover background #ffffff08 */
         --post-hover: 0, 0%, 100%, 0.031;
         /* Card hover background #2C3640 */
-        --card-hover: 210, 19%, 21%;
+        --card-hover: 209, 32%, 15%;
         /* Border #38444d */
         --border: 206, 16%, 26%;
     }
@@ -700,8 +713,8 @@ input[type="search"]::-webkit-search-results-decoration {
         --button-bg-color: 192, 19%, 95%;
         /* Post hover background #ffffff08 */
         --post-hover: 0, 0%, 100%, 0.031;
-        /* Tab hover background #181818 */
-        --card-hover: 0, 0%, 9%;
+        /* Card hover background #181818 */
+        --card-hover: 0, 0%, 7%;
         /* Border #2f3336 */
         --border: 206, 7%, 20%;
     }

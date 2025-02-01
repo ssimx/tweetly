@@ -7,7 +7,7 @@ import PostBtns from './PostBtns';
 import { SetStateAction, useState } from 'react';
 import { Reply } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { BookmarkedPostType } from '@/app/(root)/bookmarks/page';
+import { BookmarkedPostType } from '@/lib/types';
 
 export default function BookmarkedPost({ post }: { post: BookmarkedPostType }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
@@ -38,7 +38,8 @@ export default function BookmarkedPost({ post }: { post: BookmarkedPostType }) {
             {post.replyTo && (
                 <div className='flex items-center gap-1 text-14 text-secondary-text'>
                     <Reply size={16} className='text-secondary-text' />
-                    <p className='flex items-center gap-1'>Reply to
+                    <div className='flex gap-x-1'>
+                        <p className='flex items-center gap-1'>Reply to</p>
                         <UserHoverCard
                             author={{
                                 username: post.replyTo.author.username,
@@ -52,7 +53,7 @@ export default function BookmarkedPost({ post }: { post: BookmarkedPostType }) {
                             isFollowedByTheUser={replyIsFollowedByTheUser}
                             setIsFollowedByTheUser={setReplyIsFollowedByTheUser}
                             isFollowingTheUser={replyIsFollowingTheUser} />
-                    </p>
+                    </div>
                 </div>
             )}
 

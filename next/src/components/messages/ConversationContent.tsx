@@ -1,11 +1,12 @@
 'use client';
-import { ConversationType, MessageType, ReceiverType } from "@/app/(root)/messages/[conversationId]/page";
 import ConversationMessages from "./ConversationMessages";
 import ConversationInput from "./ConversationInput";
 import { useEffect, useRef, useState } from "react";
 import { socket } from "@/lib/socket";
 import { useUserContext } from "@/context/UserContextProvider";
 import { useInView } from 'react-intersection-observer';
+import { ReceiverType } from "@/app/(root)/messages/[conversationId]/page";
+import { ConversationType } from "@/lib/types";
 
 export interface NewMessageType {
     id: number,
@@ -23,14 +24,24 @@ export interface AllMessagesType {
     status: 'sending' | 'sent' | 'failed',
 };
 
-export default function ConversationContent({ receiverInfo, conversation }: { receiverInfo: ReceiverType, conversation: ConversationType }) {
+interface ConversationContentType {
+    receiverInfo: ReceiverType,
+    convo: ConversationType,
+};
+
+interface ConversationContentMoreMessagesType {
+    messages: Pick<ConversationType['conversation'], 'messages'>['messages'];
+    end: boolean,
+};
+
+export default function ConversationContent({ receiverInfo, convo }: ConversationContentType) {
     const { loggedInUser } = useUserContext();
     const scrollPositionRef = useRef<number>(0);
     const [scrollPosition, setScrollPosition] = useState(0);
 
     const [allMessagesOrdered, setAllMessagesOrdered] = useState<AllMessagesType[]>([]);
     const [cursor, setCursor] = useState<string>('');
-    const [endReached, setEndReached] = useState(conversation.end);
+    const [endReached, setEndReached] = useState(convo.end);
     const [receiverIsTyping, setReceiverIsTyping] = useState(false);
     const { ref, inView } = useInView({
         threshold: 0,
@@ -41,14 +52,14 @@ export default function ConversationContent({ receiverInfo, conversation }: { re
     useEffect(() => {
         if (inView && !endReached && scrollPositionRef.current !== scrollPosition) {
             const fetchOldMsgs = async () => {
-                const response = await fetch(`/api/conversations/${conversation.id}?cursor=${cursor}`, {
+                const response = await fetch(`/api/conversations/${convo.conversation.id}?cursor=${cursor}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     cache: 'no-cache',
                 });
-                const { messages, end }: { messages: MessageType[], end: boolean } = await response.json();
+                const { messages, end } = await response.json() as ConversationContentMoreMessagesType;
 
                 if (messages.length === 0 && end === true) {
                     setEndReached(true);
@@ -76,7 +87,7 @@ export default function ConversationContent({ receiverInfo, conversation }: { re
 
             fetchOldMsgs();
         }
-    }, [inView, conversation, cursor, loggedInUser, endReached, scrollPosition]);
+    }, [inView, convo, cursor, loggedInUser, endReached, scrollPosition]);
 
     // Handle new messages via sockets
     useEffect(() => {
@@ -92,10 +103,10 @@ export default function ConversationContent({ receiverInfo, conversation }: { re
                 { ...message, createdAt: new Date(message.createdAt).getTime(), sender: message.senderId === loggedInUser.id ? true : false, readStatus: message.senderId === loggedInUser.id ? false : true, status: 'sent' }
             ]);
 
-            message.senderId !== loggedInUser.id && socket.emit('conversation_seen_status', conversation.id, message.id);
+            message.senderId !== loggedInUser.id && socket.emit('conversation_seen_status', convo.conversation.id, message.id);
         });
 
-        socket.on('message_typing_status', (typingUser: null | string ) => {
+        socket.on('message_typing_status', (typingUser: null | string) => {
             typingUser === loggedInUser.username || typingUser === null ? setReceiverIsTyping(false) : setReceiverIsTyping(true);
         });
 
@@ -114,16 +125,16 @@ export default function ConversationContent({ receiverInfo, conversation }: { re
             socket.off('message_typing_status');
             socket.off('message_seen');
         };
-    }, [conversation, loggedInUser]);
+    }, [convo, loggedInUser]);
 
     // Connect to conversation room
     useEffect(() => {
         socket.connect();
-        socket.emit('join_conversation_room', conversation.id, loggedInUser.username);
+        socket.emit('join_conversation_room', convo.conversation.id, loggedInUser.username);
 
         // Initial message mapping and setting cursor
-        if (conversation.messages.length !== 0) {
-            const allMsgsOrdered = conversation.messages
+        if (convo.conversation.messages.length !== 0) {
+            const allMsgsOrdered = convo.conversation.messages
                 .map((msg) => ({
                     id: msg.id,
                     content: msg.content,
@@ -154,7 +165,7 @@ export default function ConversationContent({ receiverInfo, conversation }: { re
             socket.disconnect();
             socket.off('conversation_seen');
         };
-    }, [conversation, loggedInUser]);
+    }, [convo, loggedInUser]);
 
     return (
         <div className="h-full grid grid-cols-1 grid-rows-conversation-content">
@@ -169,7 +180,7 @@ export default function ConversationContent({ receiverInfo, conversation }: { re
             />
             <div className='feed-hr-line mt-auto'></div>
             <ConversationInput
-                conversationId={conversation.id}
+                conversationId={convo.conversation.id}
                 setAllMessagesOrdered={setAllMessagesOrdered}
                 setScrollPosition={setScrollPosition}
             />

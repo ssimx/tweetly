@@ -9,6 +9,7 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Loader2 } from 'lucide-react';
 import { useUserContext } from '@/context/UserContextProvider';
+import { getErrorMessage } from '@/lib/utils';
 
 type FormData = z.infer<typeof settingsChangeUsername>;
 
@@ -93,7 +94,7 @@ export default function ChangeUsername() {
             if (!response.ok) {
                 const errorData = await response.json();
                 setUsernameChanged(false);
-                throw new Error(errorData.error);
+                throw new Error(getErrorMessage(errorData));
             }
 
             setUsernameChanged(true);
@@ -108,6 +109,9 @@ export default function ChangeUsername() {
                     console.error(error);
                     reset();
                 }
+            } else {
+                console.error(error);
+                reset();
             }
         }
     };

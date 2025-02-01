@@ -141,11 +141,26 @@ export const newPostSchema = z.object({
     text: z
         .string()
         .trim()
-        .min(1, 'Please enter the post content')
-        .max(280, "Post can't exceed 280 characters"),
+        .max(280, "Post can't exceed 280 characters")
+        .optional(),
+    images: z
+        .array(z.string())
+        .optional(),
+    imagesPublicIds: z
+        .array(z.string())
+        .optional(),
     replyToId: z
         .number()
-        .optional()
+        .optional(),
+}).superRefine((data, ctx) => {
+    // Check if text is empty
+    if (!data.images && data.text?.length === 0) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Please enter the post content",
+            path: ['text'], // Path for error message
+        });
+    }
 });
 
 export const updateProfileSchema = z.object({

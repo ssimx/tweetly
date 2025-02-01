@@ -1,12 +1,10 @@
-import { getToken, removeSession, verifySession } from "@/lib/session";
-import { revalidateTag } from "next/cache";
+import { extractToken, getToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(req: NextRequest, props: { params: Promise<{ username: string }> }) {
-    const params = await props.params;
     if (req.method === 'DELETE') {
-        const token = await getToken();
-
+        const authHeader = req.headers.get('Authorization');
+        const token = await extractToken(authHeader) || await getToken();
         if (token) {
             const session = await verifySession(token);
 
@@ -20,6 +18,8 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ userna
 
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
+            const params = await props.params;
+
             const response = await fetch(`${apiUrl}/users/removeFollow/${params.username}`, {
                 method: 'DELETE',
                 headers: {
@@ -29,7 +29,6 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ userna
             });
 
             if (response.ok) {
-                revalidateTag('followSuggestions');
                 return NextResponse.json(true);
             } else {
                 const errorData = await response.json();

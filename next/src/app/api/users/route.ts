@@ -1,15 +1,15 @@
-import { decryptSession, extractToken, getToken, removeSession, verifySession } from "@/lib/session";
+import { decryptSession, extractToken, removeSession, verifySession } from "@/lib/session";
+import { UserInfo } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
         const authHeader = req.headers.get('Authorization');
-        const token = await extractToken(authHeader) || await getToken();
+        const token = await extractToken(authHeader);
         const username = await decryptSession(token).then(res => res?.username);
 
         if (token) {
             const isValid = await verifySession(token);
-
             if (!isValid.isAuth) {
                 await removeSession();
                 return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 400 });
@@ -29,8 +29,8 @@ export async function GET(req: NextRequest) {
             });
 
             if (response.ok) {
-                const data = await response.json().then((res) => res.userData);
-                if (data.username !== username) {
+                const data = await response.json() as { user: UserInfo};
+                if (data.user.username !== username) {
                     // Delete the cookie if usernames do not match
                     return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 400 });
                 }

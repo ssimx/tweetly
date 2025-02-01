@@ -1,29 +1,10 @@
 'use client';
-import { getErrorMessage } from "@/lib/utils";
-import { createContext, useContext, useEffect, useState } from "react";
-
-export interface FollowSuggestionType {
-    username: string;
-    profile: {
-        name: string;
-        bio: string;
-        profilePicture: string;
-    };
-    following: {
-        followeeId: number;
-    }[];
-    followers: {
-        followerId: number;
-    }[];
-    _count: {
-        followers: number;
-        following: number;
-    };
-    isFollowing: boolean,
-};
+import { FollowSuggestionType } from "@/lib/types";
+import { createContext, useContext, useState } from "react";
 
 interface FollowSuggestionContextType {
     suggestions: FollowSuggestionType[] | undefined;
+    setSuggestions: React.Dispatch<React.SetStateAction<FollowSuggestionType[]>>;
     updateFollowState: (userId: string, isFollowing: boolean) => void;
 };
 
@@ -36,57 +17,27 @@ export const useFollowSuggestionContext = () => {
     }
 
     return context;
-}
+};
+
+// need persistent variable to keep following state when context re-renders, state doesn't work while navigating the webpage.
+// this is good until context remounts, which is exactly what was intended
+let savedSuggestions: FollowSuggestionType[];
 
 export default function FollowSuggestionContextProvider({ followSuggestions, children }: { followSuggestions: FollowSuggestionType[], children: React.ReactNode }) {
-    const [suggestions, setSuggestions] = useState<FollowSuggestionType[]>(followSuggestions);
-
-    // const fetchFollowSuggestions = async (): Promise<void> => {
-    //     try {
-    //         const response = await fetch('http://localhost:3000/api/users/followSuggestions', {
-    //             method: 'GET',
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //             },
-    //         });
-
-    //         if (!response.ok) {
-    //             const errorData = await response.json();
-    //             throw new Error(getErrorMessage(errorData));
-    //         }
-
-    //         const followSuggestions: FollowSuggestionType[] = await response.json().then((res) => {
-    //             const mappedUsers = res.map((user: Omit<FollowSuggestionType, 'isFollowing'>) => {
-    //                 return { ...user, isFollowing: false };
-    //             });
-
-    //             return mappedUsers;
-    //         });
-            
-    //         setSuggestions(followSuggestions);
-    //         return;
-    //     } catch (error) {
-    //         const errorMessage = getErrorMessage(error);
-    //         console.error('Error fetching trending hashtags:', errorMessage);
-    //         return;
-    //     }
-    // };
+    const [suggestions, setSuggestions] = useState<FollowSuggestionType[]>(savedSuggestions || followSuggestions);
 
     const updateFollowState = async (username: string, isFollowing: boolean) => {
         if (suggestions === undefined) return;
 
-        setSuggestions((current) => {
-            if (!current) return [];
-            return current.map((user) => (user.username === username ? { ...user, isFollowing } : user))
+        const updatedSuggestions = suggestions.map((user) => (user.username === username ? { ...user, isFollowing } : user));
+        setSuggestions(() => {
+            return [ ...updatedSuggestions ]
         });
+        savedSuggestions = [ ...updatedSuggestions ] as FollowSuggestionType[];
     };
 
-    // useEffect(() => {
-    //     fetchFollowSuggestions();
-    // }, [])
-
     return (
-        <FollowSuggestionContext.Provider value={{ suggestions, updateFollowState }}>
+        <FollowSuggestionContext.Provider value={{ suggestions, setSuggestions, updateFollowState }}>
             { children }
         </FollowSuggestionContext.Provider>
     )

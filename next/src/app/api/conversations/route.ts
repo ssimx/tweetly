@@ -1,14 +1,15 @@
 import { extractToken, getToken, removeSession, verifySession } from "@/lib/session";
+import { ConversationsListType } from "@/lib/types";
+import { getErrorMessage } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
-        const searchParams = req.nextUrl.searchParams;
         const authHeader = req.headers.get('Authorization');
+        // need getToken() to extract the token from client component for infinite scroll
         const token = await extractToken(authHeader) || await getToken();
-
         if (token) {
             const isValid = await verifySession(token);
 
@@ -22,6 +23,7 @@ export async function GET(req: NextRequest) {
 
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
+            const searchParams = req.nextUrl.searchParams;
             const query = searchParams.get('cursor');
 
             if (query !== null) {
@@ -33,13 +35,13 @@ export async function GET(req: NextRequest) {
                     },
                 });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    return NextResponse.json(data);
-                } else {
+                if (!response.ok) {
                     const errorData = await response.json();
-                    return NextResponse.json({ error: errorData.error }, { status: response.status });
+                    return NextResponse.json({ error: getErrorMessage(errorData) }, { status: response.status });
                 }
+                
+                const conversations = await response.json() as ConversationsListType;
+                return NextResponse.json(conversations);
             } else {
                 const response = await fetch(`${apiUrl}/conversations`, {
                     method: 'GET',
@@ -49,13 +51,13 @@ export async function GET(req: NextRequest) {
                     }
                 })
 
-                if (response.ok) {
-                    const data = await response.json();
-                    return NextResponse.json(data);
-                } else {
+                if (!response.ok) {
                     const errorData = await response.json();
-                    return NextResponse.json({ error: errorData.error }, { status: response.status });
+                    return NextResponse.json({ error: getErrorMessage(errorData) }, { status: response.status });
                 }
+
+                const conversations = await response.json() as ConversationsListType;
+                return NextResponse.json(conversations);
             }
         } catch (error) {
             // Handle other errors

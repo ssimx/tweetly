@@ -1,5 +1,4 @@
 'use client';
-import { Reply } from './ProfileContent';
 import Link from 'next/link';
 import Image from 'next/image';
 import UserHoverCard from '../UserHoverCard';
@@ -8,18 +7,18 @@ import PostBtns from '../posts/PostBtns';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ProfileContentReplyParent from './ProfileContentReplyParent';
-import PostContent from '../PostContent';
+import PostText from '../posts/PostText';
+import PostImages from '../posts/PostImages';
+import { BasicPostType, ProfileReplyPostType } from '@/lib/types';
 
-export default function ProfileContentReply({ replyPost }: { replyPost: Reply }) {
+export default function ProfileContentReply({ replyPost }: { replyPost: ProfileReplyPostType }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(replyPost.author['_count'].followers === 1);
     const [followersCount, setFollowersCount] = useState(replyPost.author.followers.length);
-
     // state to show whether the profile follows logged in user
     const [isFollowingTheUser,] = useState(replyPost.author.following.length === 1);
-
     const router = useRouter();
 
-    const parentPost = JSON.parse(JSON.stringify(replyPost.replyTo))
+    const parentPost = JSON.parse(JSON.stringify(replyPost.replyTo)) as BasicPostType;
 
     const handleCardClick = () => {
         router.push(`/${replyPost.author.username}/status/${replyPost.id}`);
@@ -63,8 +62,9 @@ export default function ProfileContentReply({ replyPost }: { replyPost: Reply })
                             <p>·</p>
                             <p className='whitespace-nowrap'>{formatPostDate(replyPost.createdAt)}</p>
                         </div>
-                        <div className='post-content'>
-                            <PostContent content={replyPost.content} />
+                        <div className='post-content flex-col'>
+                            <PostText content={replyPost.content} />
+                            <PostImages images={replyPost.images} />
                         </div>
                         <div className='!border-t-0 post-btns'>
                             <PostBtns

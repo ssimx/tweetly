@@ -1,11 +1,11 @@
-import { extractToken, getToken, removeSession, verifySession } from "@/lib/session";
+import { extractToken, removeSession, verifySession } from "@/lib/session";
+import { getErrorMessage } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
         const authHeader = req.headers.get('Authorization');
-        const token = await extractToken(authHeader) || await getToken();
-
+        const token = await extractToken(authHeader);
         if (token) {
             const isValid = await verifySession(token);
 
@@ -27,13 +27,13 @@ export async function GET(req: NextRequest) {
                 },
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                return NextResponse.json(data);
-            } else {
+            if (!response.ok) {
                 const errorData = await response.json();
-                return NextResponse.json({ error: errorData.error }, { status: response.status });
+                return NextResponse.json({ error: getErrorMessage(errorData) }, { status: response.status });
             }
+
+            const posts = await response.json();
+            return NextResponse.json(posts);
         } catch (error) {
             // Handle other errors
             return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

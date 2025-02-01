@@ -1,5 +1,4 @@
 'use client';
-import { ConversationLastMessageType, MessagesType } from "@/app/(root)/messages/page";
 import {
     Command,
     CommandEmpty,
@@ -11,16 +10,17 @@ import {
 import ConversationCard from "./ConversationCard";
 import { useRef, useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
+import { ConversationsListType } from "@/lib/types";
 
-export default function SearchInput({ messages }: { messages: MessagesType }) {
-    const [convos, setConvos] = useState<ConversationLastMessageType[] | undefined>();
+export default function ConversationSearchInput({ messages }: { messages: ConversationsListType }) {
+    const [convos, setConvos] = useState(messages.conversations);
     const commandEmptyRef = useRef<HTMLDivElement>(null);
 
     // scroll and pagination
     const scrollPositionRef = useRef<number>(0);
     const [scrollPosition, setScrollPosition] = useState(0);
     const [conversationCursor, setConversationCursor] = useState<string>();
-    const [endReached, setEndReached] = useState(true);
+    const [endReached, setEndReached] = useState(messages.end);
     const { ref, inView } = useInView({
         threshold: 0,
         delay: 100,
@@ -50,16 +50,16 @@ export default function SearchInput({ messages }: { messages: MessagesType }) {
                     },
                     cache: 'no-cache',
                 });
-                const { olderConversations, end }: { olderConversations: ConversationLastMessageType[], end: boolean } = await response.json();
+                const { conversations, end } = await response.json() as ConversationsListType;
 
-                if (olderConversations.length === 0 && end === true) {
+                if (conversations.length === 0 && end === true) {
                     setEndReached(true);
                     return;
                 }
 
-                setConvos((currentConvos) => [...currentConvos, ...olderConversations]);
+                setConvos((currentConvos) => [...currentConvos, ...conversations]);
 
-                setConversationCursor(olderConversations[olderConversations.length === 0 ? 0 : olderConversations.length - 1].id);
+                setConversationCursor(conversations[conversations.length === 0 ? 0 : conversations.length - 1].id);
                 setScrollPosition(scrollPositionRef.current);
             }
 
@@ -71,13 +71,6 @@ export default function SearchInput({ messages }: { messages: MessagesType }) {
         // there are issues with CommandEmpty being visible on component mount for quick second
         // so the only solution is to hide the div and unhide after mount
         commandEmptyRef.current && commandEmptyRef.current.classList.remove('hidden');
-
-        if (messages.conversations) {
-            messages.conversations.length !== 0 && setConversationCursor(messages.conversations[messages.conversations.length - 1].id);
-            messages.conversations.length !== 0 && setConvos(messages.conversations);
-        }
-
-        setEndReached(messages.end);
     }, [messages]);
     
     return (

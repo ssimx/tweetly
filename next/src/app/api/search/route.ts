@@ -3,8 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { searchSchema } from "@/lib/schemas";
 
-export const dynamic = 'force-dynamic';
-
 export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
         const searchParams = req.nextUrl.searchParams;
@@ -13,7 +11,6 @@ export async function GET(req: NextRequest) {
 
         if (token) {
             const isValid = await verifySession(token);
-
             if (!isValid.isAuth) {
                 await removeSession();
                 return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 400 });

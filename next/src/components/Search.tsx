@@ -33,10 +33,10 @@ export default function Search({ searchQuery }: { searchQuery?: string }) {
     const [loading, setLoading] = useState(false);
     const searchContainer = useRef<HTMLDivElement | null>(null);
     const router = useRouter();
-    const { trendingHashtags } = useTrendingContext();
+    const { hashtags } = useTrendingContext();
 
     // Match trending hashtags based on the search text
-    const matchedHashtags = trendingHashtags && trendingHashtags.filter((hashtag) => {
+    const matchedHashtags = hashtags && hashtags.filter((hashtag) => {
         const words = text.toLowerCase().replaceAll('#', '').split(' ');
         return words.some((word) => hashtag.name.toLowerCase().includes(word));
     }).map((hashtag) => hashtag.name);

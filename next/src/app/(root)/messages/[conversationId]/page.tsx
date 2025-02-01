@@ -1,36 +1,6 @@
 import ConversationContent from "@/components/messages/ConversationContent";
 import ConversationHeader from "@/components/messages/ConversationHeader";
-import { decryptSession, getToken } from "@/lib/session";
-import { redirect } from "next/navigation";
-
-export interface ConversationType {
-    id: string,
-    participants: {
-        user: {
-            username: string,
-            createdAt: string,
-            profile: {
-                profilePicture: string,
-                name: string,
-                bio: string,
-            },
-            _count: {
-                followers: number,
-            }
-        }
-    }[],
-    messages: {
-        id: string,
-        content: string,
-        readStatus: boolean,
-        createdAt: string,
-        updatedAt: string,
-        sender: {
-            username: string
-        }
-    }[] | [],
-    end: boolean,
-}
+import { getConversationById, getLoggedInUser } from "@/data-acess-layer/user-dto";
 
 export interface ParticipantType {
     username: string,
@@ -43,7 +13,7 @@ export interface ParticipantType {
     _count: {
         followers: number,
     }
-}
+};
 
 export interface MessageType {
     id: string,
@@ -71,31 +41,18 @@ export interface ReceiverType {
 
 export default async function Conversation(props: { params: Promise<{ conversationId: string }> }) {
     const params = await props.params;
-    const token = await getToken();
-    const payload = await decryptSession(token);
+    const convo = await getConversationById(params.conversationId);
+    const user = await getLoggedInUser();
 
-    if (!payload) return redirect('/login');
-
-    const response = await fetch(`http://localhost:3000/api/conversations/${params.conversationId}`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        },
-        cache: 'no-store',
-    });
-    const conversation = await response.json() as ConversationType;
-    if (!conversation.participants.some(participant => participant.user.username === payload.username)) return redirect('/');
-
-    // filter out user on the other side of the conversation
-    const receiver = conversation.participants.filter((participant) => participant.user.username !== payload.username);
-    // if both participants share username with logged in user, it's self-conversation
-    const receiverInfo: ReceiverType = receiver.length === 1 ? receiver[0].user : conversation.participants[0].user;
+    // // filter out user on the other side of the conversation
+    const receiver = convo.conversation.participants.filter((participant) => participant.user.username !== user.username);
+    // // if both participants share username with logged in user, it's self-conversation
+    const receiverInfo: ReceiverType = receiver.length === 1 ? receiver[0].user : convo.conversation.participants[0].user;
 
     return (
         <div className='' style={{ height: 'calc(100vh - var(--header-size))' }}>
             <ConversationHeader receiverInfo={receiverInfo} />
-            <ConversationContent receiverInfo={receiverInfo} conversation={conversation} />
+            <ConversationContent receiverInfo={receiverInfo} convo={convo} />
         </div>
     )
 }

@@ -5,7 +5,8 @@ import PostBtns from './PostBtns';
 import Link from 'next/link';
 import UserHoverCard from '../UserHoverCard';
 import { useState } from 'react';
-import PostContent from '../PostContent';
+import PostText from './PostText';
+import PostImages from './PostImages';
 
 
 export default function PostInfo({ post }: { post: PostType }) {
@@ -45,8 +46,9 @@ export default function PostInfo({ post }: { post: PostType }) {
                         <p>@{post.author.username}</p>
                     </div>
                 </div>
-                <div className='post-content'>
-                    <PostContent content={post.content} />
+                <div className='post-content flex-col'>
+                    <PostText content={post.content} />
+                    <PostImages images={post.images} />
                 </div>
                 <div className='post-footer'>
                     <p>{postTime}</p>
