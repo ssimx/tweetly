@@ -2,13 +2,13 @@
 import { BasicPostType } from '@/lib/types';
 import Link from 'next/link';
 import Image from 'next/image';
-import { formatPostDate } from '@/lib/utils';
 import PostBtns from '../PostBtns';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import UserHoverCard from '../../UserHoverCard';
 import PostText from '@/components/posts/PostText';
 import PostImages from '../PostImages';
+import PostDate from '../PostDate';
 
 export default function ReplyPost({ post }: { post: BasicPostType }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
@@ -55,7 +55,7 @@ export default function ReplyPost({ post }: { post: BasicPostType }) {
                         isFollowingTheUser={isFollowingTheUser} />
                     <p>@{post.author.username}</p>
                     <p>·</p>
-                    <p className='whitespace-nowrap'>{formatPostDate(post.createdAt)}</p>
+                    <PostDate createdAt={post.createdAt} />
                 </div>
             </div>
             <div className='post-content flex-col'>

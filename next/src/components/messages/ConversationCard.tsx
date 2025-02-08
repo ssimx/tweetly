@@ -1,10 +1,10 @@
 'use client';
 import { ConversationLastMessageType } from '@/app/(root)/conversations/page';
 import { useUserContext } from '@/context/UserContextProvider';
-import { formatPostDate } from '@/lib/utils';
 import Image from 'next/image';
 import Link from 'next/link';
 import React from 'react'
+import PostDate from '../posts/PostDate';
 
 interface MessageUserPreviewType {
     username: string;
@@ -40,7 +40,7 @@ export default function ConversationCard({ convo }: { convo: ConversationLastMes
                         <p className='font-bold text-primary-text whitespace-nowrap overflow-hidden'>{messageUserPreviewInfo.profile?.name}</p>
                         <p className=''>@{messageUserPreviewInfo.username}</p>
                         <p>·</p>
-                        <p className='whitespace-nowrap'>{formatPostDate(convo.updatedAt)}</p>
+                        <PostDate createdAt={convo.updatedAt} />
                         {convo.lastMessage.sender.username !== loggedInUser.username && convo.lastMessage.readStatus === false && (
                             <div className='ml-auto self-center bg-primary rounded-full w-[8px] h-[8px] group-hover:scale-110'></div>
                         )}

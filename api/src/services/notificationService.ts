@@ -106,27 +106,20 @@ export const createNotificationsForNewLike = async (postId: number, authorId: nu
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const createNotificationsForNewFollower = async (postId: number, authorId: number) => {
-    // fetch all followers who have notifications enabled for the author
-    const followers = await prisma.pushNotification.findMany({
+export const createNotificationsForNewFollower = async (notifierId: number, receiverUsername: string) => {
+    const receiverId = await prisma.user.findUnique({
         where: {
-            notifierId: authorId,
-        },
-        select: {
-            receiverId: true,
+            username: receiverUsername
         }
-    });
-
-    // create a notification for each follower
-    const notifications = followers.map(follower => ({
-        typeId: 5,
-        postId: postId,
-        notifierId: authorId,
-        receiverId: follower.receiverId,
-    }));
+    }).then(res => res?.id);
+    if (!receiverId) return;
 
     return await prisma.notification.createMany({
-        data: notifications
+        data: {
+            typeId: 5,
+            notifierId: notifierId,
+            receiverId: receiverId
+        }
     });
 };
 
@@ -232,7 +225,7 @@ export const removeNotificationsForFollow = async (postId: number, notifierId: n
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getNotifications = async (userId: number) => {
+export const getNotifications = async (userId: number, cursor?: number) => {
     return await prisma.notification.findMany({
         where: {
             receiverId: userId,
@@ -240,6 +233,9 @@ export const getNotifications = async (userId: number) => {
         orderBy: {
             createdAt: 'desc'
         },
+        cursor: cursor ? { id: cursor } : undefined,
+        skip: cursor ? 1 : 0,
+        take: 25,
         select: {
             id: true,
             type: {
@@ -398,6 +394,22 @@ export const getNotifications = async (userId: number) => {
                     }
                 }
             }
+        }
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getOldestNotification = async (userId: number) => {
+    return await prisma.notification.findFirst({
+        where: {
+            receiverId: userId,
+        },
+        orderBy: {
+            createdAt: 'asc'
+        },
+        select: {
+            id: true,
         }
     });
 };

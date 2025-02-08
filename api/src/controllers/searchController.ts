@@ -66,7 +66,7 @@ export async function searchPostsWithCursor(req: Request, res: Response) {
 
     try {
         // fetch posts that contain either hastags, users or strings
-        const lastSearchPostId = await getLastPostBySearch(user.id, queryParams.segments).then(res => res[0].id);
+        const lastSearchPostId = await getLastPostBySearch(user.id, queryParams.segments).then(res => res?.id);
         if (lastSearchPostId) {
             if (cursor === lastSearchPostId) {
                 return res.status(200).json({
@@ -130,8 +130,8 @@ export async function searchUsersAndPosts(req: Request, res: Response) {
             postsPromise || Promise.resolve([])
         ]);
 
-        if (lastSearchPost.length === 1 && posts) {
-            if (posts.slice(-1)[0].id === lastSearchPost[0].id) {
+        if (lastSearchPost && posts) {
+            if (posts.slice(-1)[0].id === lastSearchPost.id) {
                 return res.status(200).json({
                     users,
                     posts,

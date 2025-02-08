@@ -2,10 +2,9 @@
 import { useUserContext } from '@/context/UserContextProvider';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card';
-import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import { useRouter } from 'next/navigation';
+import FollowBtn from './FollowBtn';
 
 interface AuthorType {
     username: string,
@@ -32,67 +31,9 @@ export default function UserHoverCard({
     setIsFollowedByTheUser,
     isFollowingTheUser,
 }: UserHoverCardType) {
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const followBtn = useRef<HTMLButtonElement>(null);
     const { loggedInUser } = useUserContext();
-    const { suggestions, updateFollowState } = useFollowSuggestionContext();
-    const [isFollowing, setIsFollowing] = useState(isFollowedByTheUser);
     const userIsAuthor = author.username === loggedInUser.username;
     const router = useRouter();
-
-    useEffect(() => {
-        if (suggestions?.some((user) => user.username === author.username)) {
-            const following = suggestions.find((user) => user.username === author.username)?.isFollowing as boolean;
-            setIsFollowing(following);
-        }
-    }, [author, suggestions]);
-
-    const handleFollow = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-        e.stopPropagation();
-        e.preventDefault();
-
-        if (isSubmitting) return;
-
-        setIsSubmitting(true);
-        followBtn.current && followBtn.current.setAttribute('disabled', "");
-
-        try {
-            if (isFollowing) {
-                const unfollow = await fetch(`/api/users/removeFollow/${author.username}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-
-                if (!unfollow) throw new Error("Couldn't unfollow the user");
-
-                setIsFollowedByTheUser(false);
-                setFollowersCount((current) => current - 1);
-                updateFollowState(author.username, false);
-                return;
-            } else {
-                const follow = await fetch(`/api/users/follow/${author.username}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-
-                if (!follow) throw new Error("Couldn't follow the user");
-
-                setIsFollowedByTheUser(true);
-                setFollowersCount((current) => current + 1);
-                updateFollowState(author.username, true);
-                return;
-            }
-        } catch (error) {
-            console.error(error);
-        } finally {
-            followBtn.current && followBtn.current.removeAttribute('disabled');
-            setIsSubmitting(false);
-        }
-    };
 
     const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
         e.stopPropagation();
@@ -101,7 +42,11 @@ export default function UserHoverCard({
     return (
         <div onClick={() => router.push(`/${author.username}`)} role='link'>
             <HoverCard>
-                <HoverCardTrigger href={`/${author.username}`} className='text-primary-text w-fit whitespace-nowrap overflow-hidden font-bold hover:underline' onClick={(e) => handleLinkClick(e)}>{author.name}</HoverCardTrigger>
+                <HoverCardTrigger asChild onClick={(e) => handleLinkClick(e)}>
+                    <Link href={`/${author.username}`} className='text-primary-text w-fit whitespace-nowrap overflow-hidden font-bold hover:underline'>
+                        {author.name}
+                    </Link>
+                </HoverCardTrigger>
                 <HoverCardContent>
                     <div className='user-hover-card-info'>
                         <div className='user-hover-card-header'>
@@ -113,20 +58,14 @@ export default function UserHoverCard({
                                     className='w-[60px] h-[60px] rounded-full group-hover:outline group-hover:outline-primary/10' />
                             </Link>
                             <div>
-                                {
-                                    !userIsAuthor ?
-                                        isFollowing
-                                            ? (
-                                                <button
-                                                    className="follow-btn following before:content-['Following'] hover:before:content-['Unfollow']"
-                                                    onClick={(e) => handleFollow(e)} ref={followBtn} >
-                                                </button>
-                                            )
-                                            : <button className='follow-btn' onClick={handleFollow} ref={followBtn}>
-                                                Follow
-                                            </button>
-                                        : null
-                                }
+                                {!userIsAuthor && (
+                                    <FollowBtn
+                                        username={author.username}
+                                        isFollowedByTheUser={isFollowedByTheUser}
+                                        setIsFollowedByTheUser={setIsFollowedByTheUser}
+                                        setFollowersCount={setFollowersCount}
+                                    />
+                                )}
                             </div>
                         </div>
                         <div className='flex flex-col'>

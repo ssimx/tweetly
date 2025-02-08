@@ -27,7 +27,6 @@ export default function FeedContent({ initialPosts }: { initialPosts: { posts: B
     const { ref, inView } = useInView({
         threshold: 0,
         delay: 100,
-
     });
 
     // reset

@@ -1,8 +1,9 @@
+import { createNotificationsForNewFollower } from './../services/notificationService';
 import { Request, Response } from 'express';
 import { addBlock, addFollow, addPushNotifications, deactivateUser, getFollowers, getFollowing, getFollowSuggestions, getProfile, getUser, getUserByEmail, getUserBySearch, getUserPassword, isUserDeactivated, removeBlock, removeFollow, removePushNotfications, updateProfile, updateUserBirthday, updateUserEmail, updateUserPassword, updateUserUsername } from '../services/userService';
 import { ProfileInfo, UserProps } from '../lib/types';
 import { deleteImageFromCloudinary } from './uploadController';
-import { getNotifications, updateNotificationsToRead } from '../services/notificationService';
+import { getNotifications, getOldestNotification, updateNotificationsToRead } from '../services/notificationService';
 import { generateToken } from '../utils/jwt';
 const bcrypt = require('bcrypt');
 
@@ -145,8 +146,9 @@ export const followUser = async (req: Request, res: Response) => {
 
     try {
         const response = await addFollow(user.id, username);
-
         if (!response) return res.status(404).json({ error: 'failure' })
+        
+        createNotificationsForNewFollower(user.id, username);
 
         return res.status(201).json('success');
     } catch (error) {
@@ -249,18 +251,53 @@ export const disablePushNotifications = async (req: Request, res: Response) => {
 
 export const getUserNotifications = async (req: Request, res: Response) => {
     const user = req.user as UserProps;
+    const params = req.query;
+    const cursor = params.cursor;
 
     try {
-        const notifications = await getNotifications(user.id);
+        if (cursor) {
+            const oldestNotificationId = await getOldestNotification(user.id).then(res => res?.id);
+            if (oldestNotificationId) {
+                // check if current cursor equals last post id
+                // if truthy, return empty array and set the end to true
+                if (Number(cursor) === oldestNotificationId) {
+                    return res.status(200).json({
+                        notifications: [],
+                        end: true
+                    });
+                }
+            }
 
-        if (!notifications) return res.status(404).json({ error: 'User has no notifications' });
+            const notifications = await getNotifications(user.id, Number(cursor));
+            await updateNotificationsToRead(user.id);
 
-        await updateNotificationsToRead(user.id);
-
-        return res.status(201).json({ notifications });
+            return res.status(200).json({
+                notifications: notifications,
+                // check if older posts array is empty and if truthy set the end to true
+                // check if new cursor equals last post id
+                //  if truthy, return older posts and set the end to true
+                end: notifications.length === 0
+                        ? true
+                        : oldestNotificationId === notifications.slice(-1)[0].id
+                            ? true
+                            : false,
+            });
+        } else {
+            const oldestNotificationId = await getOldestNotification(user.id).then(res => res?.id);
+            const notifications = await getNotifications(user.id, Number(cursor));
+            await updateNotificationsToRead(user.id);
+            
+            return res.status(200).json({
+                notifications: notifications,
+                end: !oldestNotificationId
+                    ? true : oldestNotificationId === notifications.slice(-1)[0].id
+                        ? true
+                        : false
+            });
+        }
     } catch (error) {
-        console.error('Error getting notifications: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        console.error('Error fetching data: ', error);
+        return res.status(500).json({ error: 'Failed to fetch notifications' });
     }
 };
 

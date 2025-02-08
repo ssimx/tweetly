@@ -178,7 +178,6 @@ export type BookmarkedPostType = BasePostType & {
     replyTo?: BasePostType,
 };
 
-
 export interface PostInfoType {
     id: number,
     content: string,
@@ -319,10 +318,8 @@ export interface ReplyPostType {
                 followeeId: number,
             }[] | [],
             _count: {
-                select: {
-                    followers: true,
-                    following: true,
-                }
+                followers: number,
+                following: number,
             }
         },
         reposts: {
@@ -399,10 +396,8 @@ export interface MediaPostType {
                 followeeId: number,
             }[] | [],
             _count: {
-                select: {
-                    followers: true,
-                    following: true,
-                }
+                followers: number,
+                following: number,
             }
         },
         reposts: {
@@ -514,9 +509,44 @@ export interface LikedPostType {
     }
 };
 
-export interface BookmarkType {
+export interface NotificationType {
+    id: number;
+    type: {
+        name: string;
+        description: string;
+    };
+    isRead: boolean,
+    notifier: {
+        username: string,
+        profile: {
+            name: string,
+            profilePicture: string,
+            bio: string
+        },
+        followers: {
+            followerId: number,
+        }[] | [],
+        following: {
+            followeeId: number,
+        }[] | [],
+        _count: {
+            followers: number,
+            following: number,
+        }
+    };
+    post?: BasePostType | ReplyPostType
+};
+
+export type NotificationPostType = NotificationType & {
+    post: BasePostType | ReplyPostType;
+};
+
+export type NotificationFollowType = NotificationType;
+
+export interface BookmarkPostType {
     id: number,
-    content: string,
+    content?: string,
+    images?: string[],
     createdAt: string,
     updatedAt: string,
     replyTo?: {
@@ -571,34 +601,6 @@ export interface BookmarkType {
         reposts: number,
         likes: number,
     }
-};
-
-export interface NotificationType {
-    id: number;
-    type: {
-        name: string;
-        description: string;
-    };
-    isRead: boolean,
-    notifier: {
-        username: string,
-        profile: {
-            name: string,
-            profilePicture: string,
-            bio: string
-        },
-        followers: {
-            followerId: number,
-        }[] | [],
-        following: {
-            followeeId: number,
-        }[] | [],
-        _count: {
-            followers: number,
-            following: number,
-        }
-    };
-    post?: 
 };
 
 export interface ConversationsListType {

@@ -61,7 +61,8 @@ export default function ProfileDynamicInfo({ user, loggedInUser }: { user: Profi
                         )}
 
                         {!hasBlockedTheUser && !isBlockedByTheUser && (
-                            <FollowBtn username={user.username}
+                            <FollowBtn
+                                username={user.username}
                                 setFollowersCount={setFollowersCount}
                                 isFollowedByTheUser={isFollowedByTheUser}
                                 setIsFollowedByTheUser={setIsFollowedByTheUser}

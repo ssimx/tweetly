@@ -1,6 +1,5 @@
 'use client';
 import { BasicPostType, FollowSuggestionType } from '@/lib/types';
-import { formatPostDate } from '@/lib/utils';
 import PostBtns from './PostBtns';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -11,6 +10,7 @@ import PostImages from './PostImages';
 import PostMenu from './PostMenu';
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
 import PostAuthorImage from './PostAuthorImage';
+import PostDate from './PostDate';
 
 export default function FeedPost({ post, searchSegments }: { post: BasicPostType, searchSegments?: string[] }) {
     const [postAuthor, setPostAuthor] = useState<FollowSuggestionType>({ ...post.author, isFollowing: post.author.followers.length === 1 });
@@ -94,7 +94,7 @@ export default function FeedPost({ post, searchSegments }: { post: BasicPostType
                         isFollowingTheUser={isFollowingTheUser} />
                     <p>@{postAuthor.username}</p>
                     <p>·</p>
-                    <p className='whitespace-nowrap'>{formatPostDate(post.createdAt)}</p>
+                    <PostDate createdAt={post.createdAt} />
                     <PostMenu
                         post={post}
                         isFollowedByTheUser={isFollowedByTheUser}

@@ -2,12 +2,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import UserHoverCard from '../UserHoverCard';
-import { formatPostDate } from '@/lib/utils';
 import PostBtns from './PostBtns';
 import { SetStateAction, useState } from 'react';
 import { Reply } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { BookmarkedPostType } from '@/lib/types';
+import PostDate from './PostDate';
 
 export default function BookmarkedPost({ post }: { post: BookmarkedPostType }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
@@ -84,7 +84,7 @@ export default function BookmarkedPost({ post }: { post: BookmarkedPostType }) {
                             isFollowingTheUser={isFollowingTheUser} />
                         <p>@{post.author.username}</p>
                         <p>·</p>
-                        <p className='whitespace-nowrap'>{formatPostDate(post.createdAt)}</p>
+                        <PostDate createdAt={post.createdAt} />
                     </div>
                     <div className='feed-post-content post-content'>
                         <p>{post.content}</p>

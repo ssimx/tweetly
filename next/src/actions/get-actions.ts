@@ -1,7 +1,7 @@
 'use server';
 import { getCurrentUserToken } from "@/data-acess-layer/auth";
 import { getPostInfo } from "@/data-acess-layer/user-dto";
-import { BasicPostType } from "@/lib/types";
+import { BasicPostType, BookmarkPostType, NotificationType } from "@/lib/types";
 import { getErrorMessage } from "@/lib/utils";
 
 // GET actions for client/dynamic components
@@ -72,7 +72,6 @@ export async function getNewPostsForHomeGlobalFeed(postCursor?: number) {
     }
 };
 
-
 export async function getHomeFollowingFeed() {
     const token = await getCurrentUserToken();
 
@@ -109,7 +108,7 @@ export async function getMorePostsForHomeFollowingFeed(postCursor: number) {
     const token = await getCurrentUserToken();
 
     try {
-        const response = await fetch(`http://localhost:3000/api/posts/feed/following?cursor=${postCursor}`, {
+        const response = await fetch(`http://localhost:3000/api/posts/feed/following?cursor=${postCursor}&type=old`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -134,6 +133,40 @@ export async function getMorePostsForHomeFollowingFeed(postCursor: number) {
         const errorMessage = getErrorMessage(error);
         console.error(errorMessage);
         return { posts: undefined, end: true };
+    }
+};
+
+export async function getNewPostsForHomeFollowingFeed(postCursor?: number) {
+    const token = await getCurrentUserToken();
+
+    try {
+        const response = await fetch(`http://localhost:3000/api/posts/feed/following?cursor=${postCursor}&type=new`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(getErrorMessage(errorData));
+        }
+
+        const followingFeedPosts = await response.json().then((res) => {
+            if (typeof res === 'object' && res !== null && 'posts' in res) {
+                return { posts: res.posts as BasicPostType[]}
+            }
+            return { posts: [] as BasicPostType[]};
+        });
+
+        console.log(followingFeedPosts)
+
+        return followingFeedPosts;
+    } catch (error) {
+        const errorMessage = getErrorMessage(error);
+        console.error(errorMessage);
+        return { posts: undefined };
     }
 };
 
@@ -166,6 +199,70 @@ export async function getMoreRepliesForPost(postId: number, replyCursor: number)
             return { posts: [] as BasicPostType[], end: true };
         });
         return moreReplies;
+    } catch (error) {
+        const errorMessage = getErrorMessage(error);
+        console.error(errorMessage);
+        return { posts: undefined, end: true };
+    }
+};
+
+export async function getMoreNotifications(notificationCursor: number) {
+    const token = await getCurrentUserToken();
+
+    try {
+        const response = await fetch(`http://localhost:3000/api/users/notifications?cursor=${notificationCursor}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(getErrorMessage(errorData));
+        }
+
+        const notifications = await response.json().then((res) => {
+            if (typeof res === 'object' && res !== null && 'notifications' in res && 'end' in res) {
+                return { notifications: res.notifications as NotificationType[], end: res.end as boolean}
+            }
+            return { notifications: [] as NotificationType[], end: true };
+        });
+
+        return notifications;
+    } catch (error) {
+        const errorMessage = getErrorMessage(error);
+        console.error(errorMessage);
+        return { notifications: undefined, end: true };
+    }
+};
+
+export async function getMoreBookmarks(cursor: number) {
+    const token = await getCurrentUserToken();
+
+    try {
+        const response = await fetch(`http://localhost:3000/api/posts/bookmarks?cursor=${cursor}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(getErrorMessage(errorData));
+        }
+
+        const posts = await response.json().then((res) => {
+            if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
+                return { posts: res.posts as BookmarkPostType[], end: res.end as boolean}
+            }
+            return { posts: [] as BookmarkPostType[], end: true };
+        });
+
+        return posts;
     } catch (error) {
         const errorMessage = getErrorMessage(error);
         console.error(errorMessage);

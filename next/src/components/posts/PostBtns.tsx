@@ -6,12 +6,12 @@ import { socket } from "@/lib/socket";
 import { useUserContext } from "@/context/UserContextProvider";
 import { bookmarkPost, likePost, removeBookmarkPost, removeLikePost, removeRepostPost, repostPost } from "@/actions/actions";
 import { usePostInteractionContext } from "@/context/PostInteractionContextProvider";
-import { BasicPostType } from "@/lib/types";
+import { BasicPostType, BookmarkPostType, ReplyPostType } from "@/lib/types";
 import { AnimatePresence, motion } from "framer-motion";
 import PostShareButton from './PostShareButton';
 
 interface PostBtnsType {
-    post: BasicPostType
+    post: BasicPostType | ReplyPostType | BookmarkPostType
     setPostIsVisible?: React.Dispatch<SetStateAction<boolean>>,
 };
 

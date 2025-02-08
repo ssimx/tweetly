@@ -74,7 +74,7 @@ export const getAllConversations = async (userId: number, cursor?: string) => {
 // ---------------------------------------------------------------------------------------------------------
 
 export const getOldestConversation = async (userId: number) => {
-    return await prisma.conversation.findMany({
+    return await prisma.conversation.findFirst({
         where: {
             participants: {
                 some: {
@@ -85,7 +85,6 @@ export const getOldestConversation = async (userId: number) => {
         orderBy: {
             updatedAt: 'asc'
         },
-        take: 1,
         select: {
             id: true,
         }

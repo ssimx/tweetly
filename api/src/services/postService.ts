@@ -128,7 +128,7 @@ export const getOldestGlobal30DayPost = async (userId: number) => {
     let date = new Date();
     date.setDate(date.getDate() - 30);
 
-    return await prisma.post.findMany({
+    return await prisma.post.findFirst({
         where: {
             AND: [
                 {
@@ -153,7 +153,6 @@ export const getOldestGlobal30DayPost = async (userId: number) => {
         orderBy: {
             createdAt: 'asc'
         },
-        take: 1,
         select: {
             id: true,
         }
@@ -407,7 +406,7 @@ export const getOldestFollowing30DayPost = async (userId: number) => {
     let date = new Date();
     date.setDate(date.getDate() - 30);
 
-    return await prisma.post.findMany({
+    return await prisma.post.findFirst({
         where: {
             AND: [
                 {
@@ -440,9 +439,139 @@ export const getOldestFollowing30DayPost = async (userId: number) => {
         orderBy: {
             createdAt: 'asc'
         },
-        take: 1,
         select: {
             id: true,
+        }
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getFollowing30DayNewPosts = async (userId: number, cursor?: number) => {
+    const cursorDate = await prisma.post.findUnique({
+        where: {
+            id: cursor
+        },
+        select: {
+            createdAt: true
+        }
+    }).then(res => res?.createdAt);
+    if (!cursorDate) return [];
+
+    return await prisma.post.findMany({
+        where: {
+            AND: [
+                {
+                    createdAt: {
+                        gt: cursorDate,
+                    }
+                },
+                {
+                    replyToId: null
+                },
+                {
+                    author: {
+                        NOT: {
+                            id: userId,
+                        },
+                        followers: {
+                            some: {
+                                followerId: userId
+                            }
+                        },
+                        blockedBy: {
+                            none: {
+                                blockerId: userId
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        orderBy: {
+            createdAt: 'desc'
+        },
+        take: 25,
+        select: {
+            id: true,
+            content: true,
+            images: true,
+            createdAt: true,
+            updatedAt: true,
+            replyToId: true,
+            author: {
+                select: {
+                    username: true,
+                    profile: {
+                        select: {
+                            name: true,
+                            bio: true,
+                            profilePicture: true,
+                        }
+                    },
+                    followers: {
+                        where: {
+                            followerId: userId,
+                        },
+                        select: {
+                            followerId: true
+                        }
+                    },
+                    following: {
+                        where: {
+                            followeeId: userId,
+                        },
+                        select: {
+                            followeeId: true,
+                        }
+                    },
+                    blockedBy: {
+                        where: {
+                            blockerId: userId,
+                        },
+                        select: {
+                            blockerId: true,
+                        }
+                    },
+                    _count: {
+                        select: {
+                            followers: true,
+                            following: true,
+                        }
+                    }
+                }
+            },
+            reposts: {
+                where: {
+                    userId: userId,
+                },
+                select: {
+                    userId: true,
+                }
+            },
+            likes: {
+                where: {
+                    userId: userId,
+                },
+                select: {
+                    userId: true,
+                }
+            },
+            bookmarks: {
+                where: {
+                    userId: userId,
+                },
+                select: {
+                    userId: true,
+                }
+            },
+            _count: {
+                select: {
+                    likes: true,
+                    reposts: true,
+                    replies: true,
+                }
+            }
         }
     });
 };
@@ -839,7 +968,7 @@ export const getPostReplies = async (userId: number, postId: number, cursor?: nu
 // ---------------------------------------------------------------------------------------------------------
 
 export const getOldestReplyLeastEnegagement = async (userId:number, parentPostId: number) => {
-    return await prisma.post.findMany({
+    return await prisma.post.findFirst({
         where: {
             AND: [
                 {
@@ -877,7 +1006,6 @@ export const getOldestReplyLeastEnegagement = async (userId:number, parentPostId
                 createdAt: 'asc'
             },
         ],
-        take: 1,
         select: {
             id: true,
         }
@@ -1014,7 +1142,7 @@ export const getPostsBySearch = async (userId: number, searchTerms: string[]) =>
 // ---------------------------------------------------------------------------------------------------------
 
 export const getLastPostBySearch = async (userId: number, searchTerms: string[]) => {
-    return await prisma.post.findMany({
+    return await prisma.post.findFirst({
         where: {
             OR: searchTerms.map((term) => ({
                 AND: [
@@ -1057,7 +1185,6 @@ export const getLastPostBySearch = async (userId: number, searchTerms: string[])
                 createdAt: 'desc'
             },
         ],
-        take: 1,
         select: {
             id: true,
         }
@@ -1552,7 +1679,7 @@ export const getPosts = async (userId: number, username: string, cursor?: number
 // ---------------------------------------------------------------------------------------------------------
 
 export const getOldestPost = async (username: string) => {
-    return await prisma.post.findMany({
+    return await prisma.post.findFirst({
         where: {
             AND: [
                 {
@@ -1578,7 +1705,6 @@ export const getOldestPost = async (username: string) => {
         orderBy: {
             createdAt: 'asc'
         },
-        take: 1,
         select: {
             id: true,
         }
@@ -1697,7 +1823,7 @@ export const getReposts = async (userId: number, username: string, cursor?: numb
 // ---------------------------------------------------------------------------------------------------------
 
 export const getOldestRepost = async (username: string) => {
-    return await prisma.post.findMany({
+    return await prisma.post.findFirst({
         where: {
             reposts: {
                 some: {
@@ -1710,7 +1836,6 @@ export const getOldestRepost = async (username: string) => {
         orderBy: {
             createdAt: 'asc'
         },
-        take: 1,
         select: {
             id: true,
         }
@@ -1912,7 +2037,7 @@ export const getReplies = async (userId: number, username: string, cursor?: numb
 // ---------------------------------------------------------------------------------------------------------
 
 export const getOldestReply = async (username: string) => {
-    return await prisma.post.findMany({
+    return await prisma.post.findFirst({
         where: {
             AND: [
                 {
@@ -1930,7 +2055,6 @@ export const getOldestReply = async (username: string) => {
         orderBy: {
             createdAt: 'asc'
         },
-        take: 1,
         select: {
             id: true,
         }
@@ -2151,7 +2275,7 @@ export const getMedia = async (userId: number, username: string, cursor?: number
 // ---------------------------------------------------------------------------------------------------------
 
 export const getOldestMedia = async (username: string) => {
-    return await prisma.post.findMany({
+    return await prisma.post.findFirst({
         where: {
             AND: [
                 {
@@ -2169,7 +2293,6 @@ export const getOldestMedia = async (username: string) => {
         orderBy: {
             createdAt: 'asc'
         },
-        take: 1,
         select: {
             id: true,
         }
@@ -2331,14 +2454,13 @@ export const getLikes = async (userId: number, username: string, cursor?: number
 // ---------------------------------------------------------------------------------------------------------
 
 export const getOldestLike = async (userId: number) => {
-    return await prisma.postLike.findMany({
+    return await prisma.postLike.findFirst({
         where: {
             userId: userId
         },
         orderBy: {
             createdAt: 'asc'
         },
-        take: 1,
         select: {
             post: {
                 select: {
@@ -2504,14 +2626,13 @@ export const getBookmarks = async (userId: number, username: string, cursor?: nu
 // ---------------------------------------------------------------------------------------------------------
 
 export const getOldestBookmark = async (userId: number) => {
-    return await prisma.postBookmark.findMany({
+    return await prisma.postBookmark.findFirst({
         where: {
             userId: userId
         },
         orderBy: {
             createdAt: 'asc'
         },
-        take: 1,
         select: {
             post: {
                 select: {

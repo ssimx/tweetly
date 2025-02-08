@@ -2,7 +2,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import UserHoverCard from '../UserHoverCard';
-import { formatPostDate } from '@/lib/utils';
 import PostBtns from '../posts/PostBtns';
 import { SetStateAction, useState } from 'react';
 import { Reply } from 'lucide-react';
@@ -10,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import PostText from '../posts/PostText';
 import PostImages from '../posts/PostImages';
 import { ProfileLikedPostType } from '@/lib/types';
+import PostDate from '../posts/PostDate';
 
 export default function ProfileContentLikedpost({ post }: { post: ProfileLikedPostType }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
@@ -90,7 +90,7 @@ export default function ProfileContentLikedpost({ post }: { post: ProfileLikedPo
                             isFollowingTheUser={isFollowingTheUser} />
                         <p>@{post.author.username}</p>
                         <p>·</p>
-                        <p className='whitespace-nowrap'>{formatPostDate(post.createdAt)}</p>
+                        <PostDate createdAt={post.createdAt} />
                     </div>
                     <div className='post-content flex-col'>
                         <PostText content={post.content} />

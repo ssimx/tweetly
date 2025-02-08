@@ -2,15 +2,14 @@
 import { followUser, unfollowUser } from "@/actions/actions";
 import { useFollowSuggestionContext } from "@/context/FollowSuggestionContextProvider";
 import { useUserContext } from "@/context/UserContextProvider";
-import { useEffect, useRef, useState } from "react";
-
+import { useEffect, useState } from "react";
 
 interface FollowBtnType {
-    username: string,
-    setFollowersCount: React.Dispatch<React.SetStateAction<number>>,
-    isFollowedByTheUser: boolean,
-    setIsFollowedByTheUser: React.Dispatch<React.SetStateAction<boolean>>,
-    setNotificationsEnabled?: React.Dispatch<React.SetStateAction<boolean>>,
+    username: string;
+    setFollowersCount: React.Dispatch<React.SetStateAction<number>>;
+    isFollowedByTheUser: boolean;
+    setIsFollowedByTheUser: React.Dispatch<React.SetStateAction<boolean>>;
+    setNotificationsEnabled?: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 export default function FollowBtn({
@@ -21,7 +20,6 @@ export default function FollowBtn({
     setNotificationsEnabled
 }: FollowBtnType) {
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const followBtn = useRef<HTMLButtonElement>(null);
     const { suggestions, updateFollowState } = useFollowSuggestionContext();
     const { setNewFollowing } = useUserContext();
 
@@ -39,7 +37,6 @@ export default function FollowBtn({
         if (isSubmitting) return;
 
         setIsSubmitting(true);
-        followBtn.current && followBtn.current.setAttribute('disabled', "");
 
         try {
             if (isFollowedByTheUser) {
@@ -56,7 +53,7 @@ export default function FollowBtn({
                 // FOLLOW USER
                 // optimistic change
                 setIsFollowedByTheUser(true);
-                setNotificationsEnabled && setNotificationsEnabled(false);
+                setNotificationsEnabled?.(false);
                 setFollowersCount((current) => current + 1);
                 updateFollowState(username, true);
 
@@ -67,39 +64,19 @@ export default function FollowBtn({
             }
         } catch (error) {
             console.error(error);
-            if (isFollowedByTheUser) {
-                // revert the changes in case of error
-                setIsFollowedByTheUser(true);
-                setFollowersCount((current) => current + 1);
-                updateFollowState(username, true);
-            } else {
-                // revert the changes in case of error
-                setIsFollowedByTheUser(false);
-                setNotificationsEnabled && setNotificationsEnabled(true);
-                setFollowersCount((current) => current - 1);
-                updateFollowState(username, false);
-            }
+            setIsFollowedByTheUser(!isFollowedByTheUser); // Revert on failure
+            setFollowersCount((current) => current + (isFollowedByTheUser ? 1 : -1));
+            updateFollowState(username, !isFollowedByTheUser);
         } finally {
-            followBtn.current && followBtn.current.removeAttribute('disabled');
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div>
-            {
-                isFollowedByTheUser
-                    ? (
-                        <button
-                            className="!w-[100px] follow-btn following text-14 before:content-['Following'] hover:before:content-['Unfollow']"
-                            onClick={(e) => handleFollow(e)} ref={followBtn} >
-                        </button>
-                    )
-                    : <button className='!w-[100px] follow-btn text-14' onClick={handleFollow} ref={followBtn}>
-                        Follow
-                    </button>
-
-            }
-        </div>
-    )
+        <button
+            className={`!w-[100px] follow-btn text-14 ${isFollowedByTheUser ? "following before:content-['Following'] hover:before:content-['Unfollow']" : "before:content-['Follow']"}`}
+            onClick={handleFollow}
+            disabled={isSubmitting}
+        ></button>
+    );
 }

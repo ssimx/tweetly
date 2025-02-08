@@ -1,9 +1,9 @@
 'use client';
-import { BasicPostType } from '@/lib/types';
+import { BasicPostType, ReplyPostType } from '@/lib/types';
 import { Share, Link } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-export default function PostShareButton({ post }: { post: BasicPostType }) {
+export default function PostShareButton({ post }: { post: BasicPostType | ReplyPostType }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const menuBtn = useRef<HTMLDivElement | null>(null);
     const copyProfileUrlAlert = useRef<HTMLDivElement | null>(null);

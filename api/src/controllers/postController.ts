@@ -32,6 +32,7 @@ import {
     getOldestMedia,
     getMedia,
     getGlobal30DayNewPosts,
+    getFollowing30DayNewPosts,
 } from '../services/postService';
 import { createNotificationsForNewLike, createNotificationsForNewPost, createNotificationsForNewReply, createNotificationsForNewRepost, removeNotificationsForLike, removeNotificationsForRepost } from '../services/notificationService';
 import { deleteImageFromCloudinary } from './uploadController';
@@ -85,8 +86,6 @@ export const newPost = async (req: Request, res: Response) => {
             createNotificationsForNewReply(postId, user.id);
         }
 
-        console.log(post)
-
         return res.status(201).json({ ...post });
     } catch (error) {
         imagesPublicIds?.forEach((img) => {
@@ -104,25 +103,23 @@ export const global30DayPosts = async (req: Request, res: Response) => {
     const params = req.query;
     const cursor = params.cursor;
     const type = params.type?.toString().toUpperCase() as 'NEW' | 'OLD';
-    console.log(cursor, type)
 
     try {
         if (cursor) {
             if (type === 'OLD') {
-                const oldestGlobalPostId = await getOldestGlobal30DayPost(user.id).then(res => res.length > 0 ? res[0].id : null);
+                const oldestGlobalPostId = await getOldestGlobal30DayPost(user.id).then(res => res?.id);
                 if (oldestGlobalPostId) {
                     // check if current cursor equals last post id
                     // if truthy, return empty array and set the end to true
                     if (Number(cursor) === oldestGlobalPostId) {
                         return res.status(200).json({
-                            olderGlobalPosts: [],
+                            posts: [],
                             end: true
                         });
                     }
                 }
 
                 const posts = await getGlobal30DayPosts(user.id, Number(cursor));
-                const lastOlderGlobalPost = posts.length ? posts.slice(-1) : undefined;
 
                 return res.status(200).json({
                     posts: posts,
@@ -131,13 +128,12 @@ export const global30DayPosts = async (req: Request, res: Response) => {
                     //  if truthy, return older posts and set the end to true
                     end: posts.length === 0
                         ? true
-                        : lastOlderGlobalPost && (oldestGlobalPostId === lastOlderGlobalPost[0].id)
+                        : oldestGlobalPostId === posts.slice(-1)[0].id
                             ? true
                             : false,
                 });
             } else if (type === 'NEW') {
                 const posts = await getGlobal30DayNewPosts(user.id, Number(cursor));
-                console.log(posts[0].id)
 
                 return res.status(200).json({
                     posts: posts,
@@ -146,12 +142,16 @@ export const global30DayPosts = async (req: Request, res: Response) => {
                 return res.status(404).json({ error: 'Unknown type' });
             }
         } else {
-            const oldestGlobalPostId = await getOldestGlobal30DayPost(user.id).then(res => res.length > 0 ? res[0].id : null);
+            const oldestGlobalPostId = await getOldestGlobal30DayPost(user.id).then(res => res?.id);
             const posts = await getGlobal30DayPosts(user.id);
             
             return res.status(200).json({
                 posts,
-                end: oldestGlobalPostId === null ? true : posts.slice(-1)[0].id === oldestGlobalPostId ? true : false
+                end: !oldestGlobalPostId
+                    ? true
+                    : posts.slice(-1)[0].id === oldestGlobalPostId
+                        ? true
+                        : false
             });
         }
     } catch (error) {
@@ -164,43 +164,58 @@ export const global30DayPosts = async (req: Request, res: Response) => {
 
 export const following30DayPosts = async (req: Request, res: Response) => {
     const user = req.user as UserProps;
-    const cursor = Number(req.query.cursor);
+    const params = req.query;
+    const cursor = params.cursor;
+    const type = params.type?.toString().toUpperCase() as 'NEW' | 'OLD';
 
     try {
         if (cursor) {
-            const oldestFollowingPostId = await getOldestFollowing30DayPost(user.id).then(res => res.length > 0 ? res[0].id : null);
-            if (oldestFollowingPostId) {
-                // check if current cursor equals last post id
-                // if truthy, return empty array and set the end to true
-                if (cursor === oldestFollowingPostId) {
-                    return res.status(200).json({
-                        posts: [],
-                        end: true
-                    });
+            if (type === 'OLD') {
+                const oldestFollowingPostId = await getOldestFollowing30DayPost(user.id).then(res => res?.id);
+                if (oldestFollowingPostId) {
+                    // check if current cursor equals last post id
+                    // if truthy, return empty array and set the end to true
+                    if (Number(cursor) === oldestFollowingPostId) {
+                        return res.status(200).json({
+                            posts: [],
+                            end: true
+                        });
+                    }
                 }
-            }
 
-            const posts = await getFollowing30DayPosts(user.id, Number(cursor));
-            const lastOlderFollowingPost = posts.length ? posts.slice(-1) : undefined;
+                const posts = await getFollowing30DayPosts(user.id, Number(cursor));
 
-            return res.status(200).json({
-                posts: posts,
-                // check if older posts array is empty and if truthy set the end to true
-                // check if new cursor equals last post id
-                //  if truthy, return older posts and set the end to true
-                end: posts.length === 0
-                    ? true
-                    : lastOlderFollowingPost && (oldestFollowingPostId === lastOlderFollowingPost[0].id)
+                return res.status(200).json({
+                    posts: posts,
+                    // check if older posts array is empty and if truthy set the end to true
+                    // check if new cursor equals last post id
+                    //  if truthy, return older posts and set the end to true
+                    end: posts.length === 0
                         ? true
-                        : false,
-            });
+                        : oldestFollowingPostId === posts.slice(-1)[0].id
+                            ? true
+                            : false,
+                });
+            } else if (type === 'NEW') {
+                const posts = await getFollowing30DayNewPosts(user.id, Number(cursor));
+
+                return res.status(200).json({
+                    posts: posts,
+                });
+            } else {
+                return res.status(404).json({ error: 'Unknown type' });
+            }
         } else {
-            const oldestFollowingPostId = await getOldestFollowing30DayPost(user.id).then(res => res.length > 0 ? res[0].id : null) || null;
+            const oldestFollowingPostId = await getOldestFollowing30DayPost(user.id).then(res => res?.id);
             const posts = await getFollowing30DayPosts(user.id);
 
             return res.status(200).json({
                 posts,
-                end: oldestFollowingPostId === null ? true : posts.slice(-1)[0].id === oldestFollowingPostId ? true : false
+                end: !oldestFollowingPostId
+                        ? true
+                        : posts.slice(-1)[0].id === oldestFollowingPostId
+                            ? true
+                            : false
             });
         }
     } catch (error) {
@@ -248,18 +263,18 @@ export const getPost = async (req: Request, res: Response) => {
         if (!post) return res.status(404).json({ error: 'Post not found' });
 
         // check whether last reply is the end of replies
-        const oldestReplyLeastEnegagementId = await getOldestReplyLeastEnegagement(user.id, postId).then(res => res.length > 0 ? res[0].id : null);
+        const oldestReplyLeastEnegagementId = await getOldestReplyLeastEnegagement(user.id, postId).then(res => res?.id);
         
         return res.status(200).json({
             ...post,
             replies: [
                 ...post.replies,
             ],
-            repliesEnd: oldestReplyLeastEnegagementId
-                ? post.replies.slice(-1)[0].id === oldestReplyLeastEnegagementId
-                    ? true
-                    : false
-                : true,
+            repliesEnd: !oldestReplyLeastEnegagementId
+                            ? true
+                            : post.replies.slice(-1)[0].id === oldestReplyLeastEnegagementId
+                                ? true
+                                : false
         })
     } catch (error) {
         console.error('Error: ', error);
@@ -278,7 +293,7 @@ export const postReplies = async (req: Request, res: Response) => {
     try {
         if (cursor) { 
             // order posts by likes and find the oldest one with no engagemenet
-            const oldestReplyLeastEnegagementId = await getOldestReplyLeastEnegagement(user.id, postId).then(res => res.length > 0 ? res[0].id : null);
+            const oldestReplyLeastEnegagementId = await getOldestReplyLeastEnegagement(user.id, postId).then(res => res?.id);
             if (oldestReplyLeastEnegagementId) {
                 // check if current cursor equals last reply id
                 // if truthy, return empty array and set the end to true
@@ -291,7 +306,6 @@ export const postReplies = async (req: Request, res: Response) => {
             }            
 
             const replies = await getPostReplies(user.id, postId, Number(cursor));
-            const lastReplyInCurrentBatch = replies.slice(-1);
 
             return res.status(200).json({
                 replies: replies,
@@ -300,17 +314,21 @@ export const postReplies = async (req: Request, res: Response) => {
                 //      if truthy, return replies and set the end to true
                 end: replies.length === 0
                     ? true
-                    : oldestReplyLeastEnegagementId === lastReplyInCurrentBatch[0].id
+                    : oldestReplyLeastEnegagementId === replies.slice(-1)[0].id
                         ? true
                         : false,
             });
         } else {
-            const oldestReplyLeastEnegagementId = await getOldestReplyLeastEnegagement(user.id, postId).then(res => res.length > 0 ? res[0].id : null);
+            const oldestReplyLeastEnegagementId = await getOldestReplyLeastEnegagement(user.id, postId).then(res => res?.id);
             const replies = await getPostReplies(user.id, postId);
 
             return res.status(200).json({
                 replies,
-                end: oldestReplyLeastEnegagementId === null ? true : replies.slice(-1)[0].id === oldestReplyLeastEnegagementId ? true : false
+                end: !oldestReplyLeastEnegagementId
+                        ? true
+                        : oldestReplyLeastEnegagementId === replies.slice(-1)[0].id
+                            ? true
+                            : false
             });
         }
     } catch (error) {
@@ -328,7 +346,7 @@ export const getUserPosts = async (req: Request, res: Response) => {
 
     try {
         if (cursor) {
-            const userOldestPostId = await getOldestPost(username).then(res => res[0].id);
+            const userOldestPostId = await getOldestPost(username).then(res => res?.id);
             if (userOldestPostId) {
                 // check if current cursor equals last post id
                 // if truthy, return empty array and set the end to true
@@ -341,7 +359,6 @@ export const getUserPosts = async (req: Request, res: Response) => {
             }
 
             const userPosts = await getPosts(user.id, username, Number(cursor));
-            const lastOlderPost = userPosts.slice(-1);
 
             return res.status(200).json({
                 olderPosts: userPosts,
@@ -349,22 +366,22 @@ export const getUserPosts = async (req: Request, res: Response) => {
                 // check if new cursor equals last post id
                 //  if truthy, return older posts and set the end to true
                 end: userPosts.length === 0
-                    ? true
-                    : userOldestPostId === lastOlderPost[0].id
                         ? true
-                        : false,
+                        : userOldestPostId === userPosts.slice(1)[0].id
+                            ? true
+                            : false,
             });
         } else {
-            const userOldestPostId = await getOldestPost(username).then(res => res[0] ? res[0].id : null);
+            const userOldestPostId = await getOldestPost(username).then(res => res?.id);
             const posts = await getPosts(user.id, username);
             
             return res.status(200).json({
                 posts,
-                end: userOldestPostId === null 
-                    ? true 
-                    : posts.slice(-1)[0].id === userOldestPostId 
+                end: !userOldestPostId
                         ? true 
-                        : false
+                        : userOldestPostId === posts.slice(-1)[0].id
+                            ? true 
+                            : false
             });
         }
     } catch (error) {
@@ -382,43 +399,42 @@ export const getUserReposts = async (req: Request, res: Response) => {
 
     try {
         if (cursor) {
-            const userOldestRepostId = await getOldestRepost(username).then(res => res[0].id);
+            const userOldestRepostId = await getOldestRepost(username).then(res => res?.id);
             if (userOldestRepostId) {
                 // check if current cursor equals last post id
                 // if truthy, return empty array and set the end to true
                 if (cursor === userOldestRepostId) {
                     return res.status(200).json({
-                        olderReposts: [],
+                        reposts: [],
                         end: true
                     });
                 }
             }
 
             const userReposts = await getReposts(user.id, username, Number(cursor));
-            const lastOlderRepost = userReposts.slice(-1);
 
             return res.status(200).json({
-                olderReposts: userReposts,
+                reposts: userReposts,
                 // check if older posts array is empty and if truthy set the end to true
                 // check if new cursor equals last post id
                 //  if truthy, return older posts and set the end to true
                 end: userReposts.length === 0
-                    ? true
-                    : userOldestRepostId === lastOlderRepost[0].id
                         ? true
-                        : false,
+                        : userOldestRepostId === userReposts.slice(-1)[0].id
+                            ? true
+                            : false,
             });
         } else {
-            const userOldestRepostId = await getOldestRepost(username).then(res => res[0] ? res[0].id : null);
+            const userOldestRepostId = await getOldestRepost(username).then(res => res?.id);
             const reposts = await getReposts(user.id, username);
             
             return res.status(200).json({
                 reposts,
-                end: userOldestRepostId === null 
-                    ? true 
-                    : reposts.slice(-1)[0].id === userOldestRepostId 
+                end: !userOldestRepostId
                         ? true 
-                        : false
+                        : userOldestRepostId === reposts.slice(-1)[0].id
+                            ? true 
+                            : false
             });
         }
     } catch (error) {
@@ -436,7 +452,7 @@ export const getUserReplies = async (req: Request, res: Response) => {
 
     try {
         if (cursor) {
-            const userOldestReplyId = await getOldestReply(username).then(res => res[0].id);
+            const userOldestReplyId = await getOldestReply(username).then(res => res?.id);
             if (userOldestReplyId) {
                 // check if current cursor equals last post id
                 // if truthy, return empty array and set the end to true
@@ -449,7 +465,6 @@ export const getUserReplies = async (req: Request, res: Response) => {
             }
 
             const userReplies = await getReplies(user.id, username, Number(cursor));
-            const lastOlderReply = userReplies.slice(-1);
 
             return res.status(200).json({
                 olderReplies: userReplies,
@@ -458,21 +473,21 @@ export const getUserReplies = async (req: Request, res: Response) => {
                 //  if truthy, return older posts and set the end to true
                 end: userReplies.length === 0
                     ? true
-                    : userOldestReplyId === lastOlderReply[0].id
+                    : userOldestReplyId === userReplies.slice(-1)[0].id
                         ? true
                         : false,
             });
         } else {
-            const userOldestReplyId = await getOldestReply(username).then(res => res[0] ? res[0].id : null);
+            const userOldestReplyId = await getOldestReply(username).then(res => res?.id);
             const replies = await getReplies(user.id, username);
             
             return res.status(200).json({
                 replies,
-                end: userOldestReplyId === null 
-                    ? true 
-                    : replies.slice(-1)[0].id === userOldestReplyId 
+                end: !userOldestReplyId
                         ? true 
-                        : false
+                        : userOldestReplyId === replies.slice(-1)[0].id
+                            ? true 
+                            : false
             });
         }
     } catch (error) {
@@ -490,7 +505,7 @@ export const getUserMedia = async (req: Request, res: Response) => {
 
     try {
         if (cursor) {
-            const userOldestMediaId = await getOldestMedia(username).then(res => res[0].id);
+            const userOldestMediaId = await getOldestMedia(username).then(res => res?.id);
             if (userOldestMediaId) {
                 // check if current cursor equals last post id
                 // if truthy, return empty array and set the end to true
@@ -503,30 +518,29 @@ export const getUserMedia = async (req: Request, res: Response) => {
             }
 
             const userMedia = await getMedia(user.id, username, Number(cursor));
-            const lastOlderPost = userMedia.slice(-1);
 
             return res.status(200).json({
-                olderMedia: userMedia,
+                media: userMedia,
                 // check if older posts array is empty and if truthy set the end to true
                 // check if new cursor equals last post id
                 //  if truthy, return older posts and set the end to true
                 end: userMedia.length === 0
-                    ? true
-                    : userOldestMediaId === lastOlderPost[0].id
                         ? true
-                        : false,
+                        : userOldestMediaId === userMedia.slice(-1)[0].id
+                            ? true
+                            : false,
             });
         } else {
-            const userOldestMediaId = await getOldestMedia(username).then(res => res[0] ? res[0].id : null);
+            const userOldestMediaId = await getOldestMedia(username).then(res => res?.id);
             const media = await getMedia(user.id, username);
             
             return res.status(200).json({
                 media,
-                end: userOldestMediaId === null 
-                    ? true 
-                    : media.slice(-1)[0].id === userOldestMediaId 
+                end: !userOldestMediaId 
                         ? true 
-                        : false
+                        : userOldestMediaId === media.slice(-1)[0].id
+                            ? true 
+                            : false
             });
         }
     } catch (error) {
@@ -543,43 +557,42 @@ export const getUserLikes = async (req: Request, res: Response) => {
 
     try {
         if (cursor) {
-            const userOldestLikeId = await getOldestLike(user.id).then(res => res[0].post.id);
+            const userOldestLikeId = await getOldestLike(user.id).then(res => res?.post.id);
             if (userOldestLikeId) {
                 // check if current cursor equals last post id
                 // if truthy, return empty array and set the end to true
                 if (cursor === userOldestLikeId) {
                     return res.status(200).json({
-                        olderLikes: [],
+                        likes: [],
                         end: true
                     });
                 }
             }
 
             const userLikes = await getLikes(user.id, user.username, Number(cursor)).then(res => res.map(like => like.post));
-            const lastOlderLike = userLikes.slice(-1);
 
             return res.status(200).json({
-                olderLikes: userLikes,
+                likes: userLikes,
                 // check if older posts array is empty and if truthy set the end to true
                 // check if new cursor equals last post id
                 //  if truthy, return older posts and set the end to true
                 end: userLikes.length === 0
                     ? true
-                    : userOldestLikeId === lastOlderLike[0].id
+                    : userOldestLikeId === userLikes.slice(-1)[0].id
                         ? true
                         : false,
             });
         } else {
-            const userOldestLikeId = await getOldestLike(user.id).then(res => res[0] ? res[0].post.id : null);
+            const userOldestLikeId = await getOldestLike(user.id).then(res => res?.post.id);
             const likes = await getLikes(user.id, user.username).then(res => res.map(like => like.post));
             
             return res.status(200).json({
                 likes,
-                end: userOldestLikeId === null 
-                    ? true 
-                    : likes.slice(-1)[0].id === userOldestLikeId 
+                end: !userOldestLikeId
                         ? true 
-                        : false
+                        : userOldestLikeId === likes.slice(-1)[0].id
+                            ? true 
+                            : false
             });
         }
     } catch (error) {
@@ -596,43 +609,42 @@ export const getUserBookmarks = async (req: Request, res: Response) => {
 
     try {
         if (cursor) {
-            const userOldestBookmarkId = await getOldestBookmark(user.id).then(res => res[0].post.id);
+            const userOldestBookmarkId = await getOldestBookmark(user.id).then(res => res?.post.id);
             if (userOldestBookmarkId) {
                 // check if current cursor equals last post id
                 // if truthy, return empty array and set the end to true
                 if (cursor === userOldestBookmarkId) {
                     return res.status(200).json({
-                        olderBookmarks: [],
+                        posts: [],
                         end: true
                     });
                 }
             }
 
             const userBookmarks = await getBookmarks(user.id, user.username, Number(cursor)).then(res => res.map(bookmark => bookmark.post));
-            const lastOlderBookmark = userBookmarks.slice(-1);
 
             return res.status(200).json({
-                olderBookmarks: userBookmarks,
+                posts: userBookmarks,
                 // check if older posts array is empty and if truthy set the end to true
                 // check if new cursor equals last post id
                 //  if truthy, return older posts and set the end to true
                 end: userBookmarks.length === 0
                     ? true
-                    : userOldestBookmarkId === lastOlderBookmark[0].id
+                    : userOldestBookmarkId === userBookmarks.slice(-1)[0].id
                         ? true
                         : false,
             });
         } else {
-            const userOldestBookmarkId = await getOldestLike(user.id).then(res => res[0] ? res[0].post.id : null);
-            const bookmarks = await getBookmarks(user.id, user.username).then(res => res.map(bookmark => bookmark.post));
+            const userOldestBookmarkId = await getOldestLike(user.id).then(res => res?.post.id);
+            const posts = await getBookmarks(user.id, user.username).then(res => res.map(bookmark => bookmark.post));
             
             return res.status(200).json({
-                bookmarks,
-                end: userOldestBookmarkId === null 
-                    ? true 
-                    : bookmarks.slice(-1)[0].id === userOldestBookmarkId 
+                posts,
+                end: !userOldestBookmarkId
                         ? true 
-                        : false
+                        : posts.slice(-1)[0].id === userOldestBookmarkId 
+                            ? true 
+                            : false
             });
         }
     } catch (error) {
@@ -658,9 +670,6 @@ export const addRepost = async (req: Request, res: Response) => {
 
             return res.status(201).json({ response });
         }
-
-
-        return res.status(201).json({ response });
     } catch (error) {
         console.error('Error: ', error);
         return res.status(500).json({ error: 'Failed to repost the post' });

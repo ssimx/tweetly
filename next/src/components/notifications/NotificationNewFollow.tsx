@@ -4,7 +4,7 @@ import Link from 'next/link';
 import UserHoverCard from '../UserHoverCard';
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, UserRoundPlus } from 'lucide-react';
+import { UserRoundPlus } from 'lucide-react';
 
 interface NotificationType {
     username: string,
@@ -43,12 +43,12 @@ export default function NotificationNewFollow({ isRead, notifier }: { isRead: bo
     };
 
     const changeCardColor = () => {
-        cardRef.current !== null && cardRef.current.classList.remove('bg-[#f3f3f3]');
+        cardRef.current !== null && cardRef.current.classList.remove('bg-secondary-foreground');
     };
 
     return (
         <div onClick={handleCardClick}
-            className={`px-4 py-2 hover:cursor-pointer hover:bg-post-hover ${isRead === false ? "bg-[#f3f3f3]" : ""}`}
+            className={`px-4 py-2 hover:cursor-pointer hover:bg-post-hover ${isRead === false ? 'bg-secondary-foreground' : ''}`}
             ref={cardRef} onMouseLeave={changeCardColor}>
             <div className='flex gap-2 items-center'>
                 <UserRoundPlus size={20} className='text-primary' />

@@ -11,7 +11,7 @@ export const getUserConversations = async (req: Request, res: Response) => {
     
     try {
         if (cursor) {
-            const oldestConvo = await getOldestConversation(user.id).then(res => res[0].id);
+            const oldestConvo = await getOldestConversation(user.id).then(res => res?.id);
             if (oldestConvo) {
                 if (cursor === oldestConvo) {
                     return res.status(200).json({
@@ -50,7 +50,7 @@ export const getUserConversations = async (req: Request, res: Response) => {
             }
 
             // get last conversation by updatedAt timestamp
-            const oldestConvoId = await getOldestConversation(user.id).then(res => res[0].id as string);
+            const oldestConvoId = await getOldestConversation(user.id).then(res => res?.id as string);
 
             const conversations = convos.map((convo) => ({
                 id: convo.id,

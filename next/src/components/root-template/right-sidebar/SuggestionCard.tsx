@@ -4,12 +4,12 @@ import Image from 'next/image';
 import { useUserContext } from '@/context/UserContextProvider';
 import { useRouter } from 'next/navigation';
 import UserHoverCard from '@/components/UserHoverCard';
-import { UserSuggestion } from '@/context/FollowSuggestionContextProvider';
 import FollowBtn from '@/components/FollowBtn';
+import { FollowSuggestionType } from '@/lib/types';
 
-export default function SuggestionCard({ user }: { user: UserSuggestion }) {
+export default function SuggestionCard({ user }: { user: FollowSuggestionType }) {
     // state for updating followers count when logged in user follows / blocks the profile
-    const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(user.isFollowing);
+    const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(false);
     const [followersCount, setFollowersCount] = useState(user['_count'].followers);
 
     // state to show whether the profile follows logged in user
@@ -63,7 +63,7 @@ export default function SuggestionCard({ user }: { user: UserSuggestion }) {
             </div>
 
             <div className='ml-auto [&_button]:py-1'>
-                <FollowBtn
+                <FollowBtn key={user.username}
                     username={user.username}
                     setFollowersCount={setFollowersCount}
                     isFollowedByTheUser={isFollowedByTheUser}

@@ -10,6 +10,7 @@ import ProfileContentReplyParent from './ProfileContentReplyParent';
 import PostText from '../posts/PostText';
 import PostImages from '../posts/PostImages';
 import { BasicPostType, ProfileReplyPostType } from '@/lib/types';
+import PostDate from '../posts/PostDate';
 
 export default function ProfileContentReply({ replyPost }: { replyPost: ProfileReplyPostType }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(replyPost.author['_count'].followers === 1);
@@ -64,7 +65,7 @@ export default function ProfileContentReply({ replyPost }: { replyPost: ProfileR
                                 isFollowingTheUser={isFollowingTheUser} />
                             <p>@{replyPost.author.username}</p>
                             <p>·</p>
-                            <p className='whitespace-nowrap'>{formatPostDate(replyPost.createdAt)}</p>
+                            <PostDate createdAt={replyPost.createdAt} />
                         </div>
                         <div className='post-content flex-col'>
                             <PostText content={replyPost.content} />

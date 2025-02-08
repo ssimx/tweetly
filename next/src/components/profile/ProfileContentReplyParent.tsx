@@ -2,19 +2,20 @@
 import React, { useState } from 'react'
 import Link from 'next/link';
 import Image from 'next/image';
-import { formatPostDate } from '@/lib/utils';
 import PostBtns from '../posts/PostBtns';
 import { useRouter } from 'next/navigation';
 import UserHoverCard from '../UserHoverCard';
 import PostText from '../posts/PostText';
 import PostImages from '../posts/PostImages';
 import { BasicPostType } from '@/lib/types';
+import PostDate from '../posts/PostDate';
 
 export default function ProfileContentReplyParent({ post }: { post: BasicPostType }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
     const [followersCount, setFollowersCount] = useState(post.author['_count'].followers);
     // state to show whether the profile follows logged in user
     const [isFollowingTheUser,] = useState(post.author.following.length === 1);
+
     const router = useRouter();
 
     const handleCardClick = () => {
@@ -60,8 +61,8 @@ export default function ProfileContentReplyParent({ post }: { post: BasicPostTyp
                         />
                         <p>@{post.author.username}</p>
                         <p>·</p>
-                        <p className='whitespace-nowrap'>{formatPostDate(post.createdAt)}</p>
-                    </div>
+                        <PostDate createdAt={post.createdAt} />
+                     </div>
                     <div className='post-content flex-col'>
                         <PostText content={post.content} />
                         <PostImages images={post.images} openPhoto={openPhoto} />

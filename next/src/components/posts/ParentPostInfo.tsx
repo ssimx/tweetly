@@ -3,12 +3,12 @@ import { BasicPostType } from '@/lib/types';
 import React, { useState } from 'react'
 import Link from 'next/link';
 import Image from 'next/image';
-import { formatPostDate } from '@/lib/utils';
 import PostBtns from './PostBtns';
 import { useRouter } from 'next/navigation';
 import UserHoverCard from '../UserHoverCard';
 import PostText from './PostText';
 import PostImages from './PostImages';
+import PostDate from './PostDate';
 
 export default function ParentPostInfo({ post }: { post: BasicPostType }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
@@ -60,7 +60,7 @@ export default function ParentPostInfo({ post }: { post: BasicPostType }) {
                         isFollowingTheUser={isFollowingTheUser} />
                     <p>@{post.author.username}</p>
                     <p>·</p>
-                    <p className='whitespace-nowrap'>{formatPostDate(post.createdAt)}</p>
+                    <PostDate createdAt={post.createdAt} />
                 </div>
 
                 <div className='post-content flex-col'>
