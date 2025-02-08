@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
-import FeedPost from './FeedPost'
 import { BasicPostType } from '@/lib/types';
+import FeedPost from '../posts/FeedPost';
 
 interface FeedTabType {
     posts: BasicPostType[],
@@ -10,7 +10,7 @@ interface FeedTabType {
     searchSegments?: string[]
 }
 
-export default function FeedTab({ posts, loadingRef, scrollPositionRef, endReached, searchSegments }: FeedTabType) {
+export default function FeedTab({ posts, loadingRef, scrollPositionRef, endReached = true, searchSegments }: FeedTabType) {
 
     useEffect(() => {
         // Track scroll position on user scroll

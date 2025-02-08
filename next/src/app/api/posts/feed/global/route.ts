@@ -19,10 +19,11 @@ export async function GET(req: NextRequest) {
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
             const searchParams = req.nextUrl.searchParams;
-            const query = searchParams.get('cursor');
+            const cursor = searchParams.get('cursor');
+            const type = searchParams.get('type');
 
-            if (query !== null) {
-                const response = await fetch(`${apiUrl}/posts/feed/global?cursor=${query}`, {
+            if (cursor !== null && type !== null) {
+                const response = await fetch(`${apiUrl}/posts/feed/global?cursor=${cursor}&type=${type}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',

@@ -28,6 +28,10 @@ export default function ProfileContentReply({ replyPost }: { replyPost: ProfileR
         e.stopPropagation();
     };
 
+    const openPhoto = (photoIndex: number) => {
+        router.push(`http://localhost:3000/${replyPost.author.username}/status/${replyPost.id}/photo/${photoIndex + 1}`, { scroll: false });
+    };
+
     return (
         <div className='flex flex-col'>
             <ProfileContentReplyParent post={parentPost} />
@@ -64,18 +68,10 @@ export default function ProfileContentReply({ replyPost }: { replyPost: ProfileR
                         </div>
                         <div className='post-content flex-col'>
                             <PostText content={replyPost.content} />
-                            <PostImages images={replyPost.images} />
+                            <PostImages images={replyPost.images} openPhoto={openPhoto} />
                         </div>
                         <div className='!border-t-0 post-btns'>
-                            <PostBtns
-                                postId={replyPost.id}
-                                author={replyPost.author.username}
-                                replies={replyPost['_count'].replies}
-                                reposts={replyPost['_count'].reposts}
-                                likes={replyPost['_count'].likes}
-                                reposted={!!replyPost.reposts.length}
-                                liked={!!replyPost.likes.length}
-                                bookmarked={!!replyPost.bookmarks.length} />
+                            <PostBtns post={replyPost} />
                         </div>
                     </div>
                 </div>

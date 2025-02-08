@@ -3,19 +3,31 @@ import { BasicPostType } from '@/lib/types';
 import ReplyPost from './Reply';
 import { useEffect, useRef, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
+import { getMoreRepliesForPost } from '@/actions/get-actions';
 
-export default function PostReplies({ replies, repliesEnd }: { replies: BasicPostType[], repliesEnd: boolean }) {
-    const [replyPosts, setReplyPosts] = useState<BasicPostType[]>(replies);
+type PostRepliesType = {
+    parentPostId: number,
+    replies: BasicPostType[],
+    setReplies: React.Dispatch<React.SetStateAction<BasicPostType[]>>,
+    repliesCursor: number | null,
+    setRepliesCursor: React.Dispatch<React.SetStateAction<number | null>>,
+    repliesEndReached: boolean,
+    setRepliesEndReached: React.Dispatch<React.SetStateAction<boolean>>,
+    scrollElementRef?: React.RefObject<HTMLDivElement | null>,
+};
 
+export default function PostReplies({ parentPostId, replies, setReplies, repliesCursor, setRepliesCursor, repliesEndReached, setRepliesEndReached, scrollElementRef }: PostRepliesType) {
     // scroll and pagination
     const scrollPositionRef = useRef<number>(0);
     const [scrollPosition, setScrollPosition] = useState(0);
-    const [repliesCursor, setRepliesCursor] = useState<number | null>(replies.length > 0 ? replies.slice(-1)[0].id : null);
-    const [endReached, setEndReached] = useState(repliesEnd);
+
     const { ref, inView } = useInView({
         threshold: 0,
         delay: 100,
     });
+
+    console.log('test scroll')
+
 
     useEffect(() => {
         // Track scroll position on user scroll
@@ -23,44 +35,35 @@ export default function PostReplies({ replies, repliesEnd }: { replies: BasicPos
             scrollPositionRef.current = window.scrollY;
         }
 
-        window.addEventListener('scroll', handleScroll, { passive: true });
+        (scrollElementRef && scrollElementRef.current)
+            ? scrollElementRef.current.addEventListener('scroll', handleScroll, { passive: true })
+            : window.addEventListener('scroll', handleScroll, { passive: true });
 
         return () => {
             window.removeEventListener('scroll', handleScroll);
         };
-    }, [scrollPositionRef]);
+    }, [scrollElementRef, scrollPositionRef]);
 
-    // Infinite scroll - fetch older messages when inView is true
+    // Infinite scroll - fetch more replies when inView is true
     useEffect(() => {
-        if (inView && !endReached && scrollPositionRef.current !== scrollPosition) {
+        console.log(inView, scrollPositionRef.current, scrollPosition)
+        if (inView && !repliesEndReached && scrollPositionRef.current !== scrollPosition) {
             const fetchMoreReplies = async () => {
-                const response = await fetch(`http://localhost:3000/api/posts/replies/${replyPosts[0].replyToId}?cursor=${repliesCursor}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    cache: 'no-cache',
-                });
-                const { moreReplies, end }: { moreReplies: PostType[], end: boolean } = await response.json();
-
-                if (moreReplies.length === 0) {
-                    setEndReached(currentValue => !currentValue);
-                    return;
-                }
-
-                setRepliesCursor(moreReplies[moreReplies.length === 0 ? 0 : moreReplies.length - 1].id);
-                setReplyPosts(currentPosts => [...currentPosts as PostType[], ...moreReplies]);
-                end && setEndReached(currentValue => !currentValue);
+                const { posts, end } = await getMoreRepliesForPost(parentPostId, repliesCursor as number);
+                
+                setRepliesCursor(posts?.length ? posts.slice(-1)[0].id : null);
+                setReplies(currentPosts => [...currentPosts as BasicPostType[], ...posts as BasicPostType[]]);
+                setRepliesEndReached(end);
                 setScrollPosition(scrollPositionRef.current);
             };
 
             fetchMoreReplies();
         }
-    }, [replyPosts, inView, repliesCursor, endReached, scrollPosition]);
+    }, [parentPostId, inView, repliesCursor, repliesEndReached, scrollPosition, setReplies, setRepliesCursor, setRepliesEndReached]);
 
     return (
         <div>
-            {replyPosts.map((reply) => (
+            {replies.map((reply) => (
                 <div key={reply.id}>
                     <ReplyPost post={reply} />
 
@@ -68,7 +71,7 @@ export default function PostReplies({ replies, repliesEnd }: { replies: BasicPos
                 </div>
             ))}
 
-            {!endReached && (
+            {!repliesEndReached && (
                 <div ref={ref}>
                     <p>Loading...</p>
                 </div>

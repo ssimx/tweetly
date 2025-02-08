@@ -38,6 +38,15 @@ export interface UserInfo {
     },
 };
 
+export interface AuthorInfoType {
+    username: string;
+    profile: {
+        name: string;
+        bio: string;
+        profilePicture: string;
+    },
+};
+
 export type UserProfileInfoType = Pick<UserInfo, 'profile'>['profile'];
 
 export interface ProfileInfo {
@@ -83,7 +92,7 @@ export interface ProfileInfo {
 interface BasePostType {
     id: number,
     content?: string,
-    images?: string[],
+    images: string[],
     createdAt: string,
     updatedAt: string,
     author: {
@@ -131,7 +140,7 @@ export type BasicPostType = BasePostType;
 
 // when post is visited, fetch post, parent post (if reply) and replies
 export type VisitedPostType = BasePostType & {
-    replyTo: BasePostType;
+    replyTo?: BasePostType;
     replies: BasePostType[];
     repliesEnd: boolean,
 };
@@ -151,6 +160,15 @@ export type ProfileReplyPostType = BasePostType & {
 // on profile Likes tab fetches all posts that were liked by the user, can be reply or non reply
 export type ProfileLikedPostType = BasePostType & {
     replyTo?: BasePostType,
+};
+
+// freshly created post
+export type NewPostType = {
+    id: number;
+    author: {
+        id: number;
+        username: string;
+    };
 };
 
 // -------------------------------------------------------------------------------------------------------------------------------------

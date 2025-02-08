@@ -1,17 +1,16 @@
 'use client';
-import { FollowSuggestionType, BasicPostType } from '@/lib/types';
-import Link from 'next/link';
-import Image from 'next/image';
+import { BasicPostType, FollowSuggestionType } from '@/lib/types';
 import { formatPostDate } from '@/lib/utils';
-import PostBtns from '../posts/PostBtns';
+import PostBtns from './PostBtns';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import UserHoverCard from '../UserHoverCard';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
-import PostText from '../posts/PostText';
-import PostImages from '../posts/PostImages';
-import PostMenu from '../posts/PostMenu';
+import PostText from './PostText';
+import PostImages from './PostImages';
+import PostMenu from './PostMenu';
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
+import PostAuthorImage from './PostAuthorImage';
 
 export default function FeedPost({ post, searchSegments }: { post: BasicPostType, searchSegments?: string[] }) {
     const [postAuthor, setPostAuthor] = useState<FollowSuggestionType>({ ...post.author, isFollowing: post.author.followers.length === 1 });
@@ -24,14 +23,6 @@ export default function FeedPost({ post, searchSegments }: { post: BasicPostType
 
     const router = useRouter();
 
-    useEffect(() => {
-        if (suggestions && suggestions.find((user) => user.username === post.author.username)) {
-            const author = suggestions.find((user) => user.username === post.author.username) as FollowSuggestionType;
-            setPostAuthor(author);
-            setIsFollowedByTheUser(author.isFollowing);
-        }
-    }, [post, suggestions]);
-
     const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
         const targetElement = e.target as HTMLElement;
 
@@ -39,10 +30,8 @@ export default function FeedPost({ post, searchSegments }: { post: BasicPostType
         if (!targetElement.closest('main') || targetElement.closest('button') || targetElement.closest('img') || targetElement.closest('a')) {
             e.stopPropagation();
             e.preventDefault();
-            return; 
+            return;
         }
-
-        console.log(targetElement)
 
         // Otherwise, navigate to the post in new tab
         if (e.button === 1) {
@@ -50,15 +39,23 @@ export default function FeedPost({ post, searchSegments }: { post: BasicPostType
             e.preventDefault(); // Prevent default middle-click behavior
             const newWindow = window.open(`/${postAuthor.username}/status/${post.id}`, '_blank', 'noopener,noreferrer');
             if (newWindow) newWindow.opener = null;
-        } else if (e.button === 0){
+        } else if (e.button === 0) {
             // Check if it's a left mouse button click
             router.push(`/${postAuthor.username}/status/${post.id}`);
         }
     };
 
-    const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-        e.stopPropagation();
+    const openPhoto = (photoIndex: number) => {
+        router.push(`http://localhost:3000/${post.author.username}/status/${post.id}/photo/${photoIndex + 1}`, { scroll: false });
     };
+
+    useEffect(() => {
+        if (suggestions && suggestions.find((user) => user.username === post.author.username)) {
+            const author = suggestions.find((user) => user.username === post.author.username) as FollowSuggestionType;
+            setPostAuthor(author);
+            setIsFollowedByTheUser(author.isFollowing);
+        }
+    }, [post, suggestions]);
 
     if (blockedUsers.some((user) => user === postAuthor.username)) {
         return (
@@ -77,13 +74,7 @@ export default function FeedPost({ post, searchSegments }: { post: BasicPostType
     return (
         <div onMouseDown={handleCardClick} className='feed-post' role="link" tabIndex={0} aria-label={`View post by ${postAuthor.username}`}>
             <div className='feed-post-left-side'>
-                <Link href={`/${postAuthor.username}`} className='flex group' onClick={(e) => handleLinkClick(e)}>
-                    <Image
-                        src={postAuthor.profile.profilePicture}
-                        alt='Post author profile pic'
-                        width={40} height={40}
-                        className='w-[40px] h-[40px] rounded-full group-hover:outline group-hover:outline-primary/10' />
-                </Link>
+                <PostAuthorImage author={post.author} />
             </div>
 
             <div className='feed-post-right-side'>
@@ -114,19 +105,11 @@ export default function FeedPost({ post, searchSegments }: { post: BasicPostType
 
                 <div className='feed-post-content post-content flex-col'>
                     <PostText content={post.content} searchSegments={searchSegments} />
-                    <PostImages images={post.images} />
+                    <PostImages images={post.images} openPhoto={openPhoto} />
                 </div>
 
                 <div className='!border-t-0 post-btns'>
-                    <PostBtns
-                        postId={post.id}
-                        author={postAuthor.username}
-                        replies={post['_count'].replies}
-                        reposts={post['_count'].reposts}
-                        likes={post['_count'].likes}
-                        reposted={!!post.reposts.length}
-                        liked={!!post.likes.length}
-                        bookmarked={!!post.bookmarks.length} />
+                    <PostBtns post={post} />
                 </div>
             </div>
         </div>

@@ -236,7 +236,7 @@ export async function getPostInfo(postId: number) {
     const token = await getCurrentUserToken();
 
     try {
-        const response = await fetch(`http://localhost:3000/api/posts/${postId}`, {
+        const response = await fetch(`http://localhost:3000/api/posts/get/${postId}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

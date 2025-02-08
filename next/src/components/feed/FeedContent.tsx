@@ -7,13 +7,12 @@ import { socket } from '@/lib/socket';
 import { useUserContext } from "@/context/UserContextProvider";
 import FeedTab from "./FeedTab";
 import { useInView } from "react-intersection-observer";
-import { FeedPostsType } from "@/app/(root)/page";
-import { getHomeFollowingFeed } from "@/actions/actions";
+import { getHomeFollowingFeed, getMorePostsForHomeFollowingFeed, getMorePostsForHomeGlobalFeed, getNewPostsForHomeGlobalFeed } from "@/actions/get-actions";
 
-export default function FeedContent({ initialPosts }: { initialPosts: FeedPostsType | undefined }) {
+export default function FeedContent({ initialPosts }: { initialPosts: { posts: BasicPostType[], end: boolean } | undefined }) {
     const [activeTab, setActiveTab] = useState(0);
     const [globalPosts, setGlobalPosts] = useState<BasicPostType[] | undefined>(initialPosts ? initialPosts.posts : undefined);
-    const [followingPosts, setFollowingPosts] = useState<BasicPostType[] | null | undefined>(null);
+    const [followingPosts, setFollowingPosts] = useState<BasicPostType[] | undefined | null>(null);
     const [newGlobalPostCount, setNewGlobalPostCount] = useState(0);
     const [newFollowingPostCount, setNewFollowingPostCount] = useState(0);
     const { loggedInUser, newFollowing, setNewFollowing } = useUserContext();
@@ -22,13 +21,33 @@ export default function FeedContent({ initialPosts }: { initialPosts: FeedPostsT
     const scrollPositionRef = useRef<number>(0);
     const [scrollPosition, setScrollPosition] = useState(0);
     const [globalFeedCursor, setGlobalFeedCursor] = useState<number | null | undefined>(initialPosts ? initialPosts.posts.length !== 0 ? initialPosts.posts.slice(-1)[0].id : null : undefined);
-    const [followingFeedCursor, setFollowingFeedCursor] = useState<number | null | undefined>(null);
-    const [globalFeedEndReached, setGlobalFeedEndReached] = useState(false);
-    const [followingFeedEndReached, setFollowingFeedEndReached] = useState(false);
+    const [globalFeedEndReached, setGlobalFeedEndReached] = useState<boolean | undefined>(initialPosts ? initialPosts.end : undefined);
+    const [followingFeedCursor, setFollowingFeedCursor] = useState<number | null | undefined>(undefined);
+    const [followingFeedEndReached, setFollowingFeedEndReached] = useState<boolean | undefined>(undefined);
     const { ref, inView } = useInView({
         threshold: 0,
         delay: 100,
+
     });
+
+    // reset
+    const fetchNewPosts = async () => {
+        if (activeTab === 0) {
+            setNewGlobalPostCount(0);
+
+            const { posts } = await getNewPostsForHomeGlobalFeed(globalPosts && globalPosts[0].id);
+            if (!posts) return;
+
+            setGlobalPosts((currentPosts) => currentPosts ? [...posts, ...currentPosts] : [...posts]);
+        } else {
+            setNewFollowingPostCount(0);
+
+            const { posts } = await getNewPostsForHomeGlobalFeed(globalPosts && globalPosts[0].id);
+            if (!posts) return;
+
+            setFollowingPosts((currentPosts) => currentPosts ? [...posts, ...currentPosts] : [...posts]);
+        }
+    };
 
     // Reset scroll position when switching tabs
     useEffect(() => {
@@ -39,32 +58,20 @@ export default function FeedContent({ initialPosts }: { initialPosts: FeedPostsT
     useEffect(() => {
         if (inView && scrollPositionRef.current !== scrollPosition) {
             const fetchOldPosts = async () => {
-                if (activeTab === 0 && !globalFeedEndReached) {
-                    const response = await fetch(`api/posts/feed/global?cursor=${globalFeedCursor}`, {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        cache: 'no-cache',
-                    });
-                    const { olderGlobalPosts, end } = await response.json() as { olderGlobalPosts: BasicPostType[], end: boolean };
+                if (activeTab === 0 && !globalFeedEndReached && globalFeedCursor) {
+                    const { posts, end } = await getMorePostsForHomeGlobalFeed(globalFeedCursor);
+                    if (!posts) return;
 
-                    setGlobalFeedCursor(olderGlobalPosts.length !== 0 ? olderGlobalPosts.slice(-1)[0].id : null);
-                    setGlobalPosts(currentPosts => [...currentPosts as BasicPostType[], ...olderGlobalPosts]);
+                    setGlobalPosts(currentPosts => [...currentPosts as BasicPostType[], ...posts as BasicPostType[]]);
+                    setGlobalFeedCursor(posts?.length ? posts.slice(-1)[0].id : null);
                     setScrollPosition(scrollPositionRef.current);
                     setGlobalFeedEndReached(end);
-                } else if (activeTab === 1 && !followingFeedEndReached) {
-                    const response = await fetch(`api/posts/feed/following?cursor=${followingFeedCursor}`, {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        cache: 'no-cache',
-                    });
-                    const { olderFollowingPosts, end } = await response.json() as { olderFollowingPosts: BasicPostType[], end: boolean };
+                } else if (activeTab === 1 && !followingFeedEndReached && followingFeedCursor) {
+                    const { posts, end } = await getMorePostsForHomeFollowingFeed(followingFeedCursor);
+                    if (!posts) return;
 
-                    setFollowingFeedCursor(olderFollowingPosts.length !== 0 ? olderFollowingPosts.slice(-1)[0].id : null);
-                    setFollowingPosts(currentPosts => [...currentPosts as BasicPostType[], ...olderFollowingPosts]);
+                    setFollowingPosts(currentPosts => [...currentPosts as BasicPostType[], ...posts as BasicPostType[]]);
+                    setFollowingFeedCursor(posts?.length ? posts.slice(-1)[0].id : null);
                     setScrollPosition(scrollPositionRef.current);
                     setFollowingFeedEndReached(end);
                 }
@@ -75,18 +82,18 @@ export default function FeedContent({ initialPosts }: { initialPosts: FeedPostsT
     }, [inView, activeTab, globalFeedCursor, followingFeedCursor, globalFeedEndReached, followingFeedEndReached, scrollPosition]);
 
     useEffect(() => {
+        // for fetching following tab, check for active tab AND whether followingPosts has yet been fetched OR logged in user has followed new user
         if (activeTab === 1 && (followingPosts === null || newFollowing === true)) {
             const fetchFeedPosts = async () => {
                 const { posts, end } = await getHomeFollowingFeed();
-                console.log(posts)
 
                 setFollowingPosts(posts);
                 setFollowingFeedCursor(posts ? posts.length !== 0 ? posts.slice(-1)[0].id : null : undefined);
                 setFollowingFeedEndReached(end);
                 setNewFollowing(false);
-           }
-   
-           fetchFeedPosts();
+            }
+
+            fetchFeedPosts();
         }
     }, [activeTab, followingPosts, newFollowing, setNewFollowing]);
 
@@ -97,11 +104,11 @@ export default function FeedContent({ initialPosts }: { initialPosts: FeedPostsT
 
         // Listen for new posts
         const onNewGlobalPostEvent = () => {
-            setNewGlobalPostCount(currentPostCount => currentPostCount + 1);
+            setNewGlobalPostCount(currentPostCount => currentPostCount <= 25 ? currentPostCount + 1 : currentPostCount);
         };
 
         const onNewFollowingPostEvent = () => {
-            setNewFollowingPostCount(currentPostCount => currentPostCount + 1);
+            setNewFollowingPostCount(currentPostCount => currentPostCount <= 25 ? currentPostCount + 1 : currentPostCount);
         };
 
         socket.on('new_global_post', onNewGlobalPostEvent);
@@ -112,17 +119,7 @@ export default function FeedContent({ initialPosts }: { initialPosts: FeedPostsT
             socket.off('new_following_post', onNewGlobalPostEvent);
             socket.disconnect();
         };
-    }, [loggedInUser]);
-
-    const fetchNewPosts = () => {
-        if (activeTab === 0) {
-            setGlobalPosts(undefined);
-            setNewGlobalPostCount(0);
-        } else {
-            setFollowingPosts(undefined);
-            setNewFollowingPostCount(0);
-        }
-    };
+    }, [loggedInUser, globalPosts, followingPosts]);
 
     return (
         <>
@@ -161,7 +158,7 @@ export default function FeedContent({ initialPosts }: { initialPosts: FeedPostsT
                                     posts={globalPosts}
                                     loadingRef={ref}
                                     scrollPositionRef={scrollPositionRef}
-                                    endReached={globalFeedEndReached} />
+                                    endReached={globalFeedEndReached as boolean} />
                     : null
                 }
 
@@ -169,14 +166,14 @@ export default function FeedContent({ initialPosts }: { initialPosts: FeedPostsT
                     ? followingPosts === undefined
                         ? <div>Something went wrong</div>
                         : followingPosts === null
-                            ? <div>loading...</div> 
+                            ? <div>loading...</div>
                             : followingPosts.length === 0
                                 ? <div>No posts. Follow more people</div>
                                 : <FeedTab
                                     posts={followingPosts}
                                     loadingRef={ref}
                                     scrollPositionRef={scrollPositionRef}
-                                    endReached={followingFeedEndReached} />
+                                    endReached={followingFeedEndReached as boolean} />
                     : null
                 }
             </section>

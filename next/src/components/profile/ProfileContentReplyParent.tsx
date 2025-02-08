@@ -25,6 +25,10 @@ export default function ProfileContentReplyParent({ post }: { post: BasicPostTyp
         e.stopPropagation();
     };
 
+    const openPhoto = (photoIndex: number) => {
+        router.push(`http://localhost:3000/${post.author.username}/status/${post.id}/photo/${photoIndex + 1}`, { scroll: false });
+    };
+
     return (
         <div onClick={handleCardClick} className='profile-content-post'>
             <div className='profile-content-post-content'>
@@ -60,18 +64,10 @@ export default function ProfileContentReplyParent({ post }: { post: BasicPostTyp
                     </div>
                     <div className='post-content flex-col'>
                         <PostText content={post.content} />
-                        <PostImages images={post.images} />
+                        <PostImages images={post.images} openPhoto={openPhoto} />
                     </div>
                     <div className='!border-t-0 post-btns'>
-                        <PostBtns
-                            postId={post.id}
-                            author={post.author.username}
-                            replies={post['_count'].replies}
-                            reposts={post['_count'].reposts}
-                            likes={post['_count'].likes}
-                            reposted={!!post.reposts.length}
-                            liked={!!post.likes.length}
-                            bookmarked={!!post.bookmarks.length} />
+                        <PostBtns post={post} />
                     </div>
                 </div>
             </div>
