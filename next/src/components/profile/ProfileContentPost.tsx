@@ -32,6 +32,10 @@ export default function ProfileContentPost({ post }: { post: ProfilePostOrRepost
         e.stopPropagation();
     };
 
+    const openPhoto = (photoIndex: number) => {
+        router.push(`http://localhost:3000/${post.author.username}/status/${post.id}?photo=${photoIndex}`);
+    };
+
     if (!postIsVisible) return <div className='mt-[-1px]'></div>;
 
     return (
@@ -77,19 +81,10 @@ export default function ProfileContentPost({ post }: { post: ProfilePostOrRepost
                     </div>
                     <div className='post-content flex-col'>
                         <PostText content={post.content} />
-                        <PostImages images={post.images} />
+                        <PostImages images={post.images} openPhoto={openPhoto} />
                     </div>
                     <div className='!border-t-0 post-btns'>
-                        <PostBtns
-                            postId={post.id}
-                            author={post.author.username}
-                            replies={post['_count'].replies}
-                            reposts={post['_count'].reposts}
-                            likes={post['_count'].likes}
-                            reposted={!!post.reposts.length}
-                            liked={!!post.likes.length}
-                            bookmarked={!!post.bookmarks.length}
-                            setPostIsVisible={setPostIsVisible} />
+                        <PostBtns post={post} setPostIsVisible={setPostIsVisible} />
                     </div>
                 </div>
             </div>

@@ -192,15 +192,7 @@ export default function NotificationPost({ post, type, isRead, notifier }: Notif
                         )}
 
                         <div className='!border-t-0 post-btns'>
-                            <PostBtns
-                                postId={post.id}
-                                author={post.author.username}
-                                replies={post['_count'].replies}
-                                reposts={post['_count'].reposts}
-                                likes={post['_count'].likes}
-                                reposted={!!post.reposts.length}
-                                liked={!!post.likes.length}
-                                bookmarked={!!post.bookmarks.length} />
+                            <PostBtns post={post} />
                         </div>
                     </div>
                 </div>

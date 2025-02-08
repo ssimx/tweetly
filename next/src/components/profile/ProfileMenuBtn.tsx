@@ -52,19 +52,6 @@ export default function ProfileMenuBtn({
         }
     };
 
-    useEffect(() => {
-        if (menuOpen) {
-            window.addEventListener('click', handleClickOutside);
-        } else {
-            window.removeEventListener('click', handleClickOutside);
-        }
-
-        return () => {
-            window.removeEventListener('click', handleClickOutside);
-            document.body.classList.remove('disable-interaction');
-        };
-    }, [menuOpen]);
-
     const handleCopyLink = () => {
         const url = window.location.origin;
         const profileUrl = `${url}/${user}`;
@@ -124,6 +111,19 @@ export default function ProfileMenuBtn({
             }
         }
     };
+
+    useEffect(() => {
+        if (menuOpen) {
+            window.addEventListener('click', handleClickOutside);
+        } else {
+            window.removeEventListener('click', handleClickOutside);
+        }
+
+        return () => {
+            window.removeEventListener('click', handleClickOutside);
+            document.body.classList.remove('disable-interaction');
+        };
+    }, [menuOpen]);
 
     return (
         <div className='profile-menu'>

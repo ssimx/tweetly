@@ -1,15 +1,13 @@
 import { newPostSchema } from "@/lib/schemas";
-import { getToken, removeSession, verifySession } from "@/lib/session";
-import { Post } from "@/lib/types";
+import { extractToken, getToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 export async function POST(req: NextRequest) {
     if (req.method === 'POST') {
-        // Check for an existing session
-        const token = await getToken();
+        const authHeader = req.headers.get('Authorization');
+        const token = await extractToken(authHeader) || await getToken();
         if (token) {
-            // Check for session validity
             const isValid = await verifySession(token);
 
             if (!isValid.isAuth) {
@@ -17,13 +15,12 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 401 });
             }
         } else {
-            return NextResponse.json({ message: 'Not logged in, please log in first' }, { status: 401 });
+            return NextResponse.json({ error: 'Not logged in. Please log in first' }, { status: 401 })
         }
 
         try {
             // validate the data
             const body = await req.json() as z.infer<typeof newPostSchema>;
-            console.log(body)
             const validatedData = newPostSchema.parse(body);
 
             // send POST request to the backend
@@ -39,7 +36,7 @@ export async function POST(req: NextRequest) {
 
             if (response.ok) {
                 const data = await response.json();
-                return NextResponse.json(data.response.post as Post);
+                return NextResponse.json(data);
             } else {
                 const errorData = await response.json();
                 return NextResponse.json({ error: errorData.error }, { status: response.status });

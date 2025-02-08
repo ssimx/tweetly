@@ -11,13 +11,16 @@ export default function PostText({ content, searchSegments }: { content: string 
         // Regex to match tags
         const tagRegex = /@\w+/g;
 
+        // Regex to match URLs (http, https, www)
+        const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|\b[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(\/[^\s]*)?)/gi;
+
         const highlightWords = searchSegments?.map(segment => segment.toLowerCase()) || [];
         const wordRegex = highlightWords.length
             ? new RegExp(`\\b(${highlightWords.join("|")})\\b`, "gi")
             : null;
 
-        // Split text while keeping hashtags or tags (@)
-        const parts = text.split(/([#@][^\s]+)/g);
+        // Split text while keeping hashtags, tags, and URLs
+        const parts = text.split(/([#@][^\s]+|https?:\/\/[^\s]+|www\.[^\s]+)/g);
 
         // Map over the parts to render text and hashtags
         return parts.map((part, index) => {
@@ -40,6 +43,14 @@ export default function PostText({ content, searchSegments }: { content: string 
                         className='text-primary hover:underline'
                         onClick={(e) => e.stopPropagation()}
                     >
+                        {part}
+                    </Link>
+                );
+            } else if (urlRegex.test(part)) {
+                // Ensure the URL starts with http or https
+                const url = part.startsWith('http') ? part : `https://${part}`;
+                return (
+                    <Link key={index} href={url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                         {part}
                     </Link>
                 );

@@ -1,5 +1,5 @@
 'use client';
-import { PostType } from '@/lib/types';
+import { BasicPostType } from '@/lib/types';
 import React, { useState } from 'react'
 import Link from 'next/link';
 import Image from 'next/image';
@@ -10,7 +10,7 @@ import UserHoverCard from '../UserHoverCard';
 import PostText from './PostText';
 import PostImages from './PostImages';
 
-export default function ParentPostInfo({ post }: { post: PostType }) {
+export default function ParentPostInfo({ post }: { post: BasicPostType }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
     const [followersCount, setFollowersCount] = useState(post.author.followers.length);
 
@@ -25,6 +25,10 @@ export default function ParentPostInfo({ post }: { post: PostType }) {
 
     const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
         e.stopPropagation();
+    };
+
+    const openPhoto = (photoIndex: number) => {
+        router.push(`http://localhost:3000/${post.author.username}/status/${post.id}/photo/${photoIndex + 1}`, { scroll: false });
     };
 
     return (
@@ -61,19 +65,11 @@ export default function ParentPostInfo({ post }: { post: PostType }) {
 
                 <div className='post-content flex-col'>
                     <PostText content={post.content} />
-                    <PostImages images={post.images} />
+                    <PostImages images={post.images} openPhoto={openPhoto} />
                 </div>
 
                 <div className='!border-t-0 post-btns'>
-                    <PostBtns
-                        postId={post.id}
-                        author={post.author.username}
-                        replies={post['_count'].replies}
-                        reposts={post['_count'].reposts}
-                        likes={post['_count'].likes}
-                        reposted={!!post.reposts.length}
-                        liked={!!post.likes.length}
-                        bookmarked={!!post.bookmarks.length} />
+                    <PostBtns post={post} />
                 </div>
             </div>
         </div>

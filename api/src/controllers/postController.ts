@@ -4,7 +4,7 @@ import {
     addPostBookmark,
     addPostLike,
     addPostRepost,
-    addPost,
+    createPost,
     getBookmarks,
     getFollowing30DayPosts,
     getGlobal30DayPosts,
@@ -31,6 +31,7 @@ import {
     removePostRepost,
     getOldestMedia,
     getMedia,
+    getGlobal30DayNewPosts,
 } from '../services/postService';
 import { createNotificationsForNewLike, createNotificationsForNewPost, createNotificationsForNewReply, createNotificationsForNewRepost, removeNotificationsForLike, removeNotificationsForRepost } from '../services/notificationService';
 import { deleteImageFromCloudinary } from './uploadController';
@@ -62,15 +63,15 @@ export const newPost = async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'Post does not have any content' });
         }
 
-        const response = await addPost(user.id, postData);
-        if (!response) {
+        const post = await createPost(user.id, postData);
+        if (!post) {
             imagesPublicIds?.forEach((img) => {
                 deleteImageFromCloudinary(img);
             });
             return res.status(404).json({ error: 'Post has to contain either text or/and images' });
         }
         
-        const postId = response.post.id;
+        const postId = post.id;
 
         // Delegate hashtag handling to service
         if (hashtags) {
@@ -84,7 +85,9 @@ export const newPost = async (req: Request, res: Response) => {
             createNotificationsForNewReply(postId, user.id);
         }
 
-        return res.status(201).json({ response });
+        console.log(post)
+
+        return res.status(201).json({ ...post });
     } catch (error) {
         imagesPublicIds?.forEach((img) => {
             deleteImageFromCloudinary(img);
@@ -98,36 +101,50 @@ export const newPost = async (req: Request, res: Response) => {
 
 export const global30DayPosts = async (req: Request, res: Response) => {
     const user = req.user as UserProps;
-    const cursor = Number(req.query.cursor);
+    const params = req.query;
+    const cursor = params.cursor;
+    const type = params.type?.toString().toUpperCase() as 'NEW' | 'OLD';
+    console.log(cursor, type)
 
     try {
         if (cursor) {
-            const oldestGlobalPostId = await getOldestGlobal30DayPost(user.id).then(res => res.length > 0 ? res[0].id : null);
-            if (oldestGlobalPostId) {
-                // check if current cursor equals last post id
-                // if truthy, return empty array and set the end to true
-                if (cursor === oldestGlobalPostId) {
-                    return res.status(200).json({
-                        olderGlobalPosts: [],
-                        end: true
-                    });
+            if (type === 'OLD') {
+                const oldestGlobalPostId = await getOldestGlobal30DayPost(user.id).then(res => res.length > 0 ? res[0].id : null);
+                if (oldestGlobalPostId) {
+                    // check if current cursor equals last post id
+                    // if truthy, return empty array and set the end to true
+                    if (Number(cursor) === oldestGlobalPostId) {
+                        return res.status(200).json({
+                            olderGlobalPosts: [],
+                            end: true
+                        });
+                    }
                 }
-            }
 
-            const olderGlobalPosts = await getGlobal30DayPosts(user.id, Number(cursor));
-            const lastOlderGlobalPost = olderGlobalPosts.slice(-1);
+                const posts = await getGlobal30DayPosts(user.id, Number(cursor));
+                const lastOlderGlobalPost = posts.length ? posts.slice(-1) : undefined;
 
-            return res.status(200).json({
-                olderGlobalPosts: olderGlobalPosts,
-                // check if older posts array is empty and if truthy set the end to true
-                // check if new cursor equals last post id
-                //  if truthy, return older posts and set the end to true
-                end: olderGlobalPosts.length === 0
-                    ? true
-                    : oldestGlobalPostId === lastOlderGlobalPost[0].id
+                return res.status(200).json({
+                    posts: posts,
+                    // check if older posts array is empty and if truthy set the end to true
+                    // check if new cursor equals last post id
+                    //  if truthy, return older posts and set the end to true
+                    end: posts.length === 0
                         ? true
-                        : false,
-            });
+                        : lastOlderGlobalPost && (oldestGlobalPostId === lastOlderGlobalPost[0].id)
+                            ? true
+                            : false,
+                });
+            } else if (type === 'NEW') {
+                const posts = await getGlobal30DayNewPosts(user.id, Number(cursor));
+                console.log(posts[0].id)
+
+                return res.status(200).json({
+                    posts: posts,
+                });
+            } else {
+                return res.status(404).json({ error: 'Unknown type' });
+            }
         } else {
             const oldestGlobalPostId = await getOldestGlobal30DayPost(user.id).then(res => res.length > 0 ? res[0].id : null);
             const posts = await getGlobal30DayPosts(user.id);
@@ -157,23 +174,23 @@ export const following30DayPosts = async (req: Request, res: Response) => {
                 // if truthy, return empty array and set the end to true
                 if (cursor === oldestFollowingPostId) {
                     return res.status(200).json({
-                        olderFollowingPosts: [],
+                        posts: [],
                         end: true
                     });
                 }
             }
 
-            const olderFollowingPosts = await getFollowing30DayPosts(user.id, Number(cursor));
-            const lastOlderFollowingPost = olderFollowingPosts.slice(-1);
+            const posts = await getFollowing30DayPosts(user.id, Number(cursor));
+            const lastOlderFollowingPost = posts.length ? posts.slice(-1) : undefined;
 
             return res.status(200).json({
-                olderFollowingPosts: olderFollowingPosts,
+                posts: posts,
                 // check if older posts array is empty and if truthy set the end to true
                 // check if new cursor equals last post id
                 //  if truthy, return older posts and set the end to true
-                end: olderFollowingPosts.length === 0
+                end: posts.length === 0
                     ? true
-                    : oldestFollowingPostId === lastOlderFollowingPost[0].id
+                    : lastOlderFollowingPost && (oldestFollowingPostId === lastOlderFollowingPost[0].id)
                         ? true
                         : false,
             });
@@ -232,7 +249,6 @@ export const getPost = async (req: Request, res: Response) => {
 
         // check whether last reply is the end of replies
         const oldestReplyLeastEnegagementId = await getOldestReplyLeastEnegagement(user.id, postId).then(res => res.length > 0 ? res[0].id : null);
-        console.log(oldestReplyLeastEnegagementId);
         
         return res.status(200).json({
             ...post,
@@ -248,6 +264,58 @@ export const getPost = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Error: ', error);
         return res.status(500).json({ error: 'Failed to fetch the post' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const postReplies = async (req: Request, res: Response) => {
+    const postId = Number(req.params.id);
+    const user = req.user as UserProps;
+
+    const cursor = Number(req.query.cursor);
+
+    try {
+        if (cursor) { 
+            // order posts by likes and find the oldest one with no engagemenet
+            const oldestReplyLeastEnegagementId = await getOldestReplyLeastEnegagement(user.id, postId).then(res => res.length > 0 ? res[0].id : null);
+            if (oldestReplyLeastEnegagementId) {
+                // check if current cursor equals last reply id
+                // if truthy, return empty array and set the end to true
+                if (cursor === oldestReplyLeastEnegagementId) {
+                    return res.status(200).json({
+                        replies: [],
+                        end: true
+                    });
+                }
+            }            
+
+            const replies = await getPostReplies(user.id, postId, Number(cursor));
+            const lastReplyInCurrentBatch = replies.slice(-1);
+
+            return res.status(200).json({
+                replies: replies,
+                // check if replies array is empty and if truthy set the end to true
+                // check if new cursor equals last post id
+                //      if truthy, return replies and set the end to true
+                end: replies.length === 0
+                    ? true
+                    : oldestReplyLeastEnegagementId === lastReplyInCurrentBatch[0].id
+                        ? true
+                        : false,
+            });
+        } else {
+            const oldestReplyLeastEnegagementId = await getOldestReplyLeastEnegagement(user.id, postId).then(res => res.length > 0 ? res[0].id : null);
+            const replies = await getPostReplies(user.id, postId);
+
+            return res.status(200).json({
+                replies,
+                end: oldestReplyLeastEnegagementId === null ? true : replies.slice(-1)[0].id === oldestReplyLeastEnegagementId ? true : false
+            });
+        }
+    } catch (error) {
+        console.error('Error: ', error);
+        return res.status(500).json({ error: 'Failed to fetch post replies' });
     }
 };
 
@@ -708,55 +776,3 @@ export const removeBookmark = async (req: Request, res: Response) => {
     }
 };
 
-// ---------------------------------------------------------------------------------------------------------
-
-export const postReplies = async (req: Request, res: Response) => {
-    const postId = Number(req.params.id);
-    const user = req.user as UserProps;
-
-    const cursor = Number(req.query.cursor);
-
-    try {
-        if (cursor) { 
-            // order posts by likes and find the oldest one with no engagemenet
-            const oldestReplyLeastEnegagementId = await getOldestReplyLeastEnegagement(user.id, postId).then(res => res.length > 0 ? res[0].id : null);
-            if (oldestReplyLeastEnegagementId) {
-                if (cursor === oldestReplyLeastEnegagementId) {
-                    return res.status(200).json({
-                        moreReplies: [],
-                        end: true
-                    });
-                }
-            }
-
-            const moreReplies = await getPostReplies(user.id, postId, Number(cursor));
-            if (moreReplies.length === 0) return res.status(200).json({
-                moreReplies: [],
-                end: true
-            });
-
-            const lastReplyInCurrentBatch = moreReplies.slice(-1);
-
-            return res.status(200).json({
-                moreReplies: moreReplies,
-                end: oldestReplyLeastEnegagementId
-                    ? oldestReplyLeastEnegagementId === lastReplyInCurrentBatch[0].id ? true : false
-                    : true,
-            });
-        } else {
-            const replies = await getPostReplies(user.id, postId);
-
-            if (!replies) {
-                return res.status(404).json({ message: "No replies found" });
-            }
-
-            return res.status(200).json({
-                posts: replies,
-                end: true
-            });
-        }
-    } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to fetch post replies' });
-    }
-};

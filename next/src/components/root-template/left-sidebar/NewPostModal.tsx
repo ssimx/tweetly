@@ -16,11 +16,10 @@ import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { Post } from "@/lib/types";
 import TextareaAutosize from 'react-textarea-autosize';
 import { useUserContext } from "@/context/UserContextProvider";
 import { socket } from "@/lib/socket";
+import { createPost } from '@/actions/actions';
 
 type PostData = z.infer<typeof newPostSchema>;
 
@@ -28,12 +27,12 @@ export default function NewPostModal() {
     const [text, setText] = useState('');
     const [selectedImages, setSelectedImages] = useState<string[]>([]);
     const [selectedImagesFiles, setSelectedImagesFiles] = useState<File[]>([]);
+    const [newPostError, setNewPostError] = useState('');
     const imageInputRef = useRef<HTMLInputElement | null>(null);
     
     const maxChars = 280;
     const { loggedInUser } = useUserContext();
     const charsPercentage = Math.min((text.length / maxChars) * 100, 100);
-    const router = useRouter();
 
     const {
         register,
@@ -127,35 +126,27 @@ export default function NewPostModal() {
                     : undefined;
             }
 
-            const response = await fetch('/api/posts/create', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            })
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error);
+            const postData = await createPost(data);
+            console.log(postData)
+            
+            if (!postData) {
+                setNewPostError('Something went wrong');
+                throw new Error('Something went wrong');
             }
-
-            const postData = await response.json() as Post;
-
             console.log(postData)
 
-            // update feed only if it's not a reply
-            if (postData.replyToId === null) {
-                socket.emit('new_global_post');
-                socket.emit('new_following_post', postData.authorId)
-            }
+            // update feed
+            socket.emit('new_global_post');
+            socket.emit('new_following_post', postData.author.id)
 
             // send notification to users
-            socket.emit('new_user_notification', postData.authorId);
+            socket.emit('new_user_notification', postData.author.id);
 
-            router.push(`/${loggedInUser.username}/status/${postData.id}`);
+            // hard redirect server action does not work, modal stays mounted / open
+            return window.location.href = `http://localhost:3000/${postData.author.username}/status/${postData.id}`;
         } catch (error) {
             console.error(error);
+        } finally {
             setSelectedImages([]);
             setText('');
             reset();
@@ -251,6 +242,9 @@ export default function NewPostModal() {
                     {errors.images && (
                         <p className="text-center text-red-600 font-bold text-xs ml-4">{`${errors.images.message}`}</p>
                     )}
+                    {newPostError && (
+                        <p className="text-center text-red-600 font-bold text-xs ml-4">{`${newPostError}`}</p>
+                    )}
                     {isSubmitting
                         ? (<Button disabled className='ml-auto font-bold w-fit rounded-3xl text-white-1'>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -269,3 +263,4 @@ export default function NewPostModal() {
         </Dialog>
     )
 }
+

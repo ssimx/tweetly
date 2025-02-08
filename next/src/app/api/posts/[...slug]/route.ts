@@ -2,7 +2,9 @@ import { extractToken, getToken, removeSession, verifySession } from "@/lib/sess
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-    req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    req: NextRequest,
+    props: { params: Promise<{ slug: [action: string, postId: string] }> }
+) {
     if (req.method === 'GET') {
         const authHeader = req.headers.get('Authorization');
         const token = await extractToken(authHeader) || await getToken();
@@ -17,11 +19,13 @@ export async function GET(
             return NextResponse.json({ error: 'Not logged in. Please log in first' }, { status: 401 })
         }
 
+        const params = await props.params;
+        const postId = params.slug[1];
+
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
-            const params = await props.params;
 
-            const response = await fetch(`${apiUrl}/posts/status/${params.id}`, {
+            const response = await fetch(`${apiUrl}/posts/status/${postId}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -48,22 +52,21 @@ export async function POST(
     req: NextRequest,
     props: { params: Promise<{ slug: [action: string, postId: string] }> }
 ) {
-    const params = await props.params;
     if (req.method === 'POST') {
-        const token = await getToken();
-
+        const authHeader = req.headers.get('Authorization');
+        const token = await extractToken(authHeader) || await getToken();
         if (token) {
             const isValid = await verifySession(token);
 
             if (!isValid.isAuth) {
                 await removeSession();
-                return NextResponse.json({ message: 'Invalid session. Please re-log ' }, { status: 401 })
+                return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 401 });
             }
         } else {
             return NextResponse.json({ error: 'Not logged in. Please log in first' }, { status: 401 })
-        };
+        }
 
-
+        const params = await props.params;
         const action = params.slug[0];
         const postId = params.slug[1];
 
@@ -97,14 +100,14 @@ export async function DELETE(
 ) {
     const params = await props.params;
     if (req.method === 'DELETE') {
-        const token = await getToken();
-
+        const authHeader = req.headers.get('Authorization');
+        const token = await extractToken(authHeader) || await getToken();
         if (token) {
             const isValid = await verifySession(token);
 
             if (!isValid.isAuth) {
                 await removeSession();
-                return NextResponse.json({ message: 'Invalid session. Please re-log ' }, { status: 401 })
+                return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 401 });
             }
         } else {
             return NextResponse.json({ error: 'Not logged in. Please log in first' }, { status: 401 })

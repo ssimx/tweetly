@@ -7,15 +7,14 @@ import { Progress } from "@/components/ui/progress"
 import { newPostSchema } from "@/lib/schemas";
 import { Image as Img, Loader2, X } from "lucide-react";
 import Image from 'next/image';
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { Post } from "@/lib/types";
 import TextareaAutosize from 'react-textarea-autosize';
 import { useUserContext } from "@/context/UserContextProvider";
 import { socket } from "@/lib/socket";
+import { createPost } from "@/actions/actions";
 
 type PostData = z.infer<typeof newPostSchema>;
 
@@ -24,12 +23,13 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
     const [, setInputActive] = useState(false);
     const [selectedImages, setSelectedImages] = useState<string[]>([]);
     const [selectedImagesFiles, setSelectedImagesFiles] = useState<File[]>([]);
+    const [newPostError, setNewPostError] = useState('');
     const formRef = useRef<HTMLFormElement | null>(null);
     const imageInputRef = useRef<HTMLInputElement | null>(null);
     const maxChars = 280;
     const charsPercentage = Math.min((text.length / maxChars) * 100, 100);
-    const router = useRouter();
     const { loggedInUser } = useUserContext();
+    const formId = useId();
 
     const {
         register,
@@ -62,7 +62,6 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
     };
 
     const handleSelectedImages = async (files: FileList) => {
-        console.log(files)
         if (files.length + selectedImages.length > 4) {
             setError('images', {
                 type: 'manual',
@@ -92,7 +91,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
         setValue('images', [...selectedImages, ...validFiles.map((file) => URL.createObjectURL(file))]);
     };
 
-    const onSubmitHeaderPost = async (data: PostData) => {
+    const onSubmitPost = async (data: PostData) => {
         if (isSubmitting) return;
 
         try {
@@ -132,31 +131,25 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
                     : undefined;
             }
 
-            const response = await fetch('/api/posts/create', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            })
+            const postData = await createPost(data);
+            console.log(postData)
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error);
+            if (!postData) {
+                setNewPostError('Something went wrong');
+                throw new Error('Something went wrong');
             }
 
-            const postData = await response.json() as Post;
-
             // update feed only if it's not a reply
-            if (postData.replyToId === null) {
+            if (!reply) {
                 socket.emit('new_global_post');
-                socket.emit('new_following_post', postData.authorId)
+                socket.emit('new_following_post', postData.author.id)
             }
 
             // send notification to users
-            socket.emit('new_user_notification', postData.authorId);
+            socket.emit('new_user_notification', postData.author.id);
 
-            router.push(`/${loggedInUser.username}/status/${postData.id}`);
+            // hard redirect server action does not work
+            return window.location.href = `http://localhost:3000/${postData.author.username}/status/${postData.id}`;
         } catch (error) {
             console.error(error);
             setSelectedImages([]);
@@ -172,7 +165,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
                     alt='User profile'
                     width={54} height={54}
                     className="w-[54px] h-[54px] rounded-full" />
-                <form onSubmit={handleSubmit(onSubmitHeaderPost)} id='headerPostForm' className='min-h-full pr-4 flex flex-col' ref={formRef}>
+                <form onSubmit={handleSubmit(onSubmitPost)} id={formId} className='min-h-full pr-4 flex flex-col' ref={formRef}>
                     <TextareaAutosize maxLength={maxChars}
                         className='h-[28px] mt-3 mb-auto w-full focus:outline-none text-xl resize-none bg-transparent'
                         placeholder={placeholder ? placeholder : 'What is happening?!'}
@@ -248,6 +241,9 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
                 {errors.images && (
                     <p className="text-center text-red-600 font-bold text-xs ml-4">{`${errors.images.message}`}</p>
                 )}
+                {newPostError && (
+                    <p className="text-center text-red-600 font-bold text-xs ml-4">{`${newPostError}`}</p>
+                )}
                 {isSubmitting
                     ? (<Button disabled className='ml-auto font-bold w-fit rounded-3xl text-white-1'>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -256,7 +252,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
                     : (<Button type="submit"
                         className='ml-auto font-bold w-fit rounded-3xl text-white-1'
                         disabled={(text.length > 280 || text.length === 0) && (selectedImages.length === 0 || selectedImages.length > 4)}
-                        form='headerPostForm'
+                        form={formId}
                     >
                         Post
                     </Button>)
