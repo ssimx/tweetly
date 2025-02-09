@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import { X, ChevronRight, ChevronLeft, ChevronsRight, ChevronsLeft } from 'lucide-react';
 import NewPost from '../feed/NewPost';
-import PostReplies from './post-replies/Replies';
+import PostReplies from './post-replies/PostReplies';
 
 export default function PostInfoModal({ post, photoId }: { post: VisitedPostType, photoId: number }) {
     const router = useRouter();
@@ -19,7 +19,6 @@ export default function PostInfoModal({ post, photoId }: { post: VisitedPostType
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
     const [followersCount, setFollowersCount] = useState(post.author.followers.length);
     const [isFollowingTheUser,] = useState(post.author.following.length === 1);
-    const postInfoRef = useRef<HTMLDivElement>(null);
     const postDate = new Date(post.createdAt);
     const postTime = `${postDate.getHours()}:${postDate.getMinutes()}`;
     const postFormatDate = `${postDate.toLocaleString('default', { month: 'short' })} ${postDate.getDate()}, ${postDate.getFullYear()}`;
@@ -30,6 +29,7 @@ export default function PostInfoModal({ post, photoId }: { post: VisitedPostType
     const [repliesEndReached, setRepliesEndReached] = useState<boolean>(post.repliesEnd);
 
     // image overlay state
+    const postInfoRef = useRef<HTMLDivElement>(null);
     const [overlayCurrentImageIndex, setOverlayCurrentImageIndex] = useState<number>(photoId - 1);
     const [isPostInfoVisible, setIsPostInfoVisible] = useState(true);
 
@@ -47,7 +47,6 @@ export default function PostInfoModal({ post, photoId }: { post: VisitedPostType
 
         return (() => {
             document.body.style.overflow = '';
-            console.log('unmounting')
         });
     }, []);
 
@@ -55,7 +54,7 @@ export default function PostInfoModal({ post, photoId }: { post: VisitedPostType
         <>
             {
                 createPortal(
-                    <div className={`fixed inset-0 z-50 bg-black-1/50 grid ${!isPostInfoVisible ? 'grid-cols-[100%]' : 'grid-cols-[80%,20%]'}`} ref={postInfoRef}>
+                    <div className={`fixed inset-0 z-50 bg-black-1/50 grid ${!isPostInfoVisible ? 'grid-cols-[100%]' : 'grid-cols-[80%,20%]'}`}>
                         <div className='relative h-[100vh] flex-center' onClick={closePhoto}>
                             <button className='absolute z-[100] inset-0 m-3 p-2 h-fit w-fit rounded-full bg-primary-foreground hover:bg-secondary-foreground hover:cursor-pointer'
                                 onClick={(e) => {
@@ -110,7 +109,8 @@ export default function PostInfoModal({ post, photoId }: { post: VisitedPostType
                                 />
                             </div>
                         </div>
-                        <div className={`bg-primary-foreground p-2 border-l-[1px] border-primary-border overflow-y-auto max-h-[100vh] ${!isPostInfoVisible ? 'translate-x-[100%]' : ''}`}>
+                        <div ref={postInfoRef}
+                            className={`bg-primary-foreground p-2 border-l-[1px] border-primary-border overflow-y-auto max-h-[100vh] ${!isPostInfoVisible ? 'translate-x-[100%]' : ''}`}>
                             <div>
                                 <div className='post'>
                                     <div className='post-header'>

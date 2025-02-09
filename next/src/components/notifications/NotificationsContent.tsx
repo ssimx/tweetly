@@ -1,6 +1,6 @@
 'use client';
 import { getMoreNotifications } from '@/actions/get-actions';
-import { NotificationPostType, NotificationType } from '@/lib/types';
+import { BasicPostType, NotificationType, ReplyPostType } from '@/lib/types';
 import React, { useEffect, useRef, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import NotificationPost from './NotificationPost';
@@ -8,12 +8,12 @@ import NotificationNewFollow from './NotificationNewFollow';
 
 export default function NotificationsContent({ initialNotifications }: { initialNotifications: { notifications: NotificationType[], end: boolean } | undefined }) {
     const [notifications, setNotifications] = useState<NotificationType[] | undefined>(initialNotifications ? initialNotifications.notifications : undefined);
-    console.log(notifications[0])
+
     // scroll and pagination
     const scrollPositionRef = useRef<number>(0);
     const [scrollPosition, setScrollPosition] = useState(0);
     const [notificationsCursor, setNotificationsCursor] = useState<number | null | undefined>(initialNotifications ? initialNotifications.notifications.length !== 0 ? initialNotifications.notifications.slice(-1)[0].id : null : undefined);
-    const [notificationsEndReached, setNotificationsEndReached] = useState<boolean | undefined>(initialNotifications ? initialNotifications.end : undefined);
+    const [notificationsEndReached, setNotificationsEndReached] = useState<boolean>(initialNotifications ? initialNotifications.end : true);
     const { ref, inView } = useInView({
         threshold: 0,
         delay: 100,
@@ -70,9 +70,9 @@ export default function NotificationsContent({ initialNotifications }: { initial
                                                 <div className='feed-hr-line'></div>
                                             </>
                                         )
-                                        : notification.post && (
+                                        : (
                                             <>
-                                                <NotificationPost notification={notification as NotificationPostType} />
+                                                <NotificationPost notification={notification as NotificationType & { post: BasicPostType | ReplyPostType}} />
                                                 <div className='feed-hr-line'></div>
                                             </>
                                         )

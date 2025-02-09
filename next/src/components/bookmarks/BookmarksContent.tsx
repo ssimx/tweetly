@@ -12,7 +12,7 @@ export default function BookmarksContent({ initialBookmarks }: { initialBookmark
     const scrollPositionRef = useRef<number>(0);
     const [scrollPosition, setScrollPosition] = useState(0);
     const [bookmarksCursor, setBookmarksCursor] = useState<number | null | undefined>(initialBookmarks ? initialBookmarks.posts.length !== 0 ? initialBookmarks.posts.slice(-1)[0].id : null : undefined);
-    const [bookmarksEndReached, setBookmarksEndReached] = useState<boolean | undefined>(initialBookmarks ? initialBookmarks.end : undefined);
+    const [bookmarksEndReached, setBookmarksEndReached] = useState<boolean>(initialBookmarks ? initialBookmarks.end : true);
     const { ref, inView } = useInView({
         threshold: 0,
         delay: 100,

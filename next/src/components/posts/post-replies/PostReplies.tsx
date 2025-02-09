@@ -1,6 +1,6 @@
 'use client';
 import { BasicPostType } from '@/lib/types';
-import ReplyPost from './Reply';
+import ReplyPost from './PostReply';
 import { useEffect, useRef, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { getMoreRepliesForPost } from '@/actions/get-actions';
@@ -26,21 +26,22 @@ export default function PostReplies({ parentPostId, replies, setReplies, replies
         delay: 100,
     });
 
-    console.log('test scroll')
-
-
     useEffect(() => {
-        // Track scroll position on user scroll
-        function handleScroll() {
-            scrollPositionRef.current = window.scrollY;
-        }
+        const scrollElement = scrollElementRef?.current;
 
-        (scrollElementRef && scrollElementRef.current)
-            ? scrollElementRef.current.addEventListener('scroll', handleScroll, { passive: true })
+        // Track scroll position on user scroll for element
+        const handleScroll = () => {
+            scrollPositionRef.current = scrollElement ? scrollElement.scrollTop : window.scrollY;
+        };
+
+        scrollElement
+            ? scrollElement.addEventListener('scroll', handleScroll, { passive: true })
             : window.addEventListener('scroll', handleScroll, { passive: true });
 
         return () => {
-            window.removeEventListener('scroll', handleScroll);
+            scrollElement
+                ? scrollElement.removeEventListener('scroll', handleScroll)
+                : window.removeEventListener('scroll', handleScroll);
         };
     }, [scrollElementRef, scrollPositionRef]);
 

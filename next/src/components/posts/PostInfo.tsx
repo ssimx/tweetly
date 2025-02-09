@@ -10,7 +10,7 @@ import PostImages from './PostImages';
 import { createPortal } from 'react-dom';
 import { X, ChevronRight, ChevronLeft, ChevronsRight, ChevronsLeft } from 'lucide-react';
 import NewPost from '../feed/NewPost';
-import PostReplies from './post-replies/Replies';
+import PostReplies from './post-replies/PostReplies';
 import ParentPostInfo from './ParentPostInfo';
 
 export default function PostInfo({ post, parentPost, photoId }: { post: VisitedPostType, parentPost?: BasicPostType, photoId?: number }) {
@@ -29,6 +29,7 @@ export default function PostInfo({ post, parentPost, photoId }: { post: VisitedP
     const [repliesEndReached, setRepliesEndReached] = useState<boolean>(post.repliesEnd);
 
     // image overlay state
+    const postInfoRef = useRef<HTMLDivElement>(null);
     const [isOverlayVisible, setIsOverlayVisible] = useState(false);
     const [overlayCurrentImageIndex, setOverlayCurrentImageIndex] = useState<number | null>(null);
     const [isPostInfoVisible, setIsPostInfoVisible] = useState(true);
@@ -37,6 +38,7 @@ export default function PostInfo({ post, parentPost, photoId }: { post: VisitedP
         window.history.replaceState(null, '', `/${authorUsername}/status/${postId}/photo/${photoIndex + 1}`);
         setIsOverlayVisible(true);
         setOverlayCurrentImageIndex(photoIndex);
+        document.body.style.overflow = 'hidden';
     };
 
     const closePhoto = () => {
@@ -60,6 +62,10 @@ export default function PostInfo({ post, parentPost, photoId }: { post: VisitedP
                 setOverlayCurrentImageIndex(photoId - 1);
             }
         }
+
+        return (() => {
+            document.body.style.overflow = '';
+        });
     }, [post, photoId, parentPost]);
 
     return (
@@ -177,9 +183,8 @@ export default function PostInfo({ post, parentPost, photoId }: { post: VisitedP
                                 />
                             </div>
                         </div>
-                        <div
-                            className={`bg-primary-foreground p-2 border-l-[1px] border-primary-border overflow-y-auto max-h-[100vh]
-                                ${!isPostInfoVisible ? 'translate-x-[100%]' : null}`}>
+                        <div ref={postInfoRef}
+                            className={`bg-primary-foreground p-2 border-l-[1px] border-primary-border overflow-y-auto max-h-[100vh] ${!isPostInfoVisible ? 'translate-x-[100%]' : ''}`}>
                             <div>
                                 <div className='post'>
                                     <div className='post-header'>
@@ -227,7 +232,8 @@ export default function PostInfo({ post, parentPost, photoId }: { post: VisitedP
                                     repliesCursor={repliesCursor}
                                     setRepliesCursor={setRepliesCursor}
                                     repliesEndReached={repliesEndReached}
-                                    setRepliesEndReached={setRepliesEndReached} />
+                                    setRepliesEndReached={setRepliesEndReached}
+                                    scrollElementRef={postInfoRef} />
                             </div>
                         </div>
                     </div>,

@@ -2,7 +2,7 @@ import 'server-only';
 import { getCurrentUserToken } from './auth';
 import { getErrorMessage } from '@/lib/utils';
 import { redirect } from 'next/navigation';
-import { BasicPostType, BookmarkedPostType, BookmarkPostType, ConversationsListType, ConversationType, NotificationType, ProfileInfo, UserInfo, VisitedPostType } from '@/lib/types';
+import { BasicPostType, BookmarkPostType, ConversationsListType, ConversationType, NotificationType, ProfileInfo, UserInfo, VisitedPostType } from '@/lib/types';
 import { cache } from 'react';
 
 export const getLoggedInUser = cache(async () => {
@@ -129,7 +129,7 @@ export async function getBookmarks() {
     } catch (error) {
         const errorMessage = getErrorMessage(error);
         console.error(errorMessage);
-        return [];
+        return undefined;
     }
 };
 
