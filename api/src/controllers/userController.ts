@@ -1,4 +1,4 @@
-import { createNotificationsForNewFollower } from './../services/notificationService';
+import { createNotificationForNewFollow, removeNotificationForFollow } from './../services/notificationService';
 import { Request, Response } from 'express';
 import { addBlock, addFollow, addPushNotifications, deactivateUser, getFollowers, getFollowing, getFollowSuggestions, getProfile, getUser, getUserByEmail, getUserBySearch, getUserPassword, isUserDeactivated, removeBlock, removeFollow, removePushNotfications, updateProfile, updateUserBirthday, updateUserEmail, updateUserPassword, updateUserUsername } from '../services/userService';
 import { ProfileInfo, UserProps } from '../lib/types';
@@ -148,7 +148,7 @@ export const followUser = async (req: Request, res: Response) => {
         const response = await addFollow(user.id, username);
         if (!response) return res.status(404).json({ error: 'failure' })
         
-        createNotificationsForNewFollower(user.id, username);
+        createNotificationForNewFollow(user.id, username);
 
         return res.status(201).json('success');
     } catch (error) {
@@ -165,8 +165,9 @@ export const unfollowUser = async (req: Request, res: Response) => {
 
     try {
         const response = await removeFollow(user.id, username);
-
         if (!response) return res.status(404).json({ error: 'failure' })
+        
+        removeNotificationForFollow(user.id, username);
 
         return res.status(201).json('success');
     } catch (error) {

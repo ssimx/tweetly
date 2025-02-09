@@ -57,14 +57,14 @@ export default function PostInfoModal({ post, photoId }: { post: VisitedPostType
                 createPortal(
                     <div className={`fixed inset-0 z-50 bg-black-1/50 grid ${!isPostInfoVisible ? 'grid-cols-[100%]' : 'grid-cols-[80%,20%]'}`} ref={postInfoRef}>
                         <div className='relative h-[100vh] flex-center' onClick={closePhoto}>
-                            <button className='absolute z-[100] inset-0 m-3 p-2 h-fit w-fit rounded-full bg-gray-800 hover:bg-gray-700 hover:cursor-pointer'
+                            <button className='absolute z-[100] inset-0 m-3 p-2 h-fit w-fit rounded-full bg-primary-foreground hover:bg-secondary-foreground hover:cursor-pointer'
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     closePhoto();
                                 }}>
                                 <X size={24} className='color-white-1 ' />
                             </button>
-                            <button className='absolute z-[100] right-0 top-0 m-3 p-2 h-fit w-fit rounded-full bg-gray-800 hover:bg-gray-700 hover:cursor-pointer'
+                            <button className='absolute z-[100] right-0 top-0 m-3 p-2 h-fit w-fit rounded-full bg-primary-foreground hover:bg-secondary-foreground hover:cursor-pointer'
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setIsPostInfoVisible((current) => !current);
@@ -75,7 +75,7 @@ export default function PostInfoModal({ post, photoId }: { post: VisitedPostType
                                 }
                             </button>
                             {overlayCurrentImageIndex !== 0 && (
-                                <button className='absolute z-[100] left-0 m-3 p-2 h-fit w-fit rounded-full bg-gray-800 hover:bg-gray-700 hover:cursor-pointer'
+                                <button className='absolute z-[100] left-0 m-3 p-2 h-fit w-fit rounded-full bg-primary-foreground hover:bg-secondary-foreground hover:cursor-pointer'
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         const previousImageIndex = overlayCurrentImageIndex - 1;
@@ -87,7 +87,7 @@ export default function PostInfoModal({ post, photoId }: { post: VisitedPostType
                             )}
                             {post.images.length > 1 && overlayCurrentImageIndex + 1 < post.images.length
                                 ? (
-                                    <button className='absolute z-[100] right-0 m-3 p-2 h-fit w-fit rounded-full bg-gray-800 hover:bg-gray-700 hover:cursor-pointer'
+                                    <button className='absolute z-[100] right-0 m-3 p-2 h-fit w-fit rounded-full bg-primary-foreground hover:bg-secondary-foreground hover:cursor-pointer'
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             const nextImageIndex = overlayCurrentImageIndex + 1;

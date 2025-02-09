@@ -27,8 +27,8 @@ export default function ReplyPost({ post }: { post: BasicPostType }) {
         e.stopPropagation();
     };
 
-    const openPhoto = (photoIndex: number) => {
-        router.push(`http://localhost:3000/${post.author.username}/status/${post.id}?photo=${photoIndex}`);
+    const openPhoto = (photoIndex: number, authorUsername: string, postId: number) => {
+        router.push(`http://localhost:3000/${authorUsername}/status/${postId}/photo/${photoIndex + 1}`, { scroll: false });
     };
 
     return (
@@ -60,7 +60,11 @@ export default function ReplyPost({ post }: { post: BasicPostType }) {
             </div>
             <div className='post-content flex-col'>
                 <PostText content={post.content} />
-                <PostImages images={post.images} openPhoto={openPhoto} />
+                <PostImages
+                    images={post.images}
+                    authorUsername={post.author.username}
+                    postId={post.id}
+                    openPhoto={openPhoto} />
             </div>
             <div className='!border-t-0 post-btns'>
                 <PostBtns post={post} />

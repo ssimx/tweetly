@@ -1,7 +1,14 @@
 import Image from 'next/image';
 import 'react-photo-view/dist/react-photo-view.css';
 
-export default function PostImages({ images, openPhoto }: { images: string[], openPhoto: (photoIndex: number) => void }) {
+type PostImagesType = {
+    images?: string[],
+    authorUsername: string,
+    postId: number,
+    openPhoto: (photoIndex: number, authorUsername: string, postId: number) => void
+};
+
+export default function PostImages({ images, authorUsername, postId, openPhoto }: PostImagesType) {
     if (!images) return <div></div>;
 
     return (
@@ -11,9 +18,9 @@ export default function PostImages({ images, openPhoto }: { images: string[], op
                     <Image
                         src={images[0]}
                         alt="Selected preview"
-                        className="max-h-[500px] w-auto mt-2 object-contain rounded-md hover:cursor-pointer"
+                        className="max-h-[500px] w-fit mt-2 object-contain rounded-md hover:cursor-pointer"
                         width={400} height={400}
-                        onClick={() => openPhoto(0)} />
+                        onClick={() => openPhoto(0, authorUsername, postId)} />
                 )
                 : (images.length > 1 && images.length < 5)
                     ? (
@@ -25,7 +32,7 @@ export default function PostImages({ images, openPhoto }: { images: string[], op
                                         alt="Selected preview"
                                         className="h-full w-full object-cover rounded-md hover:cursor-pointer"
                                         width={400} height={400}
-                                        onClick={() => openPhoto(index)} />
+                                        onClick={() => openPhoto(index, authorUsername, postId)} />
                                 </div>
                             ))}
                         </div>

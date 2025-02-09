@@ -2,13 +2,13 @@
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import { useUserContext } from '@/context/UserContextProvider';
-import { BasicPostType } from '@/lib/types';
+import { BasicPostType, BookmarkPostType, NotificationPostType } from '@/lib/types';
 import { getErrorMessage } from '@/lib/utils';
 import { Ellipsis } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 interface PostMenuType {
-    post: BasicPostType,
+    post: BasicPostType | NotificationPostType | BookmarkPostType,
     isFollowedByTheUser: boolean,
     setIsFollowedByTheUser: React.Dispatch<React.SetStateAction<boolean>>,
     setFollowersCount: React.Dispatch<React.SetStateAction<number>>,

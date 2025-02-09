@@ -8,6 +8,9 @@ import { useRouter } from 'next/navigation';
 import { Reply } from 'lucide-react';
 import PostDate from '../posts/PostDate';
 import { BookmarkPostType } from '@/lib/types';
+import PostMenu from '../posts/PostMenu';
+import PostText from '../posts/PostText';
+import PostImages from '../posts/PostImages';
 
 export default function BookmarkPost({ post }: { post: BookmarkPostType }) {
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
@@ -30,6 +33,10 @@ export default function BookmarkPost({ post }: { post: BookmarkPostType }) {
 
     const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
         e.stopPropagation();
+    };
+
+    const openPhoto = (photoIndex: number, authorUsername: string, postId: number) => {
+        router.push(`http://localhost:3000/${authorUsername}/status/${postId}/photo/${photoIndex + 1}`, { scroll: false });
     };
 
     if (!postIsVisible) return <div className='mt-[-1px]'></div>;
@@ -86,10 +93,19 @@ export default function BookmarkPost({ post }: { post: BookmarkPostType }) {
                             <p>@{post.author.username}</p>
                             <p>·</p>
                             <PostDate createdAt={post.createdAt} />
+                            <PostMenu
+                                post={post}
+                                isFollowedByTheUser={isFollowedByTheUser}
+                                setIsFollowedByTheUser={setIsFollowedByTheUser}
+                                setFollowersCount={setFollowersCount}
+                            />
                         </div>
-                        <div className='feed-post-content post-content'>
-                            <p>{post.content}</p>
-                        </div>
+                        <PostText content={post.content} />
+                        <PostImages
+                            images={post.images}
+                            authorUsername={post.author.username}
+                            postId={post.id}
+                            openPhoto={openPhoto} />
                         <div className='!border-t-0 post-btns'>
                             <PostBtns post={post} setPostIsVisible={setPostIsVisible} />
                         </div>

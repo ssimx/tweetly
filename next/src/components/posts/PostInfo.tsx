@@ -33,8 +33,8 @@ export default function PostInfo({ post, parentPost, photoId }: { post: VisitedP
     const [overlayCurrentImageIndex, setOverlayCurrentImageIndex] = useState<number | null>(null);
     const [isPostInfoVisible, setIsPostInfoVisible] = useState(true);
 
-    const openPhoto = (photoIndex: number) => {
-        window.history.replaceState(null, '', `/${post.author.username}/status/${post.id}/photo/${photoIndex + 1}`);
+    const openPhoto = (photoIndex: number, authorUsername: string, postId: number) => {
+        window.history.replaceState(null, '', `/${authorUsername}/status/${postId}/photo/${photoIndex + 1}`);
         setIsOverlayVisible(true);
         setOverlayCurrentImageIndex(photoIndex);
     };
@@ -95,7 +95,11 @@ export default function PostInfo({ post, parentPost, photoId }: { post: VisitedP
                     </div>
                     <div className='post-content flex-col'>
                         <PostText content={post.content} />
-                        <PostImages images={post.images} openPhoto={openPhoto} />
+                        <PostImages
+                            images={post.images}
+                            authorUsername={post.author.username}
+                            postId={post.id}
+                            openPhoto={openPhoto} />
                     </div>
                     <div className='post-footer'>
                         <p>{postTime}</p>

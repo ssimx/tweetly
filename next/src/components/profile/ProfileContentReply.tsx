@@ -2,7 +2,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import UserHoverCard from '../UserHoverCard';
-import { formatPostDate } from '@/lib/utils';
 import PostBtns from '../posts/PostBtns';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -29,8 +28,8 @@ export default function ProfileContentReply({ replyPost }: { replyPost: ProfileR
         e.stopPropagation();
     };
 
-    const openPhoto = (photoIndex: number) => {
-        router.push(`http://localhost:3000/${replyPost.author.username}/status/${replyPost.id}/photo/${photoIndex + 1}`, { scroll: false });
+    const openPhoto = (photoIndex: number, authorUsername: string, postId: number) => {
+        router.push(`http://localhost:3000/${authorUsername}/status/${postId}/photo/${photoIndex + 1}`, { scroll: false });
     };
 
     return (
@@ -69,7 +68,11 @@ export default function ProfileContentReply({ replyPost }: { replyPost: ProfileR
                         </div>
                         <div className='post-content flex-col'>
                             <PostText content={replyPost.content} />
-                            <PostImages images={replyPost.images} openPhoto={openPhoto} />
+                            <PostImages
+                                images={replyPost.images}
+                                authorUsername={replyPost.author.username}
+                                postId={replyPost.id}
+                                openPhoto={openPhoto} />
                         </div>
                         <div className='!border-t-0 post-btns'>
                             <PostBtns post={replyPost} />

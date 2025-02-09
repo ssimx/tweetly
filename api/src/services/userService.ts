@@ -1,6 +1,5 @@
 import { Prisma, PrismaClient } from '@prisma/client';
-import { ProfileInfo, UserProps } from '../lib/types';
-import { removeNotificationsForFollow } from './notificationService';
+import { ProfileInfo } from '../lib/types';
 const prisma = new PrismaClient();
 
 // ---------------------------------------------------------------------------------------------------------
@@ -694,8 +693,6 @@ export const removeFollow = async (followerId: number, username: string) => {
     });
 
     if (!removed) throw new Error('Logged in user is not following the user');;
-
-    removeNotificationsForFollow(followerId, followeeId);
 
     return true;
 };

@@ -8,7 +8,7 @@ import NotificationNewFollow from './NotificationNewFollow';
 
 export default function NotificationsContent({ initialNotifications }: { initialNotifications: { notifications: NotificationType[], end: boolean } | undefined }) {
     const [notifications, setNotifications] = useState<NotificationType[] | undefined>(initialNotifications ? initialNotifications.notifications : undefined);
-    
+    console.log(notifications[0])
     // scroll and pagination
     const scrollPositionRef = useRef<number>(0);
     const [scrollPosition, setScrollPosition] = useState(0);

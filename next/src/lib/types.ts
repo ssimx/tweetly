@@ -180,7 +180,8 @@ export type BookmarkedPostType = BasePostType & {
 
 export interface PostInfoType {
     id: number,
-    content: string,
+    content?: string,
+    images: string[],
     createdAt: string,
     updatedAt: string,
     author: {
@@ -293,15 +294,11 @@ export interface PostRepostType {
     }
 };
 
-export interface ReplyPostType {
-    id: number,
-    content?: string,
-    images?: string[],
-    createdAt: string,
-    updatedAt: string,
+export type ReplyPostType = BasePostType & {
     replyTo: {
         id: number,
-        content: true,
+        content?: string,
+        images?: string[],
         createdAt: string,
         updatedAt: string,
         author: {
@@ -337,38 +334,6 @@ export interface ReplyPostType {
             likes: number,
         },
     },
-    author: {
-        username: string,
-        profile: {
-            name: string,
-            bio: string,
-            profilePicture: string,
-        },
-        followers: {
-            followerId: number,
-        }[] | [],
-        following: {
-            followeeId: number,
-        }[] | [],
-        _count: {
-            followers: number,
-            following: number,
-        }
-    },
-    reposts: {
-        userId: number,
-    }[] | [],
-    likes: {
-        userId: number,
-    }[] | [],
-    bookmarks: {
-        userId: number,
-    }[] | [],
-    _count: {
-        replies: number,
-        reposts: number,
-        likes: number,
-    }
 };
 
 export interface MediaPostType {
@@ -534,11 +499,6 @@ export interface NotificationType {
             following: number,
         }
     };
-    post?: BasePostType | ReplyPostType
-};
-
-export type NotificationPostType = NotificationType & {
-    post: BasePostType | ReplyPostType;
 };
 
 export type NotificationFollowType = NotificationType;

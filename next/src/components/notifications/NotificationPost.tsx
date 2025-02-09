@@ -8,14 +8,17 @@ import { useRouter } from 'next/navigation';
 import { Repeat2, Rss, Heart, Reply } from 'lucide-react';
 import { useUserContext } from '@/context/UserContextProvider';
 import PostDate from '../posts/PostDate';
-import { NotificationPostType, ReplyPostType } from '@/lib/types';
+import { BasicPostType, NotificationType, ReplyPostType } from '@/lib/types';
+import PostMenu from '../posts/PostMenu';
+import PostText from '../posts/PostText';
+import PostImages from '../posts/PostImages';
 
-export default function NotificationPost({ notification }: { notification: NotificationPostType }) {
-    const [postIsFollowedByTheUser, postSetIsFollowedByTheUser] = useState(notification.post.author['_count'].followers === 1);
-    const [postFollowersCount, postSetFollowersCount] = useState(notification.post.author.followers.length);
+export default function NotificationPost({ notification }: { notification: NotificationType & { post: BasicPostType | ReplyPostType } }) {
+    const [postIsFollowedByTheUser, setPostIsFollowedByTheUser] = useState(notification.post.author['_count'].followers === 1);
+    const [postFollowersCount, setPostFollowersCount] = useState(notification.post.author.followers.length);
 
-    const [repostIsFollowedByTheUser, repostSetIsFollowedByTheUser] = useState(notification.notifier['_count'].followers === 1);
-    const [repostFollowersCount, repostSetFollowersCount] = useState(notification.notifier.followers.length);
+    const [repostIsFollowedByTheUser, setRepostIsFollowedByTheUser] = useState(notification.notifier['_count'].followers === 1);
+    const [repostFollowersCount, setRepostFollowersCount] = useState(notification.notifier.followers.length);
 
     // state to show whether the profile follows logged in user
     const [postIsFollowingTheUser,] = useState(notification.post.author.following.length === 1);
@@ -24,8 +27,26 @@ export default function NotificationPost({ notification }: { notification: Notif
     const { loggedInUser } = useUserContext();
     const cardRef = useRef<HTMLDivElement>(null);
 
-    const handleCardClick = (author: string, postId: number) => {
-        router.push(`/${author}/status/${postId}`);
+    const handleCardClick = (e: React.MouseEvent<HTMLDivElement>, authorUsername: string, postId: number) => {
+        const targetElement = e.target as HTMLElement;
+
+        // skip any clicks that are not coming from the card element
+        if (!targetElement.closest('main') || targetElement.closest('button') || targetElement.closest('img') || targetElement.closest('a')) {
+            e.stopPropagation();
+            e.preventDefault();
+            return;
+        }
+
+        // Otherwise, navigate to the post in new tab
+        if (e.button === 1) {
+            // Check if it's a middle mouse button click
+            e.preventDefault(); // Prevent default middle-click behavior
+            const newWindow = window.open(`/${authorUsername}/status/${postId}`, '_blank', 'noopener,noreferrer');
+            if (newWindow) newWindow.opener = null;
+        } else if (e.button === 0) {
+            // Check if it's a left mouse button click
+            router.push(`/${authorUsername}/status/${postId}`);
+        }
     };
 
     const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
@@ -36,8 +57,12 @@ export default function NotificationPost({ notification }: { notification: Notif
         cardRef.current !== null && cardRef.current.classList.remove('bg-[#f3f3f3]');
     };
 
+    const openPhoto = (photoIndex: number, authorUsername: string, postId: number) => {
+        router.push(`http://localhost:3000/${authorUsername}/status/${postId}/photo/${photoIndex + 1}`, { scroll: false });
+    };
+
     return (
-        <div onClick={() => handleCardClick(notification.post.author.username, notification.post.id)}
+        <div onClick={(e) => handleCardClick(e, notification.post.author.username, notification.post.id)}
             className={`notifications-post ${notification.isRead === false ? "bg-[#f3f3f3]" : ""}`}
             ref={cardRef} onMouseLeave={changeCardColor}>
             <div className='w-full flex flex-col gap-1'>
@@ -53,9 +78,9 @@ export default function NotificationPost({ notification }: { notification: Notif
                                     following: notification.notifier['_count'].following,
                                 }}
                                 followersCount={repostFollowersCount}
-                                setFollowersCount={repostSetFollowersCount}
+                                setFollowersCount={setRepostFollowersCount}
                                 isFollowedByTheUser={repostIsFollowedByTheUser}
-                                setIsFollowedByTheUser={repostSetIsFollowedByTheUser}
+                                setIsFollowedByTheUser={setRepostIsFollowedByTheUser}
                                 isFollowingTheUser={repostIsFollowingTheUser} />
                             <p className='font-semibold'>reposted {notification.post.author.username === loggedInUser.username && 'your post'}</p>
                         </div>
@@ -72,9 +97,9 @@ export default function NotificationPost({ notification }: { notification: Notif
                                         following: notification.notifier['_count'].following,
                                     }}
                                     followersCount={repostFollowersCount}
-                                    setFollowersCount={repostSetFollowersCount}
+                                    setFollowersCount={setRepostFollowersCount}
                                     isFollowedByTheUser={repostIsFollowedByTheUser}
-                                    setIsFollowedByTheUser={repostSetIsFollowedByTheUser}
+                                    setIsFollowedByTheUser={setRepostIsFollowedByTheUser}
                                     isFollowingTheUser={repostIsFollowingTheUser} />
                                 <p className='font-semibold'>liked {notification.post.author.username === loggedInUser.username && 'your post'}</p>
                             </div>
@@ -113,35 +138,44 @@ export default function NotificationPost({ notification }: { notification: Notif
                                     following: notification.post.author['_count'].following,
                                 }}
                                 followersCount={postFollowersCount}
-                                setFollowersCount={postSetFollowersCount}
+                                setFollowersCount={setPostFollowersCount}
                                 isFollowedByTheUser={postIsFollowedByTheUser}
-                                setIsFollowedByTheUser={postSetIsFollowedByTheUser}
+                                setIsFollowedByTheUser={setPostIsFollowedByTheUser}
                                 isFollowingTheUser={postIsFollowingTheUser} />
                             <p>@{notification.post.author.username}</p>
                             <p>·</p>
                             <PostDate createdAt={notification.post.createdAt} />
+                            <PostMenu
+                                post={notification.post}
+                                isFollowedByTheUser={postIsFollowedByTheUser}
+                                setIsFollowedByTheUser={setPostIsFollowedByTheUser}
+                                setFollowersCount={setPostFollowersCount}
+                            />
                         </div>
-                        <div className='feed-post-content post-content'>
-                            <p>{notification.post.content}</p>
-                        </div>
+                        <PostText content={notification.post.content} />
+                        <PostImages
+                            images={notification.post.images}
+                            authorUsername={notification.post.author.username}
+                            postId={notification.post.id}
+                            openPhoto={openPhoto} />
 
                         {('replyTo' in notification.post && notification.post.replyTo) && (() => {
-                            const post = notification.post as ReplyPostType;
+                            const post = notification.post.replyTo;
 
                             return (
                                 <div
-                                    onClick={() => handleCardClick(post.replyTo.author.username, post.replyTo.id)}
+                                    onClick={(e) => handleCardClick(e, post.author.username, post.id)}
                                     className='notification-replied-post'
                                 >
                                     <div className="notifications-replied-post-content">
                                         <div className='feed-post-left-side'>
                                             <Link
-                                                href={`/${post.replyTo.author.username}`}
+                                                href={`/${post.author.username}`}
                                                 className='flex group'
                                                 onClick={(e) => handleLinkClick(e)}
                                             >
                                                 <Image
-                                                    src={post.replyTo.author.profile.profilePicture} // Now accessible
+                                                    src={post.author.profile.profilePicture} // Now accessible
                                                     alt='Post author profile pic'
                                                     width={24} height={24}
                                                     className='w-[24px] h-[24px] rounded-full group-hover:outline group-hover:outline-primary/10'
@@ -152,25 +186,28 @@ export default function NotificationPost({ notification }: { notification: Notif
                                             <div className='flex gap-2 text-secondary-text'>
                                                 <UserHoverCard
                                                     author={{
-                                                        username: post.replyTo.author.username,
-                                                        name: post.replyTo.author.profile.name,
-                                                        profilePicture: post.replyTo.author.profile.profilePicture,
-                                                        bio: post.replyTo.author.profile.bio,
-                                                        following: post.replyTo.author['_count'].following,
+                                                        username: post.author.username,
+                                                        name: post.author.profile.name,
+                                                        profilePicture: post.author.profile.profilePicture,
+                                                        bio: post.author.profile.bio,
+                                                        following: post.author['_count'].following,
                                                     }}
                                                     followersCount={postFollowersCount}
-                                                    setFollowersCount={postSetFollowersCount}
+                                                    setFollowersCount={setPostFollowersCount}
                                                     isFollowedByTheUser={postIsFollowedByTheUser}
-                                                    setIsFollowedByTheUser={postSetIsFollowedByTheUser}
+                                                    setIsFollowedByTheUser={setPostIsFollowedByTheUser}
                                                     isFollowingTheUser={postIsFollowingTheUser}
                                                 />
-                                                <p>@{post.replyTo.author.username}</p>
+                                                <p>@{post.author.username}</p>
                                                 <p>·</p>
-                                                <PostDate createdAt={post.replyTo.createdAt} />
+                                                <PostDate createdAt={post.createdAt} />
                                             </div>
-                                            <div className='feed-post-content'>
-                                                <p className='break-all'>{post.replyTo.content}</p>
-                                            </div>
+                                            <PostText content={post.content} />
+                                            <PostImages
+                                                images={post.images}
+                                                authorUsername={post.author.username}
+                                                postId={post.id}
+                                                openPhoto={openPhoto} />
                                         </div>
                                     </div>
                                 </div>
