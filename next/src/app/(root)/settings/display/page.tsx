@@ -8,7 +8,7 @@ import { Check } from 'lucide-react';
 import { useDisplayContext } from '@/context/DisplayContextProvider';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
-import PostText from '@/components/posts/PostText';
+import PostText from '@/components/posts/post-parts/PostText';
 
 export default function SettingsDisplay() {
     const { savedTheme, savedColor } = useDisplayContext();

@@ -2,10 +2,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BasicPostType } from '@/lib/types';
-import PostMenu from '../posts/PostMenu';
+import PostMenu from '../posts/post-parts/PostMenu';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
-import BasicPostTemplate from '../posts/BasicPostTemplate';
+import BasicPostTemplate from '../posts/templates/BasicPostTemplate';
 
 export default function NotificationPost({ post, isRead }: { post: BasicPostType, isRead: boolean }) {
     const { suggestions } = useFollowSuggestionContext();

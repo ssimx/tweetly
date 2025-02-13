@@ -2,8 +2,8 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import UserHoverCard from '@/components/UserHoverCard';
-import FollowBtn from '@/components/FollowBtn';
+import UserHoverCard from '@/components/misc/UserHoverCard';
+import FollowBtn from '@/components/misc/FollowBtn';
 import { FollowSuggestionType, UserInfoType } from '@/lib/types';
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
 
@@ -46,7 +46,7 @@ export default function SuggestionCard({ user }: { user: FollowSuggestionType })
     // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     if (blockedUsers.some((username) => username === user.username)) return <></>;
-    
+
     return (
         <div onClick={handleCardClick} className='profile-follower-followee-card'>
             <Image

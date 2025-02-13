@@ -2,10 +2,10 @@
 import { useUserContext } from '@/context/UserContextProvider';
 import Image from 'next/image';
 import Link from 'next/link';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card';
 import { useRouter } from 'next/navigation';
-import FollowBtn from './FollowBtn';
 import { UserInfoType } from '@/lib/types';
+import FollowBtn from './FollowBtn';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '../ui/hover-card';
 
 interface UserHoverCardType {
     user: UserInfoType,
@@ -81,16 +81,16 @@ export default function UserHoverCard({
                                     {`${userIsLoggedInUser
                                         ? followingCount
                                         : _followingCount
-                                    }`}
-                                <span className='text-secondary-text font-normal'> Following</span></p>
+                                        }`}
+                                    <span className='text-secondary-text font-normal'> Following</span></p>
                             </Link>
                             <Link href={`/${user.username}/followers`} className='hover:underline' onClick={(e) => handleLinkClick(e)}>
                                 <p className='font-bold'>
                                     {`${userIsLoggedInUser
                                         ? followersCount
                                         : _followersCount
-                                    }`}
-                                <span className='text-secondary-text font-normal'> Followers</span></p>
+                                        }`}
+                                    <span className='text-secondary-text font-normal'> Followers</span></p>
                             </Link>
                         </div>
                     </div>

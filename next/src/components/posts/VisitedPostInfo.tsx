@@ -6,10 +6,10 @@ import { createPortal } from 'react-dom';
 import { X, ChevronRight, ChevronLeft, ChevronsRight, ChevronsLeft } from 'lucide-react';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import { usePathname, useRouter } from 'next/navigation';
-import BasicPostTemplate from './BasicPostTemplate';
-import VisitedPostTemplate from './VisitedPostTemplate';
 import { usePostInteractionContext } from '@/context/PostInteractionContextProvider';
 import { getPostInformation } from '@/actions/get-actions';
+import BasicPostTemplate from './templates/BasicPostTemplate';
+import VisitedPostTemplate from './templates/VisitedPostTemplate';
 
 export default function VisitedPostInfo({ post, photoId }: { post: VisitedPostType, photoId?: number }) {
     const { suggestions } = useFollowSuggestionContext();
@@ -84,7 +84,6 @@ export default function VisitedPostInfo({ post, photoId }: { post: VisitedPostTy
 
     useEffect(() => {
         if (!pathname.startsWith(`/${post.author.username}/status/${post.id}`)) {
-            console.log('test')
             setIsOverlayVisible(false);
         } else if (pathname.startsWith(`/${post.author.username}/status/${post.id}/photo/`)) {
             setIsOverlayVisible(true);

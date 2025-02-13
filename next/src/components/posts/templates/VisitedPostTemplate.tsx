@@ -1,14 +1,14 @@
-import { BasicPostType, VisitedPostType } from '@/lib/types'
-import Image from 'next/image'
-import Link from 'next/link'
-import React from 'react'
-import UserHoverCard from '../UserHoverCard'
-import PostText from './PostText'
-import PostImages from './PostImages'
-import PostBtns from './PostBtns'
-import PostMenu from './PostMenu'
-import PostReplies from './post-replies/PostReplies'
-import NewPost from '../feed/NewPost'
+import UserHoverCard from '@/components/misc/UserHoverCard';
+import { BasicPostType, VisitedPostType } from '@/lib/types';
+import Image from 'next/image';
+import Link from 'next/link';
+import React from 'react';
+import PostMenu from '../post-parts/PostMenu';
+import PostText from '../post-parts/PostText';
+import PostImages from '../post-parts/PostImages';
+import PostBtns from '../post-parts/PostBtns';
+import NewPost from '@/components/feed/NewPost';
+import PostReplies from '../post-replies/PostReplies';
 
 type VisitedPostTemplateType = {
     post: VisitedPostType,

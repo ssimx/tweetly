@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { BasicPostType } from '@/lib/types';
-import FeedPost from '../posts/FeedPost';
+import FeedPost from '../posts/PostCard';
 
 interface FeedTabType {
     posts: BasicPostType[],

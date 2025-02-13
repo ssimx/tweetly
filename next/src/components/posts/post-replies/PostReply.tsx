@@ -4,8 +4,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
-import PostMenu from '../PostMenu';
-import BasicPostTemplate from '../BasicPostTemplate';
+import PostMenu from '../post-parts/PostMenu';
+import BasicPostTemplate from '../templates/BasicPostTemplate';
 
 export default function ReplyPost({ post }: { post: BasicPostType }) {
     const { suggestions } = useFollowSuggestionContext();

@@ -3,11 +3,11 @@ import { BasicPostType } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
-import PostMenu from './PostMenu';
+import PostMenu from './post-parts/PostMenu';
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
-import BasicPostTemplate from './BasicPostTemplate';
+import BasicPostTemplate from './templates/BasicPostTemplate';
 
-export default function FeedPost({ post, searchSegments }: { post: BasicPostType, searchSegments?: string[] }) {
+export default function PostCard({ post, searchSegments }: { post: BasicPostType, searchSegments?: string[] }) {
     const { suggestions } = useFollowSuggestionContext();
     const { blockedUsers } = useBlockedUsersContext();
     const router = useRouter();
@@ -94,7 +94,7 @@ export default function FeedPost({ post, searchSegments }: { post: BasicPostType
             className='px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'
             role="link"
             tabIndex={0}
-        aria-label={`View post by ${post.author.username}`}
+            aria-label={`View post by ${post.author.username}`}
             onMouseDown={(e) => handleCardClick(e, post.author.username, post.id)} >
 
             <BasicPostTemplate

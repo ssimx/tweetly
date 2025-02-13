@@ -4,7 +4,7 @@ import { useUserContext } from '@/context/UserContextProvider';
 import Image from 'next/image';
 import Link from 'next/link';
 import React from 'react'
-import PostDate from '../posts/PostDate';
+import PostDate from '../posts/post-parts/PostDate';
 
 interface MessageUserPreviewType {
     username: string;

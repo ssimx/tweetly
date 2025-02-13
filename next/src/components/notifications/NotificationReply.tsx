@@ -1,19 +1,19 @@
 'use client';
-import UserHoverCard from '../UserHoverCard';
+import UserHoverCard from '../misc/UserHoverCard';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserContext } from '@/context/UserContextProvider';
 import { ReplyPostType } from '@/lib/types';
-import PostMenu from '../posts/PostMenu';
+import PostMenu from '../posts/post-parts/PostMenu';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
-import BasicPostTemplate from '../posts/BasicPostTemplate';
+import BasicPostTemplate from '../posts/templates/BasicPostTemplate';
 import { Reply } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import PostDate from '../posts/PostDate';
-import PostText from '../posts/PostText';
-import PostImages from '../posts/PostImages';
+import PostDate from '../posts/post-parts/PostDate';
+import PostText from '../posts/post-parts/PostText';
+import PostImages from '../posts/post-parts/PostImages';
 
 export default function NotificationReply({ post, isRead }: { post: ReplyPostType, isRead: boolean }) {
     const { suggestions } = useFollowSuggestionContext();

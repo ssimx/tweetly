@@ -1,7 +1,7 @@
 'use client';
 import Image from 'next/image';
 import Link from 'next/link';
-import UserHoverCard from '../UserHoverCard';
+import UserHoverCard from '../misc/UserHoverCard';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserRoundPlus } from 'lucide-react';

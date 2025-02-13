@@ -2,14 +2,14 @@
 import { ProfileInfo } from "@/lib/types";
 import { CalendarDays } from "lucide-react";
 import { useState } from "react";
-import FollowBtn from "../FollowBtn";
+import FollowBtn from "../misc/FollowBtn";
 import ProfileEditBtn from "./ProfileEditBtn";
 import ProfileNotificationBtn from "./ProfileNotificationBtn";
 import ProfileMenuBtn from "./ProfileMenuBtn";
 import ProfileContent from "./ProfileContent";
 import Link from "next/link";
 import ProfileMessageBtn from "./ProfileMessageBtn";
-import BlockedInfo from "../BlockedInfo";
+import BlockedInfo from "../misc/BlockedInfo";
 
 export default function ProfileDynamicInfo({ user, loggedInUser }: { user: ProfileInfo, loggedInUser: boolean }) {
     // state for updating followers count when logged in user follows / blocks the profile
@@ -111,11 +111,11 @@ export default function ProfileDynamicInfo({ user, loggedInUser }: { user: Profi
 
             {!canView && (isBlockedByTheUser || hasBlockedTheUser)
                 ? (
-                <BlockedInfo 
-                    username={user.username}
-                    isBlockedByTheUser={isBlockedByTheUser}
-                    hasBlockedTheUser={hasBlockedTheUser}
-                    setCanView={setCanView} />
+                    <BlockedInfo
+                        username={user.username}
+                        isBlockedByTheUser={isBlockedByTheUser}
+                        hasBlockedTheUser={hasBlockedTheUser}
+                        setCanView={setCanView} />
                 )
                 : (
                     <ProfileContent userProfile={user} loggedInUser={loggedInUser} />

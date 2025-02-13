@@ -6,15 +6,14 @@ import { usePathname, useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import { X, ChevronRight, ChevronLeft, ChevronsRight, ChevronsLeft } from 'lucide-react';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
-import BasicPostTemplate from './BasicPostTemplate';
-import VisitedPostTemplate from './VisitedPostTemplate';
+import BasicPostTemplate from './templates/BasicPostTemplate';
+import VisitedPostTemplate from './templates/VisitedPostTemplate';
 
 export default function PostInfoModal({ post, photoId }: { post: VisitedPostType, photoId: number }) {
     const { suggestions } = useFollowSuggestionContext();
     const router = useRouter();
     const pathname = usePathname();
 
-    // post info
     // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // PARENT POST
 

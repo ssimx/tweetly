@@ -1,7 +1,7 @@
 'use client';
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from 'lucide-react';
-import Search from "../Search";
+import Search from '@/components/misc/Search';
 
 export default function TemplateHeader() {
     const path = usePathname();

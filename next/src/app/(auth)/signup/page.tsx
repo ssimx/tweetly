@@ -9,7 +9,7 @@ import { Apple, Loader2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
-import { DateOfBirthSelect } from "@/components/DateOfBirthSelect";
+import { DateOfBirthSelect } from "@/components/forms/DateOfBirthSelect";
 
 
 type FormData = z.infer<typeof signUpSchema>;

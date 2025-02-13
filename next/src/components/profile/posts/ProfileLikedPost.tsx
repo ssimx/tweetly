@@ -2,8 +2,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BasicPostType } from '@/lib/types';
-import BasicPostTemplate from '../../posts/BasicPostTemplate';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
+import BasicPostTemplate from '@/components/posts/templates/BasicPostTemplate';
 
 export default function ProfileLikedPost({ post }: { post: BasicPostType }) {
     const { suggestions } = useFollowSuggestionContext();

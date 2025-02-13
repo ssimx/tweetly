@@ -1,11 +1,11 @@
 'use client';
-import UserHoverCard from '../../UserHoverCard';
 import { useEffect, useState } from 'react';
 import { Reply } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { BasicPostType } from '@/lib/types';
-import BasicPostTemplate from '../../posts/BasicPostTemplate';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
+import BasicPostTemplate from '@/components/posts/templates/BasicPostTemplate';
+import UserHoverCard from '@/components/misc/UserHoverCard';
 
 export default function ProfileLikedReply({ post }: { post: BasicPostType & { replyTo: BasicPostType } }) {
     const { suggestions } = useFollowSuggestionContext();

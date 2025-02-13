@@ -1,14 +1,14 @@
 'use client';
-import UserHoverCard from '../UserHoverCard';
+import UserHoverCard from '../misc/UserHoverCard';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserContext } from '@/context/UserContextProvider';
 import { BasicPostType, UserInfoType } from '@/lib/types';
-import PostMenu from '../posts/PostMenu';
+import PostMenu from '../posts/post-parts/PostMenu';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
-import BasicPostTemplate from '../posts/BasicPostTemplate';
 import { Repeat2 } from 'lucide-react';
+import BasicPostTemplate from '../posts/templates/BasicPostTemplate';
 
 export default function NotificationRepost({ post, notifier, isRead }: { post: BasicPostType, notifier: UserInfoType, isRead: boolean }) {
     const { suggestions } = useFollowSuggestionContext();
@@ -27,10 +27,10 @@ export default function NotificationRepost({ post, notifier, isRead }: { post: B
     );
 
     // Is notifier following the logged in user, notifier can't be blocked in hoverCard so no need for setter function
-    const [isNotifierFollowingTheUser, ] = useState<boolean>(notifier.following.length === 1);
+    const [isNotifierFollowingTheUser,] = useState<boolean>(notifier.following.length === 1);
 
     // Notifier following & followers count to update hover card information when they're (un)followed/blocked by logged in user
-    const [notifierFollowingCount, ] = useState(
+    const [notifierFollowingCount,] = useState(
         suggestions?.find((suggestedUser) => suggestedUser.username === notifier.username)?._count.following
         ?? notifier._count.following
         ?? 0
@@ -61,7 +61,7 @@ export default function NotificationRepost({ post, notifier, isRead }: { post: B
         suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?._count.followers
         ?? post.author._count.followers
     );
-    
+
     const cardRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -152,7 +152,7 @@ export default function NotificationRepost({ post, notifier, isRead }: { post: B
                     isFollowedByTheUser={isNotifierFollowedByTheUser}
                     setIsFollowedByTheUser={setNotifierIsFollowedByTheUser}
                     isFollowingTheUser={isNotifierFollowingTheUser} />
-                
+
                 <p className='font-semibold'>reposted {post.author.username === loggedInUser.username && 'your post'}</p>
             </div>
 

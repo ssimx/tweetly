@@ -2,8 +2,8 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import UserHoverCard from '@/components/UserHoverCard';
-import FollowBtn from '@/components/FollowBtn';
+import UserHoverCard from '@/components/misc/UserHoverCard';
+import FollowBtn from '@/components/misc/FollowBtn';
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
 import { FollowSuggestionType, UserInfoType } from '@/lib/types';
 

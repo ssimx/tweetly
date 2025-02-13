@@ -1,12 +1,12 @@
 'use client';
 import { BasicPostType } from '@/lib/types';
-import PostBtns from './PostBtns';
-import UserHoverCard from '../UserHoverCard';
-import PostText from './PostText';
-import PostImages from './PostImages';
-import PostMenu from './PostMenu';
-import PostAuthorImage from './PostAuthorImage';
-import PostDate from './PostDate';
+import PostMenu from '../post-parts/PostMenu';
+import PostText from '../post-parts/PostText';
+import PostImages from '../post-parts/PostImages';
+import PostBtns from '../post-parts/PostBtns';
+import UserHoverCard from '@/components/misc/UserHoverCard';
+import PostAuthorImage from '../post-parts/PostAuthorImage';
+import PostDate from '../post-parts/PostDate';
 
 type BasicPostTemplateType = {
     post: BasicPostType,

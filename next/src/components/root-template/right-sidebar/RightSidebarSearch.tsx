@@ -1,5 +1,5 @@
 'use client';
-import Search from '@/components/Search';
+import Search from '@/components/misc/Search';
 import { usePathname } from 'next/navigation';
 
 export default function RightSidebarSearch() {

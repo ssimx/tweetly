@@ -3,7 +3,7 @@ import { getMoreBookmarks } from '@/actions/get-actions';
 import { BasicPostType, BookmarkPostType, ReplyPostType } from '@/lib/types';
 import React, { useEffect, useRef, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
-import FeedPost from '../posts/FeedPost';
+import FeedPost from '../posts/PostCard';
 import BookmarkReply from './BookmarkReply';
 
 export default function BookmarksContent({ initialBookmarks }: { initialBookmarks: { posts: BookmarkPostType[], end: boolean } | undefined }) {

@@ -1,13 +1,13 @@
 'use client';
-import UserHoverCard from '../UserHoverCard';
+import UserHoverCard from '../misc/UserHoverCard';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserContext } from '@/context/UserContextProvider';
 import { BasicPostType, UserInfoType } from '@/lib/types';
-import PostMenu from '../posts/PostMenu';
+import PostMenu from '../posts/post-parts/PostMenu';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
-import BasicPostTemplate from '../posts/BasicPostTemplate';
+import BasicPostTemplate from '../posts/templates/BasicPostTemplate';
 import { Heart } from 'lucide-react';
 
 export default function NotificationLike({ post, notifier, isRead }: { post: BasicPostType, notifier: UserInfoType, isRead: boolean }) {

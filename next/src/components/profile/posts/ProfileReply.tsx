@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ProfileReplyPostType } from '@/lib/types';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
-import BasicPostTemplate from '../../posts/BasicPostTemplate';
+import BasicPostTemplate from '@/components/posts/templates/BasicPostTemplate';
 
 export default function ProfileReply({ post }: { post: ProfileReplyPostType }) {
     const { suggestions } = useFollowSuggestionContext();
@@ -31,16 +31,16 @@ export default function ProfileReply({ post }: { post: ProfileReplyPostType }) {
         ?? post.replyTo.author._count.followers
     );
 
-    // REPLY POST
+    // ORIGINAL POST
 
     // if user is in suggestions, track it's isFollowed property instead
-    const [isReplyFollowedByTheUser, setReplyIsFollowedByTheUser] = useState(suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?.isFollowed ?? post.author.followers.length === 1);
+    const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?.isFollowed ?? post.author.followers.length === 1);
     // Is post author following the logged in user
-    const [isReplyFollowingTheUser, setReplyIsFollowingTheUser] = useState<boolean>(post.author.following.length === 1);
+    const [isFollowingTheUser, setIsFollowingTheUser] = useState<boolean>(post.author.following.length === 1);
 
     // Post author following & followers count to update hover card information when they're (un)followed/blocked by logged in user
-    const [replyFollowingCount, setReplyFollowingCount] = useState(suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?._count.following ?? post.author._count.following);
-    const [replyFollowersCount, setReplyFollowersCount] = useState(suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?._count.followers ?? post.author._count.followers);
+    const [FollowingCount, setFollowingCount] = useState(suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?._count.following ?? post.author._count.following);
+    const [FollowersCount, setFollowersCount] = useState(suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?._count.followers ?? post.author._count.followers);
 
     useEffect(() => {
         const suggestedUsers = suggestions?.filter((suggestedUser) => suggestedUser.username === post.replyTo?.author.username || suggestedUser.username === post.author.username);
@@ -124,14 +124,14 @@ export default function ProfileReply({ post }: { post: ProfileReplyPostType }) {
 
                 <BasicPostTemplate
                     post={post}
-                    isFollowedByTheUser={isReplyFollowedByTheUser}
-                    setIsFollowedByTheUser={setReplyIsFollowedByTheUser}
-                    isFollowingTheUser={isReplyFollowingTheUser}
-                    setIsFollowingTheUser={setReplyIsFollowingTheUser}
-                    followingCount={replyFollowingCount}
-                    setFollowingCount={setReplyFollowingCount}
-                    followersCount={replyFollowersCount}
-                    setFollowersCount={setReplyFollowersCount}
+                    isFollowedByTheUser={isFollowedByTheUser}
+                    setIsFollowedByTheUser={setIsFollowedByTheUser}
+                    isFollowingTheUser={isFollowingTheUser}
+                    setIsFollowingTheUser={setIsFollowingTheUser}
+                    followingCount={FollowingCount}
+                    setFollowingCount={setFollowingCount}
+                    followersCount={FollowersCount}
+                    setFollowersCount={setFollowersCount}
                     openPhoto={openPhoto}
                 />
 

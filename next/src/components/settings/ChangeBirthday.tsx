@@ -8,7 +8,7 @@ import { useForm } from 'react-hook-form';
 import { Button } from '../ui/button';
 import { Loader2 } from 'lucide-react';
 import { useUserContext } from '@/context/UserContextProvider';
-import { DateOfBirthSelect } from '../DateOfBirthSelect';
+import { DateOfBirthSelect } from '../forms/DateOfBirthSelect';
 
 type FormData = z.infer<typeof settingsChangeBirthday>;
 
@@ -28,7 +28,7 @@ export default function ChangeBirthday() {
         watch,
     } = useForm<FormData>({
         resolver: zodResolver(settingsChangeBirthday),
-        defaultValues: { 
+        defaultValues: {
             year: String(new Date(loggedInUser.dateOfBirth).getFullYear()),
             month: String(new Date(loggedInUser.dateOfBirth).getMonth() + 1),
             day: String(new Date(loggedInUser.dateOfBirth).getDate()),
@@ -96,7 +96,7 @@ export default function ChangeBirthday() {
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Saving
                         </Button>
-                        : <Button className='bg-primary font-bold' 
+                        : <Button className='bg-primary font-bold'
                             disabled={
                                 (String(new Date(loggedInUser.dateOfBirth).getFullYear()) === currentYear)
                                 && (String(new Date(loggedInUser.dateOfBirth).getMonth() + 1) === currentMonth)

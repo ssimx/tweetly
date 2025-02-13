@@ -1,11 +1,11 @@
 'use client';
 import { useState } from 'react';
 import Image from 'next/image';
-import FollowBtn from '../FollowBtn';
+import FollowBtn from '../misc/FollowBtn';
 import ProfileMenuBtn from './ProfileMenuBtn';
-import UserHoverCard from '../UserHoverCard';
 import { useUserContext } from '@/context/UserContextProvider';
 import { useRouter } from 'next/navigation';
+import UserHoverCard from '../misc/UserHoverCard';
 
 interface FollowerFolloweeUser {
     username: string,
@@ -72,19 +72,13 @@ export default function ProfileFollowersFollowingCard({ user }: { user: Follower
             <div className='flex flex-col leading-5'>
                 <div className='flex gap-x-2 flex-wrap items-center text-secondary-text'>
                     <UserHoverCard
-                        author={{
-                            username: user.username,
-                            name: user.profile.name,
-                            profilePicture: user.profile.profilePicture,
-                            bio: user.profile.bio,
-                            following: followingCount
-                        }}
-                        followersCount={followersCount}
-                        setFollowersCount={setFollowersCount}
+                        user={user}
+                        _followingCount={followingCount}
+                        _followersCount={followersCount}
+                        _setFollowersCount={setFollowersCount}
                         isFollowedByTheUser={isFollowedByTheUser}
                         setIsFollowedByTheUser={setIsFollowedByTheUser}
-                        isFollowingTheUser={isFollowingTheUser}
-                    />
+                        isFollowingTheUser={isFollowingTheUser} />
 
                     <div className='flex-center gap-2'>
                         <p className='text-16'>@{user.username}</p>

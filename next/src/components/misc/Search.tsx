@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { z } from "zod";
 import { searchSchema } from '@/lib/schemas';
 import { useRouter } from 'next/navigation';
-import SearchUserCard from './root-template/right-sidebar/SearchUserCard';
 import { useTrendingContext } from '@/context/TrendingContextProvider';
+import SearchUserCard from '../root-template/right-sidebar/SearchUserCard';
 
 export interface SearchResponseType {
     users: {

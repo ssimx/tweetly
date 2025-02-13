@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { ProfilePostOrRepostType } from '@/lib/types';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import { useUserContext } from '@/context/UserContextProvider';
-import BasicPostTemplate from '../../posts/BasicPostTemplate';
+import BasicPostTemplate from '@/components/posts/templates/BasicPostTemplate';
 
 export default function ProfilePost({ post }: { post: ProfilePostOrRepostType }) {
     const { suggestions } = useFollowSuggestionContext();
