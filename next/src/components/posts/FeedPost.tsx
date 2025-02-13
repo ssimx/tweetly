@@ -94,7 +94,7 @@ export default function FeedPost({ post, searchSegments }: { post: BasicPostType
             className='px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'
             role="link"
             tabIndex={0}
-            aria-label={`View post by ${post.author.username}`}
+        aria-label={`View post by ${post.author.username}`}
             onMouseDown={(e) => handleCardClick(e, post.author.username, post.id)} >
 
             <BasicPostTemplate

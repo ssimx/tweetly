@@ -1,13 +1,14 @@
 'use client';
 import { getMoreBookmarks } from '@/actions/get-actions';
-import { BookmarkPostType } from '@/lib/types';
+import { BasicPostType, BookmarkPostType, ReplyPostType } from '@/lib/types';
 import React, { useEffect, useRef, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
-import BookmarkPost from './BookmarkPost';
+import FeedPost from '../posts/FeedPost';
+import BookmarkReply from './BookmarkReply';
 
 export default function BookmarksContent({ initialBookmarks }: { initialBookmarks: { posts: BookmarkPostType[], end: boolean } | undefined }) {
     const [bookmarks, setBookmarks] = useState<BookmarkPostType[] | undefined>(initialBookmarks ? initialBookmarks.posts : undefined);
-    
+
     // scroll and pagination
     const scrollPositionRef = useRef<number>(0);
     const [scrollPosition, setScrollPosition] = useState(0);
@@ -49,18 +50,35 @@ export default function BookmarksContent({ initialBookmarks }: { initialBookmark
             window.removeEventListener('scroll', handleScroll);
         };
     }, []);
-    
+
     return (
         <section className='w-full h-fit'>
             <div className='feed-hr-line'></div>
-            { bookmarks === undefined
+            {bookmarks === undefined
                 ? <div>Something went wrong</div>
                 : bookmarks === null
                     ? <div>loading...</div>
                     : bookmarks.length === 0
                         ? <div>No bookmarks</div>
                         : bookmarks.map((post) => (
-                            <BookmarkPost key={post.id} post={post} />
+                            <div key={post.id}>
+
+                                {'replyTo' in post && post.replyTo
+                                    ? (
+                                        <>
+                                            <BookmarkReply post={post as ReplyPostType} />
+                                            <div className='feed-hr-line'></div>
+                                        </>
+                                    )
+                                    : (
+                                        <>
+                                            <FeedPost post={post as BasicPostType} />
+                                            <div className='feed-hr-line'></div>
+                                        </>
+                                    )
+                                }
+
+                            </div>
                         ))
             }
 

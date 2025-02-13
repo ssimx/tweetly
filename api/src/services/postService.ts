@@ -2741,14 +2741,19 @@ export const getBookmarks = async (
                     updatedAt: true,
                     replyTo: {
                         select: {
+                            id: true,
+                            content: true,
+                            images: true,
+                            createdAt: true,
+                            updatedAt: true,
                             author: {
                                 select: {
                                     username: true,
                                     profile: {
                                         select: {
                                             name: true,
-                                            profilePicture: true,
                                             bio: true,
+                                            profilePicture: true,
                                         },
                                     },
                                     followers: {
@@ -2781,6 +2786,37 @@ export const getBookmarks = async (
                                             following: true,
                                         },
                                     },
+                                },
+                            },
+                            reposts: {
+                                where: {
+                                    userId: userId,
+                                },
+                                select: {
+                                    userId: true,
+                                },
+                            },
+                            likes: {
+                                where: {
+                                    userId: userId,
+                                },
+                                select: {
+                                    userId: true,
+                                },
+                            },
+                            bookmarks: {
+                                where: {
+                                    userId: userId,
+                                },
+                                select: {
+                                    userId: true,
+                                },
+                            },
+                            _count: {
+                                select: {
+                                    replies: true,
+                                    reposts: true,
+                                    likes: true,
                                 },
                             },
                         },

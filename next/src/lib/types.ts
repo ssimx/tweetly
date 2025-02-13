@@ -474,52 +474,37 @@ export interface NotificationType {
     post?: BasicPostType | ReplyPostType,
 };
 
-export type NotificationFollowType = NotificationType;
-
 export interface BookmarkPostType {
     id: number,
     content?: string,
     images?: string[],
     createdAt: string,
     updatedAt: string,
-    replyTo?: {
-        author: {
-            username: string,
-            profile: {
-                name: string,
-                profilePicture: string,
-                bio: string
-            },
-            followers: {
-                followerId: number,
-            }[] | [],
-            following: {
-                followeeId: number,
-            }[] | [],
-            _count: {
-                followers: number,
-                following: number,
-            }
-        }
-    },
-    author: {
-        username: string,
-        profile: {
-            name: string,
-            bio: string,
-            profilePicture: string,
-        },
-        followers: {
-            followerId: number,
-        }[] | [],
-        following: {
-            followeeId: number,
-        }[] | [],
-        _count: {
-            followers: number,
-            following: number,
-        }
-    },
+    author: UserInfoType,
+    reposts: {
+        userId: number,
+    }[] | [],
+    likes: {
+        userId: number,
+    }[] | [],
+    bookmarks: {
+        userId: number,
+    }[] | [],
+    _count: {
+        replies: number,
+        reposts: number,
+        likes: number,
+    }
+};
+
+export interface BookmarkReplyType {
+    id: number,
+    content?: string,
+    images?: string[],
+    createdAt: string,
+    updatedAt: string,
+    author: UserInfoType,
+    replyTo: ReplyPostType,
     reposts: {
         userId: number,
     }[] | [],

@@ -39,7 +39,6 @@ export default function BasicPostTemplate({
     searchSegments,
     children,
 }: BasicPostTemplateType) {
-    console.log(children)
 
     return (
         <div className='w-full grid grid-cols-[auto,1fr] grid-rows-1 gap-2'>

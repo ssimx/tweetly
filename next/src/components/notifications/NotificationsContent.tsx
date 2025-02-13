@@ -66,7 +66,6 @@ export default function NotificationsContent({ initialNotifications }: { initial
                         : notifications.map((notification) => (
                             <div key={notification.id}>
 
-
                                 {notification.type.name === 'POST' && notification.post && (
                                     <>
                                         <NotificationPost post={notification.post as BasicPostType} isRead={notification.isRead} />
