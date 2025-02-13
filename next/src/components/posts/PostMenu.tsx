@@ -2,28 +2,33 @@
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import { useUserContext } from '@/context/UserContextProvider';
-import { BasicPostType, BookmarkPostType, NotificationPostType } from '@/lib/types';
+import { BasicPostType } from '@/lib/types';
 import { getErrorMessage } from '@/lib/utils';
 import { Ellipsis } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 interface PostMenuType {
-    post: BasicPostType | NotificationPostType | BookmarkPostType,
+    post: BasicPostType,
     isFollowedByTheUser: boolean,
     setIsFollowedByTheUser: React.Dispatch<React.SetStateAction<boolean>>,
-    setFollowersCount: React.Dispatch<React.SetStateAction<number>>,
+    isFollowingTheUser: boolean,
+    setIsFollowingTheUser: React.Dispatch<React.SetStateAction<boolean>>,
+    _setFollowersCount: React.Dispatch<React.SetStateAction<number>>,
+    _setFollowingCount: React.Dispatch<React.SetStateAction<number>>,
 }
 
-export default function PostMenu({ post, isFollowedByTheUser, setIsFollowedByTheUser, setFollowersCount, }: PostMenuType) {
+export default function PostMenu({ post, isFollowedByTheUser, setIsFollowedByTheUser, isFollowingTheUser, setIsFollowingTheUser}: PostMenuType) {
     const [menuOpen, setMenuOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const menuBtn = useRef<HTMLDivElement | null>(null);
     const followBtn = useRef<HTMLButtonElement | null>(null);
     const blockBtn = useRef<HTMLButtonElement | null>(null);
-    const { loggedInUser } = useUserContext();
+
+    const { loggedInUser, setFollowersCount, setFollowingCount } = useUserContext();
     const { updateFollowState } = useFollowSuggestionContext();
     const { blockedUsers, addBlockedUser, removeBlockedUser } = useBlockedUsersContext();
     const isBlockedByTheUser = blockedUsers.some((user) => user === post.author.username);
+    const authorIsLoggedInUser = post.author.username === loggedInUser.username;
 
     const toggleMenu = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -164,8 +169,13 @@ export default function PostMenu({ post, isFollowedByTheUser, setIsFollowedByThe
                     return;
                 }
 
+                // If logged in user is following the blocked user, decrease their followers count
                 isFollowedByTheUser && setFollowersCount((prev) => prev - 1);
                 isFollowedByTheUser && setIsFollowedByTheUser(false);
+                // If blocked user is following logged in user, set "follows you" to false and decrease logged in user followers count
+                isFollowingTheUser && setIsFollowingTheUser(false);
+                isFollowingTheUser && setFollowingCount((prev) => prev - 1);
+
                 updateFollowState(post.author.username, false);
                 addBlockedUser(post.author.username);
                 setMenuOpen(false);

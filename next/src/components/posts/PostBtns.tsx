@@ -16,14 +16,14 @@ interface PostBtnsType {
 };
 
 export default function PostBtns({ post, setPostIsVisible }: PostBtnsType) {
+    const { interactedPosts, updateInteractedPosts } = usePostInteractionContext();
+    const { loggedInUser } = useUserContext();
     const [reposted, setReposted] = useState(!!post.reposts.length);
     const [liked, setLiked] = useState(!!post.likes.length);
     const [bookmarked, setBookmarked] = useState(!!post.bookmarks.length);
     const repostsCounter = useRef(post._count.reposts);
     const likesCounter = useRef(post._count.likes);
     const actionErrorRef = useRef<HTMLDivElement | null>(null);
-    const { loggedInUser } = useUserContext();
-    const { interactedPost, setInteractedPost } = usePostInteractionContext();
 
     const handlePostBtnsInteraction = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>, postId: number) => {
         e.stopPropagation();
@@ -36,35 +36,38 @@ export default function PostBtns({ post, setPostIsVisible }: PostBtnsType) {
         btn.disabled = true;
 
         if (status === 'true') {
+            // REMOVE
             try {
-
                 let response: boolean;
                 switch (type) {
                     case 'repost':
                         if (repostsCounter.current === 0) throw new Error(`Failed to remove the repost on the post`);
                             
-                        setInteractedPost({
+                        updateInteractedPosts({
                             postId: postId,
-                            type: 'REPOST',
-                            action: 'REMOVE'
+                            repostsCount: (repostsCounter.current - 1),
+                            likesCount: likesCounter.current,
+                            bookmarked: bookmarked,
                         });
                         response = await removeRepostPost(postId);
                         break;
                     case 'like':
                         if (likesCounter.current === 0) throw new Error(`Failed to remove the like on the post`);
 
-                        setInteractedPost({
+                        updateInteractedPosts({
                             postId: postId,
-                            type: 'LIKE',
-                            action: 'REMOVE'
+                            repostsCount: repostsCounter.current,
+                            likesCount: (likesCounter.current - 1),
+                            bookmarked: bookmarked,
                         });
                         response = await removeLikePost(postId);
                         break;
                     case 'bookmark':
-                        setInteractedPost({
+                        updateInteractedPosts({
                             postId: postId,
-                            type: 'BOOKMARK',
-                            action: 'REMOVE'
+                            repostsCount: repostsCounter.current,
+                            likesCount: likesCounter.current,
+                            bookmarked: false,
                         });
                         response = await removeBookmarkPost(postId);
                         break;
@@ -93,24 +96,27 @@ export default function PostBtns({ post, setPostIsVisible }: PostBtnsType) {
                 // revert the styling
                 switch (type) {
                     case 'repost':
-                        setInteractedPost({
+                        updateInteractedPosts({
                             postId: postId,
-                            type: 'REPOST',
-                            action: 'ADD'
+                            repostsCount: (repostsCounter.current + 1),
+                            likesCount: likesCounter.current,
+                            bookmarked: bookmarked,
                         });
                         break;
                     case 'like':
-                        setInteractedPost({
+                        updateInteractedPosts({
                             postId: postId,
-                            type: 'LIKE',
-                            action: 'ADD'
+                            repostsCount: repostsCounter.current,
+                            likesCount: (likesCounter.current + 1),
+                            bookmarked: bookmarked,
                         });
                         break;
                     case 'bookmark':
-                        setInteractedPost({
+                        updateInteractedPosts({
                             postId: postId,
-                            type: 'BOOKMARK',
-                            action: 'ADD'
+                            repostsCount: repostsCounter.current,
+                            likesCount: likesCounter.current,
+                            bookmarked: true,
                         });
                         break;
                     default:
@@ -123,31 +129,34 @@ export default function PostBtns({ post, setPostIsVisible }: PostBtnsType) {
                 }, 3000);
             }
         } else {
-
+            // ADD
             try {
                 let response: boolean;
                 switch (type) {
                     case 'repost':
-                        setInteractedPost({
+                        updateInteractedPosts({
                             postId: postId,
-                            type: 'REPOST',
-                            action: 'ADD'
+                            repostsCount: (repostsCounter.current + 1),
+                            likesCount: likesCounter.current,
+                            bookmarked: bookmarked,
                         });
                         response = await repostPost(postId);
                         break;
                     case 'like':
-                        setInteractedPost({
+                        updateInteractedPosts({
                             postId: postId,
-                            type: 'LIKE',
-                            action: 'ADD'
+                            repostsCount: repostsCounter.current,
+                            likesCount: (likesCounter.current + 1),
+                            bookmarked: bookmarked,
                         });
                         response = await likePost(postId);
                         break;
                     case 'bookmark':
-                        setInteractedPost({
+                        updateInteractedPosts({
                             postId: postId,
-                            type: 'BOOKMARK',
-                            action: 'ADD'
+                            repostsCount: repostsCounter.current,
+                            likesCount: likesCounter.current,
+                            bookmarked: true,
                         });
                         response = await bookmarkPost(postId);
                         break;
@@ -171,24 +180,27 @@ export default function PostBtns({ post, setPostIsVisible }: PostBtnsType) {
                 // revert the styling
                 switch (type) {
                     case 'repost':
-                        setInteractedPost({
+                        updateInteractedPosts({
                             postId: postId,
-                            type: 'REPOST',
-                            action: 'REMOVE'
+                            repostsCount: (repostsCounter.current - 1),
+                            likesCount: likesCounter.current,
+                            bookmarked: bookmarked,
                         });
                         break;
                     case 'like':
-                        setInteractedPost({
+                        updateInteractedPosts({
                             postId: postId,
-                            type: 'LIKE',
-                            action: 'REMOVE'
+                            repostsCount: repostsCounter.current,
+                            likesCount: (likesCounter.current - 1),
+                            bookmarked: bookmarked,
                         });
                         break;
                     case 'bookmark':
-                        setInteractedPost({
+                        updateInteractedPosts({
                             postId: postId,
-                            type: 'BOOKMARK',
-                            action: 'REMOVE'
+                            repostsCount: repostsCounter.current,
+                            likesCount: likesCounter.current,
+                            bookmarked: false,
                         });
                         break;
                     default:
@@ -206,26 +218,26 @@ export default function PostBtns({ post, setPostIsVisible }: PostBtnsType) {
     };
 
     useEffect(() => {
-        if (interactedPost?.postId === post.id) {
-            switch (interactedPost.type) {
-                case 'REPOST':
-                    setReposted(interactedPost.action === 'ADD' ? true : false);
-                    repostsCounter.current = interactedPost.action === 'ADD' ? ++repostsCounter.current : --repostsCounter.current;
-                    break;
-                case 'LIKE':
-                    setLiked(interactedPost.action === 'ADD' ? true : false);
-                    likesCounter.current = interactedPost.action === 'ADD' ? ++likesCounter.current : --likesCounter.current;
-                    break;
-                case 'BOOKMARK':
-                    setBookmarked(interactedPost.action === 'ADD' ? true : false);
-                    break;
-                default:
-                    break;
+        // each post can be both retweeted, liked or bookmarked
+        const interactedPost = interactedPosts.get(post.id);
+        if (interactedPost) {
+            if (interactedPost.repostsCount !== repostsCounter.current) {
+                interactedPost.repostsCount > repostsCounter.current
+                ? setReposted(true)
+                : setReposted(false)
+                repostsCounter.current = interactedPost.repostsCount;
             }
 
-            setInteractedPost(undefined);
+            if (interactedPost.likesCount !== likesCounter.current) {
+                interactedPost.likesCount > likesCounter.current
+                    ? setLiked(true)
+                    : setLiked(false)
+                likesCounter.current = interactedPost.likesCount;
+            }
+            
+            setBookmarked(interactedPost.bookmarked);
         }
-    }, [post, interactedPost, setInteractedPost]);
+    }, [post, interactedPosts]);
 
     return (
         <>

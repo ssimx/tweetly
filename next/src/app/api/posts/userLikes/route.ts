@@ -1,10 +1,10 @@
-import { getToken, removeSession, verifySession } from "@/lib/session";
+import { extractToken, getToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
-        const searchParams = req.nextUrl.searchParams;
-        const token = await getToken();
+        const authHeader = req.headers.get('Authorization');
+        const token = await extractToken(authHeader) || await getToken();
         if (token) {
             const isValid = await verifySession(token);
 
@@ -18,10 +18,11 @@ export async function GET(req: NextRequest) {
 
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
-            const query = searchParams.get('cursor');
+            const searchParams = req.nextUrl.searchParams;
+            const cursor = searchParams.get('cursor');
 
-            if (query !== null) {
-                const response = await fetch(`${apiUrl}/posts/likedPosts?cursor=${query}`, {
+            if (cursor !== null) {
+                const response = await fetch(`${apiUrl}/posts/likedPosts?cursor=${cursor}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',

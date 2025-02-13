@@ -1,8 +1,8 @@
-import { AuthorInfoType } from '@/lib/types';
+import { UserInfoType } from '@/lib/types';
 import Image from 'next/image';
 import Link from 'next/link';
 
-export default function PostAuthorImage({ author }: { author: AuthorInfoType }) {
+export default function PostAuthorImage({ author }: { author: UserInfoType }) {
   return (
       <Link href={`/${author.username}`} className='flex group' onClick={(e) => e.stopPropagation()}>
           <Image

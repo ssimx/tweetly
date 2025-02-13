@@ -51,6 +51,7 @@ export default function PostReplies({ parentPostId, replies, setReplies, replies
         if (inView && !repliesEndReached && scrollPositionRef.current !== scrollPosition) {
             const fetchMoreReplies = async () => {
                 const { posts, end } = await getMoreRepliesForPost(parentPostId, repliesCursor as number);
+                console.log(posts)
                 
                 setRepliesCursor(posts?.length ? posts.slice(-1)[0].id : null);
                 setReplies(currentPosts => [...currentPosts as BasicPostType[], ...posts as BasicPostType[]]);

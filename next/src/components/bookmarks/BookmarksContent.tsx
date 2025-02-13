@@ -59,8 +59,8 @@ export default function BookmarksContent({ initialBookmarks }: { initialBookmark
                     ? <div>loading...</div>
                     : bookmarks.length === 0
                         ? <div>No bookmarks</div>
-                        : bookmarks.map((post, index) => (
-                            <BookmarkPost key={index} post={post} />
+                        : bookmarks.map((post) => (
+                            <BookmarkPost key={post.id} post={post} />
                         ))
             }
 

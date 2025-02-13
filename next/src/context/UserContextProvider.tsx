@@ -5,9 +5,13 @@ import { createContext, useContext, useState } from 'react';
 type UserContextType = {
     loggedInUser: UserInfo,
     setLoggedInUser: React.Dispatch<React.SetStateAction<UserInfo>>
-    refetchUserData: () => void;
+    followingCount: number,
+    setFollowingCount: React.Dispatch<React.SetStateAction<number>>,
+    followersCount: number,
+    setFollowersCount: React.Dispatch<React.SetStateAction<number>>,
     newFollowing: boolean,
     setNewFollowing: React.Dispatch<React.SetStateAction<boolean>>
+    refetchUserData: () => void;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -20,6 +24,8 @@ export const useUserContext = () => {
 
 export default function UserContextProvider({ children, userData }: { children: React.ReactNode, userData: UserInfo }) {
     const [loggedInUser, setLoggedInUser] = useState<UserInfo>(userData);
+    const [followingCount, setFollowingCount] = useState(userData._count.following);
+    const [followersCount, setFollowersCount] = useState(userData._count.followers);
     const [newFollowing, setNewFollowing] = useState(false);
 
     const refetchUserData = async () => {
@@ -40,7 +46,7 @@ export default function UserContextProvider({ children, userData }: { children: 
 
     return (
         <UserContext.Provider 
-            value={{ loggedInUser, setLoggedInUser, refetchUserData, newFollowing, setNewFollowing }}>
+            value={{ loggedInUser, setLoggedInUser, newFollowing, setNewFollowing, followingCount, setFollowingCount, followersCount, setFollowersCount, refetchUserData }}>
             {children}
         </UserContext.Provider>
     )

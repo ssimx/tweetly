@@ -191,8 +191,8 @@ export default function Search({ searchQuery }: { searchQuery?: string }) {
                                     {searchResponse &&
                                         searchResponse.users.length === 0
                                         ? <div className='p-3'>No users found</div>
-                                        : searchResponse && searchResponse.users.slice(0, 5).map((user, index) => (
-                                            <SearchUserCard key={index} user={user} />
+                                        : searchResponse && searchResponse.users.slice(0, 5).map((user) => (
+                                            <SearchUserCard key={user.username} user={user} />
                                         ))
                                     }
                                 </div>

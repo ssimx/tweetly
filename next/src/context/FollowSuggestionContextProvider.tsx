@@ -4,8 +4,10 @@ import { createContext, useContext, useState } from "react";
 
 interface FollowSuggestionContextType {
     suggestions: FollowSuggestionType[] | undefined;
-    setSuggestions: React.Dispatch<React.SetStateAction<FollowSuggestionType[]>>;
-    updateFollowState: (userId: string, isFollowing: boolean) => void;
+    setSuggestions: React.Dispatch<React.SetStateAction<FollowSuggestionType[] | undefined>>;
+    updateFollowState: (username: string, isFollowed: boolean) => void;
+    updateFollowersCount: (username: string, type: 'increase' | 'decrease') => void;
+    updateFollowingCount: (username: string, type: 'increase' | 'decrease') => void;
 };
 
 const FollowSuggestionContext = createContext<FollowSuggestionContextType | undefined>(undefined);
@@ -19,25 +21,60 @@ export const useFollowSuggestionContext = () => {
     return context;
 };
 
-// need persistent variable to keep following state when context re-renders, state doesn't work while navigating the webpage.
-// this is good until context remounts, which is exactly what was intended
-let savedSuggestions: FollowSuggestionType[];
-
 export default function FollowSuggestionContextProvider({ followSuggestions, children }: { followSuggestions: FollowSuggestionType[], children: React.ReactNode }) {
-    const [suggestions, setSuggestions] = useState<FollowSuggestionType[]>(savedSuggestions || followSuggestions);
+    const [suggestions, setSuggestions] = useState<FollowSuggestionType[] | undefined>(followSuggestions ?? undefined);
 
-    const updateFollowState = async (username: string, isFollowing: boolean) => {
+    const updateFollowState = (username: string, isFollowed: boolean) => {
         if (suggestions === undefined) return;
 
-        const updatedSuggestions = suggestions.map((user) => (user.username === username ? { ...user, isFollowing } : user));
-        setSuggestions(() => {
-            return [ ...updatedSuggestions ]
+        const updatedSuggestions = suggestions.map((user) => {
+            if (user.username === username) {
+                const updatedCount = user.isFollowed !== isFollowed
+                    ? {
+                        followers: isFollowed ? ++user._count.followers : --user._count.followers,
+                        following: user._count.following
+                    }
+                    : {
+                        followers: user._count.followers,
+                        following: user._count.following
+                    };
+
+                return { ...user, isFollowed, _count: updatedCount };
+            }
+            return user;
         });
-        savedSuggestions = [ ...updatedSuggestions ] as FollowSuggestionType[];
+
+        setSuggestions(() => {
+            return [...updatedSuggestions];
+        });
+    };
+
+    const updateFollowersCount = (username: string, type: 'increase' | 'decrease') => {
+        if (suggestions === undefined) return;
+
+        const updatedSuggestions = suggestions.map((user) => (user.username === username ? {
+            ...user, _count: { followers: type === 'increase' ? user._count.followers + 1 : user._count.followers - 1, following: user._count.following }
+        } : user));
+
+        setSuggestions(() => {
+            return [...updatedSuggestions]
+        });
+    };
+
+    const updateFollowingCount = (username: string, type: 'increase' | 'decrease') => {
+        if (suggestions === undefined) return;
+
+        const updatedSuggestions = suggestions.map((user) => (user.username === username ? {
+            ...user, _count: { followers: user._count.followers, following: type === 'increase' ? user._count.following + 1 : user._count.following - 1 }
+        } : user));
+
+        setSuggestions(() => {
+            return [...updatedSuggestions]
+        });
     };
 
     return (
-        <FollowSuggestionContext.Provider value={{ suggestions, setSuggestions, updateFollowState }}>
+        <FollowSuggestionContext.Provider value={{ suggestions, setSuggestions, updateFollowState, updateFollowersCount, updateFollowingCount }}>
             { children }
         </FollowSuggestionContext.Provider>
     )

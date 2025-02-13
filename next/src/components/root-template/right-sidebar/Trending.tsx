@@ -22,8 +22,8 @@ export default function Trending() {
                         ? 'loading'
                         : hashtags.slice(0, 8).length === 0
                             ? 'There is currently no trending hashtags'
-                            : hashtags.slice(0, 8).map((hashtag, index) => (
-                                <TrendingCard key={index} hashtag={hashtag} />
+                            : hashtags.slice(0, 8).map((hashtag) => (
+                                <TrendingCard key={hashtag.name} hashtag={hashtag} />
                             ))
                 }
             </div>
@@ -41,8 +41,8 @@ export default function Trending() {
                                 {
                                     hashtags === undefined
                                         ? 'loading'
-                                        : hashtags.map((hashtag, index) => (
-                                            <DialogTrendingCard key={index} hashtag={hashtag} />
+                                        : hashtags.map((hashtag) => (
+                                            <DialogTrendingCard key={hashtag.name} hashtag={hashtag} />
                                         ))
                                 }
                             </div>

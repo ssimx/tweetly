@@ -84,7 +84,7 @@ export async function getFollowSuggestions() {
 
         const followSuggestions = await response.json() as FollowSuggestionType[];
         const mappedUsers: FollowSuggestionType[] = followSuggestions.map((user: Omit<FollowSuggestionType, 'isFollowing'>) => {
-            return { ...user, isFollowing: false };
+            return { ...user, isFollowed: false };
         });
 
         return mappedUsers;

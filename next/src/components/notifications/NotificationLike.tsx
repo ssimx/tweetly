@@ -1,26 +1,55 @@
 'use client';
+import UserHoverCard from '../UserHoverCard';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BasicPostType } from '@/lib/types';
+import { useUserContext } from '@/context/UserContextProvider';
+import { BasicPostType, UserInfoType } from '@/lib/types';
 import PostMenu from '../posts/PostMenu';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
 import BasicPostTemplate from '../posts/BasicPostTemplate';
+import { Heart } from 'lucide-react';
 
-export default function NotificationPost({ post, isRead }: { post: BasicPostType, isRead: boolean }) {
+export default function NotificationLike({ post, notifier, isRead }: { post: BasicPostType, notifier: UserInfoType, isRead: boolean }) {
     const { suggestions } = useFollowSuggestionContext();
     const { blockedUsers } = useBlockedUsersContext();
+    const { loggedInUser } = useUserContext();
     const router = useRouter();
 
     // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // USER WHO LIKED
+
+    // If notifier is in suggestions, track it's isFollowed property instead
+    const [isNotifierFollowedByTheUser, setNotifierIsFollowedByTheUser] = useState(
+        suggestions?.find((suggestedUser) => suggestedUser.username === notifier.username)?.isFollowed
+        ?? notifier.followers.length === 1
+        ?? false
+    );
+
+    // Is notifier following the logged in user, notifier can't be blocked in hoverCard so no need for setter function
+    const [isNotifierFollowingTheUser,] = useState<boolean>(notifier.following.length === 1);
+
+    // Notifier following & followers count to update hover card information when they're (un)followed/blocked by logged in user
+    const [notifierFollowingCount,] = useState(
+        suggestions?.find((suggestedUser) => suggestedUser.username === notifier.username)?._count.following
+        ?? notifier._count.following
+        ?? 0
+    );
+    const [notifierFollowersCount, setNotifierFollowersCount] = useState(
+        suggestions?.find((suggestedUser) => suggestedUser.username === notifier.username)?._count.followers
+        ?? notifier._count.followers
+        ?? 0
+    );
+
+    // ORIGINAL POST
 
     // if user is in suggestions, track it's isFollowed property instead
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(
         suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?.isFollowed
         ?? post.author.followers.length === 1
     );
-
     // Is post author following the logged in user
+
     const [isFollowingTheUser, setIsFollowingTheUser] = useState<boolean>(post.author.following.length === 1);
 
     // Post author following & followers count to update hover card information when they're (un)followed/blocked by logged in user
@@ -32,17 +61,24 @@ export default function NotificationPost({ post, isRead }: { post: BasicPostType
         suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?._count.followers
         ?? post.author._count.followers
     );
-
     const cardRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const suggestedUser = suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username);
-        if (suggestedUser) {
-            setIsFollowedByTheUser(suggestedUser.isFollowed);
-            setFollowingCount(suggestedUser._count.following);
-            setFollowersCount(suggestedUser._count.followers);
+        const suggestedUsers = suggestions?.filter((suggestedUser) => suggestedUser.username === notifier.username || suggestedUser.username === post.author.username);
+        if (suggestedUsers) {
+            suggestedUsers.forEach((user, index) => {
+                if (user.username === notifier.username) {
+                    setNotifierIsFollowedByTheUser(suggestedUsers[index].isFollowed);
+                    setNotifierFollowersCount(suggestedUsers[index]._count.followers);
+                } else if (user.username === post.author.username) {
+                    setIsFollowedByTheUser(suggestedUsers[index].isFollowed);
+                    setFollowingCount(suggestedUsers[index]._count.following);
+                    setFollowersCount(suggestedUsers[index]._count.followers);
+                }
+            });
+
         }
-    }, [suggestions, post.author.username]);
+    }, [suggestions, post, notifier]);
 
     // - FUNCTIONS --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -105,6 +141,20 @@ export default function NotificationPost({ post, isRead }: { post: BasicPostType
             onMouseDown={(e) => handleCardClick(e, post.author.username, post.id)}
             onMouseLeave={changeCardColor}
         >
+            <div className='flex gap-1 text-14 font-bold text-secondary-text'>
+                <Heart size={20} className='text-pink-500 mr-1' />
+
+                <UserHoverCard
+                    user={notifier}
+                    _followingCount={notifierFollowingCount}
+                    _followersCount={notifierFollowersCount}
+                    _setFollowersCount={setNotifierFollowersCount}
+                    isFollowedByTheUser={isNotifierFollowedByTheUser}
+                    setIsFollowedByTheUser={setNotifierIsFollowedByTheUser}
+                    isFollowingTheUser={isNotifierFollowingTheUser} />
+
+                <p className='font-semibold'>liked {post.author.username === loggedInUser.username && 'your post'}</p>
+            </div>
 
             <BasicPostTemplate
                 post={post}

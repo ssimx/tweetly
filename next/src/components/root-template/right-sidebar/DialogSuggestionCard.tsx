@@ -1,28 +1,51 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { useUserContext } from '@/context/UserContextProvider';
 import { useRouter } from 'next/navigation';
 import UserHoverCard from '@/components/UserHoverCard';
-import { UserSuggestion } from '@/context/FollowSuggestionContextProvider';
 import FollowBtn from '@/components/FollowBtn';
+import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
+import { FollowSuggestionType, UserInfoType } from '@/lib/types';
 
-export default function DialogSuggestionCard({ user }: { user: UserSuggestion }) {
-    // state for updating followers count when logged in user follows / blocks the profile
-    const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(user.isFollowing);
-    const [followersCount, setFollowersCount] = useState(user['_count'].followers);
-
-    // state to show whether the profile follows logged in user
-    //      and to update the count when logged in user blocks the profile
-    const [isFollowingTheUser, setIsFollowingTheUser] = useState(user.following.length === 1);
-    const [followingCount, setFollowingCount] = useState(user['_count'].following);
-
-    const { loggedInUser } = useUserContext();
+export default function DialogSuggestionCard({ user }: { user: FollowSuggestionType }) {
+    const { blockedUsers } = useBlockedUsersContext();
     const router = useRouter();
+
+    // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    // if user is in suggestions, track it's isFollowed property instead
+    const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(user.isFollowed);
+    // Is user following the logged in user
+    const [isFollowingTheUser, setIsFollowingTheUser] = useState<boolean>(user.following.length === 1);
+
+    // Post author following & followers count to update hover card information when they're (un)followed/blocked by logged in user
+    const [followingCount, setFollowingCount] = useState(user._count.following);
+    const [followersCount, setFollowersCount] = useState(user._count.followers);
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { isFollowed, ...hoverCardUser } = user;
+
+    useEffect(() => {
+        setIsFollowedByTheUser(user.isFollowed);
+        setFollowingCount(user._count.following);
+        setFollowersCount(user._count.followers);
+    }, [user]);
+
+    useEffect(() => {
+        if (blockedUsers?.some((blockedUser) => blockedUser === user.username)) {
+            setIsFollowingTheUser(false);
+        }
+    }, [blockedUsers, user.username]);
+
+    // - FUNCTIONS --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     const handleCardClick = () => {
         router.push(`/${user.username}`);
     };
+
+    // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    if (blockedUsers.some((username) => username === user.username)) return <></>;
 
     return (
         <div onClick={handleCardClick} className='profile-follower-followee-card'>
@@ -37,23 +60,17 @@ export default function DialogSuggestionCard({ user }: { user: UserSuggestion })
             <div className='flex flex-col leading-5'>
                 <div className='flex gap-x-2 flex-wrap items-center text-secondary-text '>
                     <UserHoverCard
-                        author={{
-                            username: user.username,
-                            name: user.profile.name,
-                            profilePicture: user.profile.profilePicture,
-                            bio: user.profile.bio,
-                            following: followingCount
-                        }}
-                        followersCount={followersCount}
-                        setFollowersCount={setFollowersCount}
+                        user={hoverCardUser as UserInfoType}
+                        _followingCount={followingCount}
+                        _followersCount={followersCount}
+                        _setFollowersCount={setFollowersCount}
                         isFollowedByTheUser={isFollowedByTheUser}
                         setIsFollowedByTheUser={setIsFollowedByTheUser}
-                        isFollowingTheUser={isFollowingTheUser}
-                    />
+                        isFollowingTheUser={isFollowingTheUser} />
 
                     <div className='flex-center gap-2'>
                         <p className='text-16'>@{user.username}</p>
-                        {loggedInUser.username !== user.username && isFollowingTheUser && (
+                        {isFollowingTheUser && (
                             <p className='bg-secondary-foreground text-12 px-1 rounded-sm h-fit mt-[2px] font-medium'>Follows you</p>
                         )}
                     </div>

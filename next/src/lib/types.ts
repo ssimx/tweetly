@@ -36,14 +36,35 @@ export interface UserInfo {
         profilePicture: string;
         bannerPicture: string;
     },
+    _count: {
+        following: number,
+        followers: number,
+    },
 };
 
-export interface AuthorInfoType {
-    username: string;
+export interface ProfileInfoType {
+
+};
+
+export interface UserInfoType {
+    username: string,
     profile: {
-        name: string;
-        bio: string;
-        profilePicture: string;
+        name: string,
+        bio: string,
+        profilePicture: string,
+    },
+    following: {
+        followeeId: number,
+    }[],
+    followers: {
+        followerId: number,
+    }[],
+    blockedBy: {
+        blockerId: number,
+    }[],
+    _count: {
+        followers: number,
+        following: number,
     },
 };
 
@@ -95,27 +116,7 @@ interface BasePostType {
     images: string[],
     createdAt: string,
     updatedAt: string,
-    author: {
-        username: string,
-        profile: {
-            name: string,
-            bio: string,
-            profilePicture: string,
-        },
-        following: {
-            followeeId: number,
-        }[],
-        followers: {
-            followerId: number,
-        }[],
-        blockedBy: {
-            blockerId: number,
-        }[],
-        _count: {
-            followers: number,
-            following: number,
-        },
-    },
+    author: UserInfoType,
     reposts: {
         userId?: number,
         createdAt?: string,
@@ -138,6 +139,16 @@ interface BasePostType {
 // general post info, no reply info
 export type BasicPostType = BasePostType;
 
+// general post info with optional reply info
+export type BasicPostOptionalReplyType = BasePostType & {
+    replyTo?: BasicPostType
+};
+
+// general post info with reply info
+export type BasicPostWithReplyType = BasePostType & {
+    replyTo: BasicPostType
+};
+
 // when post is visited, fetch post, parent post (if reply) and replies
 export type VisitedPostType = BasePostType & {
     replyTo?: BasePostType;
@@ -155,11 +166,6 @@ export type ProfilePostOrRepostType = BasePostType & {
 // on profile Replies tab fetches only posts by user that were a reply to other post
 export type ProfileReplyPostType = BasePostType & {
     replyTo: BasePostType,
-};
-
-// on profile Likes tab fetches all posts that were liked by the user, can be reply or non reply
-export type ProfileLikedPostType = BasePostType & {
-    replyTo?: BasePostType,
 };
 
 // freshly created post
@@ -301,24 +307,7 @@ export type ReplyPostType = BasePostType & {
         images?: string[],
         createdAt: string,
         updatedAt: string,
-        author: {
-            username: string,
-            profile: {
-                name: string,
-                profilePicture: string,
-                bio: string,
-            },
-            followers: {
-                followerId: number,
-            }[] | [],
-            following: {
-                followeeId: number,
-            }[] | [],
-            _count: {
-                followers: number,
-                following: number,
-            }
-        },
+        author: UserInfoType,
         reposts: {
             userId: number,
         }[] | [],
@@ -477,28 +466,12 @@ export interface LikedPostType {
 export interface NotificationType {
     id: number;
     type: {
-        name: string;
+        name: 'POST' | 'REPOST' | 'LIKE' | 'REPLY' | 'FOLLOW';
         description: string;
     };
     isRead: boolean,
-    notifier: {
-        username: string,
-        profile: {
-            name: string,
-            profilePicture: string,
-            bio: string
-        },
-        followers: {
-            followerId: number,
-        }[] | [],
-        following: {
-            followeeId: number,
-        }[] | [],
-        _count: {
-            followers: number,
-            following: number,
-        }
-    };
+    notifier: UserInfoType,
+    post?: BasicPostType | ReplyPostType,
 };
 
 export type NotificationFollowType = NotificationType;
@@ -633,22 +606,6 @@ export interface TrendingHashtagType {
     };
 };
 
-export interface FollowSuggestionType {
-    username: string;
-    profile: {
-        name: string;
-        bio: string;
-        profilePicture: string;
-    };
-    following: {
-        followeeId: number;
-    }[];
-    followers: {
-        followerId: number;
-    }[];
-    _count: {
-        followers: number;
-        following: number;
-    };
-    isFollowing: boolean,
+export type FollowSuggestionType = UserInfoType & {
+    isFollowed: boolean,
 };

@@ -2,19 +2,21 @@
 import { BasicPostType, VisitedPostType } from '@/lib/types';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import { X, ChevronRight, ChevronLeft, ChevronsRight, ChevronsLeft } from 'lucide-react';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
+import { usePathname, useRouter } from 'next/navigation';
 import BasicPostTemplate from './BasicPostTemplate';
 import VisitedPostTemplate from './VisitedPostTemplate';
+import { usePostInteractionContext } from '@/context/PostInteractionContextProvider';
+import { getPostInformation } from '@/actions/get-actions';
 
-export default function PostInfoModal({ post, photoId }: { post: VisitedPostType, photoId: number }) {
+export default function VisitedPostInfo({ post, photoId }: { post: VisitedPostType, photoId?: number }) {
     const { suggestions } = useFollowSuggestionContext();
+    const { interactedPosts, setInteractedPosts } = usePostInteractionContext();
     const router = useRouter();
     const pathname = usePathname();
 
-    // post info
     // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // PARENT POST
 
@@ -61,6 +63,8 @@ export default function PostInfoModal({ post, photoId }: { post: VisitedPostType
         ?? post.author._count.followers
     );
 
+    const [postInfo, setPostInfo] = useState(post);
+    const postRef = useRef<HTMLDivElement>(null);
     const postDate = new Date(post.createdAt);
     const postTime = `${postDate.getHours()}:${postDate.getMinutes()}`;
     const postFormatDate = `${postDate.toLocaleString('default', { month: 'short' })} ${postDate.getDate()}, ${postDate.getFullYear()}`;
@@ -73,19 +77,45 @@ export default function PostInfoModal({ post, photoId }: { post: VisitedPostType
     // image overlay state
     const overlayPostInfoRef = useRef<HTMLDivElement>(null);
     const scrollElementRef = useRef<HTMLDivElement>(null);
-    const [isOverlayVisible, setIsOverlayVisible] = useState(true);
-    const [overlayCurrentImageIndex, setOverlayCurrentImageIndex] = useState<number>(photoId - 1);
+    const [isOverlayVisible, setIsOverlayVisible] = useState(false);
+    const [flippedOverlay, setFlippedOverlay] = useState(false);
+    const [overlayCurrentImageIndex, setOverlayCurrentImageIndex] = useState<number | null>(null);
     const [isPostInfoVisible, setIsPostInfoVisible] = useState(true);
 
     useEffect(() => {
-        if (!pathname.startsWith(`/${post.author.username}/status/${post.id}/photo/`)) {
-            document.body.style.overflow = '';
+        if (!pathname.startsWith(`/${post.author.username}/status/${post.id}`)) {
+            console.log('test')
             setIsOverlayVisible(false);
         } else if (pathname.startsWith(`/${post.author.username}/status/${post.id}/photo/`)) {
-            document.body.style.overflow = 'hidden';
             setIsOverlayVisible(true);
         }
     }, [post, pathname]);
+
+    useEffect(() => {
+        // if interacted posts array is length of 1000, refetch everything so that the data is fresh for more than 1000 posts
+        if (interactedPosts.size === 1000 && flippedOverlay) {
+            // Refetch post and replies to update post interactions
+            const refetchData = async () => {
+                const refetchedPost = await getPostInformation(post.id);
+                if (!refetchedPost) return;
+                setPostInfo(refetchedPost);
+                setReplies(refetchedPost.replies);
+                setRepliesCursor(refetchedPost.replies.length > 0 ? refetchedPost.replies.slice(-1)[0].id : null);
+                setRepliesEndReached(refetchedPost.repliesEnd);
+                setInteractedPosts(new Map());
+            };
+
+            refetchData();
+        }
+
+        setFlippedOverlay(false);
+    }, [post.id, flippedOverlay, interactedPosts, setInteractedPosts]);
+
+    useEffect(() => {
+        isOverlayVisible
+            ? post.replyTo && scrollElementRef.current && overlayPostInfoRef.current && scrollElementRef.current.scrollTo(0, (overlayPostInfoRef.current.offsetTop - 50))
+            : post.replyTo && postRef.current && window.scrollTo(0, (postRef.current.offsetTop - 50));
+    }, [post.replyTo, isOverlayVisible]);
 
     useEffect(() => {
         const suggestedUsers = suggestions?.filter((suggestedUser) => suggestedUser.username === post.replyTo?.author.username || suggestedUser.username === post.author.username);
@@ -106,13 +136,23 @@ export default function PostInfoModal({ post, photoId }: { post: VisitedPostType
     }, [suggestions, post]);
 
     useEffect(() => {
-        document.body.style.overflow = 'hidden';
-        post.replyTo && scrollElementRef.current && overlayPostInfoRef.current && scrollElementRef.current.scrollTo(0, (overlayPostInfoRef.current.offsetTop - 50))
+        if (photoId) {
+            if (!post.images?.length || photoId < 1 || photoId > post.images.length) {
+                // If invalid, remove the param and prevent loop
+                window.history.replaceState(null, '', `/${post.author.username}/status/${post.id}`);
+            } else {
+                // If valid, render only overlay if image was clicked from the feed, otherwise render both post and overlay
+                document.body.style.overflow = "hidden";
+                setIsOverlayVisible(true);
+                setOverlayCurrentImageIndex(photoId - 1);
+            }
+        }
 
         return (() => {
-            document.body.style.overflow = '';
+            // clean up map because interacted posts will be re-fetched so context is not needed
+            setInteractedPosts(new Map());
         });
-    }, [post.replyTo]);
+    }, [post, photoId, setInteractedPosts]);
 
     // - FUNCTIONS --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -126,7 +166,6 @@ export default function PostInfoModal({ post, photoId }: { post: VisitedPostType
             return;
         }
 
-        console.log(targetElement)
         // Otherwise, navigate to the post in new tab
         if (e.button === 1) {
             // Check if it's a middle mouse button click
@@ -135,30 +174,73 @@ export default function PostInfoModal({ post, photoId }: { post: VisitedPostType
             if (newWindow) newWindow.opener = null;
         } else if (e.button === 0) {
             // Check if it's a left mouse button click
-            document.body.style.overflow = '';
             router.replace(`/${authorUsername}/status/${postId}`);
         }
     };
 
     const openPhoto = (photoIndex: number, authorUsername: string, postId: number) => {
-        document.body.style.overflow = '';
-        router.push(`http://localhost:3000/${authorUsername}/status/${postId}/photo/${photoIndex + 1}`, { scroll: false });
+        document.body.style.overflow = 'hidden';
+        window.history.replaceState(null, '', `/${authorUsername}/status/${postId}/photo/${photoIndex + 1}`);
+        setIsOverlayVisible(true);
+        setOverlayCurrentImageIndex(photoIndex);
+        setFlippedOverlay(true);
     };
 
     const closePhoto = () => {
         document.body.style.overflow = '';
-        router.back();
+        window.history.replaceState(null, '', `/${post.author.username}/status/${post.id}`);
+        setIsOverlayVisible(false);
+        setOverlayCurrentImageIndex(null);
+        setFlippedOverlay(true);
     };
 
     // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    if (!post.images?.length || photoId < 1 || photoId > post.images.length) {
-        router.back();
-    }
-
     return (
         <>
-            {isOverlayVisible &&
+            <div className='flex flex-col'>
+                {postInfo.replyTo && (
+                    <div onClick={(e) => handleCardClick(e, postInfo.replyTo!.author.username, post.replyTo!.id)} className='profile-content-post'>
+                        <BasicPostTemplate
+                            post={postInfo.replyTo}
+                            isFollowedByTheUser={isParentFollowedByTheUser}
+                            setIsFollowedByTheUser={setParentIsFollowedByTheUser}
+                            isFollowingTheUser={isParentFollowingTheUser}
+                            setIsFollowingTheUser={setParentIsFollowingTheUser}
+                            followingCount={parentFollowingCount}
+                            setFollowingCount={setParentFollowingCount}
+                            followersCount={parentFollowersCount}
+                            setFollowersCount={setParentFollowersCount}
+                            openPhoto={openPhoto}
+                            type='parent'
+                        />
+                    </div>
+                )}
+
+                <VisitedPostTemplate
+                    post={postInfo}
+                    postRef={postRef}
+                    postTime={postTime}
+                    postDate={postFormatDate}
+                    replies={replies}
+                    setReplies={setReplies}
+                    repliesCursor={repliesCursor}
+                    setRepliesCursor={setRepliesCursor}
+                    repliesEndReached={repliesEndReached}
+                    setRepliesEndReached={setRepliesEndReached}
+                    isFollowedByTheUser={isFollowedByTheUser}
+                    setIsFollowedByTheUser={setIsFollowedByTheUser}
+                    isFollowingTheUser={isFollowingTheUser}
+                    setIsFollowingTheUser={setIsFollowingTheUser}
+                    followingCount={followingCount}
+                    setFollowingCount={setFollowingCount}
+                    followersCount={followersCount}
+                    setFollowersCount={setFollowersCount}
+                    openPhoto={openPhoto}
+                />
+            </div>
+
+            {(isOverlayVisible && overlayCurrentImageIndex !== null) &&
                 createPortal(
                     <div className={`fixed inset-0 z-50 bg-black-1/50 grid ${!isPostInfoVisible ? 'grid-cols-[100%]' : 'grid-cols-[80%,20%]'}`} >
                         <div className='relative h-[100vh] flex-center' onClick={closePhoto}>
@@ -182,19 +264,19 @@ export default function PostInfoModal({ post, photoId }: { post: VisitedPostType
                                         e.stopPropagation();
                                         const previousImageIndex = overlayCurrentImageIndex - 1;
                                         setOverlayCurrentImageIndex(previousImageIndex);
-                                        window.history.replaceState(null, '', `/${post.author.username}/status/${post.id}/photo/${previousImageIndex + 1}`);
+                                        window.history.replaceState(null, '', `/${postInfo.author.username}/status/${postInfo.id}/photo/${previousImageIndex + 1}`);
                                     }}>
                                     <ChevronLeft size={24} className='color-white-1 ' />
                                 </button>
                             )}
-                            {post.images.length > 1 && overlayCurrentImageIndex + 1 < post.images.length
+                            {postInfo.images.length > 1 && overlayCurrentImageIndex + 1 < postInfo.images.length
                                 ? (
                                     <button className='absolute z-[100] right-0 m-3 p-2 h-fit w-fit rounded-full bg-gray-800 hover:bg-gray-700 hover:cursor-pointer'
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             const nextImageIndex = overlayCurrentImageIndex + 1;
                                             setOverlayCurrentImageIndex(nextImageIndex);
-                                            window.history.replaceState(null, '', `/${post.author.username}/status/${post.id}/photo/${nextImageIndex + 1}`);
+                                            window.history.replaceState(null, '', `/${postInfo.author.username}/status/${postInfo.id}/photo/${nextImageIndex + 1}`);
                                         }}>
                                         <ChevronRight size={24} className='color-white-1 ' />
                                     </button>
@@ -204,7 +286,7 @@ export default function PostInfoModal({ post, photoId }: { post: VisitedPostType
 
                             <div className='relative max-w-[100%] max-h-[80vh] pointer-events-auto' onClick={(e) => e.stopPropagation()} >
                                 <Image
-                                    src={post.images[overlayCurrentImageIndex]}
+                                    src={postInfo.images[overlayCurrentImageIndex]}
                                     alt={`Post image ${overlayCurrentImageIndex}`}
                                     width={1000}
                                     height={1000}
@@ -241,7 +323,7 @@ export default function PostInfoModal({ post, photoId }: { post: VisitedPostType
                             )}
 
                             <VisitedPostTemplate
-                                post={post}
+                                post={postInfo}
                                 postRef={overlayPostInfoRef}
                                 scrollRef={scrollElementRef}
                                 postTime={postTime}
@@ -266,8 +348,7 @@ export default function PostInfoModal({ post, photoId }: { post: VisitedPostType
                         </div>
                     </div>,
                     document.body // Append to <body>
-                )
-            }
+                )}
         </>
     )
 }

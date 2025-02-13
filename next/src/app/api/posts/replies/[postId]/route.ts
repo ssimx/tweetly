@@ -19,12 +19,12 @@ export async function GET(req: NextRequest, props: { params: Promise<{ postId: n
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
             const searchParams = req.nextUrl.searchParams;
-            const query = searchParams.get('cursor');
+            const cursor = searchParams.get('cursor');
             const params = await props.params;
             const postId = params.postId;
 
-            if (query !== null) {
-                const response = await fetch(`${apiUrl}/posts/postReplies/${postId}?cursor=${query}`, {
+            if (cursor !== null) {
+                const response = await fetch(`${apiUrl}/posts/postReplies/${postId}?cursor=${cursor}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',

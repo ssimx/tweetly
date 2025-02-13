@@ -69,6 +69,33 @@ export async function getHomeGlobalFeed() {
     }
 };
 
+export async function getPostInfo(postId: number) {
+    const token = await getCurrentUserToken();
+
+    try {
+        const response = await fetch(`http://localhost:3000/api/posts/get/${postId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            cache: 'no-store',
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(getErrorMessage(errorData));
+        }
+
+        const post = await response.json() as VisitedPostType;
+        return post;
+    } catch (error) {
+        const errorMessage = getErrorMessage(error);
+        console.error(errorMessage);
+        return undefined;
+    }
+};
+
 export async function getNotifications() {
     const token = await getCurrentUserToken();
 
@@ -194,6 +221,10 @@ export async function getConversationById(id: string) {
     }
 };
 
+// ---------------------------------------------------------------------------------------------------------
+//                                             PROFILE ACCESS
+// ---------------------------------------------------------------------------------------------------------
+
 async function authorizedToEditProfile(username: string) {
     const loggedInUser = await getLoggedInUser();
     return loggedInUser.username === username;
@@ -232,29 +263,3 @@ export async function getUserProfile(username: string) {
     }
 };
 
-export async function getPostInfo(postId: number) {
-    const token = await getCurrentUserToken();
-
-    try {
-        const response = await fetch(`http://localhost:3000/api/posts/get/${postId}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-            cache: 'no-store',
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
-        }
-
-        const post = await response.json() as VisitedPostType;
-        return post;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return undefined;
-    }
-};

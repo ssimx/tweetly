@@ -1,6 +1,7 @@
 'server only';
-import PostInfo from '@/components/posts/PostInfo';
 import { getPostInfo } from '@/data-acess-layer/user-dto';
+import { VisitedPostType } from '@/lib/types';
+import VisitedPostInfo from '@/components/posts/VisitedPostInfo';
 
 export default async function Status({ params }: { params: Promise<{ postId: number }> }) {
     const { postId } = await params;
@@ -9,7 +10,7 @@ export default async function Status({ params }: { params: Promise<{ postId: num
 
     return (
         <div>
-            <PostInfo post={post} parentPost={post.replyTo} />
+            <VisitedPostInfo post={post as VisitedPostType} />
         </div>
     )
 }

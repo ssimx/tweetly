@@ -1,74 +1,115 @@
 'use client';
 import { BasicPostType } from '@/lib/types';
-import Link from 'next/link';
-import Image from 'next/image';
-import PostBtns from '../PostBtns';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import UserHoverCard from '../../UserHoverCard';
-import PostText from '@/components/posts/PostText';
-import PostImages from '../PostImages';
-import PostDate from '../PostDate';
+import { useEffect, useState } from 'react';
+import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
+import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
+import PostMenu from '../PostMenu';
+import BasicPostTemplate from '../BasicPostTemplate';
 
 export default function ReplyPost({ post }: { post: BasicPostType }) {
-    const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(post.author.followers.length === 1);
-    const [followersCount, setFollowersCount] = useState(post.author.followers.length);
-
-    // state to show whether the profile follows logged in user
-    const [isFollowingTheUser,] = useState(post.author.following.length === 1);
-
+    const { suggestions } = useFollowSuggestionContext();
+    const { blockedUsers } = useBlockedUsersContext();
     const router = useRouter();
 
-    const handleCardClick = () => {
-        router.push(`/${post.author.username}/status/${post.id}`);
-    };
+    // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-        e.stopPropagation();
+    // if user is in suggestions, track it's isFollowed property instead
+    const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(
+        suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?.isFollowed
+        ?? post.author.followers.length === 1
+    );
+
+    // Is post author following the logged in user
+    const [isFollowingTheUser, setIsFollowingTheUser] = useState<boolean>(post.author.following.length === 1);
+
+    // Post author following & followers count to update hover card information when they're (un)followed/blocked by logged in user
+    const [followingCount, setFollowingCount] = useState(
+        suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?._count.following
+        ?? post.author._count.following
+    );
+    const [followersCount, setFollowersCount] = useState(
+        suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?._count.followers
+        ?? post.author._count.followers
+    );
+
+    useEffect(() => {
+        const suggestedUser = suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username);
+        if (suggestedUser) {
+            setIsFollowedByTheUser(suggestedUser.isFollowed);
+            setFollowingCount(suggestedUser._count.following);
+            setFollowersCount(suggestedUser._count.followers);
+        }
+    }, [suggestions, post.author.username]);
+
+    // - FUNCTIONS --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    const handleCardClick = (e: React.MouseEvent<HTMLDivElement>, authorUsername: string, postId: number) => {
+        const targetElement = e.target as HTMLElement;
+
+        // skip any clicks that are not coming from the card element
+        if (targetElement.closest('button') || targetElement.closest('img') || targetElement.closest('a')) {
+            e.stopPropagation();
+            e.preventDefault();
+            return;
+        }
+
+        // Otherwise, navigate to the post in new tab
+        if (e.button === 1) {
+            // Check if it's a middle mouse button click
+            e.preventDefault(); // Prevent default middle-click behavior
+            const newWindow = window.open(`/${authorUsername}/status/${postId}`, '_blank', 'noopener,noreferrer');
+            if (newWindow) newWindow.opener = null;
+        } else if (e.button === 0) {
+            // Check if it's a left mouse button click
+            router.replace(`/${authorUsername}/status/${postId}`);
+        }
     };
 
     const openPhoto = (photoIndex: number, authorUsername: string, postId: number) => {
         router.push(`http://localhost:3000/${authorUsername}/status/${postId}/photo/${photoIndex + 1}`, { scroll: false });
     };
 
+    // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    if (blockedUsers.some((user) => user === post.author.username)) {
+        return (
+            <div className="w-full px-4 py-2 flex">
+                <p className="text-secondary-text">You&apos;ve blocked this user. <span>Unblock to see their posts.</span></p>
+                <PostMenu
+                    post={post}
+                    isFollowedByTheUser={isFollowedByTheUser}
+                    setIsFollowedByTheUser={setIsFollowedByTheUser}
+                    isFollowingTheUser={isFollowingTheUser}
+                    setIsFollowingTheUser={setIsFollowingTheUser}
+                    _setFollowersCount={setFollowersCount}
+                    _setFollowingCount={setFollowingCount}
+                />
+            </div>
+        )
+    }
+
     return (
-        <div onClick={() => handleCardClick()} className='post hover:bg-post-hover hover:cursor-pointer'>
-            <div className='post-header'>
-                <Link href={`/${post.author.username}`} className='group' onClick={(e) => handleLinkClick(e)}>
-                    <Image
-                        src={post.author.profile?.profilePicture}
-                        alt='Post author profile pic' width={35} height={35} className='w-[35px] h-[35px] rounded-full group-hover:outline group-hover:outline-primary/10' />
-                </Link>
-                <div className='flex gap-2 min-w-0 text-secondary-text'>
-                    <UserHoverCard
-                        author={{
-                            username: post.author.username,
-                            name: post.author.profile.name,
-                            profilePicture: post.author.profile.profilePicture,
-                            bio: post.author.profile.bio,
-                            following: post.author['_count'].following,
-                        }}
-                        followersCount={followersCount}
-                        setFollowersCount={setFollowersCount}
-                        isFollowedByTheUser={isFollowedByTheUser}
-                        setIsFollowedByTheUser={setIsFollowedByTheUser}
-                        isFollowingTheUser={isFollowingTheUser} />
-                    <p>@{post.author.username}</p>
-                    <p>·</p>
-                    <PostDate createdAt={post.createdAt} />
-                </div>
-            </div>
-            <div className='post-content flex-col'>
-                <PostText content={post.content} />
-                <PostImages
-                    images={post.images}
-                    authorUsername={post.author.username}
-                    postId={post.id}
-                    openPhoto={openPhoto} />
-            </div>
-            <div className='!border-t-0 post-btns'>
-                <PostBtns post={post} />
-            </div>
+        <div
+            className='px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'
+            role="link"
+            tabIndex={0}
+            aria-label={`View post by ${post.author.username}`}
+            onMouseDown={(e) => handleCardClick(e, post.author.username, post.id)} >
+
+            <BasicPostTemplate
+                post={post}
+                isFollowedByTheUser={isFollowedByTheUser}
+                setIsFollowedByTheUser={setIsFollowedByTheUser}
+                isFollowingTheUser={isFollowingTheUser}
+                setIsFollowingTheUser={setIsFollowingTheUser}
+                followingCount={followingCount}
+                setFollowingCount={setFollowingCount}
+                followersCount={followersCount}
+                setFollowersCount={setFollowersCount}
+                openPhoto={openPhoto}
+            />
+
         </div>
     )
 }

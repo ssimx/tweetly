@@ -181,8 +181,8 @@ export default function Search() {
                         <div className='px-4 pb-4 pt-2'>
                             <h1 className='text-24 font-bold mb-2'>People</h1>
                             <div>
-                                {users.slice(0, 3).map((user, index) => (
-                                    <ProfileFollowersFollowingCard key={index} user={user} />
+                                {users.slice(0, 3).map((user) => (
+                                    <ProfileFollowersFollowingCard key={user.username} user={user} />
                                 ))}
                             </div>
                             <Dialog>
@@ -199,8 +199,8 @@ export default function Search() {
                                                 {
                                                     users === undefined
                                                         ? 'loading'
-                                                        : users.map((user, index) => (
-                                                            <ProfileFollowersFollowingCard key={index} user={user} />
+                                                        : users.map((user) => (
+                                                            <ProfileFollowersFollowingCard key={user.username} user={user} />
                                                         ))
                                                 }
                                             </div>

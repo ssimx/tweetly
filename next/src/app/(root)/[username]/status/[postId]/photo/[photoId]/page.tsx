@@ -1,5 +1,5 @@
 'server only';
-import PostInfo from '@/components/posts/PostInfo';
+import VisitedPostInfo from '@/components/posts/VisitedPostInfo';
 import { getPostInfo } from '@/data-acess-layer/user-dto';
 
 export default async function Photo({ params }: { params: Promise<{ postId: number, photoId: number }> }) {
@@ -9,7 +9,7 @@ export default async function Photo({ params }: { params: Promise<{ postId: numb
 
     return (
         <div>
-            <PostInfo post={post} parentPost={post.replyTo} photoId={photoId} />
+            <VisitedPostInfo post={post} photoId={photoId} />
         </div>
     )
 }

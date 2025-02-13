@@ -9,11 +9,9 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
 
 export default function RightSidebarFollowSuggestions() {
     const { suggestions } = useFollowSuggestionContext();
-    const { blockedUsers } = useBlockedUsersContext();
 
     return (
         <div className='w-full h-fit rounded-[15px] border p-3 flex flex-col gap-2'>
@@ -22,11 +20,11 @@ export default function RightSidebarFollowSuggestions() {
                 {
                     suggestions === undefined
                         ? 'loading'
-                        : suggestions.slice(0, 4).length === 0
+                        : suggestions.length === 0
                             ? 'You are currently following everyone'
-                            : suggestions.slice(0, 4).map((user, index) => {
-                                return !blockedUsers.some((username) => username === user.username) && <SuggestionCard key={index} user={user} />;
-                            })
+                            : suggestions.slice(0, 4).map((user) => (
+                                <SuggestionCard key={user.username} user={user} />
+                            ))
                 }
             </div>
             <Dialog>
@@ -43,9 +41,9 @@ export default function RightSidebarFollowSuggestions() {
                                 {
                                     suggestions === undefined
                                         ? 'loading'
-                                        : suggestions.map((user, index) => {
-                                            return !blockedUsers.some((username) => username === user.username) && <DialogSuggestionCard key={index} user={user} />;
-                                        })
+                                        : suggestions.map((user) => (
+                                            <DialogSuggestionCard key={user.username} user={user} />
+                                        ))
                                 }
                             </div>
                         </DialogContent>

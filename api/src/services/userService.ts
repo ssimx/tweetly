@@ -23,6 +23,12 @@ export const getUser = async (id: number) => {
                     bannerPicture: true,
                 }
             },
+            _count: {
+                select: {
+                    following: true,
+                    followers: true,
+                }
+            }
         }
     });
 };

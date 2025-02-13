@@ -19,8 +19,8 @@ export default async function Explore() {
                 <div>
                     <h1 className='pt-4 pl-4 pb-2 text-20 font-bold'>Posts For You</h1>
                     {orderedPosts
-                        ? orderedPosts.map((post, index) => (
-                            <div key={index}>
+                        ? orderedPosts.map((post) => (
+                            <div key={post.id}>
                                 <FeedPost post={post} />
                                 <div className='feed-hr-line'></div>
                             </div>

@@ -69,9 +69,9 @@ export default function LeftSidebar() {
                 <Image src={savedTheme === 0 ? TweetlyLogoBlack : TweetlyLogoWhite} alt='Tweetly logo' width='30' height='30' className='mx-auto' />
             </Link>
             <div className='left-sidebar-links'>
-                {leftSidebarLinks.map((link, index) => (
+                {leftSidebarLinks.map((link) => (
                     <LeftSidebarLink 
-                        key={index} 
+                        key={link.label} 
                         link={link}
                         messages={messages}
                         notifications={notifications} />

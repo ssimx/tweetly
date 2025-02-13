@@ -29,7 +29,7 @@ export default function FeedTab({ posts, loadingRef, scrollPositionRef, endReach
         <div>
             {
                 posts.map((post, index) => (
-                    <div key={index}>
+                    <div key={post.id}>
                         <FeedPost post={post} searchSegments={searchSegments} />
                         {(index + 1) !== posts.length && <div className='feed-hr-line'></div>}
                     </div>
