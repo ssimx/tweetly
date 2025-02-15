@@ -7,9 +7,9 @@ import { X, ChevronRight, ChevronLeft, ChevronsRight, ChevronsLeft } from 'lucid
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import { usePathname, useRouter } from 'next/navigation';
 import { usePostInteractionContext } from '@/context/PostInteractionContextProvider';
-import { getPostInformation } from '@/actions/get-actions';
 import BasicPostTemplate from './templates/BasicPostTemplate';
 import VisitedPostTemplate from './templates/VisitedPostTemplate';
+import { getPostInfo } from '@/actions/get-actions';
 
 export default function VisitedPostInfo({ post, photoId }: { post: VisitedPostType, photoId?: number }) {
     const { suggestions } = useFollowSuggestionContext();
@@ -95,7 +95,7 @@ export default function VisitedPostInfo({ post, photoId }: { post: VisitedPostTy
         if (interactedPosts.size === 1000 && flippedOverlay) {
             // Refetch post and replies to update post interactions
             const refetchData = async () => {
-                const refetchedPost = await getPostInformation(post.id);
+                const refetchedPost = await getPostInfo(post.id);
                 if (!refetchedPost) return;
                 setPostInfo(refetchedPost);
                 setReplies(refetchedPost.replies);

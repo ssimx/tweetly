@@ -2,7 +2,7 @@ import React from 'react'
 import RightSidebarFollowSuggestions from './RightSidebarFollowSuggestions'
 import RightSidebarSearch from './RightSidebarSearch';
 import RightSidebarTrendingHashtags from './RightSidebarTrendingHashtags';
-import { getTrendingHashtags } from '@/data-acess-layer/misc-dto';
+import { getTrendingHashtags } from '@/actions/get-actions';
 
 export default async function RightSidebar() {
     const hashtags = await getTrendingHashtags();

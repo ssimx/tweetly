@@ -2,7 +2,7 @@ import 'server-only';
 import { getCurrentUserToken } from './auth';
 import { getErrorMessage } from '@/lib/utils';
 import { redirect } from 'next/navigation';
-import { BasicPostType, BookmarkPostType, ConversationsListType, ConversationType, NotificationType, ProfileInfo, UserInfo, VisitedPostType } from '@/lib/types';
+import { BookmarkPostType, ConversationsListType, ConversationType, NotificationType, ProfileInfo, UserInfo } from '@/lib/types';
 import { cache } from 'react';
 
 export const getLoggedInUser = cache(async () => {
@@ -36,65 +36,6 @@ export const getLoggedInUser = cache(async () => {
         return redirect('/logout');
     }
 });
-
-export async function getHomeGlobalFeed() {
-    const token = await getCurrentUserToken();
-
-    try {
-        const response = await fetch(`http://localhost:3000/api/posts/feed/global`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
-        }
-
-        const globalFeedPosts = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as BasicPostType[], end: res.end as boolean}
-            }
-            return { posts: [], end: true };
-        });
-
-        return globalFeedPosts;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return undefined;
-    }
-};
-
-export async function getPostInfo(postId: number) {
-    const token = await getCurrentUserToken();
-
-    try {
-        const response = await fetch(`http://localhost:3000/api/posts/get/${postId}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-            cache: 'no-store',
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
-        }
-
-        const post = await response.json() as VisitedPostType;
-        return post;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return undefined;
-    }
-};
 
 export async function getNotifications() {
     const token = await getCurrentUserToken();

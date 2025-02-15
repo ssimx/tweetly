@@ -41,63 +41,14 @@ export async function searchUsers(req: Request, res: Response) {
         } else if (queryParams.stringSegments && queryParams.stringSegments.length > 0) {
             const fetchedUsers = await getUsersBySearch(user.id, queryParams.stringSegments);
             users.push(...fetchedUsers);
-        } 
-        
+        }
+
         return res.status(200).json({
             users,
             queryParams
         })
     } catch (error) {
         console.error('Error fetching users: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
-    }
-};
-
-// ---------------------------------------------------------------------------------------------------------
-
-export async function searchPostsWithCursor(req: Request, res: Response) {
-    const query = req.query.q as string;
-    if (!query) return res.status(400).json({ error: "No search query provided" });
-    const cursor = Number(req.query.cursor);
-    if (!cursor) return res.status(400).json({ error: "No cursor provided" });
-    const queryParams = searchQueryCleanup(query);
-
-    const user = req.user as UserProps;
-
-    try {
-        // fetch posts that contain either hastags, users or strings
-        const lastSearchPostId = await getLastPostBySearch(user.id, queryParams.segments).then(res => res?.id);
-        if (lastSearchPostId) {
-            if (cursor === lastSearchPostId) {
-                return res.status(200).json({
-                    posts: [],
-                    end: true
-                });
-            }
-        }
-
-        const posts = await getMorePostsBySearch(user.id, queryParams.segments, cursor);
-        
-        if (lastSearchPostId && posts) {
-            if (posts.slice(-1)[0].id === lastSearchPostId) {
-                return res.status(200).json({
-                    posts: posts,
-                    end: true
-                });
-            } else {
-                return res.status(200).json({
-                    posts: posts,
-                    end: false
-                });
-            }
-        }
-
-        return res.status(200).json({
-            posts: [],
-            end: true
-        });
-    } catch (error) {
-        console.error('Error fetching posts: ', error);
         return res.status(500).json({ error: 'Failed to process the request' });
     }
 };
@@ -114,10 +65,15 @@ export async function searchUsersAndPosts(req: Request, res: Response) {
     try {
         // fetch users
         let usersPromise;
-        if (queryParams.usernames && queryParams.usernames.length > 0) {
+        let userSearchParams: string[] = [];
+        if (queryParams.usernames.length) {
+            // check if queryParams has usernames by checking input for @
             usersPromise = getUsersBySearch(user.id, queryParams.usernames);
-        } else if (queryParams.stringSegments && queryParams.stringSegments.length > 0) {
+            userSearchParams = queryParams.usernames;
+        } else if (queryParams.stringSegments.length) {
+            // if not, use string segments instead
             usersPromise = getUsersBySearch(user.id, queryParams.stringSegments);
+            userSearchParams = queryParams.stringSegments;
         }
 
         // fetch posts
@@ -130,32 +86,96 @@ export async function searchUsersAndPosts(req: Request, res: Response) {
             postsPromise || Promise.resolve([])
         ]);
 
-        if (lastSearchPost && posts) {
-            if (posts.slice(-1)[0].id === lastSearchPost.id) {
+        // Prioritize users based on match specificity
+        const prioritizedUsers = users.map((user) => {
+            const { username, profile } = user;
+            const name = profile?.name || "";
+            let priority = 0;
+
+            userSearchParams.forEach((term) => {
+                const lowerTerm = term.toLowerCase();
+                const lowerUsername = username.toLowerCase();
+                const lowerName = name.toLowerCase();
+
+                // Username matches
+                if (lowerUsername === lowerTerm) {
+                    priority += 3; // Exact match
+                } else if (lowerUsername.startsWith(lowerTerm)) {
+                    priority += 2; // Starts with
+                } else if (lowerUsername.includes(lowerTerm)) {
+                    priority += 1; // Partial match
+                }
+
+                // Name matches
+                if (lowerName === lowerTerm) {
+                    priority += 3; // Exact match
+                } else if (lowerName.startsWith(lowerTerm)) {
+                    priority += 2; // Starts with
+                } else if (lowerName.includes(lowerTerm)) {
+                    priority += 1; // Partial match
+                }
+            });
+
+            return { ...user, priority };
+        }).sort((a, b) => b.priority - a.priority);
+
+        return res.status(200).json({
+            users: prioritizedUsers,
+            posts: posts,
+            searchSegments: queryParams.stringSegments,
+            end: !lastSearchPost
+                ? true
+                : !posts.length
+                    ? true
+                    : lastSearchPost.id === posts.slice(-1)[0].id
+                        ? true
+                        : false
+        })
+    } catch (error) {
+        console.error('Error fetching users and posts: ', error);
+        return res.status(500).json({ error: 'Failed to process the request' });
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export async function searchPostsWithCursor(req: Request, res: Response) {
+    const query = req.query.q as string;
+    if (!query) return res.status(400).json({ error: "No search query provided" });
+    const cursor = Number(req.query.cursor);
+    if (!cursor) return res.status(400).json({ error: "No cursor provided" });
+    const queryParams = searchQueryCleanup(query);
+
+    const user = req.user as UserProps;
+
+    try {
+        const lastSearchPostId = await getLastPostBySearch(user.id, queryParams.segments).then(res => res?.id);
+        if (lastSearchPostId) {
+            // check if current cursor equals last post id
+            // if truthy, return empty array and set the end to true
+            if (Number(cursor) === lastSearchPostId) {
                 return res.status(200).json({
-                    users,
-                    posts,
-                    queryParams,
+                    posts: [],
                     end: true
-                });
-            } else {
-                return res.status(200).json({
-                    users,
-                    posts,
-                    queryParams,
-                    end: false
                 });
             }
         }
 
+        const posts = await getPostsBySearch(user.id, queryParams.segments, cursor);
+
         return res.status(200).json({
-            users,
-            posts: [],
-            queryParams,
-            end: true
-        })
+            posts: posts,
+            // check if older posts array is empty and if truthy set the end to true
+            // check if new cursor equals last post id
+            //  if truthy, return older posts and set the end to true
+            end: posts.length === 0
+                ? true
+                : lastSearchPostId === posts.slice(-1)[0].id
+                    ? true
+                    : false,
+        });
     } catch (error) {
-        console.error('Error fetching users and posts: ', error);
+        console.error('Error fetching posts: ', error);
         return res.status(500).json({ error: 'Failed to process the request' });
     }
 };

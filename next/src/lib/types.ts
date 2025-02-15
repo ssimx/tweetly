@@ -594,3 +594,16 @@ export interface TrendingHashtagType {
 export type FollowSuggestionType = UserInfoType & {
     isFollowed: boolean,
 };
+
+export type SearchInfoType = {
+    users: UserInfoType[],
+    posts: BasicPostType[],
+    queryParams: {
+        raw: string,
+        segments: string[],
+        stringSegments: string[],
+        usernames: string[],
+        hashtags: string[],
+    },
+    end: boolean,
+};

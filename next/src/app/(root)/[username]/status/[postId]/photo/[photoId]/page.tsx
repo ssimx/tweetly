@@ -1,6 +1,6 @@
 'server only';
+import { getPostInfo } from '@/actions/get-actions';
 import VisitedPostInfo from '@/components/posts/VisitedPostInfo';
-import { getPostInfo } from '@/data-acess-layer/user-dto';
 
 export default async function Photo({ params }: { params: Promise<{ postId: number, photoId: number }> }) {
     const { postId, photoId } = await params;

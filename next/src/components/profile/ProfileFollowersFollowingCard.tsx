@@ -6,37 +6,9 @@ import ProfileMenuBtn from './ProfileMenuBtn';
 import { useUserContext } from '@/context/UserContextProvider';
 import { useRouter } from 'next/navigation';
 import UserHoverCard from '../misc/UserHoverCard';
+import { UserInfoType } from '@/lib/types';
 
-interface FollowerFolloweeUser {
-    username: string,
-    profile: {
-        name: string,
-        bio: string,
-        profilePicture: string,
-    },
-    followers: {
-        followerId: number,
-    }[] | [],
-    following: {
-        followeeId: number,
-    }[] | [],
-    blockedBy: {
-        blockerId: number,
-    }[] | [],
-    blockedUsers: {
-        blockedId: number,
-    }[] | [],
-    notifying: {
-        receiverId: number,
-    }[] | [],
-    _count: {
-        followers: number,
-        following: number,
-    },
-    type?: 'follower' | 'followee',
-}
-
-export default function ProfileFollowersFollowingCard({ user }: { user: FollowerFolloweeUser }) {
+export default function ProfileFollowersFollowingCard({ user, type }: { user: UserInfoType, type?: 'FOLLOWER' | 'FOLLOWEE' }) {
     // state for updating followers count when logged in user follows / blocks the profile
     const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(user.followers.length === 1);
     const [followersCount, setFollowersCount] = useState(user['_count'].followers);
@@ -47,13 +19,12 @@ export default function ProfileFollowersFollowingCard({ user }: { user: Follower
     const [followingCount, setFollowingCount] = useState(user['_count'].following);
 
     const [isBlockedByTheUser, setIsBlockedByTheUser] = useState(user.blockedBy.length === 1);
-    const [, setNotificationsEnabled] = useState(user.notifying.length === 1);
 
     const { loggedInUser } = useUserContext();
     const router = useRouter();
 
     if (isBlockedByTheUser) return <></>;
-    if (user.type === 'followee' && !isFollowedByTheUser) return <></>;
+    if (type === 'FOLLOWEE' && !isFollowedByTheUser) return <></>;
 
     const handleCardClick = () => {
         router.push(`/${user.username}`);

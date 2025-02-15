@@ -1072,7 +1072,8 @@ export const getOldestReplyLeastEnegagement = async (
 
 export const getPostsBySearch = async (
     userId: number,
-    searchTerms: string[]
+    searchTerms: string[],
+    cursor?: number,
 ) => {
     return await prisma.post.findMany({
         where: {
@@ -1098,7 +1099,6 @@ export const getPostsBySearch = async (
                 ],
             })),
         },
-        distinct: 'id',
         orderBy: [
             {
                 replies: {
@@ -1119,7 +1119,9 @@ export const getPostsBySearch = async (
                 createdAt: 'asc',
             },
         ],
+        cursor: cursor ? { id: cursor } : undefined,
         take: 15,
+        skip: cursor ? 1 : 0,
         select: {
             id: true,
             content: true,
@@ -2001,24 +2003,29 @@ export const getReplies = async (
                     },
                 },
                 {
-                    replyToId: {
-                        not: null,
-                    },
-                    replyTo: {
-                        author: {
-                            username,
-                            blockedUsers: {
-                                none: {
-                                    blockedId: userId,
-                                },
-                            },
-                            blockedBy: {
-                                none: {
-                                    blockerId: userId,
-                                },
+                    AND: [
+                        {
+                            replyToId: {
+                                not: null,
                             },
                         },
-                    }
+                        {
+                            replyTo: {
+                                author: {
+                                    blockedUsers: {
+                                        none: {
+                                            blockedId: userId,
+                                        },
+                                    },
+                                    blockedBy: {
+                                        none: {
+                                            blockerId: userId,
+                                        },
+                                    },
+                                },
+                            }
+                        }
+                    ]
                 },
             ],
         },
@@ -2667,7 +2674,7 @@ export const getLikes = async (
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getOldestLike = async (userId: number, ) => {
+export const getOldestLike = async (userId: number,) => {
     return await prisma.postLike.findFirst({
         where: {
             userId: userId,

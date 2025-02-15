@@ -788,11 +788,6 @@ export const getUsersBySearch = async (userId: number, searchTerms: string[]) =>
                             },
                         },
                     },
-                    {
-                        id: {
-                            not: userId
-                        }
-                    }
                 ],
             })),
         },
@@ -840,14 +835,6 @@ export const getUsersBySearch = async (userId: number, searchTerms: string[]) =>
                 },
                 select: {
                     blockedId: true,
-                }
-            },
-            notifying: {
-                where: {
-                    receiverId: userId,
-                },
-                select: {
-                    receiverId: true,
                 }
             },
             _count: {

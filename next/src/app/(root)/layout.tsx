@@ -6,9 +6,9 @@ import UserContextProvider from "@/context/UserContextProvider";
 import FollowSuggestionContextProvider from "@/context/FollowSuggestionContextProvider";
 import TrendingContextProvider from "@/context/TrendingContextProvider";
 import { getLoggedInUser } from "@/data-acess-layer/user-dto";
-import { getFollowSuggestions } from "@/data-acess-layer/misc-dto";
 import BlockedUsersContextProvider from "@/context/BlockedUsersContextProvider";
 import PostInteractionContextProvider from "@/context/PostInteractionContextProvider";
+import { getFollowSuggestions } from '@/actions/get-actions';
 
 export default async function AuthorizedLayout({ children, modals }: Readonly<{ children: React.ReactNode, modals: React.ReactNode }>) {
     const userPromise = getLoggedInUser();

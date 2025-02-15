@@ -1,5 +1,5 @@
+import { getHomeGlobalFeed } from '@/actions/get-actions';
 import FeedContent from "@/components/feed/FeedContent";
-import { getHomeGlobalFeed } from "@/data-acess-layer/user-dto";
 
 export default async function Feed() {
     const globalFeedPosts = await getHomeGlobalFeed();
