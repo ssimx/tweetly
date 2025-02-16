@@ -15,6 +15,7 @@ export const getLoggedInUser = cache(async () => {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
             },
+            next: { tags: ['loggedInUser'], revalidate: 3600 }, // Cache for 1 hour
         });
 
         if (!response.ok) {

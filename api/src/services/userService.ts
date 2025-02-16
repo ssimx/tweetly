@@ -849,7 +849,7 @@ export const getUsersBySearch = async (userId: number, searchTerms: string[]) =>
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getUserBySearch = async (username: string) => {
+export const getUserByUsername = async (username: string) => {
     return await prisma.user.findUnique({
         where: {
             username

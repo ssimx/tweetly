@@ -1,22 +1,20 @@
 import { Request, Response } from 'express';
 import { searchQueryCleanup } from '../utils/searchQueryCleanup';
-import { getUserBySearch, getUsersBySearch } from '../services/userService';
+import { getUserByUsername, getUsersBySearch } from '../services/userService';
 import { UserProps } from '../lib/types';
 import { getLastPostBySearch, getMorePostsBySearch, getPostsBySearch } from '../services/postService';
 
 // ---------------------------------------------------------------------------------------------------------
 
-export async function searchUser(req: Request, res: Response) {
+export async function usernameAvailable(req: Request, res: Response) {
     const query = req.query.q as string;
     if (!query) return res.status(400).json({ error: "No search query provided" });
 
-    const user = req.user as UserProps;
-
     try {
         // fetch user
-        const fetchedUser = await getUserBySearch(query);
+        const fetchedUser = await getUserByUsername(query);
 
-        return res.status(200).json(fetchedUser ? true : false);
+        return res.status(200).json(fetchedUser ? false : true);
     } catch (error) {
         console.error('Error fetching user: ', error);
         return res.status(500).json({ error: 'Failed to process the request' });

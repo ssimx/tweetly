@@ -1,4 +1,5 @@
 'use client';
+import { fetchLoggedInUser } from '@/actions/get-actions';
 import { UserInfo } from '@/lib/types';
 import { createContext, useContext, useState } from 'react';
 
@@ -11,7 +12,7 @@ type UserContextType = {
     setFollowersCount: React.Dispatch<React.SetStateAction<number>>,
     newFollowing: boolean,
     setNewFollowing: React.Dispatch<React.SetStateAction<boolean>>
-    refetchUserData: () => void;
+    refetchUserData: () => Promise<void>;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -30,18 +31,9 @@ export default function UserContextProvider({ children, userData }: { children: 
 
     const refetchUserData = async () => {
         // Call the backend API again to get the updated user data
-        const response = await fetch('http://localhost:3000/api/users', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            cache: 'reload',
-        });
+        const freshInfo = await fetchLoggedInUser();
 
-        if (response.ok) {
-            const updatedUser = await response.json() as UserInfo;
-            setLoggedInUser(() => ({...updatedUser})); // Update the context with the latest data
-        }
+        setLoggedInUser(freshInfo); // Update the context with the latest data
     };
 
     return (

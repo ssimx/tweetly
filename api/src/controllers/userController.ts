@@ -1,6 +1,6 @@
 import { createNotificationForNewFollow, removeNotificationForFollow } from './../services/notificationService';
 import { Request, Response } from 'express';
-import { addBlock, addFollow, addPushNotifications, deactivateUser, getFollowers, getFollowing, getFollowSuggestions, getProfile, getUser, getUserByEmail, getUserBySearch, getUserPassword, isUserDeactivated, removeBlock, removeFollow, removePushNotfications, updateProfile, updateUserBirthday, updateUserEmail, updateUserPassword, updateUserUsername } from '../services/userService';
+import { addBlock, addFollow, addPushNotifications, deactivateUser, getFollowers, getFollowing, getFollowSuggestions, getProfile, getUser, getUserByEmail, getUserByUsername, getUserPassword, isUserDeactivated, removeBlock, removeFollow, removePushNotfications, updateProfile, updateUserBirthday, updateUserEmail, updateUserPassword, updateUserUsername } from '../services/userService';
 import { ProfileInfo, UserProps } from '../lib/types';
 import { deleteImageFromCloudinary } from './uploadController';
 import { getNotifications, getOldestNotification, updateNotificationsToRead } from '../services/notificationService';
@@ -311,7 +311,7 @@ export const changeUsername = async (req: Request, res: Response) => {
     try {
         if (user.username === newUsername) return res.status(401).json({ error: 'New username must be different than the current one.' });
 
-        const fetchedUser = await getUserBySearch(newUsername);
+        const fetchedUser = await getUserByUsername(newUsername);
         if (fetchedUser) return res.status(401).json({ error: 'That username has been taken. Please choose another.' });
 
         newUsername.toLowerCase();
@@ -325,7 +325,6 @@ export const changeUsername = async (req: Request, res: Response) => {
 
         // Generate and send JWT token
         const token: string = generateToken(tokenPayload);
-        
 
         return res.status(201).json({ token });
     } catch (error) {

@@ -1,9 +1,10 @@
 'use server';
 import { getCurrentUserToken, verifyCurrentUserSettingsToken } from "@/data-acess-layer/auth";
-import { newPostSchema, settingsPasswordSchema } from "@/lib/schemas";
-import { createSettingsSession } from '@/lib/session';
+import { newPostSchema, settingsChangeUsername, settingsPasswordSchema } from "@/lib/schemas";
+import { createSettingsSession, updateSessionToken } from '@/lib/session';
 import { NewPostType } from "@/lib/types";
 import { getErrorMessage } from "@/lib/utils";
+import { revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 
 export async function followUser(username: string) {
@@ -283,7 +284,7 @@ export async function verifyLoginPasswordForSettings(data: unknown) {
     }
 };
 
-export async function checkIfUsernameIsTaken(username: string) {
+export async function checkIfNewUsernameIsAvailable(username: string) {
     const sessionToken = await getCurrentUserToken();
     const settingsToken = await verifyCurrentUserSettingsToken();
 
@@ -314,3 +315,49 @@ export async function checkIfUsernameIsTaken(username: string) {
         return getErrorMessage(error);
     }
 };
+
+export async function changeUsername(data: unknown) {
+    const sessionToken = await getCurrentUserToken();
+    const settingsToken = await verifyCurrentUserSettingsToken();
+
+    try {
+        if (!settingsToken) {
+            throw new Error('Invalid settings token');
+        }
+
+        const validatedData = settingsChangeUsername.parse(data);
+
+        const response = await fetch(`http://localhost:3000/api/users/username`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${sessionToken}`,
+                'Settings-Token': `Bearer ${settingsToken}`,
+            },
+            body: JSON.stringify(validatedData),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(getErrorMessage(errorData));
+        }
+
+        const newSessionToken = await response.json().then((res) => {
+            if (typeof res === 'object' && res !== null && 'token' in res) {
+                return res.token as string
+            }
+            throw new Error('Invalid response format');
+        });
+
+
+
+        // don't need to update settings token because it's saving only user ID
+        await updateSessionToken(newSessionToken);
+        revalidateTag("loggedInUser");
+
+        return true;
+    } catch (error) {
+        console.log(error)
+        return getErrorMessage(error);
+    }
+}

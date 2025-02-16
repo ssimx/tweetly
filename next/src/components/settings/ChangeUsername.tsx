@@ -9,15 +9,17 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Loader2 } from 'lucide-react';
 import { useUserContext } from '@/context/UserContextProvider';
+import { changeUsername, checkIfNewUsernameIsAvailable } from '@/actions/actions';
 import { getErrorMessage } from '@/lib/utils';
-import { checkIfUsernameIsTaken } from '@/actions/actions';
 
 type FormData = z.infer<typeof settingsChangeUsername>;
 
 export default function ChangeUsername() {
     const { loggedInUser, refetchUserData } = useUserContext();
-    const [usernameChanged, setUsernameChanged] = useState(false);
+    const [newUsername, setNewUsername] = useState<string | null>(null);
     const [isValidating, setIsValidating] = useState(true);
+    const [newUsernameAvailable, setNewUsernameAvailable] = useState(false);
+    const [customError, setCustomError] = useState<string | null>(null);
 
     const {
         register,
@@ -32,37 +34,43 @@ export default function ChangeUsername() {
         defaultValues: { newUsername: loggedInUser.username }
     });
 
-    const newUsername = watch("newUsername"); // Watch for changes to the username field
+    const usernameText = watch("newUsername"); // Watch for changes to the username field
 
+    // check for new username availability
     useEffect(() => {
         setIsValidating(true);
         if (isSubmitting) return;
-        else if (!newUsername) return;
-        else if (newUsername === loggedInUser.username) {
+        else if (!usernameText) return;
+        else if (usernameText === loggedInUser.username) {
             clearErrors("newUsername");
             return;
-        };
+        } else if (newUsername === usernameText) {
+            return;
+        }
+
+        // reset states after text field has been changed
+        setNewUsername(null);
+        setCustomError(null);
 
         const timeout = setTimeout(async () => {
-            setUsernameChanged(false);
 
             try {
                 // Decode query before validation
-                const decodedSearch = decodeURIComponent(newUsername);
+                const decodedSearch = decodeURIComponent(usernameText);
                 searchUsernameSchema.parse({ q: decodedSearch });
 
                 // Encode query for API requests
                 const encodedSearch = encodeURIComponent(decodedSearch);
 
-                const checkForUsernameAvailability = await checkIfUsernameIsTaken(encodedSearch);
+                const usernameAvailable = await checkIfNewUsernameIsAvailable(encodedSearch);
 
-                const usernameTaken = await searchResponse.json();
-
-                if (usernameTaken) {
+                if (usernameAvailable !== true) {
+                    setNewUsernameAvailable(false);
                     setError("newUsername", { type: "manual", message: 'That username has been taken. Please choose another.' });
                 } else {
                     clearErrors("newUsername");
                     setIsValidating(false);
+                    setNewUsernameAvailable(true);
                 }
             } catch (error) {
                 console.error("Fetch error:", error);
@@ -73,42 +81,38 @@ export default function ChangeUsername() {
             clearTimeout(timeout);
             setIsValidating(false);
         });
-    }, [newUsername, setError, clearErrors, loggedInUser.username, isSubmitting]);
+    }, [usernameText, newUsername, setError, clearErrors, loggedInUser.username, isSubmitting]);
 
     const onSubmit = async (data: FormData) => {
         if (isSubmitting || isValidating) return;
 
         try {
-            const response = await fetch('/api/users/username', {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            })
+            const response = await changeUsername(data);
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                setUsernameChanged(false);
-                throw new Error(getErrorMessage(errorData));
+            if (response !== true) {
+                console.log('testttt')
+                throw new Error(response);
             }
 
-            setUsernameChanged(true);
-            refetchUserData();
+            setCustomError(null);
+            setNewUsername(data.newUsername);
+            setNewUsernameAvailable(false);
+            await refetchUserData();
         } catch (error) {
-            if (error instanceof Error) {
-                if (error.message === 'That username has been taken. Please choose another.') {
-                    setError("newUsername", { type: "manual", message: error.message });
-                } else if (error.message === "New username must be different than the current one.") {
-                    setError("newUsername", { type: "manual", message: error.message });
-                } else {
-                    console.error(error);
-                    reset();
-                }
+            const errorMessage = getErrorMessage(error);
+            console.error(errorMessage);
+
+            if (errorMessage === 'That username has been taken. Please choose another.') {
+                setError("newUsername", { type: "manual", message: errorMessage });
+            } else if (errorMessage === "New username must be different than the current one.") {
+                setError("newUsername", { type: "manual", message: errorMessage });
             } else {
-                console.error(error);
-                reset();
+                setCustomError(getErrorMessage(error));
             }
+
+            setNewUsername(null);
+            setNewUsernameAvailable(false);
+            reset();
         }
     };
 
@@ -127,9 +131,18 @@ export default function ChangeUsername() {
                         <p className="error-msg">{`${errors.newUsername.message}`}</p>
                     )}
 
-                    {usernameChanged && (
-                        <div className='text-green-400 text-14'>Username successfully changed</div>
+                    {customError !== null && (
+                        <div className='error-msg'>{customError}</div>
                     )}
+
+                    {newUsernameAvailable && (
+                        <p className="error-msg !text-green-400">{`Username is available`}</p>
+                    )}
+
+                    {newUsername !== null && (
+                        <div className='error-msg !text-green-400'>Username successfully changed</div>
+                    )}
+
 
                     {isSubmitting
                         ? <Button disabled>

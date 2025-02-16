@@ -3,6 +3,7 @@ import { getCurrentUserToken } from "@/data-acess-layer/auth";
 import { getLoggedInUser } from "@/data-acess-layer/user-dto";
 import { BasicPostType, BookmarkPostType, NotificationType, ProfilePostOrRepostType, ProfileReplyPostType, UserInfoType, VisitedPostType } from "@/lib/types";
 import { getErrorMessage } from "@/lib/utils";
+import { cache } from 'react';
 
 // GET actions for client/dynamic components
 
@@ -427,7 +428,7 @@ export async function getMoreSearchPosts(encodedSearch: string, cursor: number) 
 
 // MISC
 
-export async function getTrendingHashtags() {
+export const getTrendingHashtags = cache(async () => {
     const token = await getCurrentUserToken();
 
     try {
@@ -457,9 +458,9 @@ export async function getTrendingHashtags() {
         console.error(errorMessage);
         return [];
     }
-};
+});
 
-export async function getFollowSuggestions() {
+export const getFollowSuggestions = cache(async () => {
     const token = await getCurrentUserToken();
 
     try {
@@ -487,6 +488,12 @@ export async function getFollowSuggestions() {
         console.error('Error fetching trending hashtags:', errorMessage);
         return [];
     }
+});
+
+// LOGGED IN USER
+
+export async function fetchLoggedInUser() {
+    return await getLoggedInUser();
 };
 
 // ---------------------------------------------------------------------------------------------------------
