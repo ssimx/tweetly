@@ -1,38 +1,26 @@
 import { settingsPasswordSchema } from '@/lib/schemas';
-import { createSettingsSession, getSettingsToken, getToken, removeSession, removeSettingsToken, verifySession } from '@/lib/session';
+import { extractToken, getToken, removeSession, verifySession } from '@/lib/session';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 export async function POST(req: NextRequest) {
     if (req.method === 'POST') {
-        // Check for an existing session
-        const sessionToken = await getToken();
-        const settingsToken = await getSettingsToken();
+        const authHeader = req.headers.get('Authorization');
+        const token = await extractToken(authHeader) || await getToken();
+        if (token) {
+            const isValid = await verifySession(token);
 
-        if (sessionToken && settingsToken) {
-            // Check for session validity
-            const isSessionValid = await verifySession(sessionToken);
-            const isSettingsTokenValid = await verifySession(settingsToken);
-
-            if (!isSessionValid.isAuth) {
+            if (!isValid.isAuth) {
                 await removeSession();
-                removeSettingsToken();
                 return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 401 });
             }
-
-            if (!isSettingsTokenValid.isAuth) {
-                removeSettingsToken();
-                return NextResponse.json({ message: 'Invalid settings token' }, { status: 401 });
-            } else {
-                return NextResponse.json({ message: 'Settings token is already valid' }, { status: 401 });
-            }
         } else {
-            if (!sessionToken) return NextResponse.json({ message: 'Not logged in, please log in first' }, { status: 401 });
+            return NextResponse.json({ error: 'Not logged in. Please log in first' }, { status: 401 })
         }
 
         try {
             // Validate incoming data
-            const body: z.infer<typeof settingsPasswordSchema> = await req.json();
+            const body = await req.json() as z.infer<typeof settingsPasswordSchema>;
             const validatedData = settingsPasswordSchema.parse(body);
 
             // Send a POST request to the backend
@@ -41,14 +29,13 @@ export async function POST(req: NextRequest) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionToken}`,
+                    'Authorization': `Bearer ${token}`,
                 },
                 body: JSON.stringify(validatedData),
             });
 
             if (response.ok) {
                 const data = await response.json();
-                await createSettingsSession(data.token);
                 return NextResponse.json(data);
             } else {
                 const errorData = await response.json();

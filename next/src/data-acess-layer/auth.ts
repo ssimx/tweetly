@@ -12,5 +12,6 @@ export const getCurrentUserToken = cache(async (): Promise<string | undefined> =
 export const verifyCurrentUserSettingsToken = async () => {
     const token = await getSettingsToken();
     const verifyToken = await verifySettingsToken(token);
-    return verifyToken.isAuth;
+    if (!verifyToken.isAuth) return null;
+    return token;
 };

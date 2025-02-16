@@ -1,7 +1,6 @@
 'use client';
 import { settingsPasswordSchema } from "@/lib/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -9,11 +8,11 @@ import { Loader2 } from "lucide-react";
 import { z } from "zod";
 import SettingsHeaderInfo from "./SettingsHeaderInfo";
 import { getErrorMessage } from "@/lib/utils";
+import { verifyLoginPasswordForSettings } from '@/actions/actions';
 
 type FormData = z.infer<typeof settingsPasswordSchema>;
 
 export default function SettingsLogin() {
-    const router = useRouter();
 
     const {
         register,
@@ -28,34 +27,23 @@ export default function SettingsLogin() {
         if (isSubmitting) return;
 
         try {
-            const response = await fetch('/api/auth/settings', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            })
+            const response = await verifyLoginPasswordForSettings(data);
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(getErrorMessage(errorData));
-            }
-
-            router.refresh();
-        } catch (error) {
-            if (error instanceof Error) {
-                if (error.message === 'Incorrect password') {
-                    setError("password", { type: "manual", message: error.message });
+            if (response !== true) {
+                if (response === 'Incorrect password') {
+                    setError("password", { type: "manual", message: response });
                     resetField("password", { keepError: true });
-                }
-                else {
-                    console.error(error);
+                } else {
+                    console.error(response);
                     reset();
                 }
-            } else {
-                console.error(error);
-                reset();
+
+                return;
             }
+
+        } catch (error) {
+            console.error(getErrorMessage(error));
+            reset();
         }
     };
 

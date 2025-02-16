@@ -10,6 +10,7 @@ import { Button } from '../ui/button';
 import { Loader2 } from 'lucide-react';
 import { useUserContext } from '@/context/UserContextProvider';
 import { getErrorMessage } from '@/lib/utils';
+import { checkIfUsernameIsTaken } from '@/actions/actions';
 
 type FormData = z.infer<typeof settingsChangeUsername>;
 
@@ -53,12 +54,7 @@ export default function ChangeUsername() {
                 // Encode query for API requests
                 const encodedSearch = encodeURIComponent(decodedSearch);
 
-                const searchResponse = await fetch(`/api/search/user?q=${encodedSearch}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
+                const checkForUsernameAvailability = await checkIfUsernameIsTaken(encodedSearch);
 
                 const usernameTaken = await searchResponse.json();
 

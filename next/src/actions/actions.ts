@@ -1,6 +1,7 @@
 'use server';
-import { getCurrentUserToken } from "@/data-acess-layer/auth";
-import { newPostSchema } from "@/lib/schemas";
+import { getCurrentUserToken, verifyCurrentUserSettingsToken } from "@/data-acess-layer/auth";
+import { newPostSchema, settingsPasswordSchema } from "@/lib/schemas";
+import { createSettingsSession } from '@/lib/session';
 import { NewPostType } from "@/lib/types";
 import { getErrorMessage } from "@/lib/utils";
 import { redirect } from 'next/navigation';
@@ -236,4 +237,80 @@ export async function removeBookmarkPost(postId: number) {
 export async function hardRedirect(uri: string) {
     console.log('redirecting');
     return redirect(uri);
+};
+
+// ---------------------------------------------------------------------------------------------------------
+//                                             ACCOUNT ACTIONS
+// ---------------------------------------------------------------------------------------------------------
+
+export async function verifyLoginPasswordForSettings(data: unknown) {
+    const sessionToken = await getCurrentUserToken();
+
+    try {
+        const alreadyValidSettingsToken = await verifyCurrentUserSettingsToken();
+        if (alreadyValidSettingsToken) {
+            throw new Error('User already has valid token');
+        }
+
+        const validatedData = settingsPasswordSchema.parse(data);
+        const response = await fetch('http://localhost:3000/api/auth/settings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${sessionToken}`,
+            },
+            body: JSON.stringify(validatedData),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(getErrorMessage(errorData));
+        }
+
+        const settingsToken = await response.json().then((res) => {
+            if (typeof res === 'object' && res !== null && 'token' in res) {
+                return res.token as string;
+            }
+            throw new Error('Invalid response format');
+        });
+
+        await createSettingsSession(settingsToken);
+
+        return true;
+    } catch (error) {
+        console.log(error)
+        return getErrorMessage(error);
+    }
+};
+
+export async function checkIfUsernameIsTaken(username: string) {
+    const sessionToken = await getCurrentUserToken();
+    const settingsToken = await verifyCurrentUserSettingsToken();
+
+    try {
+        if (!settingsToken) {
+            throw new Error('Invalid settings token');
+        }
+
+        const response = await fetch(`http://localhost:3000/api/search/user?q=${username}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${sessionToken}`,
+                'Settings-Token': `Bearer ${settingsToken}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(getErrorMessage(errorData));
+        }
+
+        const available = await response.json() as boolean;
+
+        return available;
+    } catch (error) {
+        console.log(error)
+        return getErrorMessage(error);
+    }
 };
