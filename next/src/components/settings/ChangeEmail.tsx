@@ -9,12 +9,15 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Loader2 } from 'lucide-react';
 import { useUserContext } from '@/context/UserContextProvider';
+import { changeEmail } from '@/actions/actions';
+import { getErrorMessage } from '@/lib/utils';
 
 type FormData = z.infer<typeof settingsChangeEmail>;
 
 export default function ChangeEmail() {
     const { loggedInUser, refetchUserData } = useUserContext();
-    const [emailChanged, setEmailChanged] = useState(false);
+    const [newEmail, setNewEmail] = useState<string | null>(null);
+    const [customError, setCustomError] = useState<string | null>(null);
 
     const {
         register,
@@ -28,42 +31,35 @@ export default function ChangeEmail() {
         defaultValues: { newEmail: loggedInUser.email }
     });
 
-    const newEmail = watch("newEmail"); // Watch for changes to the email field
+    const emailText = watch("newEmail"); // Watch for changes to the email field
 
     const onSubmit = async (data: FormData) => {
         if (isSubmitting) return;
 
         try {
-            const response = await fetch('/api/users/email', {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            })
+            const response = await changeEmail(data);
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                setEmailChanged(false);
-                throw new Error(errorData.error);
+            if (response !== true) {
+                throw new Error(response);
             }
 
-            setEmailChanged(true);
-            refetchUserData();
+            setCustomError(null);
+            setNewEmail(emailText);
+            await refetchUserData();
         } catch (error) {
-            if (error instanceof Error) {
-                if (error.message === 'That email has been taken. Please choose another.') {
-                    setError("newEmail", { type: "manual", message: error.message });
-                } else if (error.message === "New email must be different than the current one.") {
-                    setError("newEmail", { type: "manual", message: error.message });
-                } else {
-                    console.error(error);
-                    reset();
-                }
+            const errorMessage = getErrorMessage(error);
+            console.error(errorMessage);
+
+            if (errorMessage === 'That email has been taken. Please choose another.') {
+                setError("newEmail", { type: "manual", message: errorMessage });
+            } else if (errorMessage === "New email must be different than the current one.") {
+                setError("newEmail", { type: "manual", message: errorMessage });
             } else {
-                console.error(error);
-                reset();
-            }
+                setCustomError(getErrorMessage(error));
+            } reset();
+
+            setNewEmail(null);
+            reset();
         }
     };
 
@@ -78,11 +74,16 @@ export default function ChangeEmail() {
                         {...register("newEmail")}
                         type="text" placeholder="Email"
                     />
+
                     {errors.newEmail && (
                         <p className="error-msg">{`${errors.newEmail.message}`}</p>
                     )}
 
-                    {emailChanged && (
+                    {customError !== null && (
+                        <div className='error-msg'>{customError}</div>
+                    )}
+
+                    {newEmail && (
                         <div className='text-green-400 text-14'>Email successfully changed</div>
                     )}
 
@@ -91,7 +92,9 @@ export default function ChangeEmail() {
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Saving
                         </Button>
-                        : <Button disabled={newEmail.toLowerCase() === loggedInUser.email} className='bg-primary font-bold'>Save</Button>
+                        : <Button
+                            disabled={(isSubmitting || emailText.toLowerCase() === loggedInUser.email.toLowerCase()) && true}
+                            className='bg-primary font-bold'>Save</Button>
                     }
                 </form>
             </div>

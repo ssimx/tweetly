@@ -46,7 +46,6 @@ export async function PATCH(req: NextRequest) {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log(data);
                 return NextResponse.json(data);
             } else {
                 const errorData = await response.json();
