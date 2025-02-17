@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "module": "ESNext", // Use ES modules
+    "target": "ESNext", // Target the latest JavaScript features
+    "outDir": "./dist", // Output directory for compiled files
+    "rootDir": "./src", // Root directory for source files
+    "esModuleInterop": true, // Enable ES module interop
+    "moduleResolution": "node", // Use Node.js module resolution
+    "skipLibCheck": true, // Skip library checks
+    "resolveJsonModule": true, // Allow importing JSON files
+    "strict": true, // Enable strict mode
+    "declaration": true, // Generate .d.ts files
+    "declarationDir": "./dist/types" // Output directory for .d.ts files
+  },
+  "include": ["src/**/*.ts"], // Include all TypeScript files in the src folder
+  "exclude": ["node_modules", "dist"] // Exclude node_modules and dist folders
+}
