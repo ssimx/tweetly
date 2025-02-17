@@ -5,7 +5,7 @@ import { ProfileInfo, UserProps } from '../lib/types';
 import { deleteImageFromCloudinary } from './uploadController';
 import { getNotifications, getOldestNotification, updateNotificationsToRead } from '../services/notificationService';
 import { generateToken } from '../utils/jwt';
-const bcrypt = require('bcrypt');
+import bcrypt from 'bcrypt';
 
 // ---------------------------------------------------------------------------------------------------------
 

@@ -1,6 +1,7 @@
 import { searchPostsWithCursor, usernameAvailable, searchUsers, searchUsersAndPosts } from "../controllers/searchController";
 
-const express = require('express');
+import express from 'express';
+
 const router = express.Router();
 
 router.get('/', searchUsersAndPosts);

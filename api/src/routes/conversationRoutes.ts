@@ -1,6 +1,7 @@
 import { createConversationMessage, createEmptyConversation, getSpecificConversation, getUserConversations } from "../controllers/conversationController";
 
-const express = require('express');
+import express from 'express';
+
 const router = express.Router();
 
 router.get('/', getUserConversations);

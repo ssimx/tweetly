@@ -1,10 +1,16 @@
 {
-    "compilerOptions": {
-        /* Visit https://aka.ms/tsconfig to read more about this file */
-        "sourceMap": true,
-        "outDir": "./dist",
-        "strict": true,
-        "lib": ["esnext"],
-        "esModuleInterop": true
-    }
+  "compilerOptions": {
+    "module": "ESNext",  // Use ES modules
+    "target": "ESNext",  // Ensure you're targeting the latest features
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "outDir": "./dist",  // Output directory for compiled JS
+    "strict": true,  // Enable strict mode for TypeScript
+    "lib": ["esnext"]  // Include latest JavaScript features
+  },
+  "include": [
+    "src/**/*.ts"  // Include all TypeScript files in the src folder
+  ]
 }

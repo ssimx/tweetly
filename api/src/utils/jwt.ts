@@ -1,6 +1,6 @@
 import { UserTokenProps } from "../lib/types";
 
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
 const SECRET_KEY = process.env.JWT_SECRET || 'tweetly';
 

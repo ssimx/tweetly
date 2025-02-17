@@ -1,4 +1,4 @@
-import { 
+import {
     addBookmark,
     addLike,
     addRepost,
@@ -6,7 +6,7 @@ import {
     getUserReplies,
     getUserLikes,
     postReplies,
-    getUserPosts, 
+    getUserPosts,
     getUserReposts,
     global30DayPosts,
     newPost,
@@ -18,9 +18,10 @@ import {
     trendingHashtags,
     exploreRandomPosts,
     getUserMedia,
- } from "../controllers/postController";
+} from "../controllers/postController";
 
-const express = require('express');
+import express from 'express';
+
 
 const router = express.Router();
 

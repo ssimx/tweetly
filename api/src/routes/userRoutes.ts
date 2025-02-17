@@ -1,6 +1,7 @@
 import { blockUser, changeBirthday, changeEmail, changePassword, changeUsername, deactivateAccount, disablePushNotifications, enablePushNotifications, followUser, getProfileFollowers, getProfileFollowing, getProfileInfo, getUserFollowSuggestions, getUserInfo, getUserNotifications, unblockUser, unfollowUser, updateProfileInfo } from "../controllers/userController";
 
-const express = require('express');
+import express from 'express';
+
 const router = express.Router();
 
 router.get('/', getUserInfo);

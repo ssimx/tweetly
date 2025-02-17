@@ -1,60 +1,77 @@
-import { User } from './../../../next/src/lib/types';
-import { Request, Response } from 'express';
+import { signUpDataSchema, SignUpDataType } from 'tweetly-shared';
+import { NextFunction, Request, Response } from 'express';
 import { checkUserExsistence, createUserAndProfile, getUserLogin } from "../services/authService";
 import { generateSettingsToken, generateToken } from '../utils/jwt';
-import { PassportError, UserProps } from '../lib/types';
-import passport from 'passport';
-const bcrypt = require('bcrypt');
+import { UserProps } from '../lib/types';
+import { AppError } from '../middleware/errorHandler';
+import bcrypt from 'bcrypt';
 
 // ---------------------------------------------------------------------------------------------------------
 
-interface SignUpDataProps {
-    username: string,
-    dateOfBirth: string,
-    email: string,
-    password: string,
-};
-
-export const registerUser = async (req: Request, res: Response) => {
-    const { username, email, dateOfBirth, password } = req.body as SignUpDataProps;
-
+export const registerUser = async (req: Request, res: Response, next: NextFunction) => {
+    let signUpData = req.body as SignUpDataType;
+    
     try {
+        const validatedData = signUpDataSchema.parse(signUpData);
+    
+        let { year, day, month, username, email, password, confirmPassword } = validatedData;
+    
+        // convert to lower case
+        username = username.toLowerCase();
+        email = email.toLowerCase();
+    
+        // convert year, month, day to Date object
+        const dateOfBirth = new Date(`${year}-${('0' + month).slice(-2)}-${('0' + day).slice(-2)}`);
+
         // check if user already exists
-        const existingUser = await checkUserExsistence(username, email);
+        let existingUser;
+        try {
+            existingUser = await checkUserExsistence(username, email);
+        } catch (error) {
+            return next(new AppError('Database error while checking user existence', 500, 'DB_ERROR'));
+        }
+
         if (existingUser) {
             if (existingUser.username === username && existingUser.email === email) {
-                return res.status(400).json({ error: 'username and email' });
+                throw new AppError('Username and email already taken', 400, 'USERNAME_EMAIL_TAKEN');
             }
             if (existingUser.username === username) {
-                return res.status(400).json({ error: 'username' });
+                throw new AppError('Username already taken', 400, 'USERNAME_TAKEN');
             }
             if (existingUser.email === email) {
-                return res.status(400).json({ error: 'email' });
+                throw new AppError('Email already taken', 400, 'EMAIL_TAKEN');
             }
         }
 
         // Hash the password before saving it
         const hashedPassword: string = await bcrypt.hash(password, 10);
 
-        // Convert date string to date
-        const birthDate = new Date(Date.UTC(Number(new Date(dateOfBirth).getFullYear()), Number(new Date(dateOfBirth).getMonth() )- 1, Number(new Date(dateOfBirth).getDate())));
-
         // Try to save the new user
-        username.toLowerCase();
-        email.toLowerCase();
-        const response = await createUserAndProfile({ username, email, birthDate, hashedPassword });
+        const response = await createUserAndProfile(username, email, dateOfBirth, hashedPassword);
 
         // Check if there was a unique constraint violation
         if ('error' in response) {
             if (response.fields?.includes('username') && response.fields?.includes('email')) {
-                return res.status(400).json({ error: 'username and email' });
+                throw new AppError('Username and email already taken', 400, 'USERNAME_EMAIL_TAKEN');
             }
             if (response.fields?.includes('username')) {
-                return res.status(400).json({ error: 'username' });
+                throw new AppError('Username already taken', 400, 'USERNAME_TAKEN');
             }
             if (response.fields?.includes('email')) {
-                return res.status(400).json({ error: 'email' });
+                throw new AppError('Email already taken', 400, 'EMAIL_TAKEN');
             }
+
+            // Fallback error if `fields` exist but don't match expected values
+            if (response.fields?.length) {
+                throw new AppError(
+                    `Unexpected unique constraint violation on: ${response.fields.join(', ')}`,
+                    400,
+                    'UNEXPECTED_FIELD_ERROR'
+                );
+            }
+
+            // If no specific fields were provided, throw a generic database error
+            throw new AppError('Database error while creating a new user', 500, 'DB_ERROR');
         } else {
             const tokenPayload = {
                 id: response.user.id,
@@ -65,11 +82,13 @@ export const registerUser = async (req: Request, res: Response) => {
             }
 
             const token: string = generateToken(tokenPayload);
-            return res.status(200).json({ token });
+            return res.status(200).json({
+                success: true,
+                data: { token },
+            });
         }
     } catch (error) {
-        console.error('Error saving form data: ', error);
-        res.status(500).json({ error: 'Failed to process the data' });
+        next(error);
     }
 };
 

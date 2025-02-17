@@ -1,7 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const { faker } = require('@faker-js/faker');
 const prisma = new PrismaClient();
-const bcrypt = require('bcrypt');
+import bcrypt from 'bcrypt';
 const { generateUsername } = require("unique-username-generator");
 
 const UserRole = {

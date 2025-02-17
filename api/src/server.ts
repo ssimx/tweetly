@@ -8,9 +8,10 @@ import conversationRouter from './routes/conversationRoutes';
 import { configurePassport } from './middleware/passport';
 import { socketConnection } from './utils/sockets';
 import { authenticateJWT } from './middleware/authenticateJWT';
-const passport = require('passport');
-const http = require("http");
-const cors = require('cors');
+import { errorHandler } from './middleware/errorHandler';
+import passport from 'passport';
+import cors from 'cors';
+
 dotenv.config();
 const app: Express = express();
 const port = process.env.PORT || 3001;
@@ -33,6 +34,9 @@ app.use('/api/v1/posts', postRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/conversations', conversationRouter);
 app.use('/api/v1/search', searchRouter);
+
+// Error-handling
+app.use(errorHandler);
 
 const server = app.listen(port, () => {
     console.log(`[server]: Server is running at http://localhost:${port}`);
