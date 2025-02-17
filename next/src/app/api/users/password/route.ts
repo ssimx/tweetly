@@ -1,30 +1,29 @@
 import { settingsChangePassword } from "@/lib/schemas";
-import { getSettingsToken, getToken, removeSession, removeSettingsToken, verifySession } from "@/lib/session";
+import { extractToken, getSettingsToken, getToken, removeSession, removeSettingsToken, verifySession, verifySettingsToken } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 export async function PATCH(req: NextRequest) {
     if (req.method === 'PATCH') {
-        // Check for an existing session
-        const sessionToken = await getToken();
-        const settingsToken = await getSettingsToken();
+        const authHeader = req.headers.get('Authorization');
+        const settingsHeader = req.headers.get('Settings-Token');
+        const sessionToken = await extractToken(authHeader) || await getToken();
+        const settingsToken = await extractToken(settingsHeader) || await getSettingsToken();
 
         if (sessionToken && settingsToken) {
             // Check for session validity
             const isSessionValid = await verifySession(sessionToken);
-            const isSettingsTokenValid = await verifySession(settingsToken);
+            const isSettingsTokenValid = await verifySettingsToken(settingsToken);
 
             if (!isSessionValid.isAuth) {
                 await removeSession();
-                removeSettingsToken();
+                await removeSettingsToken();
                 return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 401 });
             }
 
             if (!isSettingsTokenValid.isAuth) {
-                removeSettingsToken();
+                await removeSettingsToken();
                 return NextResponse.json({ message: 'Invalid settings token' }, { status: 401 });
-            } else {
-                return NextResponse.json({ message: 'Settings token is already valid' }, { status: 401 });
             }
         } else {
             if (!sessionToken) return NextResponse.json({ message: 'Not logged in, please log in first' }, { status: 401 });
@@ -32,7 +31,7 @@ export async function PATCH(req: NextRequest) {
 
         try {
             // Validate incoming data
-            const body: z.infer<typeof settingsChangePassword> = await req.json();
+            const body = await req.json() as z.infer<typeof settingsChangePassword>;
             const validatedData = settingsChangePassword.parse(body);
 
             const apiUrl = process.env.EXPRESS_API_URL;

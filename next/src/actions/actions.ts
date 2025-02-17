@@ -1,7 +1,7 @@
 'use server';
 import { getCurrentUserToken, verifyCurrentUserSettingsToken } from "@/data-acess-layer/auth";
-import { newPostSchema, settingsChangeBirthday, settingsChangeEmail, settingsChangeUsername, settingsPasswordSchema } from "@/lib/schemas";
-import { createSettingsSession, updateSessionToken } from '@/lib/session';
+import { newPostSchema, settingsChangeBirthday, settingsChangeEmail, settingsChangePassword, settingsChangeUsername, settingsPasswordSchema } from "@/lib/schemas";
+import { createSettingsSession, removeSettingsToken, updateSessionToken } from '@/lib/session';
 import { NewPostType } from "@/lib/types";
 import { getErrorMessage } from "@/lib/utils";
 import { revalidateTag } from 'next/cache';
@@ -435,6 +435,40 @@ export async function changeBirthday(data: unknown) {
         }
 
         revalidateTag("loggedInUser");
+
+        return true;
+    } catch (error) {
+        console.log(error)
+        return getErrorMessage(error);
+    }
+}
+
+export async function changePassword(data: unknown) {
+    const sessionToken = await getCurrentUserToken();
+    const settingsToken = await verifyCurrentUserSettingsToken();
+
+    try {
+        if (!settingsToken) {
+            await removeSettingsToken();
+            throw new Error('Invalid settings token');
+        }
+
+        const validatedData = settingsChangePassword.parse(data);
+
+        const response = await fetch(`http://localhost:3000/api/users/password`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${sessionToken}`,
+                'Settings-Token': `Bearer ${settingsToken}`,
+            },
+            body: JSON.stringify(validatedData),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(getErrorMessage(errorData));
+        }
 
         return true;
     } catch (error) {

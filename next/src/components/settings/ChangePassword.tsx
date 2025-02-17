@@ -9,11 +9,13 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Loader2 } from 'lucide-react';
 import { getErrorMessage } from '@/lib/utils';
+import { changePassword } from '@/actions/actions';
 
 type FormData = z.infer<typeof settingsChangePassword>;
 
 export default function ChangePassword() {
     const [passwordChanged, setPasswordChanged] = useState(false);
+    const [customError, setCustomError] = useState<string | null>(null);
 
     const {
         register,
@@ -28,37 +30,28 @@ export default function ChangePassword() {
         if (isSubmitting) return;
 
         try {
-            const response = await fetch('/api/users/password', {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            })
+            const response = await changePassword(data);
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                setPasswordChanged(false);
-                throw new Error(getErrorMessage(errorData));
+            if (response !== true) {
+                throw new Error(response);
             }
-
-            reset();
+            
+            setCustomError(null);
             setPasswordChanged(true);
+            reset();
         } catch (error) {
-            if (error instanceof Error) {
-                if (error.message === 'Incorrect current password') {
-                    setError("currentPassword", { type: "manual", message: error.message });
-                    resetField("currentPassword", { keepError: true });
-                } else {
-                    console.error(error);
-                    reset();
-                }
+            const errorMessage = getErrorMessage(error);
+            
+            if (errorMessage === 'Incorrect current password') {
+                setError("currentPassword", { type: "manual", message: errorMessage });
+                resetField("currentPassword", { keepError: true });
             } else {
-                console.error(error);
-                reset();
+                setCustomError(errorMessage);
             }
+
+            console.error(error);
         }
-    };
+    }
 
     return (
         <div className='flex flex-col'>
@@ -71,20 +64,26 @@ export default function ChangePassword() {
                     {errors.currentPassword && (
                         <p className="error-msg">{`${errors.currentPassword.message}`}</p>
                     )}
+
                     <div className='feed-hr-line'></div>
                     <Input {...register("newPassword")} type="password" placeholder="New password" />
                     {errors.newPassword && (
                         <p className="error-msg">{`${errors.newPassword.message}`}</p>
                     )}
+
                     <Input {...register("newConfirmPassword")} type="password" placeholder="Confirm new password" />
                     {errors.newConfirmPassword && (
                         <p className="error-msg">{`${errors.newConfirmPassword.message}`}</p>
                     )}
+
+                    {customError && (
+                        <div className='error-msg'>{customError}</div>
+                    )}
+
                     {passwordChanged && (
                         <div className='text-green-400 text-14'>Password successfully changed</div>
-                    )
+                    )}
 
-                    }
                     {isSubmitting
                         ? <Button className='bg-primary text-white-1 font-bold' disabled>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

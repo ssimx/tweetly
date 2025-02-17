@@ -55,7 +55,7 @@ export default function ChangeEmail() {
             } else if (errorMessage === "New email must be different than the current one.") {
                 setError("newEmail", { type: "manual", message: errorMessage });
             } else {
-                setCustomError(getErrorMessage(error));
+                setCustomError(errorMessage);
             }
 
             setNewEmail(null);

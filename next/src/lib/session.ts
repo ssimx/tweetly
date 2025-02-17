@@ -100,11 +100,27 @@ export async function createSettingsSession(token: string) {
 export async function getSettingsToken() {
     const cookieStore = await cookies();
     return cookieStore.get('settings-token')?.value;
-}
+};
 
+export async function decryptSettingsToken(token: string | undefined) {
+    if (!token) {
+        console.error('No settings token found');
+        return;
+    }
+
+    try {
+        const { payload } = await jwtVerify(token, encodedKey, {
+            algorithms: ['HS256'],
+        })
+        return payload;
+    } catch (error) {
+        console.log('Failed to verify settings token');
+        return;
+    }
+};
 
 export async function verifySettingsToken(token: string | undefined) {
-    const session = await decryptSession(token);
+    const session = await decryptSettingsToken(token);
     if (!session?.id) {
         return { isAuth: false };
     }
