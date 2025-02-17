@@ -9,13 +9,15 @@ import { Button } from '../ui/button';
 import { Loader2 } from 'lucide-react';
 import { useUserContext } from '@/context/UserContextProvider';
 import { DateOfBirthSelect } from '../forms/DateOfBirthSelect';
+import { changeBirthday } from '@/actions/actions';
+import { getErrorMessage } from '@/lib/utils';
 
 type FormData = z.infer<typeof settingsChangeBirthday>;
 
 export default function ChangeBirthday() {
     const { loggedInUser, refetchUserData } = useUserContext();
     const [birthdayChanged, setBirthdayChanged] = useState(false);
-    const [sameBirthdayError, setSameBirthdayError] = useState(false);
+    const [customError, setCustomError] = useState<string | null>(null);
 
     const {
         register,
@@ -43,34 +45,20 @@ export default function ChangeBirthday() {
         if (isSubmitting) return;
 
         try {
-            const response = await fetch('/api/users/birthday', {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            })
+            const response = await changeBirthday(data);
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                setBirthdayChanged(false);
-                throw new Error(errorData.error);
+            if (response !== true) {
+                throw new Error(response);
             }
 
+            setCustomError(null);
             setBirthdayChanged(true);
-            setSameBirthdayError(false);
-            refetchUserData();
+            await refetchUserData();
         } catch (error) {
-            if (error instanceof Error) {
-                if (error.message === 'User must be older than 13') {
-                    setError('year', { type: 'manual', message: error.message });
-                } else if (error.message === "New birth date must be different than the current one") {
-                    setSameBirthdayError(true);
-                } else {
-                    console.error(error);
-                    reset();
-                }
-            }
+            const errorMessage = getErrorMessage(error);
+            console.error(errorMessage);
+            setCustomError(errorMessage);
+            reset();
         }
     };
 
@@ -83,8 +71,8 @@ export default function ChangeBirthday() {
                 <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
                     <DateOfBirthSelect settingsRegister={register} settingsGetValues={getValues} settingsSetValues={setValue} errors={errors} />
 
-                    {sameBirthdayError && (
-                        <p className="error-msg-date">New birth date must be different than the current one.</p>
+                    {customError && (
+                        <p className="error-msg-date">{customError}</p>
                     )}
 
                     {birthdayChanged && (

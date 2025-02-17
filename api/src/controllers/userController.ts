@@ -357,7 +357,6 @@ export const changeEmail = async (req: Request, res: Response) => {
         // Generate and send JWT token
         const token: string = generateToken(tokenPayload);
 
-
         return res.status(201).json({ token });
     } catch (error) {
         console.error('Error updating password: ', error);

@@ -56,7 +56,7 @@ export default function ChangeEmail() {
                 setError("newEmail", { type: "manual", message: errorMessage });
             } else {
                 setCustomError(getErrorMessage(error));
-            } reset();
+            }
 
             setNewEmail(null);
             reset();

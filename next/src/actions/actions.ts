@@ -1,6 +1,6 @@
 'use server';
 import { getCurrentUserToken, verifyCurrentUserSettingsToken } from "@/data-acess-layer/auth";
-import { newPostSchema, settingsChangeEmail, settingsChangeUsername, settingsPasswordSchema } from "@/lib/schemas";
+import { newPostSchema, settingsChangeBirthday, settingsChangeEmail, settingsChangeUsername, settingsPasswordSchema } from "@/lib/schemas";
 import { createSettingsSession, updateSessionToken } from '@/lib/session';
 import { NewPostType } from "@/lib/types";
 import { getErrorMessage } from "@/lib/utils";
@@ -399,6 +399,41 @@ export async function changeEmail(data: unknown) {
 
         // don't need to update settings token because it's saving only user ID
         await updateSessionToken(newSessionToken);
+        revalidateTag("loggedInUser");
+
+        return true;
+    } catch (error) {
+        console.log(error)
+        return getErrorMessage(error);
+    }
+}
+
+export async function changeBirthday(data: unknown) {
+    const sessionToken = await getCurrentUserToken();
+    const settingsToken = await verifyCurrentUserSettingsToken();
+
+    try {
+        if (!settingsToken) {
+            throw new Error('Invalid settings token');
+        }
+
+        const validatedData = settingsChangeBirthday.parse(data);
+
+        const response = await fetch(`http://localhost:3000/api/users/birthday`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${sessionToken}`,
+                'Settings-Token': `Bearer ${settingsToken}`,
+            },
+            body: JSON.stringify(validatedData),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(getErrorMessage(errorData));
+        }
+
         revalidateTag("loggedInUser");
 
         return true;
