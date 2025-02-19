@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react'
 import SettingsHeaderInfo from './SettingsHeaderInfo'
-import { settingsChangePassword } from '@/lib/schemas';
+import { userUpdatePasswordSchema } from '@/lib/schemas';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -11,7 +11,7 @@ import { Loader2 } from 'lucide-react';
 import { getErrorMessage } from '@/lib/utils';
 import { changePassword } from '@/actions/actions';
 
-type FormData = z.infer<typeof settingsChangePassword>;
+type FormData = z.infer<typeof userUpdatePasswordSchema>;
 
 export default function ChangePassword() {
     const [passwordChanged, setPasswordChanged] = useState(false);
@@ -24,7 +24,7 @@ export default function ChangePassword() {
         formState: { errors, isSubmitting },
         setError,
         resetField,
-    } = useForm<FormData>({ resolver: zodResolver(settingsChangePassword) });
+    } = useForm<FormData>({ resolver: zodResolver(userUpdatePasswordSchema) });
 
     const onSubmit = async (data: FormData) => {
         if (isSubmitting) return;
@@ -35,13 +35,13 @@ export default function ChangePassword() {
             if (response !== true) {
                 throw new Error(response);
             }
-            
+
             setCustomError(null);
             setPasswordChanged(true);
             reset();
         } catch (error) {
             const errorMessage = getErrorMessage(error);
-            
+
             if (errorMessage === 'Incorrect current password') {
                 setError("currentPassword", { type: "manual", message: errorMessage });
                 resetField("currentPassword", { keepError: true });

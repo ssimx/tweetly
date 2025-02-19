@@ -3,10 +3,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Search as SearchIcon } from 'lucide-react';
 import Link from 'next/link';
 import { z } from "zod";
-import { searchSchema } from '@/lib/schemas';
 import { useRouter } from 'next/navigation';
 import { useTrendingContext } from '@/context/TrendingContextProvider';
 import SearchUserCard from '../root-template/right-sidebar/SearchUserCard';
+import { searchSchema } from 'tweetly-shared';
 
 export interface SearchResponseType {
     users: {

@@ -1,35 +1,27 @@
-import { signUpSchema } from '@/lib/schemas';
-import { createSession, getToken, removeSession, verifySession } from '@/lib/session';
+import { extractToken, getToken, removeSession, verifySession } from '@/lib/session';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { ApiResponse, AppError, ErrorResponse, RegisterUserDataType, SuccessResponse, SuccessfulRegisterResponseType, registerUserDataSchema } from 'tweetly-shared';
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<SuccessfulRegisterResponseType>>> {
     if (req.method === 'POST') {
-        const token = await getToken();
-        if (token) {
-            const isValid = await verifySession(token);
-
-            if (isValid.isAuth) {
-                return NextResponse.json({ message: 'Already logged in!' }, { status: 400 });
-            } else {
-                // Remove invalid session if the session is not valid
-                await removeSession();
-            }
-        }
-
         try {
-            const body: z.infer<typeof signUpSchema> = await req.json();
-            const validatedData = signUpSchema.parse(body);
+            const authHeader = req.headers.get('Authorization');
+            const token = await extractToken(authHeader) || await getToken();
 
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { confirmPassword, year, day, month, ...data } = validatedData;
+            if (token) {
+                const isValid = await verifySession(token);
+    
+                if (isValid.isAuth) {
+                    throw new AppError('Already logged in', 401, 'USER_LOGGED_IN');
+                } else {
+                    // Remove invalid session if the session is not valid
+                    await removeSession();
+                }
+            }
 
-            const dateOfBirth = `${year}-${('0' + month).slice(-2)}-${('0' + day).slice(-2)}`;
-
-            const userData = {
-                ...data,
-                dateOfBirth
-            };
+            const body = await req.json() as RegisterUserDataType;
+            const validatedData = registerUserDataSchema.parse(body);
 
             const apiUrl = process.env.EXPRESS_API_URL;
             const response = await fetch(`${apiUrl}/auth/register`, {
@@ -37,26 +29,78 @@ export async function POST(req: NextRequest) {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(userData),
+                body: JSON.stringify(validatedData),
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                await createSession(data.token);
-                return NextResponse.json(data);
-            } else {
-                const errorData = await response.json();
-                return NextResponse.json({ error: errorData.error }, { status: response.status });
+            if (!response.ok) {
+                const errorData = await response.json() as ErrorResponse;
+                throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
             }
-        } catch (error) {
+
+            const { data } = await response.json() as SuccessResponse<SuccessfulRegisterResponseType>;
+
+            const successResponse: SuccessResponse<SuccessfulRegisterResponseType> = {
+                success: true,
+                data: {
+                    token: data.token
+                },
+            };
+
+            return NextResponse.json(
+                successResponse,
+                { status: response.status }
+            );
+        } catch (error: unknown) {
+
             // Handle validation errors
             if (error instanceof z.ZodError) {
-                return NextResponse.json({ error: error.errors }, { status: 400 });
+                return NextResponse.json(
+                    {
+                        success: false,
+                        error: {
+                            message: error.message || 'Internal Server Error',
+                            code: 'VALIDATION_ERROR',
+                            details: error.issues,
+                        },
+                    },
+                    { status: 400 }
+                ) as NextResponse<ErrorResponse>;
+            } else if (error instanceof AppError) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        error: {
+                            message: error.message || 'Internal Server Error',
+                            code: error.code || 'INTERNAL_ERROR',
+                            details: error.details,
+                        },
+                    },
+                    { status: error.statusCode || 500 }
+                ) as NextResponse<ErrorResponse>;
             }
+
             // Handle other errors
-            return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: {
+                        message: 'Internal Server Error',
+                        code: 'INTERNAL_ERROR',
+                    },
+                },
+                { status: 500 }
+            ) as NextResponse<ErrorResponse>;
         }
     } else {
-        return NextResponse.json({ error: `Method ${req.method} Not Allowed` }, { status: 405 });
+        return NextResponse.json(
+            {
+                success: false,
+                error: {
+                    message: `HTTP Method ${req.method} Not Allowed`,
+                    code: 'INVALID_HTTP_METHOD',
+                },
+            },
+            { status: 405 }
+        ) as NextResponse<ErrorResponse>;
     }
 }

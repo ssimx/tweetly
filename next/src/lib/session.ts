@@ -52,7 +52,7 @@ export async function hasSession() {
 export async function getToken() {
     const cookieStore = await cookies();
     return cookieStore.get('access-token')?.value;
-}
+};
 
 export async function removeSession() {
     const cookieStore = await cookies();
@@ -70,7 +70,7 @@ export async function updateSessionToken(newToken: string) {
         sameSite: 'lax',
         path: '/',
     })
-}
+};
 
 export async function extractToken(authHeader: string | null) {
     if (authHeader) {
@@ -82,6 +82,47 @@ export async function extractToken(authHeader: string | null) {
     return;
 };
 
+// temporary user token
+export async function createTemporarySession(token: string) {
+    const jwtPayload = JSON.parse(atob(token.split('.')[1])) as JwtPayload;
+    const expiresAt = new Date(jwtPayload.exp * 1000);
+    const cookieStore = await cookies();
+    cookieStore.set('temporary-access-token', token, {
+        httpOnly: true,
+        secure: true,
+        expires: expiresAt,
+        sameSite: 'lax',
+        path: '/',
+    });
+};
+
+export async function hasTemporarySession() {
+    const cookieStore = await cookies();
+    return cookieStore.has('temporary-access-token');
+};
+
+export async function getTemporaryToken() {
+    const cookieStore = await cookies();
+    return cookieStore.get('temporary-access-token')?.value;
+};
+
+export async function removeTemporarySession() {
+    const cookieStore = await cookies();
+    cookieStore.delete('temporary-access-token');
+};
+
+export async function updateTemporarySessionToken(newToken: string) {
+    const jwtPayload = JSON.parse(atob(newToken.split('.')[1])) as JwtPayload;
+    const expiresAt = new Date(jwtPayload.exp * 1000);
+    const cookieStore = await cookies();
+    cookieStore.set('temporary-access-token', newToken, {
+        httpOnly: true,
+        secure: true,
+        expires: expiresAt,
+        sameSite: 'lax',
+        path: '/',
+    })
+};
 
 // settings token
 export async function createSettingsSession(token: string) {

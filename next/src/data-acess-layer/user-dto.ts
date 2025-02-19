@@ -1,13 +1,78 @@
 import 'server-only';
-import { getCurrentUserToken } from './auth';
+import { getCurrentTemporaryUserToken, getCurrentUserToken } from './auth';
 import { getErrorMessage } from '@/lib/utils';
 import { redirect } from 'next/navigation';
 import { BookmarkPostType, ConversationsListType, ConversationType, NotificationType, ProfileInfo, UserInfo } from '@/lib/types';
 import { cache } from 'react';
+import { ApiResponse, AppError, ErrorResponse, SuccessResponse, TemporaryUserDataType } from 'tweetly-shared';
+import { getToken, verifySession } from '@/lib/session';
+
+export const getTemporaryUser = async (): Promise<ApiResponse<{ user: TemporaryUserDataType | null }>> => {
+    const sessionToken = await getToken();
+    if ((await verifySession(sessionToken)).isAuth) redirect('/');
+
+    const temporaryToken = await getCurrentTemporaryUserToken();
+    if (!temporaryToken) {
+        return {
+            success: true,
+            data: {
+                user: null,
+            }
+        }
+    };
+
+    try {
+        const response = await fetch('http://localhost:3000/api/temporaryUsers', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${temporaryToken}`,
+            },
+            next: { tags: ['temporaryUser'] }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+        }
+
+        const { data } = await response.json() as SuccessResponse<TemporaryUserDataType>;
+
+        return {
+            success: true,
+            data: {
+                user: data,
+            }
+        }
+    } catch (error: unknown) {
+
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        const errorMessage = getErrorMessage(error);
+
+        return {
+            success: false,
+            error: {
+                message: errorMessage,
+                code: error instanceof Error ? error.name.toUpperCase().replaceAll(' ', '_') : 'INTERNAL_ERROR',
+            }
+        } as ErrorResponse;
+    }
+};
 
 export const getLoggedInUser = cache(async () => {
     const token = await getCurrentUserToken();
-    
+
     try {
         const response = await fetch('http://localhost:3000/api/users', {
             method: 'GET',
@@ -15,7 +80,7 @@ export const getLoggedInUser = cache(async () => {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
             },
-            next: { tags: ['loggedInUser'], revalidate: 3600 }, // Cache for 1 hour
+            next: { tags: ['loggedInUser'] },
         });
 
         if (!response.ok) {
@@ -57,7 +122,7 @@ export async function getNotifications() {
 
         const notifications = await response.json().then((res) => {
             if (typeof res === 'object' && res !== null && 'notifications' in res && 'end' in res) {
-                return { notifications: res.notifications as NotificationType[], end: res.end as boolean}
+                return { notifications: res.notifications as NotificationType[], end: res.end as boolean }
             }
             return { notifications: [], end: true };
         });
@@ -89,7 +154,7 @@ export async function getBookmarks() {
 
         const posts = await response.json().then((res) => {
             if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as BookmarkPostType[], end: res.end as boolean}
+                return { posts: res.posts as BookmarkPostType[], end: res.end as boolean }
             }
             return { posts: [], end: true };
         });
@@ -197,7 +262,7 @@ export async function getUserProfile(username: string) {
             throw new Error(getErrorMessage('User not found'));
         });
 
-        return {...profile, authorized: await authorizedToEditProfile(profile.username)};
+        return { ...profile, authorized: await authorizedToEditProfile(profile.username) };
     } catch (error) {
         const errorMessage = getErrorMessage(error);
         console.error(errorMessage);

@@ -46,7 +46,7 @@ export interface NewPostType {
     replyToId?: number,
 }
 
-export const newPost = async (req: Request, res: Response) => {
+export const newPost = async (req: Request, res: Response): Promise<void> => {
     const user = req.user as UserProps;
     const { text, images, imagesPublicIds, replyToId } = req.body as NewPostType;
     const postData = { text, images, replyToId, imagesPublicIds };
@@ -57,11 +57,12 @@ export const newPost = async (req: Request, res: Response) => {
         if (replyToId) {
             // Check if post exists
             const replyPost = await postExists(replyToId);
-            if (!replyPost) return res.status(404).json({ error: 'Reply post does not exist' });
+            
+            if (!replyPost) res.status(404).json({ error: 'Reply post does not exist' });
         }
 
         if ((postData.text === undefined || postData.text.length === 0) && (postData.images === undefined || postData.images.length === 0)) {
-            return res.status(404).json({ error: 'Post does not have any content' });
+            res.status(404).json({ error: 'Post does not have any content' });
         }
 
         const post = await createPost(user.id, postData);
@@ -69,7 +70,7 @@ export const newPost = async (req: Request, res: Response) => {
             imagesPublicIds?.forEach((img) => {
                 deleteImageFromCloudinary(img);
             });
-            return res.status(404).json({ error: 'Post has to contain either text or/and images' });
+            res.status(404).json({ error: 'Post has to contain either text or/and images' });
         }
         
         const postId = post.id;
@@ -86,7 +87,7 @@ export const newPost = async (req: Request, res: Response) => {
             createNotificationsForNewReply(postId, user.id);
         }
 
-        return res.status(201).json({ ...post });
+        res.status(201).json({ ...post });
     } catch (error) {
         imagesPublicIds?.forEach((img) => {
             deleteImageFromCloudinary(img);

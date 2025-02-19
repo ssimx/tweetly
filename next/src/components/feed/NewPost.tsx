@@ -4,19 +4,16 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress"
-import { newPostSchema } from "@/lib/schemas";
 import { Image as Img, Loader2, X } from "lucide-react";
 import Image from 'next/image';
 import { useId, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import TextareaAutosize from 'react-textarea-autosize';
 import { useUserContext } from "@/context/UserContextProvider";
 import { socket } from "@/lib/socket";
 import { createPost } from "@/actions/actions";
-
-type PostData = z.infer<typeof newPostSchema>;
+import { newPostDataSchema, NewPostDataType } from 'tweetly-shared';
 
 export default function NewPost({ reply, placeholder }: { reply?: number, placeholder?: string }) {
     const [text, setText] = useState('');
@@ -39,7 +36,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
         setError,
         clearErrors,
         setValue,
-    } = useForm<PostData>({ resolver: zodResolver(newPostSchema) });
+    } = useForm<NewPostDataType>({ resolver: zodResolver(newPostDataSchema) });
 
     const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setText(e.target.value);
@@ -91,7 +88,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
         setValue('images', [...selectedImages, ...validFiles.map((file) => URL.createObjectURL(file))]);
     };
 
-    const onSubmitPost = async (data: PostData) => {
+    const onSubmitPost = async (data: NewPostDataType) => {
         if (isSubmitting) return;
 
         try {

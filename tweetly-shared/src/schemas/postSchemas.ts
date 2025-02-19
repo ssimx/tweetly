@@ -25,5 +25,3 @@ export const newPostDataSchema = z.object({
         });
     }
 });
-
-export type NewPostDataType = z.infer<typeof newPostDataSchema>;

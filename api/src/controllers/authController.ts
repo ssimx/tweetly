@@ -1,18 +1,17 @@
-import { signUpDataSchema, SignUpDataType } from 'tweetly-shared';
+import { AppError, registerUserDataSchema, RegisterUserDataType, SuccessfulLoginResponseType, SuccessfulRegisterResponseType, SuccessResponse } from 'tweetly-shared';
 import { NextFunction, Request, Response } from 'express';
 import { checkUserExsistence, createUserAndProfile, getUserLogin } from "../services/authService";
 import { generateSettingsToken, generateToken } from '../utils/jwt';
 import { UserProps } from '../lib/types';
-import { AppError } from '../middleware/errorHandler';
 import bcrypt from 'bcrypt';
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const registerUser = async (req: Request, res: Response, next: NextFunction) => {
-    let signUpData = req.body as SignUpDataType;
+export const registerUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    let registerUserData = req.body as RegisterUserDataType;
     
     try {
-        const validatedData = signUpDataSchema.parse(signUpData);
+        const validatedData = registerUserDataSchema.parse(registerUserData);
     
         let { year, day, month, username, email, password, confirmPassword } = validatedData;
     
@@ -82,10 +81,13 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
             }
 
             const token: string = generateToken(tokenPayload);
-            return res.status(200).json({
+
+            const successResponse: SuccessResponse<SuccessfulRegisterResponseType> = {
                 success: true,
                 data: { token },
-            });
+            };
+
+            res.status(200).json(successResponse);
         }
     } catch (error) {
         next(error);
@@ -99,7 +101,7 @@ interface logInDataProps {
     password: string,
 };
 
-export const loginUser = async (req: Request, res: Response) => {
+export const loginUser = async (req: Request, res: Response, next: NextFunction) => {
     const { username, password } = req.body as logInDataProps;
 
     try {
@@ -107,13 +109,13 @@ export const loginUser = async (req: Request, res: Response) => {
         const user = await getUserLogin(username);
 
         if (!user) {
-            return res.status(401).json({ error: 'User not found'});
+            throw new AppError('User not found', 404, 'USER_NOT_FOUND');
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
         if (!isPasswordValid) {
-            return res.status(401).json({ error: 'Incorrect password'});
+            throw new AppError('Incorrect login password', 401, 'INCORRECT_PASSWORD');
         }
 
         const tokenPayload = {
@@ -124,10 +126,15 @@ export const loginUser = async (req: Request, res: Response) => {
 
         // Generate and send JWT token
         const token: string = generateToken(tokenPayload);
-        return res.status(200).json({ token });
+
+        const successResponse: SuccessResponse<SuccessfulLoginResponseType> = {
+            success: true,
+            data: { token },
+        };
+
+        res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Internal server error' });
+        next(error);
     }
 };
 

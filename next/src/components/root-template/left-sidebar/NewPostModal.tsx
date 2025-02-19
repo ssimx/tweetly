@@ -9,19 +9,16 @@ import {
 } from "@/components/ui/dialog";
 import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 import { Progress } from "@/components/ui/progress"
-import { newPostSchema } from "@/lib/schemas";
 import { Feather, Image as Img, Loader2, X } from "lucide-react";
 import Image from 'next/image';
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import TextareaAutosize from 'react-textarea-autosize';
 import { useUserContext } from "@/context/UserContextProvider";
 import { socket } from "@/lib/socket";
 import { createPost } from '@/actions/actions';
-
-type PostData = z.infer<typeof newPostSchema>;
+import { newPostDataSchema, NewPostDataType } from 'tweetly-shared';
 
 export default function NewPostModal() {
     const [text, setText] = useState('');
@@ -29,7 +26,7 @@ export default function NewPostModal() {
     const [selectedImagesFiles, setSelectedImagesFiles] = useState<File[]>([]);
     const [newPostError, setNewPostError] = useState('');
     const imageInputRef = useRef<HTMLInputElement | null>(null);
-    
+
     const maxChars = 280;
     const { loggedInUser } = useUserContext();
     const charsPercentage = Math.min((text.length / maxChars) * 100, 100);
@@ -42,7 +39,7 @@ export default function NewPostModal() {
         setError,
         clearErrors,
         setValue,
-    } = useForm<PostData>({ resolver: zodResolver(newPostSchema) });
+    } = useForm<NewPostDataType>({ resolver: zodResolver(newPostDataSchema) });
 
     const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setText(e.target.value);
@@ -88,7 +85,7 @@ export default function NewPostModal() {
         setValue('images', [...selectedImages, ...validFiles.map((file) => URL.createObjectURL(file))]);
     };
 
-    const onSubmitModalPost = async (data: PostData) => {
+    const onSubmitModalPost = async (data: NewPostDataType) => {
         if (isSubmitting) return;
 
         try {
@@ -128,7 +125,7 @@ export default function NewPostModal() {
 
             const postData = await createPost(data);
             console.log(postData)
-            
+
             if (!postData) {
                 setNewPostError('Something went wrong');
                 throw new Error('Something went wrong');
@@ -177,38 +174,38 @@ export default function NewPostModal() {
                             })}
                         />
                         { // selected images preview
-                        selectedImages.length === 1
-                            ? (
-                                <div className="mt-2 relative inline-block w-fit max-h-[500px]">
-                                    <Image src={selectedImages[0]} alt="Selected preview" className="max-h-[500px] w-auto object-contain rounded-md" width={400} height={400} />
-                                    <button type='button' className='absolute top-2 right-2 group rounded-full bg-black-1/40 p-1 flex-center'
-                                        onClick={() => {
-                                            setSelectedImages([]);
-                                            setValue('images', []);
-                                        }}>
-                                        <X size={20} className='' />
-                                    </button>
-                                </div>
-                            )
-                            : (selectedImages.length > 1 && selectedImages.length < 5)
+                            selectedImages.length === 1
                                 ? (
-                                    <div className={`mt-2 grid gap-1 w-full h-[300px] ${selectedImages.length === 2 ? 'grid-cols-2 grid-rows-1' : 'grid-cols-2 grid-rows-2'}`}>
-                                        {selectedImages.map((image, index) => (
-                                            <div key={index} className='h-full relative'>
-                                                <Image src={image} alt="Selected preview" className="h-full w-full object-cover rounded-md" width={400} height={400} />
-                                                <button type='button' className='absolute top-2 right-2 group rounded-full bg-black-1/40 p-1 flex-center'
-                                                    onClick={() => {
-                                                        const updatedImages = selectedImages.toSpliced(index, 1);
-                                                        setSelectedImages(updatedImages);
-                                                        setValue('images', updatedImages);
-                                                    }}>
-                                                    <X size={20} className='' />
-                                                </button>
-                                            </div>
-                                        ))}
+                                    <div className="mt-2 relative inline-block w-fit max-h-[500px]">
+                                        <Image src={selectedImages[0]} alt="Selected preview" className="max-h-[500px] w-auto object-contain rounded-md" width={400} height={400} />
+                                        <button type='button' className='absolute top-2 right-2 group rounded-full bg-black-1/40 p-1 flex-center'
+                                            onClick={() => {
+                                                setSelectedImages([]);
+                                                setValue('images', []);
+                                            }}>
+                                            <X size={20} className='' />
+                                        </button>
                                     </div>
                                 )
-                                : null
+                                : (selectedImages.length > 1 && selectedImages.length < 5)
+                                    ? (
+                                        <div className={`mt-2 grid gap-1 w-full h-[300px] ${selectedImages.length === 2 ? 'grid-cols-2 grid-rows-1' : 'grid-cols-2 grid-rows-2'}`}>
+                                            {selectedImages.map((image, index) => (
+                                                <div key={index} className='h-full relative'>
+                                                    <Image src={image} alt="Selected preview" className="h-full w-full object-cover rounded-md" width={400} height={400} />
+                                                    <button type='button' className='absolute top-2 right-2 group rounded-full bg-black-1/40 p-1 flex-center'
+                                                        onClick={() => {
+                                                            const updatedImages = selectedImages.toSpliced(index, 1);
+                                                            setSelectedImages(updatedImages);
+                                                            setValue('images', updatedImages);
+                                                        }}>
+                                                        <X size={20} className='' />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )
+                                    : null
                         }
                     </form>
                 </div>

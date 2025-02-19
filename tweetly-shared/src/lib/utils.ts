@@ -1,3 +1,4 @@
+
 export function getAge(date: string) {
     const birthDate = new Date(date);
     const now = new Date();
@@ -11,4 +12,4 @@ export function getAge(date: string) {
     }
 
     return age;
-}
+};

@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 import type { NextConfig } from 'next';
+import path from 'path';
 
 const nextConfig: NextConfig = {
     // reactStrictMode: false,
@@ -19,12 +20,12 @@ const nextConfig: NextConfig = {
     },
     experimental: {
         turbo: {
-            root: '.', // root folder which is /next
             resolveAlias: {
-                '@public/': ['./public/'], // public folder inside /next
-            }
+                '@public/': ['./public/'],
+            },
         },
     },
+    outputFileTracingRoot: path.join(__dirname, "../"),
     devIndicators: {
         appIsrStatus: true,
         buildActivity: true,

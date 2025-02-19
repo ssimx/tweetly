@@ -1,4 +1,4 @@
-import { settingsChangePassword } from "@/lib/schemas";
+import { userUpdatePasswordSchema } from "@/lib/schemas";
 import { extractToken, getSettingsToken, getToken, removeSession, removeSettingsToken, verifySession, verifySettingsToken } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -31,8 +31,8 @@ export async function PATCH(req: NextRequest) {
 
         try {
             // Validate incoming data
-            const body = await req.json() as z.infer<typeof settingsChangePassword>;
-            const validatedData = settingsChangePassword.parse(body);
+            const body = await req.json() as z.infer<typeof userUpdatePasswordSchema>;
+            const validatedData = userUpdatePasswordSchema.parse(body);
 
             const apiUrl = process.env.EXPRESS_API_URL;
             const response = await fetch(`${apiUrl}/users/password`, {

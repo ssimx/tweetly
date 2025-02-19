@@ -3,26 +3,26 @@ import { twMerge } from "tailwind-merge";
 
 // Helper function to handle errors
 export function getErrorMessage (error: unknown): string {
-    let message: string;
 
     // error is new Error
     if (error instanceof Error) {
-        message = error.message;
-    } // error is object with message
-    else if (error && typeof error === 'object' && 'message' in error) {
-        message = String(error.message);
-    } // error is object with error
-    else if (error && typeof error === 'object' && 'error' in error) {
-        message = String(error.error);
-    } // error is just a string
-    else if (typeof error === 'string') {
-        message = error;
-    } // anything else is unknown
-    else {
-        message = 'Something went wrong';
+        return error.message;
     }
-
-    return message;
+    
+    // error is object with property message or error
+    if (typeof error === 'object' && error !== null) {
+        // assert error as an object with string keys and unknown values
+        // first check for message key presence, if undefined check for error key, if undefined return "Internal Server Error"
+        return String((error as Record<string, unknown>)?.message || (error as Record<string, unknown>)?.error || 'Internal Server Error');
+    }
+    
+    // error is just a string
+    if (typeof error === 'string') {
+        return error;
+    }
+    
+    // anything else is unknown
+    return 'Internal Server Error';
 };
 
 export function cn(...inputs: ClassValue[]) {
