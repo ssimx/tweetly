@@ -90,7 +90,6 @@ export default function ChangeUsername() {
             const response = await changeUsername(data);
 
             if (response !== true) {
-                console.log('testttt')
                 throw new Error(response);
             }
 

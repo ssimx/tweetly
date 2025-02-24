@@ -4,11 +4,11 @@ import { getErrorMessage } from '@/lib/utils';
 import { redirect } from 'next/navigation';
 import { BookmarkPostType, ConversationsListType, ConversationType, NotificationType, ProfileInfo, UserInfo } from '@/lib/types';
 import { cache } from 'react';
-import { ApiResponse, AppError, ErrorResponse, SuccessResponse, TemporaryUserDataType } from 'tweetly-shared';
-import { getToken, verifySession } from '@/lib/session';
+import { ApiResponse, AppError, ErrorResponse, LoggedInTemporaryUserDataType, SuccessResponse, } from 'tweetly-shared';
+import { getUserSessionToken, verifySession } from '@/lib/session';
 
-export const getTemporaryUser = async (): Promise<ApiResponse<{ user: TemporaryUserDataType | null }>> => {
-    const sessionToken = await getToken();
+export const getTemporaryUser = async (): Promise<ApiResponse<{ user: LoggedInTemporaryUserDataType | null }>> => {
+    const sessionToken = await getUserSessionToken();
     if ((await verifySession(sessionToken)).isAuth) redirect('/');
 
     const temporaryToken = await getCurrentTemporaryUserToken();
@@ -22,7 +22,7 @@ export const getTemporaryUser = async (): Promise<ApiResponse<{ user: TemporaryU
     };
 
     try {
-        const response = await fetch('http://localhost:3000/api/temporaryUsers', {
+        const response = await fetch('http://localhost:3000/api/users/temporary', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -33,17 +33,20 @@ export const getTemporaryUser = async (): Promise<ApiResponse<{ user: TemporaryU
 
         if (!response.ok) {
             const errorData = await response.json() as ErrorResponse;
+            console.log(errorData)
             throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const { data } = await response.json() as SuccessResponse<TemporaryUserDataType>;
+        const { data } = await response.json() as SuccessResponse<{ user: LoggedInTemporaryUserDataType }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (!data.user) throw new AppError('User information is missing in data response', 404, 'MISSING_USER_INFO');
 
-        return {
+        const successResponse: SuccessResponse<{ user: LoggedInTemporaryUserDataType }> = {
             success: true,
-            data: {
-                user: data,
-            }
-        }
+            data: data
+        };
+
+        return successResponse;
     } catch (error: unknown) {
 
         if (error instanceof AppError) {
@@ -52,14 +55,12 @@ export const getTemporaryUser = async (): Promise<ApiResponse<{ user: TemporaryU
                 error: {
                     message: error.message || 'Internal Server Error',
                     code: error.code || 'INTERNAL_ERROR',
-                    details: error.details,
                 }
             } as ErrorResponse;
         }
 
         // Handle other errors
         const errorMessage = getErrorMessage(error);
-
         return {
             success: false,
             error: {
@@ -69,6 +70,8 @@ export const getTemporaryUser = async (): Promise<ApiResponse<{ user: TemporaryU
         } as ErrorResponse;
     }
 };
+
+// ---------------------------------------------------------------------------------------------------------
 
 export const getLoggedInUser = cache(async () => {
     const token = await getCurrentUserToken();

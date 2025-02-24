@@ -1,35 +1,20 @@
 import { z } from 'zod';
-import { logInUserSchema, registerTemporaryUserBasicDataSchema, registerUserDataSchema, updateTemporaryUserPasswordSchema, updateTemporaryUserProfilePictureSchema, updateTemporaryUserUsernameSchema } from '../schemas/authSchemas';
+import { logInUserSchema, temporaryUserBasicDataSchema, registerUserDataSchema, temporaryUserPasswordSchema, updateTemporaryUserProfilePictureSchema, updateTemporaryUserUsernameSchema } from '../schemas/authSchemas';
 
 // Type for register temporary user data
-export type RegisterTemporaryUserBasicDataType = z.infer<typeof registerTemporaryUserBasicDataSchema>;
+export type FormTemporaryUserBasicDataType = z.infer<typeof temporaryUserBasicDataSchema>;
 
 // Type for updating temporary user password
-export type updateTemporaryUserPasswordType = z.infer<typeof updateTemporaryUserPasswordSchema>;
+export type FormTemporaryUserPasswordType = z.infer<typeof temporaryUserPasswordSchema>;
 
-// Type for updating temporary user password
-export type updateTemporaryUserUsernameType = z.infer<typeof updateTemporaryUserUsernameSchema>;
+// Type for updating temporary user username
+export type FormTemporaryUserUsernameType = z.infer<typeof updateTemporaryUserUsernameSchema>;
 
-// Type for updating temporary user password
-export type updateTemporaryUserProfilePictureType = z.infer<typeof updateTemporaryUserProfilePictureSchema>;
+// Type for updating temporary user profile picture
+export type FormTemporaryUserProfilePictureType = z.infer<typeof updateTemporaryUserProfilePictureSchema>;
 
-// Type for temporary user information
-export type TemporaryUserDataType = {
-    id: number,
-    createdAt: string,
-    updatedAt: string,
-    profileName: string,
-    email: string,
-    emailVerified: boolean,
-    dateOfBirth: string,
-    password?: string,
-    username?: string,
-    profilePicture?: string,
-    registrationComplete: boolean,
-};
+// Type for register user data form
+export type FormFormRegisterUserDataType = z.infer<typeof registerUserDataSchema>;
 
-// Type for register user data
-export type RegisterUserDataType = z.infer<typeof registerUserDataSchema>;
-
-// Type for log in user data
-export type LogInUserDataType = z.infer<typeof logInUserSchema>;
+// Type for log in user data form
+export type FormFormLogInUserDataType = z.infer<typeof logInUserSchema>;

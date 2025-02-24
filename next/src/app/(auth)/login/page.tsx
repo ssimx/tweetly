@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Mail, Apple } from "lucide-react";
-import { LogInUserDataType, logInUserSchema } from 'tweetly-shared';
+import { FormLogInUserDataType, logInUserSchema } from 'tweetly-shared';
 
 export default function LogIn() {
     const router = useRouter();
@@ -19,9 +19,9 @@ export default function LogIn() {
         formState: { errors, isSubmitting },
         setError,
         resetField,
-    } = useForm<LogInUserDataType>({ resolver: zodResolver(logInUserSchema) });
+    } = useForm<FormLogInUserDataType>({ resolver: zodResolver(logInUserSchema) });
 
-    const onSubmit = async (data: LogInUserDataType) => {
+    const onSubmit = async (data: FormLogInUserDataType) => {
         if (isSubmitting) return;
 
         try {

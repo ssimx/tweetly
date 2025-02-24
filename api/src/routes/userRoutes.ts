@@ -1,4 +1,4 @@
-import { blockUser, changeBirthday, changeEmail, changePassword, changeUsername, deactivateAccount, disablePushNotifications, enablePushNotifications, followUser, getProfileFollowers, getProfileFollowing, getProfileInfo, getUserFollowSuggestions, getUserInfo, getUserNotifications, unblockUser, unfollowUser, updateProfileInfo } from "../controllers/userController";
+import { blockUser, changeBirthday, changeEmail, changePassword, changeUsername, deactivateAccount, disablePushNotifications, enablePushNotifications, followUser, getProfileFollowers, getProfileFollowing, getProfileInfo, getTemporaryUserInfo, getUserFollowSuggestions, getUserInfo, getUserNotifications, unblockUser, unfollowUser, updateProfileInfo } from "../controllers/userController";
 
 import express from 'express';
 
@@ -21,6 +21,7 @@ router.post('/enableNotifications/:username', enablePushNotifications);
 router.delete('/disableNotifications/:username', disablePushNotifications);
 router.post('/block/:username', blockUser);
 router.delete('/removeBlock/:username', unblockUser);
+router.get('/temporary', getTemporaryUserInfo);
 router.get('/:username', getProfileInfo);
 
 export default router;

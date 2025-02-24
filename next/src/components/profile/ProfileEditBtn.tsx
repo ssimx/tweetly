@@ -407,7 +407,7 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
                     </div>
                     <div ref={croppieContainerRef}></div>
                     <Button type="button"
-                        className='ml-auto mr-auto font-bold w-fit rounded-3xl text-primary-text'
+                        className='ml-auto mr-auto font-bold w-fit rounded-3xl text-white-1'
                         onClick={onResult}
                     >
                         Apply

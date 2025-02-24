@@ -1,10 +1,10 @@
-import { getToken, removeSession, verifySession } from "@/lib/session";
+import { getUserSessionToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(req: NextRequest, props: { params: Promise<{ username: string }> }) {
     const params = await props.params;
     if (req.method === 'DELETE') {
-        const token = await getToken();
+        const token = await getUserSessionToken();
 
         if (token) {
             const session = await verifySession(token);

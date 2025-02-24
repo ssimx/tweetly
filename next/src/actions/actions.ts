@@ -1,6 +1,6 @@
 'use server';
-import { getCurrentUserToken, verifyCurrentUserSettingsToken } from "@/data-acess-layer/auth";
-import { createSession, createSettingsSession, createTemporarySession, removeSettingsToken, updateSessionToken } from '@/lib/session';
+import { getCurrentTemporaryUserToken, getCurrentUserToken, verifyCurrentUserSettingsToken } from "@/data-acess-layer/auth";
+import { createSession, createSettingsSession, createTemporarySession, getUserSessionToken, removeSettingsToken, updateSessionToken, verifySession } from '@/lib/session';
 import { getErrorMessage } from '@/lib/utils';
 import { revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -11,7 +11,6 @@ import {
     newPostDataSchema,
     NewPostDataType,
     registerUserDataSchema,
-    RegisterUserDataType,
     SuccessfulRegisterResponseType,
     SuccessResponse,
     userSettingsAccessSchema,
@@ -23,80 +22,221 @@ import {
     userUpdatePasswordSchema,
     UserUpdatePasswordType,
     userUpdateUsernameSchema,
-    UserUpdateUsernameType
+    UserUpdateUsernameType,
+    FormTemporaryUserPasswordType,
+    FormTemporaryUserBasicDataType,
+    temporaryUserBasicDataSchema,
+    temporaryUserPasswordSchema,
+    isZodError,
+    FormTemporaryUserUsernameType,
+    temporaryUserUsernameSchema
 } from 'tweetly-shared';
 import { z } from 'zod';
 
 // AUTH
 
-// export async function registerTemporaryUser(formData: RegisterTemporaryUserType) {
-//     const token = await getCurrentUserToken();
 
-//     try {
-//         const validatedData = registerTemporaryUserData.parse(formData);
+// First step of the registration process, registers new temporary user with basic information
+export async function registerTemporaryUser(
+    formData: FormTemporaryUserBasicDataType,
+): Promise<ApiResponse<{ token: string }>> {
 
-//         const response = await fetch(`http://localhost:3000/api/auth/registerTemporary`, {
-//             method: 'POST',
-//             headers: {
-//                 'Content-Type': 'application/json',
-//                 'Authorization': `Bearer ${token}`,
-//             },
-//             body: JSON.stringify(validatedData),
-//         });
+    try {
+        const validatedBasicData = temporaryUserBasicDataSchema.parse(formData);
 
-//         if (!response.ok) {
-//             const errorData = await response.json() as ErrorResponse;
-//             throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
-//         }
+        const response = await fetch(`http://localhost:3000/api/auth/register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(validatedBasicData),
+        });
 
-//         const { data } = await response.json() as SuccessResponse<SuccessfulRegisterResponseType>;
-//         await createTemporarySession(data.token);
 
-//         return {
-//             success: true,
-//             data: {
-//                 token: data.token,
-//             }
-//         }
-//     } catch (error: unknown) {
+        if (!response.ok) {
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+        }
 
-//         // Handle validation errors
-//         if (error instanceof z.ZodError) {
-//             return {
-//                 success: false,
-//                 error: {
-//                     message: error.message || 'Internal Server Error',
-//                     code: 'VALIDATION_ERROR',
-//                     details: error.issues,
-//                 }
-//             } as ErrorResponse;
-//         } else if (error instanceof AppError) {
-//             return {
-//                 success: false,
-//                 error: {
-//                     message: error.message || 'Internal Server Error',
-//                     code: error.code || 'INTERNAL_ERROR',
-//                     details: error.details,
-//                 }
-//             } as ErrorResponse;
-//         }
+        const { data } = await response.json() as SuccessResponse<SuccessfulRegisterResponseType>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (!data.token) throw new AppError('JWT is missing in data response', 404, 'MISSING_JWT');
 
-//         // Handle other errors
-//         return {
-//             success: false,
-//             error: {
-//                 message: 'Internal Server Error',
-//                 code: 'INTERNAL_ERROR',
-//             },
-//         };
-//     }
-// };
+        await createTemporarySession(data.token);
 
-// export async function updateTemporaryUser(formData) {
+        return {
+            success: true,
+            data: {
+                token: data.token,
+            }
+        }
+    } catch (error: unknown) {
 
-// };
+        // Handle validation errors
+        if (isZodError(error)) {
+            return {
+                success: false,
+                error: {
+                    message: 'Validation failed',
+                    code: 'VALIDATION_FAILED',
+                    details: error.issues,
+                }
+            } as ErrorResponse;
+        } else if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
 
-export async function registerUser(formData: RegisterUserDataType): Promise<ApiResponse<SuccessfulRegisterResponseType>> {
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
+    }
+};
+
+// Second step of the registration process, update temporary user's password
+export async function updateTemporaryUserPassword(
+    formData: FormTemporaryUserPasswordType
+): Promise<ApiResponse<undefined>> {
+
+    const sessionToken = await getUserSessionToken();
+    if ((await verifySession(sessionToken)).isAuth) redirect('/');
+
+    try {
+        const temporaryToken = await getCurrentTemporaryUserToken();
+        if (!temporaryToken) throw new AppError('User not logged in', 400, 'NOT_LOGGED_IN');
+
+        const validatedPasswordData = temporaryUserPasswordSchema.parse(formData);
+
+        const response = await fetch(`http://localhost:3000/api/auth/temporary/password`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${temporaryToken}`,
+            },
+            body: JSON.stringify(validatedPasswordData),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+        }
+
+        return {
+            success: true,
+            data: undefined,
+        }
+    } catch (error) {
+
+        // Handle validation errors
+        if (isZodError(error)) {
+            return {
+                success: false,
+                error: {
+                    message: 'Validation failed',
+                    code: 'VALIDATION_FAILED',
+                    details: error.issues,
+                }
+            } as ErrorResponse;
+        } else if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
+    }
+};
+
+// Third step of the registration process, update temporary user's password
+export async function updateTemporaryUserUsername(
+    formData: FormTemporaryUserUsernameType
+): Promise<ApiResponse<undefined>> {
+
+    const sessionToken = await getUserSessionToken();
+    if ((await verifySession(sessionToken)).isAuth) redirect('/');
+
+    try {
+        const temporaryToken = await getCurrentTemporaryUserToken();
+        if (!temporaryToken) throw new AppError('User not logged in', 400, 'NOT_LOGGED_IN');
+
+        const validatedUsername = temporaryUserUsernameSchema.parse(formData);
+
+        const response = await fetch(`http://localhost:3000/api/auth/temporary/username`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${temporaryToken}`,
+            },
+            body: JSON.stringify(validatedUsername),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+        }
+
+        return {
+            success: true,
+            data: undefined,
+        }
+    } catch (error) {
+
+        // Handle validation errors
+        if (isZodError(error)) {
+            return {
+                success: false,
+                error: {
+                    message: 'Validation failed',
+                    code: 'VALIDATION_FAILED',
+                    details: error.issues,
+                }
+            } as ErrorResponse;
+        } else if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
+    }
+};
+
+export async function registerUser(formData: FormRegisterUserDataType): Promise<ApiResponse<SuccessfulRegisterResponseType>> {
     const token = await getCurrentUserToken();
 
     try {
@@ -146,7 +286,7 @@ export async function registerUser(formData: RegisterUserDataType): Promise<ApiR
                     details: error.details,
                 }
             } as ErrorResponse;
-        } 
+        }
 
         // Handle other errors
         const errorMessage = getErrorMessage(error);
@@ -439,20 +579,21 @@ export async function verifyLoginPasswordForSettings(data: UserSettingsAccessTyp
 };
 
 export async function checkIfNewUsernameIsAvailable(username: string) {
-    const sessionToken = await getCurrentUserToken();
-    const settingsToken = await verifyCurrentUserSettingsToken();
+    const sessionToken = await getUserSessionToken();
+    const temporaryToken = await getCurrentTemporaryUserToken();
+
+    console.log(sessionToken, temporaryToken)
 
     try {
-        if (!settingsToken) {
-            throw new Error('Invalid settings token');
+        if (!sessionToken && !temporaryToken) {
+            throw new Error('Invalid token');
         }
 
         const response = await fetch(`http://localhost:3000/api/search/user?q=${username}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${sessionToken}`,
-                'Settings-Token': `Bearer ${settingsToken}`,
+                'Authorization': `Bearer ${sessionToken ?? temporaryToken}`,
             },
         });
 

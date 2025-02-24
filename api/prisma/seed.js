@@ -1,8 +1,9 @@
-const { PrismaClient } = require('@prisma/client');
-const { faker } = require('@faker-js/faker');
-const prisma = new PrismaClient();
 import bcrypt from 'bcrypt';
-const { generateUsername } = require("unique-username-generator");
+import { PrismaClient } from '@prisma/client';
+import { generateUsername } from 'unique-username-generator';
+import { faker } from '@faker-js/faker';
+
+const prisma = new PrismaClient();
 
 const UserRole = {
     USER: 'USER',
@@ -105,7 +106,7 @@ async function main() {
 
     console.log("Seeding database...");
 
-    const hashedPassword = await bcrypt.hash('tweetly', 10);
+    const hashedPassword = await bcrypt.hash('tweetly1', 10);
 
     // Create 100 users with profiles
     const users = await Promise.all(
@@ -585,6 +586,7 @@ async function main() {
 
             const messageCount = faker.number.int({ min: 0, max: 100 });
             let lastMessageTime = conversationCreatedAt;
+            let newMessageTime;
             // Randomly choose the initial sender between `user.id` and `receiver.id`
             let currentSenderId = Math.random() < 0.5 ? user.id : receiver.id;
 

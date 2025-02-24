@@ -1,63 +1,53 @@
-import { AppError, registerUserDataSchema, RegisterUserDataType, SuccessfulLoginResponseType, SuccessfulRegisterResponseType, SuccessResponse } from 'tweetly-shared';
+import { AppError, LoggedInTemporaryUserDataType, SuccessfulLoginResponseType, SuccessfulRegisterResponseType, SuccessResponse, temporaryUserBasicDataSchema, temporaryUserPasswordSchema, temporaryUserUsernameSchema } from 'tweetly-shared';
 import { NextFunction, Request, Response } from 'express';
-import { checkUserExsistence, createUserAndProfile, getUserLogin } from "../services/authService";
-import { generateSettingsToken, generateToken } from '../utils/jwt';
+import { checkEmailAvailability, createTemporaryUser, createUserAndProfile, getUserLogin, updateTemporaryUserPassword, updateTemporaryUserUsername } from "../services/authService";
+import { generateSettingsToken, generateTemporaryUserToken } from '../utils/jwt';
 import { UserProps } from '../lib/types';
 import bcrypt from 'bcrypt';
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const registerUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    let registerUserData = req.body as RegisterUserDataType;
-    
+export const registerTempUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    let body = req.body;
+
     try {
-        const validatedData = registerUserDataSchema.parse(registerUserData);
-    
-        let { year, day, month, username, email, password, confirmPassword } = validatedData;
-    
+        if (!body) {
+            throw new AppError('User data is missing', 404, 'MISSING_DATA');
+        }
+
+        const validatedBasicData = temporaryUserBasicDataSchema.parse(body);
+
+        let { profileName, email, year, day, month } = validatedBasicData;
+
         // convert to lower case
-        username = username.toLowerCase();
+        profileName = profileName.toLowerCase();
         email = email.toLowerCase();
-    
+
         // convert year, month, day to Date object
         const dateOfBirth = new Date(`${year}-${('0' + month).slice(-2)}-${('0' + day).slice(-2)}`);
 
         // check if user already exists
         let existingUser;
         try {
-            existingUser = await checkUserExsistence(username, email);
+            existingUser = await checkEmailAvailability(email);
         } catch (error) {
             return next(new AppError('Database error while checking user existence', 500, 'DB_ERROR'));
         }
 
         if (existingUser) {
-            if (existingUser.username === username && existingUser.email === email) {
-                throw new AppError('Username and email already taken', 400, 'USERNAME_EMAIL_TAKEN');
-            }
-            if (existingUser.username === username) {
-                throw new AppError('Username already taken', 400, 'USERNAME_TAKEN');
-            }
-            if (existingUser.email === email) {
-                throw new AppError('Email already taken', 400, 'EMAIL_TAKEN');
-            }
+            throw new AppError('Email is already in use', 400, 'EMAIL_TAKEN');
         }
 
         // Hash the password before saving it
-        const hashedPassword: string = await bcrypt.hash(password, 10);
+        // const hashedPassword: string = await bcrypt.hash(password, 10);
 
-        // Try to save the new user
-        const response = await createUserAndProfile(username, email, dateOfBirth, hashedPassword);
+        // Try to create a new temporary user
+        const response = await createTemporaryUser(profileName, email, dateOfBirth);
 
         // Check if there was a unique constraint violation
         if ('error' in response) {
-            if (response.fields?.includes('username') && response.fields?.includes('email')) {
-                throw new AppError('Username and email already taken', 400, 'USERNAME_EMAIL_TAKEN');
-            }
-            if (response.fields?.includes('username')) {
-                throw new AppError('Username already taken', 400, 'USERNAME_TAKEN');
-            }
             if (response.fields?.includes('email')) {
-                throw new AppError('Email already taken', 400, 'EMAIL_TAKEN');
+                throw new AppError('Email is already in use', 400, 'EMAIL_TAKEN');
             }
 
             // Fallback error if `fields` exist but don't match expected values
@@ -73,14 +63,12 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
             throw new AppError('Database error while creating a new user', 500, 'DB_ERROR');
         } else {
             const tokenPayload = {
-                id: response.user.id,
-                username: username,
-                name: username,
+                type: 'temporary' as 'temporary',
+                id: response.id,
                 email: email,
-                profilePicture: '',
             }
 
-            const token: string = generateToken(tokenPayload);
+            const token: string = generateTemporaryUserToken(tokenPayload);
 
             const successResponse: SuccessResponse<SuccessfulRegisterResponseType> = {
                 success: true,
@@ -89,6 +77,73 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
 
             res.status(200).json(successResponse);
         }
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const updateTempUserPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    let body = req.body;
+    const user = req.user as LoggedInTemporaryUserDataType;
+
+    try {
+        if (!body) {
+            throw new AppError('User password is missing', 404, 'MISSING_DATA');
+        }
+
+        if (!user) {
+            throw new AppError('User not logged in', 404, 'NOT_LOGGED_IN');
+        }
+
+        const validatedPassword = temporaryUserPasswordSchema.parse(body);
+
+        let { password } = validatedPassword;
+
+        // Hash the password before saving it
+        const hashedPassword: string = await bcrypt.hash(password, 10);
+
+        // Try to create a new temporary user
+        const response = await updateTemporaryUserPassword(user.id, hashedPassword);
+        if (!response) {
+            throw new AppError('User not found', 404, 'USER_NOT_FOUND');
+        }
+
+        const successResponse: SuccessResponse<SuccessfulRegisterResponseType> = {
+            success: true,
+        };
+
+        res.status(200).json(successResponse);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const updateTempUserUsername = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    let body = req.body;
+    const user = req.user as LoggedInTemporaryUserDataType;
+
+    try {
+        if (!body) {
+            throw new AppError('User username is missing', 404, 'MISSING_DATA');
+        }
+
+        if (!user) {
+            throw new AppError('User not logged in', 404, 'NOT_LOGGED_IN');
+        }
+
+        const validatedUsername = temporaryUserUsernameSchema.parse(body);
+
+        // Try to create a new temporary user
+        const response = await updateTemporaryUserUsername(user.id, validatedUsername.username);
+        if (!response) {
+            throw new AppError('User not found', 404, 'USER_NOT_FOUND');
+        }
+
+        const successResponse: SuccessResponse<SuccessfulRegisterResponseType> = {
+            success: true,
+        };
+
+        res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }

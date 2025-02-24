@@ -1,4 +1,4 @@
-import { extractToken, getToken, removeSession, verifySession } from "@/lib/session";
+import { extractToken, getUserSessionToken, removeSession, verifySession } from "@/lib/session";
 import { ConversationsListType } from "@/lib/types";
 import { getErrorMessage } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
@@ -8,8 +8,8 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
         const authHeader = req.headers.get('Authorization');
-        // need getToken() to extract the token from client component for infinite scroll
-        const token = await extractToken(authHeader) || await getToken();
+        // need getUserSessionToken() to extract the token from client component for infinite scroll
+        const token = await extractToken(authHeader) || await getUserSessionToken();
         if (token) {
             const isValid = await verifySession(token);
 
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
                     const errorData = await response.json();
                     return NextResponse.json({ error: getErrorMessage(errorData) }, { status: response.status });
                 }
-                
+
                 const conversations = await response.json() as ConversationsListType;
                 return NextResponse.json(conversations);
             } else {

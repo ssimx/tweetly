@@ -1,225 +1,219 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-    provider        = "prisma-client-js"
-    previewFeatures = ["omitApi"]
+  provider        = "prisma-client-js"
+  previewFeatures = ["omitApi"]
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DEV_DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DEV_DATABASE_URL")
 }
 
 model User {
-    id                       Int                       @id @default(autoincrement())
-    createdAt                DateTime                  @default(now())
-    updatedAt                DateTime                  @updatedAt
-    username                 String                    @unique @db.VarChar(15)
-    email                    String                    @unique @db.VarChar(254)
-    password                 String
-    dateOfBirth              DateTime                  @db.Date()
-    deactivatedAt            DateTime?
-    emailVerified            Boolean                   @default(false)
-    role                     UserRole                  @default(USER)
-    profile                  Profile?
-    posts                    Post[]
-    likedPosts               PostLike[]
-    repostedPosts            PostRepost[]
-    bookmarkedPosts          PostBookmark[]
-    followers                Follow[]                  @relation("followee")
-    following                Follow[]                  @relation("follower")
-    messagesReceived         Message[]                 @relation("receiver")
-    messagesSent             Message[]                 @relation("sender")
-    blockedBy                Block[]                   @relation("blocked")
-    blockedUsers             Block[]                   @relation("blocker")
-    notifiers                PushNotification[]        @relation("receiver")
-    notifying                PushNotification[]        @relation("notifier")
-    notificationsCreated     Notification[]            @relation("notifier")
-    notificationsReceived    Notification[]            @relation("receiver")
-    conversationsParticipant ConversationParticipant[]
+  id                       Int                       @id @default(autoincrement())
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
+  username                 String                    @unique @db.VarChar(15)
+  email                    String                    @unique @db.VarChar(254)
+  password                 String
+  dateOfBirth              DateTime                  @db.Date
+  role                     UserRole                  @default(USER)
+  deactivatedAt            DateTime?
+  emailVerified            Boolean                   @default(false)
+  blockedBy                Block[]                   @relation("blocked")
+  blockedUsers             Block[]                   @relation("blocker")
+  conversationsParticipant ConversationParticipant[]
+  followers                Follow[]                  @relation("followee")
+  following                Follow[]                  @relation("follower")
+  messagesReceived         Message[]                 @relation("receiver")
+  messagesSent             Message[]                 @relation("sender")
+  notificationsCreated     Notification[]            @relation("notifier")
+  notificationsReceived    Notification[]            @relation("receiver")
+  posts                    Post[]
+  bookmarkedPosts          PostBookmark[]
+  likedPosts               PostLike[]
+  repostedPosts            PostRepost[]
+  profile                  Profile?
+  notifying                PushNotification[]        @relation("notifier")
+  notifiers                PushNotification[]        @relation("receiver")
 }
 
 model Profile {
-    id             Int      @id @default(autoincrement())
-    createdAt      DateTime @default(now())
-    updatedAt      DateTime @updatedAt
-    name           String   @db.VarChar(50)
-    bio            String   @db.VarChar(160)
-    location       String   @db.VarChar(30)
-    websiteUrl     String   @db.VarChar(100)
-    profilePicture String   @db.VarChar(255)
-    bannerPicture  String   @db.VarChar(255)
-    user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId         Int      @unique
+  id             Int      @id @default(autoincrement())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  name           String   @db.VarChar(50)
+  bio            String   @db.VarChar(160)
+  location       String   @db.VarChar(30)
+  websiteUrl     String   @db.VarChar(100)
+  profilePicture String   @db.VarChar(255)
+  bannerPicture  String   @db.VarChar(255)
+  userId         Int      @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model TemporaryUser {
-    id                   Int      @id @default(autoincrement())
-    createdAt            DateTime @default(now())
-    updatedAt            DateTime @updatedAt
-    profileName          String   @db.VarChar(50)
-    email                String   @unique @db.VarChar(254)
-    emailVerified        Boolean  @default(false)
-    dateOfBirth          DateTime @db.Date()
-    password             String?
-    username             String?  @unique @db.VarChar(15)
-    profilePicture       String?  @db.VarChar(255)
-    registrationComplete Boolean  @default(false)
+  id                   Int      @id @default(autoincrement())
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  profileName          String   @db.VarChar(50)
+  email                String   @unique @db.VarChar(254)
+  emailVerified        Boolean  @default(false)
+  dateOfBirth          DateTime @db.Date
+  password             String?
+  username             String?  @unique @db.VarChar(15)
+  profilePicture       String?  @db.VarChar(255)
+  registrationComplete Boolean  @default(false)
 }
 
 model Post {
-    id            Int             @id @default(autoincrement())
-    content       String?         @db.VarChar(280)
-    images        String[]        @db.VarChar(280)
-    createdAt     DateTime        @default(now())
-    updatedAt     DateTime        @updatedAt
-    author        User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
-    authorId      Int
-    replyTo       Post?           @relation("reply", fields: [replyToId], references: [id], onDelete: Cascade)
-    replyToId     Int?
-    replies       Post[]          @relation("reply")
-    likes         PostLike[]
-    reposts       PostRepost[]
-    bookmarks     PostBookmark[]
-    notifications Notification[]
-    hashtags      HashtagOnPost[] @relation("PostHashtags")
+  id            Int             @id @default(autoincrement())
+  content       String?         @db.VarChar(280)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  authorId      Int
+  replyToId     Int?
+  images        String[]        @db.VarChar(280)
+  hashtags      HashtagOnPost[] @relation("PostHashtags")
+  notifications Notification[]
+  author        User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  replyTo       Post?           @relation("reply", fields: [replyToId], references: [id], onDelete: Cascade)
+  replies       Post[]          @relation("reply")
+  bookmarks     PostBookmark[]
+  likes         PostLike[]
+  reposts       PostRepost[]
 }
 
 model Hashtag {
-    id        Int             @id @default(autoincrement())
-    name      String          @unique
-    posts     HashtagOnPost[] @relation("HashtagPosts")
-    createdAt DateTime        @default(now())
+  id        Int             @id @default(autoincrement())
+  name      String          @unique
+  createdAt DateTime        @default(now())
+  posts     HashtagOnPost[] @relation("HashtagPosts")
 }
 
 model HashtagOnPost {
-    postId    Int
-    hashtagId Int
-    post      Post    @relation(name: "PostHashtags", fields: [postId], references: [id])
-    hashtag   Hashtag @relation(name: "HashtagPosts", fields: [hashtagId], references: [id])
+  postId    Int
+  hashtagId Int
+  hashtag   Hashtag @relation("HashtagPosts", fields: [hashtagId], references: [id])
+  post      Post    @relation("PostHashtags", fields: [postId], references: [id])
 
-    @@id([postId, hashtagId])
+  @@id([postId, hashtagId])
 }
 
 model PostLike {
-    postId    Int
-    userId    Int
-    createdAt DateTime @default(now())
-    post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    Int
+  userId    Int
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    @@id(name: "postLikeId", [postId, userId])
+  @@id([postId, userId], name: "postLikeId")
 }
 
 model PostRepost {
-    postId    Int
-    userId    Int
-    createdAt DateTime @default(now())
-    post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    Int
+  userId    Int
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    @@id(name: "postRepostId", [postId, userId])
+  @@id([postId, userId], name: "postRepostId")
 }
 
 model PostBookmark {
-    userId    Int
-    postId    Int
-    createdAt DateTime @default(now())
-    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-    post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    Int
+  postId    Int
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    @@id(name: "postBookmarkId", [userId, postId])
+  @@id([userId, postId], name: "postBookmarkId")
 }
 
 model Follow {
-    followerId Int
-    followeeId Int
-    createdAt  DateTime @default(now())
-    follower   User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
-    followee   User     @relation("followee", fields: [followeeId], references: [id], onDelete: Cascade)
+  followerId Int
+  followeeId Int
+  createdAt  DateTime @default(now())
+  followee   User     @relation("followee", fields: [followeeId], references: [id], onDelete: Cascade)
+  follower   User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
 
-    @@id(name: "followId", [followerId, followeeId])
+  @@id([followerId, followeeId], name: "followId")
 }
 
 model Conversation {
-    id           String                    @id @default(uuid())
-    createdAt    DateTime                  @default(now())
-    updatedAt    DateTime                  @updatedAt
-    participants ConversationParticipant[]
-    messages     Message[]
+  id           String                    @id @default(uuid())
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+  participants ConversationParticipant[]
+  messages     Message[]
 }
 
 model ConversationParticipant {
-    id             Int          @id @default(autoincrement())
-    conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-    conversationId String
-    user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId         Int
-    isDeleted      Boolean      @default(false) // Tracks if the participant "deleted" the conversation on their end
+  id             Int          @id @default(autoincrement())
+  conversationId String
+  userId         Int
+  isDeleted      Boolean      @default(false)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    @@unique([conversationId, userId])
+  @@unique([conversationId, userId])
 }
 
 model Message {
-    id             String       @id @default(uuid())
-    content        String       @db.VarChar(10000)
-    createdAt      DateTime     @default(now())
-    updatedAt      DateTime     @default(now())
-    readStatus     Boolean      @default(false)
-    sender         User         @relation("sender", fields: [senderId], references: [id], onDelete: Cascade)
-    senderId       Int
-    receiver       User         @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
-    receiverId     Int
-    conversation   Conversation @relation(fields: [conversationId], references: [id])
-    conversationId String
+  id             String       @id @default(uuid())
+  content        String       @db.VarChar(10000)
+  receiverId     Int
+  createdAt      DateTime     @default(now())
+  readStatus     Boolean      @default(false)
+  senderId       Int
+  updatedAt      DateTime     @default(now())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  receiver       User         @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender         User         @relation("sender", fields: [senderId], references: [id], onDelete: Cascade)
 }
 
 model Block {
-    blockerId Int
-    blockedId Int
-    createdAt DateTime @default(now())
-    blocker   User     @relation("blocker", fields: [blockerId], references: [id], onDelete: Cascade)
-    blocked   User     @relation("blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+  blockerId Int
+  blockedId Int
+  createdAt DateTime @default(now())
+  blocked   User     @relation("blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+  blocker   User     @relation("blocker", fields: [blockerId], references: [id], onDelete: Cascade)
 
-    @@id(name: "blockId", [blockerId, blockedId])
+  @@id([blockerId, blockedId], name: "blockId")
 }
 
 model PushNotification {
-    receiverId Int
-    notifierId Int
-    createdAt  DateTime @default(now())
-    receiver   User     @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
-    notifier   User     @relation("notifier", fields: [notifierId], references: [id], onDelete: Cascade)
+  receiverId Int
+  notifierId Int
+  createdAt  DateTime @default(now())
+  notifier   User     @relation("notifier", fields: [notifierId], references: [id], onDelete: Cascade)
+  receiver   User     @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
 
-    @@id(name: "pushNotificationId", [receiverId, notifierId])
+  @@id([receiverId, notifierId], name: "pushNotificationId")
 }
 
 model NotificationType {
-    id           Int            @id @default(autoincrement())
-    name         String
-    description  String
-    Notification Notification[]
+  id           Int            @id @default(autoincrement())
+  name         String
+  description  String
+  Notification Notification[]
 }
 
 model Notification {
-    id         Int              @id @default(autoincrement())
-    typeId     Int
-    postId     Int?
-    notifierId Int
-    receiverId Int
-    isRead     Boolean          @default(false)
-    createdAt  DateTime         @default(now())
-    type       NotificationType @relation(fields: [typeId], references: [id], onDelete: Cascade)
-    post       Post?            @relation(fields: [postId], references: [id], onDelete: Cascade)
-    notifier   User             @relation("notifier", fields: [notifierId], references: [id], onDelete: Cascade)
-    receiver   User             @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  id         Int              @id @default(autoincrement())
+  typeId     Int
+  postId     Int?
+  notifierId Int
+  receiverId Int
+  isRead     Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+  notifier   User             @relation("notifier", fields: [notifierId], references: [id], onDelete: Cascade)
+  post       Post?            @relation(fields: [postId], references: [id], onDelete: Cascade)
+  receiver   User             @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  type       NotificationType @relation(fields: [typeId], references: [id], onDelete: Cascade)
 }
 
 enum UserRole {
-    USER
-    ADMIN
+  USER
+  ADMIN
 }

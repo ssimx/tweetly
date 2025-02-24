@@ -1,11 +1,11 @@
-import { getSettingsToken, getToken, removeSession, removeSettingsToken, verifySession } from "@/lib/session";
+import { getSettingsToken, getUserSessionToken, removeSession, removeSettingsToken, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 export async function PATCH(req: NextRequest) {
     if (req.method === 'PATCH') {
         // Check for an existing session
-        const sessionToken = await getToken();
+        const sessionToken = await getUserSessionToken();
         const settingsToken = await getSettingsToken();
 
         if (sessionToken && settingsToken) {

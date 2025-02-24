@@ -7,6 +7,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { RegisterTemporaryUserBasicDataType } from 'tweetly-shared';
 
 type DateOfBirthDataType = {
     year: number;
@@ -14,23 +15,16 @@ type DateOfBirthDataType = {
     day: number;
 };
 
-// For sign up page
-type SignUpFormFieldsType = DateOfBirthDataType & {
-    username: string;
-    email: string;
-    password: string;
-    confirmPassword: string;
-};
-
-// For user settings change birthday page
-type SettingsFormFieldsType = DateOfBirthDataType;
-
 type DateOfBirthProps = {
-    signUpRegister?: UseFormRegister<SignUpFormFieldsType>;
-    signUpSetValues?: UseFormSetValue<SignUpFormFieldsType>;
-    settingsRegister?: UseFormRegister<SettingsFormFieldsType>;
+    // For new user registration process
+    signUpRegister?: UseFormRegister<RegisterTemporaryUserBasicDataType>;
+    signUpSetValues?: UseFormSetValue<RegisterTemporaryUserBasicDataType>;
+    
+    // For user settings
+    settingsRegister?: UseFormRegister<DateOfBirthDataType>;
     settingsGetValues?: UseFormGetValues<DateOfBirthDataType>;
-    settingsSetValues?: UseFormSetValue<SettingsFormFieldsType>;
+    settingsSetValues?: UseFormSetValue<DateOfBirthDataType>;
+    
     errors: FieldErrors;
 };
 
@@ -82,9 +76,14 @@ export function DateOfBirthSelect({ signUpRegister, signUpSetValues, settingsReg
     };
 
     return (
-        <div className='flex flex-col gap-2'>
+        <div className='flex flex-col gap-6'>
             {!settingsGetValues && (
-                <p className="font-bold">Date Of Birth</p>
+                <div>
+                    <p className="font-bold">Date Of Birth</p>
+                    <p className='text-secondary-text text-14'>
+                            This will not be shown publicly. Confirm your own age, even if this account is for a business, a pet, or something else.
+                    </p>
+                </div>
             )}
             <div className='flex gap-2 w-full'>
 

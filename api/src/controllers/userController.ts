@@ -1,25 +1,90 @@
 import { createNotificationForNewFollow, removeNotificationForFollow } from './../services/notificationService';
-import { Request, Response } from 'express';
-import { addBlock, addFollow, addPushNotifications, deactivateUser, getFollowers, getFollowing, getFollowSuggestions, getProfile, getUser, getUserByEmail, getUserByUsername, getUserPassword, isUserDeactivated, removeBlock, removeFollow, removePushNotfications, updateProfile, updateUserBirthday, updateUserEmail, updateUserPassword, updateUserUsername } from '../services/userService';
+import { NextFunction, Request, Response } from 'express';
+import { addBlock, addFollow, addPushNotifications, deactivateUser, getFollowers, getFollowing, getFollowSuggestions, getProfile, getTemporaryUser, getUser, getUserByEmail, getUserByUsername, getUserPassword, isUserDeactivated, removeBlock, removeFollow, removePushNotfications, updateProfile, updateUserBirthday, updateUserEmail, updateUserPassword, updateUserUsername } from '../services/userService';
 import { ProfileInfo, UserProps } from '../lib/types';
 import { deleteImageFromCloudinary } from './uploadController';
 import { getNotifications, getOldestNotification, updateNotificationsToRead } from '../services/notificationService';
-import { generateToken } from '../utils/jwt';
+import { generateUserSessionToken } from '../utils/jwt';
 import bcrypt from 'bcrypt';
+import { AppError, LoggedInTemporaryUserDataType, LoggedInUserDataType, SuccessResponse } from 'tweetly-shared';
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getUserInfo = async (req: Request, res: Response) => {
+export const getUserInfo = async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.user as UserProps;
-    
-    try {
-        const user = await getUser(id);
-        if (!user) return res.status(404).json({ error: 'User does not exist' });
 
-        return res.status(201).json({ user });
+    try {
+        const userInfo = await getUser(id);
+        if (!userInfo || !userInfo.profile) {
+            throw new AppError('User not found', 404, 'USER_NOT_FOUND');
+        }
+
+        const user = {
+            id: userInfo.id,
+            createdAt: userInfo.createdAt,
+            username: userInfo.username,
+            email: userInfo.email,
+            dateOfBirth: userInfo.dateOfBirth,
+            following: userInfo._count.following,
+            followers: userInfo._count.followers,
+            profile: {
+                name: userInfo.profile.name,
+                bio: userInfo.profile.bio,
+                location: userInfo.profile.location,
+                websiteUrl: userInfo.profile.websiteUrl,
+                profilePicture: userInfo.profile.profilePicture,
+                bannerPicture: userInfo.profile.bannerPicture,
+            },
+        } as LoggedInUserDataType;
+
+        const successResponse: SuccessResponse<{ user: LoggedInUserDataType }> = {
+            success: true,
+            data: {
+                user: user
+            },
+        };
+
+        res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error getting user: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        next(error);
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getTemporaryUserInfo = async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.user as UserProps;
+
+    try {
+        const userInfo = await getTemporaryUser(id);
+        if (!userInfo) {
+            throw new AppError('Temporary user not found', 404, 'USER_NOT_FOUND');
+        }
+
+        const user = {
+            id: userInfo.id,
+            createdAt: userInfo.createdAt,
+            updatedAt: userInfo.updatedAt,
+            profileName: userInfo.profileName,
+            email: userInfo.email,
+            emailVerified: userInfo.emailVerified,
+            dateOfBirth: userInfo.dateOfBirth,
+            password: userInfo.password !== null,
+            username: userInfo.username !== null,
+            profilePicture: userInfo.profilePicture !== null,
+            registrationComplete: userInfo.registrationComplete,
+        } as LoggedInTemporaryUserDataType;
+
+        const successResponse: SuccessResponse<{ user: LoggedInTemporaryUserDataType }> = {
+            success: true,
+            data: {
+                user: user
+            },
+        };
+
+        res.status(200).json(successResponse);
+    } catch (error) {
+        next(error);
     }
 };
 
@@ -147,7 +212,7 @@ export const followUser = async (req: Request, res: Response) => {
     try {
         const response = await addFollow(user.id, username);
         if (!response) return res.status(404).json({ error: 'failure' })
-        
+
         createNotificationForNewFollow(user.id, username);
 
         return res.status(201).json('success');
@@ -166,7 +231,7 @@ export const unfollowUser = async (req: Request, res: Response) => {
     try {
         const response = await removeFollow(user.id, username);
         if (!response) return res.status(404).json({ error: 'failure' })
-        
+
         removeNotificationForFollow(user.id, username);
 
         return res.status(201).json('success');
@@ -278,16 +343,16 @@ export const getUserNotifications = async (req: Request, res: Response) => {
                 // check if new cursor equals last post id
                 //  if truthy, return older posts and set the end to true
                 end: notifications.length === 0
+                    ? true
+                    : oldestNotificationId === notifications.slice(-1)[0].id
                         ? true
-                        : oldestNotificationId === notifications.slice(-1)[0].id
-                            ? true
-                            : false,
+                        : false,
             });
         } else {
             const oldestNotificationId = await getOldestNotification(user.id).then(res => res?.id);
             const notifications = await getNotifications(user.id, Number(cursor));
             await updateNotificationsToRead(user.id);
-            
+
             return res.status(200).json({
                 notifications: notifications,
                 end: !oldestNotificationId
@@ -324,7 +389,7 @@ export const changeUsername = async (req: Request, res: Response) => {
         }
 
         // Generate and send JWT token
-        const token: string = generateToken(tokenPayload);
+        const token: string = generateUserSessionToken(tokenPayload);
 
         return res.status(201).json({ token });
     } catch (error) {

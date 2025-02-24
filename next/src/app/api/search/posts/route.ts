@@ -1,4 +1,4 @@
-import { extractToken, getToken, removeSession, verifySession } from "@/lib/session";
+import { extractToken, getUserSessionToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { searchSchema } from "@/lib/schemas";
@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
         const searchParams = req.nextUrl.searchParams;
         const authHeader = req.headers.get('Authorization');
-        const token = await extractToken(authHeader) || await getToken();
+        const token = await extractToken(authHeader) || await getUserSessionToken();
 
         if (token) {
             const isValid = await verifySession(token);

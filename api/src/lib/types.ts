@@ -7,7 +7,14 @@ export interface PassportError extends Error {
 
 export type UserProps = Omit<User, 'password'>;
 
+export type TemporaryUserTokenType = {
+    type: 'temporary',
+    id: number;
+    email: string;
+};
+
 export interface UserTokenProps {
+    type: 'user',
     id: number;
     username: string;
     email: string;

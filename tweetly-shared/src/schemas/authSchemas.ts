@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import { getAge } from '../lib/utils';
 
-export const registerTemporaryUserBasicDataSchema = z.object({
+export const temporaryUserBasicDataSchema = z.object({
     profileName: z
         .string()
         .trim()
@@ -42,7 +42,7 @@ export const registerTemporaryUserBasicDataSchema = z.object({
     }
 });
 
-export const updateTemporaryUserPasswordSchema = z.object({
+export const temporaryUserPasswordSchema = z.object({
     password: z
         .string()
         .trim()
@@ -61,7 +61,7 @@ export const updateTemporaryUserPasswordSchema = z.object({
     }
 });
 
-export const updateTemporaryUserUsernameSchema = z.object({
+export const temporaryUserUsernameSchema = z.object({
     username: z
         .string()
         .trim()
@@ -71,9 +71,10 @@ export const updateTemporaryUserUsernameSchema = z.object({
         .regex(/^[a-zA-Z0-9]+$/, "Username contains invalid characters."),
 });
 
-export const updateTemporaryUserProfilePictureSchema = z.object({
+export const temporaryUserProfilePictureSchema = z.object({
     profilePicture: z
         .string()
+        .optional(),
 });
 
 export const registerUserDataSchema = z.object({

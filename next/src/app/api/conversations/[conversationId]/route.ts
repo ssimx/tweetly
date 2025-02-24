@@ -1,4 +1,4 @@
-import { verifySession, extractToken, removeSession, getToken } from "@/lib/session";
+import { verifySession, extractToken, removeSession, getUserSessionToken } from "@/lib/session";
 import { ConversationsListType } from "@/lib/types";
 import { getErrorMessage } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
@@ -9,8 +9,8 @@ export async function GET(req: NextRequest, props: { params: Promise<{ conversat
     const params = await props.params;
     if (req.method === 'GET') {
         const authHeader = req.headers.get('Authorization');
-        // need getToken() to extract the token from client component for infinite scroll
-        const token = await extractToken(authHeader) || await getToken();
+        // need getUserSessionToken() to extract the token from client component for infinite scroll
+        const token = await extractToken(authHeader) || await getUserSessionToken();
         if (token) {
             const isValid = await verifySession(token);
             if (!isValid.isAuth) {

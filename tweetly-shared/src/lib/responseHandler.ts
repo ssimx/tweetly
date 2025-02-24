@@ -21,7 +21,7 @@ export class AppError extends Error {
 // Type for successful response
 export type SuccessResponse<T> = {
     success: true;
-    data: T;
+    data?: T;
 };
 
 // Type for failed response

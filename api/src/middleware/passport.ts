@@ -6,6 +6,9 @@ const prisma = new PrismaClient({
     omit: {
         user: {
             password: true
+        },
+        temporaryUser: {
+            password: true
         }
     }
 });
@@ -17,18 +20,34 @@ const options: StrategyOptions = {
     secretOrKey: SECRET_KEY,
 }
 
-const strategy = new Strategy(options, async (payload: { id: number, email: string, username: string }, done: VerifiedCallback) => {
+const strategy = new Strategy(options, async (payload: { type: 'user' | 'temporary', id: number }, done: VerifiedCallback) => {
     try {
-        const user = await prisma.user.findUnique({
-            where: {
-                id: payload.id,
-            },
-        });
+        if (payload.type === 'user') {
+            const user = await prisma.user.findUnique({
+                where: {
+                    id: payload.id,
+                },
+            });
 
-        if (user) {
-            return done(null, user);
+            if (user) {
+                return done(null, user);
+            } else {
+                return done(null, false, { message: 'User not found' });
+            }
+        } else if (payload.type === 'temporary') {
+            const user = await prisma.temporaryUser.findUnique({
+                where: {
+                    id: payload.id,
+                },
+            });
+
+            if (user) {
+                return done(null, user);
+            } else {
+                return done(null, false, { message: 'Temporary user not found' });
+            }
         } else {
-            return done(null, false, { message: 'User not found'} );
+            throw new Error('Invalid JWT');
         }
     } catch (error) {
         console.error('Error during JWT verification:', error);

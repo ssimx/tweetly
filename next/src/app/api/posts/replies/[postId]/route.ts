@@ -1,10 +1,10 @@
-import { extractToken, getToken, removeSession, verifySession } from "@/lib/session";
+import { extractToken, getUserSessionToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest, props: { params: Promise<{ postId: number }> }) {
     if (req.method === 'GET') {
         const authHeader = req.headers.get('Authorization');
-        const token = await extractToken(authHeader) || await getToken();
+        const token = await extractToken(authHeader) || await getUserSessionToken();
         if (token) {
             const isValid = await verifySession(token);
 

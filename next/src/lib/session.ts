@@ -21,7 +21,6 @@ export async function createSession(token: string) {
 
 export async function decryptSession(token: string | undefined) {
     if (!token) {
-        console.error('No session found');
         return;
     }
 
@@ -31,7 +30,6 @@ export async function decryptSession(token: string | undefined) {
         })
         return payload;
     } catch (error) {
-        console.log('Failed to verify session');
         return;
     }
 };
@@ -49,7 +47,7 @@ export async function hasSession() {
     return cookieStore.has('access-token');
 };
 
-export async function getToken() {
+export async function getUserSessionToken() {
     const cookieStore = await cookies();
     return cookieStore.get('access-token')?.value;
 };
@@ -145,7 +143,6 @@ export async function getSettingsToken() {
 
 export async function decryptSettingsToken(token: string | undefined) {
     if (!token) {
-        console.error('No settings token found');
         return;
     }
 
@@ -155,7 +152,6 @@ export async function decryptSettingsToken(token: string | undefined) {
         })
         return payload;
     } catch (error) {
-        console.log('Failed to verify settings token');
         return;
     }
 };

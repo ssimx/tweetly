@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { getSettingsToken, getTemporaryToken, getToken, removeSession, removeTemporarySession, verifySession, verifySettingsToken } from "@/lib/session";
+import { getSettingsToken, getTemporaryToken, getUserSessionToken, removeSession, removeTemporarySession, verifySession, verifySettingsToken } from "@/lib/session";
 import { redirect } from "next/navigation";
 
 export const getCurrentTemporaryUserToken = cache(async (): Promise<string | null> => {
@@ -16,7 +16,7 @@ export const getCurrentTemporaryUserToken = cache(async (): Promise<string | nul
 });
 
 export const getCurrentUserToken = cache(async (): Promise<string | undefined> => {
-    const token = await getToken();
+    const token = await getUserSessionToken();
 
     if (!token) {
         redirect('/logout');
@@ -37,6 +37,6 @@ export const verifyCurrentUserSettingsToken = async () => {
 
     const verifyToken = await verifySettingsToken(token);
     if (!verifyToken.isAuth) return null;
-    
+
     return token;
 };

@@ -9,10 +9,10 @@ export const getUser = async (id: number) => {
         where: { id },
         select: {
             id: true,
+            createdAt: true,
             username: true,
             email: true,
             dateOfBirth: true,
-            createdAt: true,
             profile: {
                 select: {
                     name: true,
@@ -30,6 +30,14 @@ export const getUser = async (id: number) => {
                 }
             }
         }
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getTemporaryUser = async (id: number) => {
+    return await prisma.temporaryUser.findUnique({
+        where: { id },
     });
 };
 
@@ -850,14 +858,27 @@ export const getUsersBySearch = async (userId: number, searchTerms: string[]) =>
 // ---------------------------------------------------------------------------------------------------------
 
 export const getUserByUsername = async (username: string) => {
-    return await prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
         where: {
             username
         },
         select: {
             username: true,
         },
-    })
+    });
+
+    if (user) return user;
+
+    const temporaryUser = await prisma.temporaryUser.findUnique({
+        where: {
+            username
+        },
+        select: {
+            username: true,
+        },
+    });
+
+    return temporaryUser;
 };
 
 // ---------------------------------------------------------------------------------------------------------

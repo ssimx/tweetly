@@ -1,4 +1,4 @@
-import { extractToken, getToken, removeSession, verifySession } from "@/lib/session";
+import { extractToken, getUserSessionToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
         const authHeader = req.headers.get('Authorization');
-        const token = await extractToken(authHeader) || await getToken();
+        const token = await extractToken(authHeader) || await getUserSessionToken();
         if (token) {
             const isValid = await verifySession(token);
 
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
             const apiUrl = process.env.EXPRESS_API_URL;
             const searchParams = req.nextUrl.searchParams;
             const cursor = searchParams.get('cursor');
-                console.log(cursor)
+            console.log(cursor)
 
             if (cursor !== null) {
                 console.log(cursor)

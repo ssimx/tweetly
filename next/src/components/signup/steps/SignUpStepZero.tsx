@@ -1,62 +1,75 @@
 'use client';
-
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
-import { Apple, Loader2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { Input } from "@/components/ui/input";
-import { DateOfBirthSelect } from "@/components/forms/DateOfBirthSelect";
-import { registerUser } from '@/actions/actions';
-import { registerUserDataSchema, RegisterUserDataType, TemporaryUserDataType } from 'tweetly-shared';
+import TweetlyLogoWhite from '@public/white.png';
+import TweetlyLogoBlack from '@public/black.png';
+import {
+    Dialog,
+    DialogContent,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Loader2, X } from "lucide-react";
+import { useEffect, useId } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FormTemporaryUserBasicDataType, isZodError, temporaryUserBasicDataSchema } from 'tweetly-shared';
+import { Input } from '@/components/ui/input';
+import { DateOfBirthSelect } from '@/components/forms/DateOfBirthSelect';
 import { z } from 'zod';
 import { getErrorMessage } from '@/lib/utils';
-import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { useDisplayContext } from '@/context/DisplayContextProvider';
+import { registerTemporaryUser } from '@/actions/actions';
+import { SignUpStepType } from '../SignUpProcess';
 
-export default function SignUpStepZero({ user }: { user: TemporaryUserDataType | null }) {
-    const router = useRouter();
-    const [registrationStep, setRegistrationStep] = useState<number | undefined>(undefined);
+export default function SignUpStepZero({ dialogOpen, setDialogOpen, registrationStep, setRegistrationStep, customError, setCustomError }: SignUpStepType) {
+    const { savedTheme } = useDisplayContext();
+    const formId = useId();
 
     const {
         register,
+        control,
         handleSubmit,
-        reset,
         formState: { errors, isSubmitting },
         setError,
         setValue,
-    } = useForm<RegisterUserDataType>({ resolver: zodResolver(registerUserDataSchema) });
+        reset,
+    } = useForm<FormTemporaryUserBasicDataType>({ resolver: zodResolver(temporaryUserBasicDataSchema) });
 
-    const onSubmit = async (formData: unknown) => {
+    // better performance than watch
+    const nameWatch = useWatch({ control, name: 'profileName', defaultValue: '' });
+    const emailWatch = useWatch({ control, name: 'email', defaultValue: '' });
+    const yearWatch = useWatch({ control, name: 'year' });
+    const monthWatch = useWatch({ control, name: 'month' });
+    const dayWatch = useWatch({ control, name: 'day' });
+
+    const onSubmit = async (formData: FormTemporaryUserBasicDataType) => {
         if (isSubmitting) return;
+        setCustomError(null);
 
         try {
-            if (registrationStep === 0);
-
-            const response = await registerUser(data);
+            const response = await registerTemporaryUser(formData);
 
             if (!response.success) {
-                if (response.error?.details) {
-                    response.error.details.forEach((detail) => {
-                        if (detail.path && detail.message) {
-                            setError(detail.path[0] as keyof RegisterUserDataType, {
-                                type: 'manual',
-                                message: detail.message
-                            });
+                if (response.error.details) throw new z.ZodError(response.error.details);
+                else if (response.error.code === 'EMAIL_TAKEN') {
+                    throw new z.ZodError([
+                        {
+                            code: 'custom',
+                            path: ['email'],
+                            message: response.error.message,
                         }
-                    });
-                } else {
-                    throw new Error(response.error.message);
+                    ]);
                 }
+                else throw new Error(response.error.message);
             }
 
-            router.replace('/');
-            router.refresh();
+            setRegistrationStep(() => 1);
         } catch (error: unknown) {
-            if (error instanceof z.ZodError) {
+            if (isZodError(error)) {
                 error.issues.forEach((detail) => {
+                    console.log(detail)
                     if (detail.path && detail.message) {
-                        setError(detail.path[0] as keyof RegisterUserDataType, {
+                        setError(detail.path[0] as keyof FormTemporaryUserBasicDataType, {
                             type: 'manual',
                             message: detail.message
                         });
@@ -65,68 +78,83 @@ export default function SignUpStepZero({ user }: { user: TemporaryUserDataType |
             } else {
                 const errorMessage = getErrorMessage(error);
                 console.error('Registration error:', errorMessage);
+                setCustomError('Something went wrong');
             }
-
-            reset();
         }
     };
 
-    const completeRegistration = async (data: RegisterUserDataType) => {
-
-    };
+    useEffect(() => {
+    }, [registrationStep, reset]);
 
     return (
-        <div className='flex flex-col justify-between gap-8 w-3/4 min-w-[300px] md:w-1/2'>
-            <h1 className='text-30 font-bold text-center'>
-                Create your account
-            </h1>
-            <div className='flex flex-col justify-between items-center gap-8'>
-                <div className='flex flex-col gap-4 w-3/5'>
-                    <Button className='rounded-2xl border border-gray-200 bg-transparent focus-visible:bg-none hover:text-white-1'>
-                        <Mail className="mr-2 h-4 w-4" /> Sign up with Email
-                    </Button>
-                    <Button className='rounded-2xl border border-gray-200 bg-transparent focus-visible:bg-none hover:text-white-1'>
-                        <Apple className="mr-2 h-4 w-4" /> Sign up with Apple
-                    </Button>
+        <Dialog open={dialogOpen} >
+            <DialogContent
+                className='w-[90%] sm:w-[700px] sm:h-[75%] flex flex-col justify-center items-center px-20 py-5 bg-primary-foreground'
+                hideClose
+            >
+
+                <div className=''>
+                    <Image src={savedTheme === 0 ? TweetlyLogoBlack : TweetlyLogoWhite} alt='Tweetly logo' width='30' height='30' className='mx-auto' />
                 </div>
 
-                <p>Or</p>
+                <button
+                    className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+                    onClick={() => setDialogOpen(false)}
+                >
+                    <X size={22} className='text-primary-text' />
+                    <span className="sr-only">Close</span>
+                </button>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
-                    <Input {...register("username")} placeholder="username" />
-                    {errors.username && (
-                        <p className="error-msg">{`${errors.username.message}`}</p>
-                    )}
-                    <Input {...register("email")} placeholder="email" />
-                    {errors.email && (
-                        <p className="error-msg">{`${errors.email.message}`}</p>
-                    )}
+                <div className='flex flex-col gap-8 mt-auto'>
+                    <DialogTitle className='text-primary-text mr-auto text-[2.2rem]'>Create your account</DialogTitle>
 
-                    <DateOfBirthSelect
-                        signUpRegister={register}
-                        signUpSetValues={setValue}
-                        errors={errors}
-                    />
+                    <form
+                        onSubmit={handleSubmit(onSubmit)}
+                        className='flex flex-col gap-5 w-full'
+                        id={formId}
+                    >
+                        <Input {...register("profileName")} placeholder="Name" maxLength={50} />
+                        {errors.profileName && (
+                            <p className="error-msg">{`${errors.profileName.message}`}</p>
+                        )}
 
-                    <Input {...register("password")} type="password" placeholder="password" />
-                    {errors.password && (
-                        <p className="error-msg">{`${errors.password.message}`}</p>
-                    )}
-                    <Input {...register("confirmPassword")} type="password" placeholder="confirm password" />
-                    {errors.confirmPassword && (
-                        <p className="error-msg">{`${errors.confirmPassword.message}`}</p>
-                    )}
+                        <Input {...register("email")} placeholder="Email" maxLength={254} />
+                        {errors.email && (
+                            <p className="error-msg">{`${errors.email.message}`}</p>
+                        )}
 
-                    {isSubmitting
-                        ? <Button disabled>
+                        <DateOfBirthSelect
+                            signUpRegister={register}
+                            signUpSetValues={setValue}
+                            errors={errors}
+                        />
+                    </form>
+
+                    {customError && (
+                        <p className="error-msg text-center mt-auto">{`${customError}`}</p>
+                    )}
+                </div>
+
+                {isSubmitting
+                    ? (
+                        <Button disabled
+                            className='w-full h-[3rem] text-[1.1rem] bg-primary font-semibold text-white-1 mt-auto rounded-[25px]'>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Signing up
+                            Creating account...
                         </Button>
-                        : <Button className='bg-primary font-bold text-white-1'>Sign up</Button>
-                    }
-                </form>
-                <p>Already have an account? <Link href='/login' className='font-bold hover:text-primary'>Log in</Link></p>
-            </div>
-        </div>
+                    )
+                    : (
+                        <Button form={formId}
+                            className='w-full h-[3rem] text-[1.1rem] bg-primary font-semibold text-white-1 mt-auto rounded-[25px]'
+                            disabled={!(nameWatch && (emailWatch?.includes('@') && emailWatch?.includes('.')) && yearWatch && monthWatch && dayWatch)}
+                        >
+                            Next
+                        </Button>
+                    )
+                }
+
+            </DialogContent>
+        </Dialog>
     )
 }
+

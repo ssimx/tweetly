@@ -1,9 +1,9 @@
-import { getToken, removeSession, verifySession } from "@/lib/session";
+import { getUserSessionToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
     if (req.method === 'POST') {
-        const token = await getToken();
+        const token = await getUserSessionToken();
         if (token) {
             const isValid = await verifySession(token);
 

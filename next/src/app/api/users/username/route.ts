@@ -1,5 +1,5 @@
 import { settingsChangeUsername } from "@/lib/schemas";
-import { extractToken, getSettingsToken, getToken, removeSession, removeSettingsToken, verifySession, verifySettingsToken } from "@/lib/session";
+import { extractToken, getSettingsToken, getUserSessionToken, removeSession, removeSettingsToken, verifySession, verifySettingsToken } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -7,7 +7,7 @@ export async function PATCH(req: NextRequest) {
     if (req.method === 'PATCH') {
         const authHeader = req.headers.get('Authorization');
         const settingsHeader = req.headers.get('Settings-Token');
-        const sessionToken = await extractToken(authHeader) || await getToken();
+        const sessionToken = await extractToken(authHeader) || await getUserSessionToken();
         const settingsToken = await extractToken(settingsHeader) || await getSettingsToken();
 
         if (sessionToken && settingsToken) {

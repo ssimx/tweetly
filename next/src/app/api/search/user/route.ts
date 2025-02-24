@@ -1,4 +1,4 @@
-import { extractToken, getSettingsToken, getToken, removeSession, removeSettingsToken, verifySession, verifySettingsToken } from "@/lib/session";
+import { extractToken, removeSession, removeTemporarySession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { searchUsernameSchema } from "@/lib/schemas";
@@ -8,25 +8,19 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
         const authHeader = req.headers.get('Authorization');
-        const settingsHeader = req.headers.get('Settings-Token');
-        const sessionToken = await extractToken(authHeader) || await getToken();
-        const settingsToken = await extractToken(settingsHeader) || await getSettingsToken();
+        const sessionToken = await extractToken(authHeader);
+        console.log(sessionToken)
 
-        if (sessionToken && settingsToken) {
+        if (sessionToken) {
             // Check for session validity
             const isSessionValid = await verifySession(sessionToken);
-            const isSettingsTokenValid = await verifySettingsToken(settingsToken);
 
             if (!isSessionValid.isAuth) {
                 await removeSession();
-                await removeSettingsToken();
+                await removeTemporarySession();
                 return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 401 });
             }
 
-            if (!isSettingsTokenValid.isAuth) {
-                await removeSettingsToken();
-                return NextResponse.json({ message: 'Invalid settings token' }, { status: 401 });
-            }
         } else {
             if (!sessionToken) return NextResponse.json({ message: 'Not logged in, please log in first' }, { status: 401 });
         }

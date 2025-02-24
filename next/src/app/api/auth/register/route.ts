@@ -1,27 +1,17 @@
-import { extractToken, getToken, removeSession, verifySession } from '@/lib/session';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { ApiResponse, AppError, ErrorResponse, RegisterUserDataType, SuccessResponse, SuccessfulRegisterResponseType, registerUserDataSchema } from 'tweetly-shared';
+import { ApiResponse, AppError, ErrorResponse, SuccessResponse, SuccessfulRegisterResponseType, isZodError, temporaryUserBasicDataSchema, temporaryUserPasswordSchema } from 'tweetly-shared';
+import { getErrorMessage } from '@/lib/utils';
 
 export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<SuccessfulRegisterResponseType>>> {
     if (req.method === 'POST') {
         try {
-            const authHeader = req.headers.get('Authorization');
-            const token = await extractToken(authHeader) || await getToken();
-
-            if (token) {
-                const isValid = await verifySession(token);
-    
-                if (isValid.isAuth) {
-                    throw new AppError('Already logged in', 401, 'USER_LOGGED_IN');
-                } else {
-                    // Remove invalid session if the session is not valid
-                    await removeSession();
-                }
+            const body = await req.json();
+            if (!body) {
+                throw new AppError('User data is missing', 404, 'MISSING_DATA');
             }
 
-            const body = await req.json() as RegisterUserDataType;
-            const validatedData = registerUserDataSchema.parse(body);
+            const validatedBasicData = temporaryUserBasicDataSchema.parse(body);
 
             const apiUrl = process.env.EXPRESS_API_URL;
             const response = await fetch(`${apiUrl}/auth/register`, {
@@ -29,7 +19,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<S
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(validatedData),
+                body: JSON.stringify(validatedBasicData),
             });
 
             if (!response.ok) {
@@ -38,6 +28,8 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<S
             }
 
             const { data } = await response.json() as SuccessResponse<SuccessfulRegisterResponseType>;
+            if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+            else if (!data.token) throw new AppError('JWT is missing in data response', 404, 'MISSING_JWT');
 
             const successResponse: SuccessResponse<SuccessfulRegisterResponseType> = {
                 success: true,
@@ -53,14 +45,15 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<S
         } catch (error: unknown) {
 
             // Handle validation errors
-            if (error instanceof z.ZodError) {
+            if (isZodError(error)) {
+                const err = error as z.ZodError;
                 return NextResponse.json(
                     {
                         success: false,
                         error: {
-                            message: error.message || 'Internal Server Error',
-                            code: 'VALIDATION_ERROR',
-                            details: error.issues,
+                            message: 'Validation failed',
+                            code: 'VALIDATION_FAILED',
+                            details: err.issues
                         },
                     },
                     { status: 400 }
@@ -77,20 +70,21 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<S
                     },
                     { status: error.statusCode || 500 }
                 ) as NextResponse<ErrorResponse>;
-            }
+            } 
 
             // Handle other errors
+            const errorMessage = getErrorMessage(error);
             return NextResponse.json(
                 {
                     success: false,
                     error: {
-                        message: 'Internal Server Error',
-                        code: 'INTERNAL_ERROR',
-                    },
+                        message: errorMessage,
+                        code: error instanceof Error ? error.name.toUpperCase().replaceAll(' ', '_') : 'INTERNAL_ERROR',
+                    }
                 },
-                { status: 500 }
+                { status: error instanceof Error ? 400 : 500 }
             ) as NextResponse<ErrorResponse>;
-        }
+        };
     } else {
         return NextResponse.json(
             {
@@ -102,5 +96,5 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<S
             },
             { status: 405 }
         ) as NextResponse<ErrorResponse>;
-    }
+    };
 }

@@ -1,10 +1,10 @@
-import { extractToken, getToken, removeSession, verifySession } from "@/lib/session";
+import { extractToken, getUserSessionToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest, props: { params: Promise<{ username: string }> }) {
     if (req.method === 'POST') {
         const authHeader = req.headers.get('Authorization');
-        const token = await extractToken(authHeader) || await getToken();
+        const token = await extractToken(authHeader) || await getUserSessionToken();
         if (token) {
             const session = await verifySession(token);
 
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ username
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
             const params = await props.params;
-            
+
             const response = await fetch(`${apiUrl}/users/follow/${params.username}`, {
                 method: 'POST',
                 headers: {

@@ -1,12 +1,12 @@
-import { logInSchema } from '@/lib/schemas';
-import { createSession, getToken, removeSession, verifySession } from '@/lib/session';
+import { createSession, getUserSessionToken, removeSession, verifySession } from '@/lib/session';
 import { NextRequest, NextResponse } from 'next/server';
+import { FormLogInUserDataType, logInUserSchema } from 'tweetly-shared';
 import { z } from 'zod';
 
 export async function POST(req: NextRequest) {
     if (req.method === 'POST') {
         // Check for an existing session
-        const token = await getToken();
+        const token = await getUserSessionToken();
         if (token) {
             const isValid = await verifySession(token);
 
@@ -21,8 +21,8 @@ export async function POST(req: NextRequest) {
 
         try {
             // Validate incoming data
-            const body: z.infer<typeof logInSchema> = await req.json();
-            const validatedData = logInSchema.parse(body);
+            const body = await req.json() as FormLogInUserDataType;
+            const validatedData = logInUserSchema.parse(body);
 
             // Send a POST request to the backend
             const apiUrl = process.env.EXPRESS_API_URL;
