@@ -8,20 +8,19 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Loader2, X } from "lucide-react";
-import { useEffect, useId } from "react";
+import { useId, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FormTemporaryUserBasicDataType, isZodError, temporaryUserBasicDataSchema } from 'tweetly-shared';
+import { FormTemporaryUserBasicDataType, getErrorMessage, isZodError, temporaryUserBasicDataSchema } from 'tweetly-shared';
 import { Input } from '@/components/ui/input';
 import { DateOfBirthSelect } from '@/components/forms/DateOfBirthSelect';
 import { z } from 'zod';
-import { getErrorMessage } from '@/lib/utils';
 import Image from 'next/image';
 import { useDisplayContext } from '@/context/DisplayContextProvider';
 import { registerTemporaryUser } from '@/actions/actions';
 import { SignUpStepType } from '../SignUpProcess';
 
-export default function SignUpStepZero({ dialogOpen, setDialogOpen, registrationStep, setRegistrationStep, customError, setCustomError }: SignUpStepType) {
+export default function SignUpStepZero({ dialogOpen, setDialogOpen, setRegistrationStep, customError, setCustomError }: SignUpStepType) {
     const { savedTheme } = useDisplayContext();
     const formId = useId();
 
@@ -32,12 +31,12 @@ export default function SignUpStepZero({ dialogOpen, setDialogOpen, registration
         formState: { errors, isSubmitting },
         setError,
         setValue,
-        reset,
     } = useForm<FormTemporaryUserBasicDataType>({ resolver: zodResolver(temporaryUserBasicDataSchema) });
 
-    // better performance than watch
-    const nameWatch = useWatch({ control, name: 'profileName', defaultValue: '' });
-    const emailWatch = useWatch({ control, name: 'email', defaultValue: '' });
+    // React hook form's watch API is causing performance issue
+    const [profileNameWatch, setProfileNameWatch] = useState('');
+    const [emailWatch, setEmailWatch] = useState('');
+
     const yearWatch = useWatch({ control, name: 'year' });
     const monthWatch = useWatch({ control, name: 'month' });
     const dayWatch = useWatch({ control, name: 'day' });
@@ -83,9 +82,6 @@ export default function SignUpStepZero({ dialogOpen, setDialogOpen, registration
         }
     };
 
-    useEffect(() => {
-    }, [registrationStep, reset]);
-
     return (
         <Dialog open={dialogOpen} >
             <DialogContent
@@ -113,12 +109,22 @@ export default function SignUpStepZero({ dialogOpen, setDialogOpen, registration
                         className='flex flex-col gap-5 w-full'
                         id={formId}
                     >
-                        <Input {...register("profileName")} placeholder="Name" maxLength={50} />
+                        <Input
+                            {...register('profileName')}
+                            placeholder="Name"
+                            maxLength={50}
+                            onChange={(e) => setProfileNameWatch(e.target.value)}
+                        />
                         {errors.profileName && (
                             <p className="error-msg">{`${errors.profileName.message}`}</p>
                         )}
 
-                        <Input {...register("email")} placeholder="Email" maxLength={254} />
+                        <Input
+                            {...register('email')}
+                            placeholder="Email"
+                            maxLength={254}
+                            onChange={(e) => setEmailWatch(e.target.value)}
+                        />
                         {errors.email && (
                             <p className="error-msg">{`${errors.email.message}`}</p>
                         )}
@@ -146,7 +152,7 @@ export default function SignUpStepZero({ dialogOpen, setDialogOpen, registration
                     : (
                         <Button form={formId}
                             className='w-full h-[3rem] text-[1.1rem] bg-primary font-semibold text-white-1 mt-auto rounded-[25px]'
-                            disabled={!(nameWatch && (emailWatch?.includes('@') && emailWatch?.includes('.')) && yearWatch && monthWatch && dayWatch)}
+                            disabled={!(profileNameWatch.length >= 2 && (emailWatch.includes('@') && emailWatch.includes('.')) && yearWatch && monthWatch && dayWatch)}
                         >
                             Next
                         </Button>

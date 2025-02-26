@@ -7,34 +7,35 @@ import {
     DialogContent,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, X } from "lucide-react";
-import { useEffect, useId } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { Loader2, X, Eye, EyeOff } from "lucide-react";
+import { useId, useState } from "react";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from '@/components/ui/input';
 import { updateTemporaryUserPassword } from '@/actions/actions';
 import { z } from 'zod';
-import { getErrorMessage } from '@/lib/utils';
 import Image from 'next/image';
 import { useDisplayContext } from '@/context/DisplayContextProvider';
-import { FormTemporaryUserPasswordType, isZodError, temporaryUserPasswordSchema } from 'tweetly-shared';
+import { FormTemporaryUserPasswordType, getErrorMessage, isZodError, temporaryUserPasswordSchema } from 'tweetly-shared';
 import { SignUpStepType } from '../SignUpProcess';
 
-export default function SignUpStepOne({ dialogOpen, setDialogOpen, registrationStep, setRegistrationStep, hasCameBack, setHasCameBack, customError, setCustomError }: SignUpStepType) {
+export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrationStep, customError, setCustomError }: SignUpStepType) {
     const { savedTheme } = useDisplayContext();
+    const [passwordType, setPasswordType] = useState<'password' | 'text'>('password');
+    const [confirmPasswordType, setConfirmPasswordType] = useState<'password' | 'text'>('password');
     const formId = useId();
 
     const {
         register,
-        control,
         handleSubmit,
         formState: { errors, isSubmitting },
         setError,
         reset,
     } = useForm<FormTemporaryUserPasswordType>({ resolver: zodResolver(temporaryUserPasswordSchema) });
 
-    const passwordWatch = useWatch({ control, name: 'password', defaultValue: '' });
-    const confirmPasswordWatch = useWatch({ control, name: 'confirmPassword', defaultValue: '' });
+    // React hook form's watch API is causing performance issue
+    const [passwordWatch, setPasswordWatch] = useState('');
+    const [confirmPasswordWatch, setConfirmPasswordWatch] = useState('');
 
     const onSubmit = async (formData: FormTemporaryUserPasswordType) => {
         if (isSubmitting) return;
@@ -47,7 +48,6 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, registrationS
                 if (response.error.details) throw new z.ZodError(response.error.details);
                 else if (response.error.code === 'NOT_LOGGED_IN') {
                     setCustomError('Not logged in, please log in with existing email or register a new account');
-                    setHasCameBack!(false);
                     setRegistrationStep(() => 0);
                     reset();
                     return;
@@ -55,8 +55,7 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, registrationS
                 else throw new Error(response.error.message);
             }
 
-            setHasCameBack!(false);
-            setRegistrationStep(() => 2);
+            setRegistrationStep(() => 3);
         } catch (error: unknown) {
 
             if (isZodError(error)) {
@@ -79,12 +78,6 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, registrationS
         }
     };
 
-    useEffect(() => {
-        if (registrationStep === 1) {
-            reset();
-        }
-    }, [registrationStep, reset]);
-
     return (
         <Dialog open={dialogOpen} >
             <DialogContent
@@ -99,6 +92,7 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, registrationS
                 <button
                     className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
                     onClick={() => setDialogOpen(false)}
+                    tabIndex={0}
                 >
                     <X size={22} className='text-primary-text' />
                     <span className="sr-only">Close</span>
@@ -106,9 +100,6 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, registrationS
 
                 <div className='flex flex-col gap-8 mb-auto mt-10'>
                     <div className='mr-auto'>
-                        {hasCameBack && (
-                            <p className='text-secondary-text mb-2'>Welcome back, continue where you left of</p>
-                        )}
                         <DialogTitle className='text-primary-text text-[2.15rem]'>You&apos;ll need a password</DialogTitle>
                         <p className='text-secondary-text ml-2'>Make sure it&apos;s 8 characters or more</p>
                     </div>
@@ -117,13 +108,91 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, registrationS
                         onSubmit={handleSubmit(onSubmit)}
                         className='flex flex-col gap-5 w-full'
                         id={formId}
+                        tabIndex={1}
                     >
-                        <Input {...register("password")} placeholder="Password" maxLength={50} type='password' />
+                        <div className="relative h-10 w-full">
+                            <Input
+                                {...register('password')}
+                                placeholder="Password"
+                                maxLength={50}
+                                type={passwordType}
+                                onChange={(e) => setPasswordWatch(e.target.value)}
+                                tabIndex={2}
+                                autoFocus={true}
+                            />
+
+                            {passwordType === 'password'
+                                ? (
+                                    <button
+                                        title='Show password'
+                                        type='button'
+                                        onClick={() => setPasswordType('text')}
+                                    >
+                                        <EyeOff
+                                            size={18}
+                                            className="absolute right-0 mr-3 top-1/2 transform -translate-y-1/2 text-secondary-text z-10"
+                                            tabIndex={4}
+                                        />
+                                    </button>
+                                )
+                                : (
+                                    <button
+                                        title='Hide password'
+                                        type='button'
+                                        onClick={() => setPasswordType('password')}
+                                    >
+                                        <Eye
+                                            size={18}
+                                            className="absolute right-0 mr-3 top-1/2 transform -translate-y-1/2 text-primary z-10"
+                                            tabIndex={4}
+                                        />
+                                    </button>
+                                )
+                            }
+                        </div>
                         {errors.password && (
                             <p className="error-msg">{`${errors.password.message}`}</p>
                         )}
 
-                        <Input {...register("confirmPassword")} placeholder="Confirm password" maxLength={254} type='password' />
+                        <div className="relative h-10 w-full">
+                            <Input
+                                {...register('confirmPassword')}
+                                placeholder="Confirm password"
+                                maxLength={50}
+                                type={confirmPasswordType}
+                                onChange={(e) => setConfirmPasswordWatch(e.target.value)}
+                                tabIndex={3}
+                            />
+
+                            {confirmPasswordType === 'password'
+                                ? (
+                                    <button
+                                        title='Show password'
+                                        type='button'
+                                        onClick={() => setConfirmPasswordType('text')}
+                                    >
+                                        <EyeOff
+                                            size={18}
+                                            className="absolute right-0 mr-3 top-1/2 transform -translate-y-1/2 text-secondary-text z-10"
+                                            tabIndex={5}
+                                        />
+                                    </button>
+                                )
+                                : (
+                                    <button
+                                        title='Hide password'
+                                        type='button'
+                                        onClick={() => setConfirmPasswordType('password')}
+                                    >
+                                        <Eye
+                                            size={18}
+                                            className="absolute right-0 mr-3 top-1/2 transform -translate-y-1/2 text-primary z-10"
+                                            tabIndex={5}
+                                        />
+                                    </button>
+                                )
+                            }
+                        </div>
                         {errors.confirmPassword && (
                             <p className="error-msg">{`${errors.confirmPassword.message}`}</p>
                         )}
@@ -146,7 +215,13 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, registrationS
                     : (
                         <Button form={formId}
                             className='w-full h-[3rem] text-[1.1rem] bg-primary font-semibold text-white-1 mt-auto rounded-[25px]'
-                            disabled={!(passwordWatch.length >= 8 && confirmPasswordWatch.length >= 8)}
+                            tabIndex={6}
+                            disabled={
+                                !(
+                                    passwordWatch.length >= 8 &&
+                                    confirmPasswordWatch.length >= 8
+                                )
+                            }
                         >
                             Next
                         </Button>

@@ -10,7 +10,7 @@ import { Loader2 } from 'lucide-react';
 import { useUserContext } from '@/context/UserContextProvider';
 import { DateOfBirthSelect } from '../forms/DateOfBirthSelect';
 import { changeBirthday } from '@/actions/actions';
-import { getErrorMessage } from '@/lib/utils';
+import { getErrorMessage } from 'tweetly-shared';
 
 type FormData = z.infer<typeof settingsChangeBirthday>;
 

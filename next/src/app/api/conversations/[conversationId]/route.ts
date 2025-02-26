@@ -1,7 +1,7 @@
 import { verifySession, extractToken, removeSession, getUserSessionToken } from "@/lib/session";
 import { ConversationsListType } from "@/lib/types";
-import { getErrorMessage } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
+import { getErrorMessage } from 'tweetly-shared';
 
 export const dynamic = 'force-dynamic';
 

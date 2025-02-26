@@ -9,7 +9,7 @@ import { socket } from '@/lib/socket';
 import { AllMessagesType } from './ConversationContent';
 import { v4 as uuidv4 } from 'uuid';
 import { useUserContext } from '@/context/UserContextProvider';
-import { getErrorMessage } from '@/lib/utils';
+import { getErrorMessage } from 'tweetly-shared';
 
 export const newMessageSchema = z.object({
     text: z

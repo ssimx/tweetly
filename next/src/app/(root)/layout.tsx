@@ -9,16 +9,22 @@ import { getLoggedInUser } from "@/data-acess-layer/user-dto";
 import BlockedUsersContextProvider from "@/context/BlockedUsersContextProvider";
 import PostInteractionContextProvider from "@/context/PostInteractionContextProvider";
 import { getFollowSuggestions } from '@/actions/get-actions';
+import { redirect } from 'next/navigation';
 
 export default async function AuthorizedLayout({ children, modals }: Readonly<{ children: React.ReactNode, modals: React.ReactNode }>) {
     const userPromise = getLoggedInUser();
     const followSuggestionsPromise = getFollowSuggestions();
-    const [user, followSuggestions] = await Promise.all([userPromise, followSuggestionsPromise]);
+    const [userResponse, followSuggestionsResponse] = await Promise.all([userPromise, followSuggestionsPromise]);
+
+    if (!userResponse.success || !userResponse.data) {
+        console.error('Something went wrong while trying to log in the user');
+        redirect('/logout');
+    }
 
     return (
-        <UserContextProvider userData={user}>
+        <UserContextProvider userData={userResponse.data.user}>
             <TrendingContextProvider>
-                <FollowSuggestionContextProvider followSuggestions={followSuggestions}>
+                <FollowSuggestionContextProvider followSuggestions={followSuggestionsResponse}>
                     <BlockedUsersContextProvider>
                         <PostInteractionContextProvider>
                             <main className="w-screen h-auto">

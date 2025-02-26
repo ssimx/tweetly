@@ -66,15 +66,37 @@ export const temporaryUserUsernameSchema = z.object({
         .string()
         .trim()
         .toLowerCase()
-        .min(2, "Username must contain at least 2 characters")
+        .nonempty('Please enter username')
+        .min(2, 'Username must contain at least 2 characters')
         .max(15, "Username must contain less than 15 characters")
         .regex(/^[a-zA-Z0-9]+$/, "Username contains invalid characters."),
 });
 
 export const temporaryUserProfilePictureSchema = z.object({
-    profilePicture: z
-        .string()
-        .optional(),
+    image:
+        z.optional(z.instanceof(File))
+}).superRefine((data, ctx) => {
+    if (data.image) {
+        if (!(data.image instanceof File)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Input is not a file',
+                path: ['image'],
+            });
+        } else if (data.image.size >= 5000000) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Max image size is 5MB',
+                path: ['image'],
+            });
+        } else if (!(["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(data.image.type))) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Only .jpg, .jpeg, .png and .webp formats are supported',
+                path: ['image'],
+            });
+        }
+    }
 });
 
 export const registerUserDataSchema = z.object({
@@ -134,10 +156,16 @@ export const registerUserDataSchema = z.object({
 });
 
 export const logInUserSchema = z.object({
-    username: z
+    usernameOrEmail: z
         .string()
         .trim()
-        .min(1, "Please enter username"),
+        .toLowerCase()
+        .nonempty('Please enter username or email address')
+        .min(2, 'Username must contain at least 2 characters')
+        .regex(
+            /^(?:[a-zA-Z0-9]{2,15}|\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b)$/,
+            "Enter a valid username or email"
+        ),
     password: z
         .string()
         .trim()

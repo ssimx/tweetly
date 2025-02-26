@@ -1,7 +1,6 @@
 import { verifySession, extractToken, removeSession } from "@/lib/session";
-import { getErrorMessage } from '@/lib/utils';
 import { NextRequest, NextResponse } from "next/server";
-import { AppError, ErrorResponse, SuccessResponse, temporaryUserPasswordSchema } from 'tweetly-shared';
+import { getErrorMessage, AppError, ErrorResponse, SuccessResponse, temporaryUserPasswordSchema } from 'tweetly-shared';
 
 export async function PATCH(req: NextRequest) {
     if (req.method === 'PATCH') {

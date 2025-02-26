@@ -1,6 +1,6 @@
 import { extractToken, removeSession, verifySession } from "@/lib/session";
-import { getErrorMessage } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
+import { getErrorMessage } from 'tweetly-shared';
 
 export async function GET(req: NextRequest) {
     if (req.method === 'GET') {

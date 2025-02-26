@@ -10,7 +10,7 @@ import { Button } from '../ui/button';
 import { Loader2 } from 'lucide-react';
 import { useUserContext } from '@/context/UserContextProvider';
 import { changeUsername, checkIfNewUsernameIsAvailable } from '@/actions/actions';
-import { getErrorMessage } from '@/lib/utils';
+import { getErrorMessage } from 'tweetly-shared';
 
 type FormData = z.infer<typeof settingsChangeUsername>;
 

@@ -90,6 +90,14 @@ export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
     } = useForm<ProfileInfoData>({ resolver: zodResolver(updateProfileSchema) });
 
     useEffect(() => {
+        // Cleanup Croppie instance when edit media is cancelled
+        if (!isFileUploaded && croppieRef.current) {
+            croppieRef.current.destroy();
+            croppieRef.current = null;
+        }
+    }, [isFileUploaded]);
+
+    useEffect(() => {
         // Cleanup Croppie instance on component unmount
         return () => {
             if (croppieRef.current) {

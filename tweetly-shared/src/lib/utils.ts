@@ -15,7 +15,8 @@ export function getAge(date: string) {
     return age;
 };
 
-
+// Check if error is ZodError
+//  - checking for z.ZodError currently returns false in turbo monorepo
 export function isZodError(error: unknown): error is z.ZodError {
     if (!(error instanceof Error)) return false
 
@@ -24,4 +25,28 @@ export function isZodError(error: unknown): error is z.ZodError {
     if ("issues" in error && error.issues instanceof Array) return true
 
     return false
+};
+
+// Helper function to handle errors
+export function getErrorMessage(error: unknown): string {
+
+    // error is new Error
+    if (error instanceof Error) {
+        return error.message;
+    }
+
+    // error is object with property message or error
+    if (typeof error === 'object' && error !== null) {
+        // assert error as an object with string keys and unknown values
+        // first check for message key presence, if undefined check for error key, if undefined return "Internal Server Error"
+        return String((error as Record<string, unknown>)?.message || (error as Record<string, unknown>)?.error || 'Internal Server Error');
+    }
+
+    // error is just a string
+    if (typeof error === 'string') {
+        return error;
+    }
+
+    // anything else is unknown
+    return 'Internal Server Error';
 };

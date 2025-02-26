@@ -1,24 +1,49 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { getErrorMessage, ApiResponse, AppError, ErrorResponse, SuccessResponse, SuccessfulRegisterResponseType, isZodError, temporaryUserBasicDataSchema } from 'tweetly-shared';
+import { verifySession, extractToken, removeSession } from "@/lib/session";
+import { NextRequest, NextResponse } from "next/server";
+import { getErrorMessage, AppError, ErrorResponse, SuccessResponse, temporaryUserProfilePictureSchema } from 'tweetly-shared';
 
-export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<SuccessfulRegisterResponseType>>> {
-    if (req.method === 'POST') {
+export async function PATCH(req: NextRequest) {
+    if (req.method === 'PATCH') {
         try {
-            const body = await req.json();
-            if (!body) {
-                throw new AppError('User data is missing', 404, 'MISSING_DATA');
+            const authHeader = req.headers.get('Authorization');
+            const token = await extractToken(authHeader);
+
+            if (token) {
+                const isValid = await verifySession(token);
+
+                if (!isValid.isAuth) {
+                    await removeSession();
+                    throw new AppError('Invalid temporary token session', 400, 'INVALID_TOKEN');
+                }
+            } else {
+                throw new AppError('User not logged in', 400, 'NOT_LOGGED_IN');
             }
 
-            const validatedBasicData = temporaryUserBasicDataSchema.parse(body);
+            let image = null;
+            const contentType = req.headers.get("content-type");
+            // Only parse formData if request contains multipart/form-data
+            if (contentType && contentType.includes("multipart/form-data")) {
+                const body = await req.formData();
+                image = body.get("image") ?? null;
+
+                if (image) {
+                    temporaryUserProfilePictureSchema.parse({ image });
+                }
+            }
 
             const apiUrl = process.env.EXPRESS_API_URL;
-            const response = await fetch(`${apiUrl}/auth/register`, {
-                method: 'POST',
+            const response = await fetch(`${apiUrl}/auth/temporary/profilePicture`, {
+                method: 'PATCH',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
                 },
-                body: JSON.stringify(validatedBasicData),
+                ...(image && {
+                    body: (() => {
+                        const newFormData = new FormData();
+                        newFormData.append('image', image);
+                        return newFormData;
+                    })(),
+                }),
             });
 
             if (!response.ok) {
@@ -26,15 +51,15 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<S
                 throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
             }
 
-            const { data } = await response.json() as SuccessResponse<SuccessfulRegisterResponseType>;
+            const { data } = await response.json() as SuccessResponse<{ token: string }>;
             if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
             else if (!data.token) throw new AppError('JWT is missing in data response', 404, 'MISSING_JWT');
 
-            const successResponse: SuccessResponse<SuccessfulRegisterResponseType> = {
+            const successResponse: SuccessResponse<{ token: string }> = {
                 success: true,
                 data: {
                     token: data.token
-                },
+                }
             };
 
             return NextResponse.json(
@@ -42,34 +67,19 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<S
                 { status: response.status }
             );
         } catch (error: unknown) {
-
-            // Handle validation errors
-            if (isZodError(error)) {
-                const err = error as z.ZodError;
-                return NextResponse.json(
-                    {
-                        success: false,
-                        error: {
-                            message: 'Validation failed',
-                            code: 'VALIDATION_FAILED',
-                            details: err.issues
-                        },
-                    },
-                    { status: 400 }
-                ) as NextResponse<ErrorResponse>;
-            } else if (error instanceof AppError) {
+            console.log(error)
+            if (error instanceof AppError) {
                 return NextResponse.json(
                     {
                         success: false,
                         error: {
                             message: error.message || 'Internal Server Error',
                             code: error.code || 'INTERNAL_ERROR',
-                            details: error.details,
                         },
                     },
                     { status: error.statusCode || 500 }
                 ) as NextResponse<ErrorResponse>;
-            } 
+            }
 
             // Handle other errors
             const errorMessage = getErrorMessage(error);
@@ -80,8 +90,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<S
                         message: errorMessage,
                         code: error instanceof Error ? error.name.toUpperCase().replaceAll(' ', '_') : 'INTERNAL_ERROR',
                     }
-                },
-                { status: error instanceof Error ? 400 : 500 }
+                }
             ) as NextResponse<ErrorResponse>;
         };
     } else {

@@ -12,12 +12,9 @@ import SignUpStepFour from './steps/SignUpStepFour';
 export type SignUpStepType = {
     dialogOpen: boolean,
     setDialogOpen: React.Dispatch<React.SetStateAction<boolean>>,
-    registrationStep: number,
     setRegistrationStep: React.Dispatch<React.SetStateAction<number | undefined>>,
     customError: string | null,
     setCustomError: React.Dispatch<React.SetStateAction<string | null>>,
-    hasCameBack?: boolean,
-    setHasCameBack?: React.Dispatch<React.SetStateAction<boolean>>,
 };
 
 // Registration process
@@ -44,16 +41,15 @@ export type SignUpStepType = {
 
 export default function SignUpProcess({ user }: { user: LoggedInTemporaryUserDataType | null }) {
     const [registrationStep, setRegistrationStep] = useState<number | undefined>(undefined);
-    const [hasCameBack, setHasCameBack] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [customError, setCustomError] = useState<string | null>(null);
 
     useEffect(() => {
+        console.log('test')
         if (user) {
             if (!user.profileName || !user.email || !user.dateOfBirth) {
                 setRegistrationStep(0);
             } else if (user.password === false) {
-                setHasCameBack(true);
                 setRegistrationStep(1);
                 setIsDialogOpen(true);
             // } else if (user.emailVerified === false) {
@@ -61,14 +57,14 @@ export default function SignUpProcess({ user }: { user: LoggedInTemporaryUserDat
             //     setRegistrationStep(2);
             //     setIsDialogOpen(true);
             } else if (!user.username) {
-                setHasCameBack(true);
                 setRegistrationStep(3);
                 setIsDialogOpen(true);
             } else if (!user.profilePicture) {
-                setHasCameBack(true);
                 setRegistrationStep(4);
                 setIsDialogOpen(true);
             }
+        } else {
+            setRegistrationStep(0);
         }
     }, [user]);
 
@@ -102,7 +98,6 @@ export default function SignUpProcess({ user }: { user: LoggedInTemporaryUserDat
                 <SignUpStepZero
                     dialogOpen={isDialogOpen}
                     setDialogOpen={setIsDialogOpen}
-                    registrationStep={registrationStep}
                     setRegistrationStep={setRegistrationStep}
                     customError={customError}
                     setCustomError={setCustomError}
@@ -114,10 +109,7 @@ export default function SignUpProcess({ user }: { user: LoggedInTemporaryUserDat
                 <SignUpStepOne
                     dialogOpen={isDialogOpen}
                     setDialogOpen={setIsDialogOpen}
-                    registrationStep={registrationStep}
                     setRegistrationStep={setRegistrationStep}
-                    hasCameBack={hasCameBack}
-                    setHasCameBack={setHasCameBack}
                     customError={customError}
                     setCustomError={setCustomError}
                 />
@@ -128,10 +120,7 @@ export default function SignUpProcess({ user }: { user: LoggedInTemporaryUserDat
                 <SignUpStepTwo
                     dialogOpen={isDialogOpen}
                     setDialogOpen={setIsDialogOpen}
-                    registrationStep={registrationStep}
                     setRegistrationStep={setRegistrationStep}
-                    hasCameBack={hasCameBack}
-                    setHasCameBack={setHasCameBack}
                     customError={customError}
                     setCustomError={setCustomError}
                 />
@@ -142,10 +131,7 @@ export default function SignUpProcess({ user }: { user: LoggedInTemporaryUserDat
                 <SignUpStepThree
                     dialogOpen={isDialogOpen}
                     setDialogOpen={setIsDialogOpen}
-                    registrationStep={registrationStep}
                     setRegistrationStep={setRegistrationStep}
-                    hasCameBack={hasCameBack}
-                    setHasCameBack={setHasCameBack}
                     customError={customError}
                     setCustomError={setCustomError}
                 />
@@ -156,10 +142,7 @@ export default function SignUpProcess({ user }: { user: LoggedInTemporaryUserDat
                 <SignUpStepFour
                     dialogOpen={isDialogOpen}
                     setDialogOpen={setIsDialogOpen}
-                    registrationStep={registrationStep}
                     setRegistrationStep={setRegistrationStep}
-                    hasCameBack={hasCameBack}
-                    setHasCameBack={setHasCameBack}
                     customError={customError}
                     setCustomError={setCustomError}
                 />

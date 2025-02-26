@@ -1,3 +1,4 @@
+import { LoggedInUserJwtPayload, TemporaryUserJwtPayload } from 'tweetly-shared';
 import { TemporaryUserTokenType, UserTokenProps } from "../lib/types";
 
 import jwt from 'jsonwebtoken';
@@ -5,23 +6,23 @@ import jwt from 'jsonwebtoken';
 const SECRET_KEY = process.env.JWT_SECRET || 'tweetly';
 
 // generate a session token
-export const generateUserSessionToken = (user: UserTokenProps): string => {
+export const generateUserSessionToken = (payload: LoggedInUserJwtPayload ): string => {
     return jwt.sign({
-        type: 'user',
-        id: user.id,
-        email: user.email,
-        username: user.username,
+        type: payload.type,
+        id: payload.id,
+        email: payload.email,
+        username: payload.username,
     }, SECRET_KEY, {
         expiresIn: '30d',
     });
 };
 
 // generate a temporary user token
-export const generateTemporaryUserToken = (user: TemporaryUserTokenType): string => {
+export const generateTemporaryUserToken = (payload: TemporaryUserJwtPayload): string => {
     return jwt.sign({
-        type: 'temporary',
-        id: user.id,
-        email: user.email,
+        type: payload.type,
+        id: payload.id,
+        email: payload.email,
     }, SECRET_KEY, {
         expiresIn: '30d',
     });

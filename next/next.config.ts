@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
             {
                 protocol: 'https',
                 hostname: 'res.cloudinary.com',
-                pathname: '/ddj6z1ptr/**', // Path to your images on the Express server
+                pathname: '/ddj6z1ptr/**',
             },
         ],
     },

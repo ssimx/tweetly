@@ -91,14 +91,37 @@ export const updateTemporaryUserUsername = async (userId: number, username: stri
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const createUserAndProfile = async (username: string, email: string, dateOfBirth: Date, hashedPassword: string) => {
+export const updateTemporaryUserProfilePicture = async (userId: number, image: string) => {
+    return await prisma.temporaryUser.update({
+        where: {
+            id: userId,
+        },
+        data: {
+            profilePicture: image
+        }
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const removeTemporaryUser = async (userId: number) => {
+    return await prisma.temporaryUser.delete({
+        where: {
+            id: userId,
+        },
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const createUserAndProfile = async (profileName: string, email: string, dateOfBirth: Date, hashedPassword: string, username: string, profilePicture: string) => {
     try {
         return await prisma.$transaction(async (prisma) => {
             // Create user first
             const user = await prisma.user.create({
                 data: {
-                    username: username.toLocaleLowerCase(),
-                    email: email.toLocaleLowerCase(),
+                    username: username,
+                    email: email,
                     dateOfBirth: dateOfBirth,
                     password: hashedPassword,
                 },
@@ -107,11 +130,11 @@ export const createUserAndProfile = async (username: string, email: string, date
             // Create profile for that user
             const profile = await prisma.profile.create({
                 data: {
-                    name: username,
+                    name: profileName,
                     bio: '',
                     location: '',
                     websiteUrl: '',
-                    profilePicture: '',
+                    profilePicture: profilePicture,
                     bannerPicture: '',
                     userId: user.id,
                 },
@@ -133,8 +156,20 @@ export const createUserAndProfile = async (username: string, email: string, date
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getUserLogin = async (username: string) => {
-    return await prisma.user.findUnique({
-        where: { username },
-    });
+export const getUserLogin = async (usernameOrEmail: string) => {
+    const isEmail = usernameOrEmail.includes('@');
+
+    if (isEmail) {
+        return await prisma.user.findUnique({
+            where: {
+                email: usernameOrEmail
+            },
+        });
+    } else {
+        return await prisma.user.findUnique({
+            where: {
+                username: usernameOrEmail
+            },
+        });
+    }
 };

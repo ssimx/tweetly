@@ -2,8 +2,8 @@
 import { getCurrentUserToken } from "@/data-acess-layer/auth";
 import { getLoggedInUser } from "@/data-acess-layer/user-dto";
 import { BasicPostType, BookmarkPostType, NotificationType, ProfilePostOrRepostType, ProfileReplyPostType, UserInfoType, VisitedPostType } from "@/lib/types";
-import { getErrorMessage } from "@/lib/utils";
 import { cache } from 'react';
+import { getErrorMessage } from 'tweetly-shared';
 
 // GET actions for client/dynamic components
 

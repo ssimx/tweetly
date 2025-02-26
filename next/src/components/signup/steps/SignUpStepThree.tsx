@@ -14,14 +14,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from '@/components/ui/input';
 import { checkIfNewUsernameIsAvailable, updateTemporaryUserUsername } from '@/actions/actions';
 import { z } from 'zod';
-import { getErrorMessage } from '@/lib/utils';
 import Image from 'next/image';
 import { useDisplayContext } from '@/context/DisplayContextProvider';
-import { FormTemporaryUserUsernameType, isZodError, temporaryUserUsernameSchema } from 'tweetly-shared';
+import { FormTemporaryUserUsernameType, getErrorMessage, isZodError, temporaryUserUsernameSchema } from 'tweetly-shared';
 import { searchUsernameSchema } from '@/lib/schemas';
 import { SignUpStepType } from '../SignUpProcess';
 
-export default function SignUpStepThree({ dialogOpen, setDialogOpen, registrationStep, setRegistrationStep, hasCameBack, setHasCameBack, customError, setCustomError }: SignUpStepType) {
+export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistrationStep, customError, setCustomError }: SignUpStepType) {
     const { savedTheme } = useDisplayContext(); 
     const [isValidating, setIsValidating] = useState(false);
     const [validatedUsername, setValidatedUsername] = useState<string | undefined>(undefined);
@@ -50,7 +49,6 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, registratio
                 if (response.error.details) throw new z.ZodError(response.error.details);
                 else if (response.error.code === 'NOT_LOGGED_IN') {
                     setCustomError('Not logged in, please log in with existing email or register a new account');
-                    setHasCameBack!(false);
                     setRegistrationStep(() => 0);
                     reset();
                     return;
@@ -58,7 +56,6 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, registratio
                 else throw new Error(response.error.message);
             }
 
-            setHasCameBack!(false);
             setRegistrationStep(() => 4);
         } catch (error: unknown) {
 
@@ -119,12 +116,6 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, registratio
         });
     }, [isSubmitting, isValidating, usernameWatch, validatedUsername]);
 
-    useEffect(() => {
-        if (registrationStep === 3) {
-            reset();
-        }
-    }, [registrationStep, reset]);
-
     return (
         <Dialog open={dialogOpen} >
             <DialogContent
@@ -146,9 +137,6 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, registratio
 
                 <div className='flex flex-col gap-8 mb-auto mt-10'>
                     <div className='mr-auto'>
-                        {hasCameBack && (
-                            <p className='text-secondary-text mb-2'>Welcome back, continue where you left of</p>
-                        )}
                         <DialogTitle className='text-primary-text text-[2.15rem]'>What should we call you?</DialogTitle>
                         <p className='text-secondary-text'>Your <span className='text-primary'>@username</span> is unique. You can always change it later</p>
                     </div>

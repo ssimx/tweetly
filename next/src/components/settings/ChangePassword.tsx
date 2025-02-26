@@ -8,8 +8,8 @@ import { useForm } from 'react-hook-form';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Loader2 } from 'lucide-react';
-import { getErrorMessage } from '@/lib/utils';
 import { changePassword } from '@/actions/actions';
+import { getErrorMessage } from 'tweetly-shared';
 
 type FormData = z.infer<typeof userUpdatePasswordSchema>;
 

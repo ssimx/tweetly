@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { logInUserSchema, temporaryUserBasicDataSchema, registerUserDataSchema, temporaryUserPasswordSchema, updateTemporaryUserProfilePictureSchema, updateTemporaryUserUsernameSchema } from '../schemas/authSchemas';
+import { logInUserSchema, temporaryUserBasicDataSchema, registerUserDataSchema, temporaryUserPasswordSchema, temporaryUserUsernameSchema, temporaryUserProfilePictureSchema } from '../schemas/authSchemas';
 
 // Type for register temporary user data
 export type FormTemporaryUserBasicDataType = z.infer<typeof temporaryUserBasicDataSchema>;
@@ -8,13 +8,10 @@ export type FormTemporaryUserBasicDataType = z.infer<typeof temporaryUserBasicDa
 export type FormTemporaryUserPasswordType = z.infer<typeof temporaryUserPasswordSchema>;
 
 // Type for updating temporary user username
-export type FormTemporaryUserUsernameType = z.infer<typeof updateTemporaryUserUsernameSchema>;
+export type FormTemporaryUserUsernameType = z.infer<typeof temporaryUserUsernameSchema>;
 
 // Type for updating temporary user profile picture
-export type FormTemporaryUserProfilePictureType = z.infer<typeof updateTemporaryUserProfilePictureSchema>;
-
-// Type for register user data form
-export type FormFormRegisterUserDataType = z.infer<typeof registerUserDataSchema>;
+export type FormTemporaryUserProfilePictureType = z.infer<typeof temporaryUserProfilePictureSchema>;
 
 // Type for log in user data form
-export type FormFormLogInUserDataType = z.infer<typeof logInUserSchema>;
+export type FormLogInUserDataType = z.infer<typeof logInUserSchema>;

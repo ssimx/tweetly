@@ -1,10 +1,9 @@
 import 'server-only';
 import { getCurrentTemporaryUserToken, getCurrentUserToken } from './auth';
-import { getErrorMessage } from '@/lib/utils';
 import { redirect } from 'next/navigation';
 import { BookmarkPostType, ConversationsListType, ConversationType, NotificationType, ProfileInfo, UserInfo } from '@/lib/types';
 import { cache } from 'react';
-import { ApiResponse, AppError, ErrorResponse, LoggedInTemporaryUserDataType, SuccessResponse, } from 'tweetly-shared';
+import { getErrorMessage, ApiResponse, AppError, ErrorResponse, LoggedInTemporaryUserDataType, LoggedInUserDataType, SuccessResponse, } from 'tweetly-shared';
 import { getUserSessionToken, verifySession } from '@/lib/session';
 
 export const getTemporaryUser = async (): Promise<ApiResponse<{ user: LoggedInTemporaryUserDataType | null }>> => {
@@ -33,7 +32,6 @@ export const getTemporaryUser = async (): Promise<ApiResponse<{ user: LoggedInTe
 
         if (!response.ok) {
             const errorData = await response.json() as ErrorResponse;
-            console.log(errorData)
             throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
@@ -48,7 +46,6 @@ export const getTemporaryUser = async (): Promise<ApiResponse<{ user: LoggedInTe
 
         return successResponse;
     } catch (error: unknown) {
-
         if (error instanceof AppError) {
             return {
                 success: false,
@@ -73,7 +70,7 @@ export const getTemporaryUser = async (): Promise<ApiResponse<{ user: LoggedInTe
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getLoggedInUser = cache(async () => {
+export const getLoggedInUser = cache(async (): Promise<ApiResponse<{ user: LoggedInUserDataType }>> => {
     const token = await getCurrentUserToken();
 
     try {
@@ -87,24 +84,44 @@ export const getLoggedInUser = cache(async () => {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const user = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'user' in res) {
-                return res.user as UserInfo;
-            }
-            return redirect('/logout');
-        });
+        const { data } = await response.json() as SuccessResponse<{ user: LoggedInUserDataType }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (!data.user) throw new AppError('User data is missing in data response', 404, 'MISSING_USER_DATA');
 
-        return user;
-    } catch (error) {
+        return {
+            success: true,
+            data: {
+                user: data.user
+            }
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
         const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return redirect('/logout');
+        return {
+            success: false,
+            error: {
+                message: errorMessage,
+                code: error instanceof Error ? error.name.toUpperCase().replaceAll(' ', '_') : 'INTERNAL_ERROR',
+            }
+        } as ErrorResponse;
     }
 });
+
+// ---------------------------------------------------------------------------------------------------------
 
 export async function getNotifications() {
     const token = await getCurrentUserToken();

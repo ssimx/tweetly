@@ -3,9 +3,9 @@ import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import { useUserContext } from '@/context/UserContextProvider';
 import { BasicPostType } from '@/lib/types';
-import { getErrorMessage } from '@/lib/utils';
 import { Ellipsis } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { getErrorMessage } from 'tweetly-shared';
 
 interface PostMenuType {
     post: BasicPostType,

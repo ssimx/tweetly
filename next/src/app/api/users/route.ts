@@ -1,6 +1,6 @@
 import { decryptSession, extractToken, removeSession, verifySession } from "@/lib/session";
-import { UserInfo } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
+import { AppError, ErrorResponse, getErrorMessage, LoggedInUserDataType, SuccessResponse } from 'tweetly-shared';
 
 export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
@@ -28,22 +28,68 @@ export async function GET(req: NextRequest) {
                 },
             });
 
-            if (response.ok) {
-                const data = await response.json() as { user: UserInfo};
-                if (data.user.username !== username) {
-                    // Delete the cookie if usernames do not match
-                    return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 400 });
-                }
-                return NextResponse.json(data);
-            } else {
-                const errorData = await response.json();
-                return NextResponse.json({ error: errorData.error }, { status: response.status });
+            if (!response.ok) {
+                const errorData = await response.json() as ErrorResponse;
+                throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
             }
-        } catch (error) {
+
+            const { data } = await response.json() as SuccessResponse<{ user: LoggedInUserDataType }>;
+            if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+            else if (!data.user) throw new AppError('User data is missing in data response', 404, 'MISSING_USER_DATA');
+
+            // check if token payload username matches fetched user
+            if (data.user.username !== username) {
+                await removeSession();
+                return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 400 });
+            }
+
+            const successResponse: SuccessResponse<{ user: LoggedInUserDataType }> = {
+                success: true,
+                data: {
+                    user: data.user
+                }
+            };
+
+            return NextResponse.json(
+                successResponse,
+                { status: response.status }
+            );
+        } catch (error: unknown) {
+            if (error instanceof AppError) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        error: {
+                            message: error.message || 'Internal Server Error',
+                            code: error.code || 'INTERNAL_ERROR',
+                        },
+                    },
+                    { status: error.statusCode || 500 }
+                ) as NextResponse<ErrorResponse>;
+            }
+
             // Handle other errors
-            return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-        }
+            const errorMessage = getErrorMessage(error);
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: {
+                        message: errorMessage,
+                        code: error instanceof Error ? error.name.toUpperCase().replaceAll(' ', '_') : 'INTERNAL_ERROR',
+                    }
+                }
+            ) as NextResponse<ErrorResponse>;
+        };
     } else {
-        return NextResponse.json({ error: `Method ${req.method} Not Allowed` }, { status: 405 });
-    }
-};
+        return NextResponse.json(
+            {
+                success: false,
+                error: {
+                    message: `HTTP Method ${req.method} Not Allowed`,
+                    code: 'INVALID_HTTP_METHOD',
+                },
+            },
+            { status: 405 }
+        ) as NextResponse<ErrorResponse>;
+    };
+}

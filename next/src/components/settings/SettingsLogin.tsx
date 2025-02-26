@@ -7,8 +7,8 @@ import { Button } from "../ui/button";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 import SettingsHeaderInfo from "./SettingsHeaderInfo";
-import { getErrorMessage } from "@/lib/utils";
 import { verifyLoginPasswordForSettings } from '@/actions/actions';
+import { getErrorMessage } from 'tweetly-shared';
 
 type FormData = z.infer<typeof settingsPasswordSchema>;
 

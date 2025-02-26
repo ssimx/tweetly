@@ -1,7 +1,6 @@
 'use server';
 import { getCurrentTemporaryUserToken, getCurrentUserToken, verifyCurrentUserSettingsToken } from "@/data-acess-layer/auth";
-import { createSession, createSettingsSession, createTemporarySession, getUserSessionToken, removeSettingsToken, updateSessionToken, verifySession } from '@/lib/session';
-import { getErrorMessage } from '@/lib/utils';
+import { createSession, createSettingsSession, createTemporarySession, getUserSessionToken, removeSettingsToken, removeTemporarySession, updateSessionToken, verifySession } from '@/lib/session';
 import { revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import {
@@ -10,7 +9,6 @@ import {
     ErrorResponse,
     newPostDataSchema,
     NewPostDataType,
-    registerUserDataSchema,
     SuccessfulRegisterResponseType,
     SuccessResponse,
     userSettingsAccessSchema,
@@ -22,24 +20,29 @@ import {
     userUpdatePasswordSchema,
     UserUpdatePasswordType,
     userUpdateUsernameSchema,
-    UserUpdateUsernameType,
+    UserUpdateUsernameType, 
     FormTemporaryUserPasswordType,
     FormTemporaryUserBasicDataType,
     temporaryUserBasicDataSchema,
     temporaryUserPasswordSchema,
     isZodError,
     FormTemporaryUserUsernameType,
-    temporaryUserUsernameSchema
+    temporaryUserUsernameSchema,
+    FormTemporaryUserProfilePictureType,
+    temporaryUserProfilePictureSchema,
+    getErrorMessage,
+    logInUserSchema,
+    FormLogInUserDataType,
 } from 'tweetly-shared';
-import { z } from 'zod';
 
 // AUTH
 
+// registration 
 
 // First step of the registration process, registers new temporary user with basic information
 export async function registerTemporaryUser(
     formData: FormTemporaryUserBasicDataType,
-): Promise<ApiResponse<{ token: string }>> {
+): Promise<ApiResponse<undefined>> {
 
     try {
         const validatedBasicData = temporaryUserBasicDataSchema.parse(formData);
@@ -51,7 +54,6 @@ export async function registerTemporaryUser(
             },
             body: JSON.stringify(validatedBasicData),
         });
-
 
         if (!response.ok) {
             const errorData = await response.json() as ErrorResponse;
@@ -66,9 +68,6 @@ export async function registerTemporaryUser(
 
         return {
             success: true,
-            data: {
-                token: data.token,
-            }
         }
     } catch (error: unknown) {
 
@@ -236,19 +235,33 @@ export async function updateTemporaryUserUsername(
     }
 };
 
-export async function registerUser(formData: FormRegisterUserDataType): Promise<ApiResponse<SuccessfulRegisterResponseType>> {
-    const token = await getCurrentUserToken();
+// Forth step of the registration process, update temporary user's profile picture
+//      remove temp user and create a new user
+export async function updateTemporaryUserProfilePicture( 
+    formData?: FormTemporaryUserProfilePictureType
+): Promise<ApiResponse<undefined>> {
+
+    const sessionToken = await getUserSessionToken();
+    if ((await verifySession(sessionToken)).isAuth) redirect('/');
 
     try {
-        const validatedData = registerUserDataSchema.parse(formData);
+        const temporaryToken = await getCurrentTemporaryUserToken();
+        if (!temporaryToken) throw new AppError('User not logged in', 400, 'NOT_LOGGED_IN');
 
-        const response = await fetch(`http://localhost:3000/api/auth/register`, {
-            method: 'POST',
+        formData && temporaryUserProfilePictureSchema.parse(formData);
+
+        const response = await fetch(`http://localhost:3000/api/auth/temporary/profilePicture`, {
+            method: 'PATCH',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
+                'Authorization': `Bearer ${temporaryToken}`,
             },
-            body: JSON.stringify(validatedData),
+            ...(formData?.image && {
+                body: (() => {
+                    const newFormData = new FormData();
+                    newFormData.append('image', formData.image);
+                    return newFormData;
+                })(),
+            }),
         });
 
         if (!response.ok) {
@@ -256,24 +269,27 @@ export async function registerUser(formData: FormRegisterUserDataType): Promise<
             throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const { data } = await response.json() as SuccessResponse<SuccessfulRegisterResponseType>;
+        const { data } = await response.json() as SuccessResponse<{ token: string }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (!data.token) throw new AppError('JWT is missing in data response', 404, 'MISSING_JWT');
+
+        console.log(data.token)
+        await removeTemporarySession();
         await createSession(data.token);
 
         return {
             success: true,
-            data: {
-                token: data.token,
-            }
+            data: undefined,
         }
-    } catch (error: unknown) {
+    } catch (error) {
 
         // Handle validation errors
-        if (error instanceof z.ZodError) {
+        if (isZodError(error)) {
             return {
                 success: false,
                 error: {
-                    message: error.message || 'Internal Server Error',
-                    code: 'VALIDATION_ERROR',
+                    message: 'Validation failed',
+                    code: 'VALIDATION_FAILED',
                     details: error.issues,
                 }
             } as ErrorResponse;
@@ -289,17 +305,85 @@ export async function registerUser(formData: FormRegisterUserDataType): Promise<
         }
 
         // Handle other errors
-        const errorMessage = getErrorMessage(error);
-
         return {
             success: false,
             error: {
-                message: errorMessage,
-                code: error instanceof Error ? error.name.toUpperCase().replaceAll(' ', '_') : 'INTERNAL_ERROR',
-            }
-        } as ErrorResponse;
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
+
+// login
+
+export async function loginUser(
+    formData: FormLogInUserDataType,
+): Promise<ApiResponse<undefined>> {
+    try {
+        if (!formData) {
+            throw new AppError('Log in data is missing', 404, 'MISSING_DATA');
+        }
+
+        const validatedData = logInUserSchema.parse(formData);
+
+        const response = await fetch(`http://localhost:3000/api/auth/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(validatedData),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+        }
+
+        const { data } = await response.json() as SuccessResponse<{ token: string }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (!data.token) throw new AppError('JWT is missing in data response', 404, 'MISSING_JWT');
+
+        await createSession(data.token);
+
+        return {
+            success: true,
+        }
+    } catch (error: unknown) {
+        // Handle validation errors
+        if (isZodError(error)) {
+            return {
+                success: false,
+                error: {
+                    message: 'Validation failed',
+                    code: 'VALIDATION_FAILED',
+                    details: error.issues,
+                }
+            } as ErrorResponse;
+        } else if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
 
 export async function followUser(username: string) {
     const token = await getCurrentUserToken();

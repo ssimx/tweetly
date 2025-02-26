@@ -7,50 +7,57 @@ import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Mail, Apple } from "lucide-react";
-import { FormLogInUserDataType, logInUserSchema } from 'tweetly-shared';
+import { FormLogInUserDataType, getErrorMessage, isZodError, logInUserSchema } from 'tweetly-shared';
+import { loginUser } from '@/actions/actions';
+import { useState } from 'react';
 
 export default function LogIn() {
     const router = useRouter();
+    const [isError, setIsError] = useState(false);
 
     const {
         register,
         handleSubmit,
-        reset,
         formState: { errors, isSubmitting },
         setError,
-        resetField,
     } = useForm<FormLogInUserDataType>({ resolver: zodResolver(logInUserSchema) });
 
-    const onSubmit = async (data: FormLogInUserDataType) => {
+    const onSubmit = async (formData: FormLogInUserDataType) => {
         if (isSubmitting) return;
 
         try {
-            const response = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            })
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error);
+            const response = await loginUser(formData);
+            console.log(response)
+            if (!response.success) {
+                if (response.error.details) throw new z.ZodError(response.error.details);
+                else if (response.error.code === 'USER_NOT_FOUND') {
+                    setError('usernameOrEmail' as keyof FormLogInUserDataType, {
+                        type: 'manual',
+                        message: response.error.message
+                    });
+                    return;
+                }
+                else throw new Error(response.error.message);
             }
 
+            setIsError(false);
             router.replace('/');
             router.refresh();
-        } catch (error) {
-            if (error instanceof Error) {
-                if (error.message === 'User not found') {
-                    setError("username", { type: "manual", message: error.message });
-                } else if (error.message === 'Incorrect password') {
-                    setError("password", { type: "manual", message: error.message });
-                    resetField("password", { keepError: true });
-                } else {
-                    console.error(error);
-                    reset();
-                }
+        } catch (error: unknown) {
+            // Handle validation errors
+            if (isZodError(error)) {
+                error.issues.forEach((detail) => {
+                    if (detail.path && detail.message) {
+                        setError(detail.path[0] as keyof FormLogInUserDataType, {
+                            type: 'manual',
+                            message: detail.message
+                        });
+                    }
+                });
+            } else {
+                const errorMessage = getErrorMessage(error);
+                console.error('Registration error:', errorMessage);
+                setIsError(true);
             }
         }
     };
@@ -73,9 +80,9 @@ export default function LogIn() {
                 <p>Or</p>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
-                    <Input {...register("username")} placeholder="username" />
-                    {errors.username && (
-                        <p className="error-msg">{`${errors.username.message}`}</p>
+                    <Input {...register("usernameOrEmail")} placeholder="Username or email address" />
+                    {errors.usernameOrEmail && (
+                        <p className="error-msg">{`${errors.usernameOrEmail.message}`}</p>
                     )}
                     <Input {...register("password")} type="password" placeholder="password" />
                     {errors.password && (
@@ -88,6 +95,9 @@ export default function LogIn() {
                         </Button>
                         : <Button className='bg-primary font-bold text-white-1'>Log in</Button>
                     }
+                    {isError && (
+                        <p className="!mt-0 error-msg text-center">Something wen&apos;t wrong, please contact the support</p>
+                    )}
                 </form>
                 <p>Don&apos;t have an account? <Link href='/signup' className='font-bold hover:text-primary'>Sign up</Link></p>
             </div>

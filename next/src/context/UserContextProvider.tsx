@@ -1,11 +1,11 @@
 'use client';
 import { fetchLoggedInUser } from '@/actions/get-actions';
-import { UserInfo } from '@/lib/types';
 import { createContext, useContext, useState } from 'react';
+import { ErrorResponse, getErrorMessage, LoggedInUserDataType } from 'tweetly-shared';
 
 type UserContextType = {
-    loggedInUser: UserInfo,
-    setLoggedInUser: React.Dispatch<React.SetStateAction<UserInfo>>
+    loggedInUser: LoggedInUserDataType,
+    setLoggedInUser: React.Dispatch<React.SetStateAction<LoggedInUserDataType>>
     followingCount: number,
     setFollowingCount: React.Dispatch<React.SetStateAction<number>>,
     followersCount: number,
@@ -23,25 +23,35 @@ export const useUserContext = () => {
     return context;
 };
 
-export default function UserContextProvider({ children, userData }: { children: React.ReactNode, userData: UserInfo }) {
-    const [loggedInUser, setLoggedInUser] = useState<UserInfo>(userData);
-    const [followingCount, setFollowingCount] = useState(userData._count.following);
-    const [followersCount, setFollowersCount] = useState(userData._count.followers);
+export default function UserContextProvider({ children, userData }: { children: React.ReactNode, userData: LoggedInUserDataType }) {
+    const [loggedInUser, setLoggedInUser] = useState<LoggedInUserDataType>(userData);
+    const [followingCount, setFollowingCount] = useState(userData.following);
+    const [followersCount, setFollowersCount] = useState(userData.followers);
     const [newFollowing, setNewFollowing] = useState(false);
 
     const refetchUserData = async () => {
-        // Call the backend API again to get the updated user data
-        const freshInfo = await fetchLoggedInUser();
+        try {
+            // Call the backend API again to get the updated user data
+            const response = await fetchLoggedInUser();
 
-        setLoggedInUser(freshInfo); // Update the context with the latest data
-    };
+            if (!response.success) {
+                const errorData = response as ErrorResponse;
+                throw new Error(errorData.error.message);
+            }
 
-    return (
-        <UserContext.Provider 
-            value={{ loggedInUser, setLoggedInUser, newFollowing, setNewFollowing, followingCount, setFollowingCount, followersCount, setFollowersCount, refetchUserData }}>
-            {children}
-        </UserContext.Provider>
-    )
+            setLoggedInUser(response.data!.user); // Update the context with the latest data
+        } catch (error: unknown) {
+            const errorMessage = getErrorMessage(error);
+            console.error('Log in error:', errorMessage);
+        }
+};
+
+return (
+    <UserContext.Provider
+        value={{ loggedInUser, setLoggedInUser, newFollowing, setNewFollowing, followingCount, setFollowingCount, followersCount, setFollowersCount, refetchUserData }}>
+        {children}
+    </UserContext.Provider>
+)
 };
 
 export { UserContext };

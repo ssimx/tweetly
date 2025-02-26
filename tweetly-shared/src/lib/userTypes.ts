@@ -1,5 +1,3 @@
-import { FormTemporaryUserBasicDataType, FormTemporaryUserPasswordType } from './authTypes';
-
 // Type for logged in user information
 export type LoggedInUserDataType = {
     id: number,
@@ -19,6 +17,13 @@ export type LoggedInUserDataType = {
     },
 };
 
+// Type for logged in user JWT payload
+export type TemporaryUserJwtPayload = {
+    type: 'temporary',
+    id: number,
+    email: string,
+};
+
 // Type for temporary user information
 export type LoggedInTemporaryUserDataType = {
     id: number,
@@ -32,4 +37,12 @@ export type LoggedInTemporaryUserDataType = {
     username: boolean,
     profilePicture: boolean,
     registrationComplete: boolean,
+};
+
+// Type for logged in user JWT payload
+export type LoggedInUserJwtPayload = {
+    type: 'user',
+    id: number,
+    email: string,
+    username: string
 };
