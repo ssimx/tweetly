@@ -8,19 +8,22 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Loader2, X } from "lucide-react";
-import { useId, useRef, useState } from "react";
+import { useId, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormTemporaryUserBasicDataType, getErrorMessage, isZodError, temporaryUserBasicDataSchema } from 'tweetly-shared';
 import { Input } from '@/components/ui/input';
 import { DateOfBirthSelect } from '@/components/forms/DateOfBirthSelect';
-import { z } from 'zod';
 import Image from 'next/image';
 import { useDisplayContext } from '@/context/DisplayContextProvider';
-import { registerTemporaryUser } from '@/actions/actions';
 import { SignUpStepType } from '../SignUpProcess';
+import { checkIfEmailIsAvailable } from '@/actions/actions';
 
-export default function SignUpStepZero({ dialogOpen, setDialogOpen, setRegistrationStep, customError, setCustomError }: SignUpStepType) {
+type SignUpStepZeroProps = SignUpStepType & {
+    setBasicUserInfo: NonNullable<SignUpStepType['setBasicUserInfo']>;
+};
+
+export default function SignUpStepZero({ dialogOpen, setDialogOpen, setRegistrationStep, customError, setCustomError, basicUserInfo, setBasicUserInfo }: SignUpStepZeroProps) {
     const { savedTheme } = useDisplayContext();
     const formId = useId();
 
@@ -31,37 +34,41 @@ export default function SignUpStepZero({ dialogOpen, setDialogOpen, setRegistrat
         formState: { errors, isSubmitting },
         setError,
         setValue,
-    } = useForm<FormTemporaryUserBasicDataType>({ resolver: zodResolver(temporaryUserBasicDataSchema) });
+        getValues
+    } = useForm<FormTemporaryUserBasicDataType>({
+        resolver: zodResolver(temporaryUserBasicDataSchema),
+        defaultValues: { profileName: basicUserInfo?.profileName, email: basicUserInfo?.email }
+    });
 
     // React hook form's watch API is causing performance issue
-    const [profileNameWatch, setProfileNameWatch] = useState('');
-    const [emailWatch, setEmailWatch] = useState('');
+    const [profileNameWatch, setProfileNameWatch] = useState(basicUserInfo?.profileName ?? '');
+    const [emailWatch, setEmailWatch] = useState(basicUserInfo?.email ?? '');
 
     const yearWatch = useWatch({ control, name: 'year' });
     const monthWatch = useWatch({ control, name: 'month' });
     const dayWatch = useWatch({ control, name: 'day' });
+
+    console.log(getValues('email'));
 
     const onSubmit = async (formData: FormTemporaryUserBasicDataType) => {
         if (isSubmitting) return;
         setCustomError(null);
 
         try {
-            const response = await registerTemporaryUser(formData);
+            const validatedData = temporaryUserBasicDataSchema.parse(formData);
 
-            if (!response.success) {
-                if (response.error.details) throw new z.ZodError(response.error.details);
-                else if (response.error.code === 'EMAIL_TAKEN') {
-                    throw new z.ZodError([
-                        {
-                            code: 'custom',
-                            path: ['email'],
-                            message: response.error.message,
-                        }
-                    ]);
-                }
-                else throw new Error(response.error.message);
+            const emailAvailable = await checkIfEmailIsAvailable({ email: validatedData.email });
+            console.log(emailAvailable)
+            if (!emailAvailable) {
+                setError('email' as keyof FormTemporaryUserBasicDataType, {
+                    type: 'manual',
+                    message: 'Provided email address is not available'
+                });
+                return;
             }
 
+            setBasicUserInfo({ ...formData });
+            setCustomError(null);
             setRegistrationStep(() => 1);
         } catch (error: unknown) {
             if (isZodError(error)) {

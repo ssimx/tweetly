@@ -1,11 +1,11 @@
-import { searchPostsWithCursor, usernameAvailable, searchUsers, searchUsersAndPosts } from "../controllers/searchController";
+import { searchPostsWithCursor, usernameOrEmailLookup, searchUsers, searchUsersAndPosts } from "../controllers/searchController";
 
 import express from 'express';
 
 const router = express.Router();
 
 router.get('/', searchUsersAndPosts);
-router.get('/user', usernameAvailable);
+router.get('/user', usernameOrEmailLookup);
 router.get('/users', searchUsers);
 router.get('/posts', searchPostsWithCursor);
 

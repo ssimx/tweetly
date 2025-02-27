@@ -20,7 +20,7 @@ import {
     userUpdatePasswordSchema,
     UserUpdatePasswordType,
     userUpdateUsernameSchema,
-    UserUpdateUsernameType, 
+    UserUpdateUsernameType,
     FormTemporaryUserPasswordType,
     FormTemporaryUserBasicDataType,
     temporaryUserBasicDataSchema,
@@ -33,26 +33,33 @@ import {
     getErrorMessage,
     logInUserSchema,
     FormLogInUserDataType,
+    emailAvailableSchema,
+    emailSchema,
+    usernameSchema,
+    usernameOrEmailAvailibilitySchema,
 } from 'tweetly-shared';
 
 // AUTH
 
 // registration 
-
 // First step of the registration process, registers new temporary user with basic information
 export async function registerTemporaryUser(
-    formData: FormTemporaryUserBasicDataType,
+    basicDataForm: FormTemporaryUserBasicDataType,
+    passwordDataForm: FormTemporaryUserPasswordType,
 ): Promise<ApiResponse<undefined>> {
-
     try {
-        const validatedBasicData = temporaryUserBasicDataSchema.parse(formData);
+        const validatedBasicData = temporaryUserBasicDataSchema.parse(basicDataForm);
+        const validatedPassword = temporaryUserPasswordSchema.parse(passwordDataForm);
 
         const response = await fetch(`http://localhost:3000/api/auth/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(validatedBasicData),
+            body: JSON.stringify({
+                basicData: validatedBasicData,
+                passwordData: validatedPassword
+            }),
         });
 
         if (!response.ok) {
@@ -103,73 +110,7 @@ export async function registerTemporaryUser(
     }
 };
 
-// Second step of the registration process, update temporary user's password
-export async function updateTemporaryUserPassword(
-    formData: FormTemporaryUserPasswordType
-): Promise<ApiResponse<undefined>> {
-
-    const sessionToken = await getUserSessionToken();
-    if ((await verifySession(sessionToken)).isAuth) redirect('/');
-
-    try {
-        const temporaryToken = await getCurrentTemporaryUserToken();
-        if (!temporaryToken) throw new AppError('User not logged in', 400, 'NOT_LOGGED_IN');
-
-        const validatedPasswordData = temporaryUserPasswordSchema.parse(formData);
-
-        const response = await fetch(`http://localhost:3000/api/auth/temporary/password`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${temporaryToken}`,
-            },
-            body: JSON.stringify(validatedPasswordData),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json() as ErrorResponse;
-            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
-        }
-
-        return {
-            success: true,
-            data: undefined,
-        }
-    } catch (error) {
-
-        // Handle validation errors
-        if (isZodError(error)) {
-            return {
-                success: false,
-                error: {
-                    message: 'Validation failed',
-                    code: 'VALIDATION_FAILED',
-                    details: error.issues,
-                }
-            } as ErrorResponse;
-        } else if (error instanceof AppError) {
-            return {
-                success: false,
-                error: {
-                    message: error.message || 'Internal Server Error',
-                    code: error.code || 'INTERNAL_ERROR',
-                    details: error.details,
-                }
-            } as ErrorResponse;
-        }
-
-        // Handle other errors
-        return {
-            success: false,
-            error: {
-                message: 'Internal Server Error',
-                code: 'INTERNAL_ERROR',
-            },
-        };
-    }
-};
-
-// Third step of the registration process, update temporary user's password
+// Second step of the registration process, update temporary user's username
 export async function updateTemporaryUserUsername(
     formData: FormTemporaryUserUsernameType
 ): Promise<ApiResponse<undefined>> {
@@ -235,9 +176,9 @@ export async function updateTemporaryUserUsername(
     }
 };
 
-// Forth step of the registration process, update temporary user's profile picture
+// Third step of the registration process, update temporary user's profile picture
 //      remove temp user and create a new user
-export async function updateTemporaryUserProfilePicture( 
+export async function updateTemporaryUserProfilePicture(
     formData?: FormTemporaryUserProfilePictureType
 ): Promise<ApiResponse<undefined>> {
 
@@ -316,7 +257,6 @@ export async function updateTemporaryUserProfilePicture(
 };
 
 // login
-
 export async function loginUser(
     formData: FormLogInUserDataType,
 ): Promise<ApiResponse<undefined>> {
@@ -383,7 +323,6 @@ export async function loginUser(
 };
 
 // ---------------------------------------------------------------------------------------------------------
-
 
 export async function followUser(username: string) {
     const token = await getCurrentUserToken();
@@ -662,22 +601,14 @@ export async function verifyLoginPasswordForSettings(data: UserSettingsAccessTyp
     }
 };
 
-export async function checkIfNewUsernameIsAvailable(username: string) {
-    const sessionToken = await getUserSessionToken();
-    const temporaryToken = await getCurrentTemporaryUserToken();
-
-    console.log(sessionToken, temporaryToken)
-
+export async function checkIfUsernameIsAvailable(formData: { username: string }) {
     try {
-        if (!sessionToken && !temporaryToken) {
-            throw new Error('Invalid token');
-        }
+        const validatedData = usernameSchema.parse(formData);
 
-        const response = await fetch(`http://localhost:3000/api/search/user?q=${username}`, {
+        const response = await fetch(`http://localhost:3000/api/search/user?type=username&data=${validatedData.username}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${sessionToken ?? temporaryToken}`,
             },
         });
 
@@ -687,6 +618,7 @@ export async function checkIfNewUsernameIsAvailable(username: string) {
         }
 
         const available = await response.json() as boolean;
+        console.log(available)
 
         return available;
     } catch (error) {
@@ -739,7 +671,36 @@ export async function changeUsername(data: UserUpdateUsernameType) {
         console.log(error)
         return getErrorMessage(error);
     }
-}
+};
+
+export async function checkIfEmailIsAvailable(formData: { email: string }) {
+    try {
+        // Decode and validate type and data
+        const decodedData = decodeURIComponent(formData.email);
+        usernameOrEmailAvailibilitySchema.parse({ type: 'email', data: decodedData });
+
+        // Encode query for backend API call
+        const encodedData = encodeURIComponent(decodedData);
+
+        const response = await fetch(`http://localhost:3000/api/search/user?type=email&data=${encodedData}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(getErrorMessage(errorData));
+        }
+
+        const available = await response.json() as boolean;
+        return available;
+    } catch (error) {
+        console.log(error)
+        return getErrorMessage(error);
+    }
+};
 
 export async function changeEmail(data: UserUpdateEmailType) {
     const sessionToken = await getCurrentUserToken();
@@ -785,7 +746,7 @@ export async function changeEmail(data: UserUpdateEmailType) {
         console.log(error)
         return getErrorMessage(error);
     }
-}
+};
 
 export async function changeBirthday(data: UserUpdateBirthdayType) {
     const sessionToken = await getCurrentUserToken();
@@ -820,7 +781,7 @@ export async function changeBirthday(data: UserUpdateBirthdayType) {
         console.log(error)
         return getErrorMessage(error);
     }
-}
+};
 
 export async function changePassword(data: UserUpdatePasswordType) {
     const sessionToken = await getCurrentUserToken();
@@ -854,4 +815,4 @@ export async function changePassword(data: UserUpdatePasswordType) {
         console.log(error)
         return getErrorMessage(error);
     }
-}
+};

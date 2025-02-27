@@ -124,3 +124,51 @@ export const userUpdateProfileSchema = z.object({
 });
 
 export type UserUpdateProfileType = z.infer<typeof userUpdateProfileSchema>;
+
+// SEARCHING USERS
+
+// Email schema
+export const emailSchema = z.object({
+    email: z
+        .string()
+        .trim()
+        .toLowerCase()
+        .email(),
+});
+
+// Username schema
+export const usernameSchema = z.object({
+    username: z
+        .string()
+        .trim()
+        .toLowerCase()
+        .nonempty('Please enter username')
+        .min(2, 'Username must contain at least 2 characters')
+        .max(15, "Username must contain less than 15 characters")
+        .regex(/^[a-zA-Z0-9]+$/, "Username contains invalid characters."),
+});
+
+// Email or username availability lookup
+export const usernameOrEmailAvailibilitySchema = z.discriminatedUnion('type',
+    [
+        z.object({
+            type: z.literal('email'),
+            data: z
+                .string()
+                .trim()
+                .toLowerCase()
+                .email(),
+        }),
+        z.object({
+            type: z.literal('username'),
+            data: z
+                .string()
+                .trim()
+                .toLowerCase()
+                .nonempty('Please enter username')
+                .min(2, 'Username must contain at least 2 characters')
+                .max(15, "Username must contain less than 15 characters")
+                .regex(/^[a-zA-Z0-9]+$/, "Username contains invalid characters."),
+        })
+    ]
+);

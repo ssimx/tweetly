@@ -1,16 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getErrorMessage, ApiResponse, AppError, ErrorResponse, SuccessResponse, SuccessfulRegisterResponseType, isZodError, temporaryUserBasicDataSchema } from 'tweetly-shared';
+import { getErrorMessage, ApiResponse, AppError, ErrorResponse, SuccessResponse, SuccessfulRegisterResponseType, isZodError, temporaryUserBasicDataSchema, FormTemporaryUserBasicDataType, FormTemporaryUserPasswordType, temporaryUserPasswordSchema } from 'tweetly-shared';
 
 export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<SuccessfulRegisterResponseType>>> {
     if (req.method === 'POST') {
         try {
-            const body = await req.json();
+            const body = await req.json() as { basicData: FormTemporaryUserBasicDataType, passwordData: FormTemporaryUserPasswordType };
             if (!body) {
-                throw new AppError('User data is missing', 404, 'MISSING_DATA');
+                throw new AppError('Request information is missing', 404, 'MISSING_DATA');
+            } else if (!body.basicData) {
+                throw new AppError('Basic user information is missing', 404, 'MISSING_DATA');
+            } else if (!body.passwordData) {
+                throw new AppError('Password information is missing', 404, 'MISSING_DATA');
             }
 
-            const validatedBasicData = temporaryUserBasicDataSchema.parse(body);
+            const validatedBasicData = temporaryUserBasicDataSchema.parse(body.basicData);
+            const validatedPassword = temporaryUserPasswordSchema.parse(body.passwordData);
 
             const apiUrl = process.env.EXPRESS_API_URL;
             const response = await fetch(`${apiUrl}/auth/register`, {
@@ -18,7 +23,10 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<S
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(validatedBasicData),
+                body: JSON.stringify({
+                    basicData: validatedBasicData,
+                    passwordData: validatedPassword
+                }),
             });
 
             if (!response.ok) {

@@ -1,6 +1,6 @@
-import { AppError, FormLogInUserDataType, LoggedInTemporaryUserDataType, LoggedInUserJwtPayload, logInUserSchema, SuccessfulLoginResponseType, SuccessfulRegisterResponseType, SuccessResponse, temporaryUserBasicDataSchema, temporaryUserPasswordSchema, temporaryUserProfilePictureSchema, temporaryUserUsernameSchema } from 'tweetly-shared';
+import { AppError, FormLogInUserDataType, FormTemporaryUserBasicDataType, FormTemporaryUserPasswordType, LoggedInTemporaryUserDataType, LoggedInUserJwtPayload, logInUserSchema, SuccessfulLoginResponseType, SuccessfulRegisterResponseType, SuccessResponse, temporaryUserBasicDataSchema, temporaryUserPasswordSchema, temporaryUserProfilePictureSchema, temporaryUserUsernameSchema } from 'tweetly-shared';
 import { NextFunction, Request, Response } from 'express';
-import { checkEmailAvailability, createTemporaryUser, createUserAndProfile, getUserLogin, removeTemporaryUser, updateTemporaryUserPassword, updateTemporaryUserProfilePicture, updateTemporaryUserUsername } from "../services/authService";
+import { checkEmailAvailability, createTemporaryUser, createUserAndProfile, getUserLogin, removeTemporaryUser, updateTemporaryUserProfilePicture, updateTemporaryUserUsername } from "../services/authService";
 import { generateSettingsToken, generateTemporaryUserToken, generateUserSessionToken } from '../utils/jwt';
 import { UserProps } from '../lib/types';
 import bcrypt from 'bcrypt';
@@ -8,23 +8,26 @@ import bcrypt from 'bcrypt';
 // ---------------------------------------------------------------------------------------------------------
 
 export const registerTempUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    let body = req.body;
+    const body = req.body as { basicData: FormTemporaryUserBasicDataType, passwordData: FormTemporaryUserPasswordType };
 
     try {
         if (!body) {
-            throw new AppError('User data is missing', 404, 'MISSING_DATA');
+            throw new AppError('Request information is missing', 404, 'MISSING_DATA');
+        } else if (!body.basicData) {
+            throw new AppError('Basic user information is missing', 404, 'MISSING_DATA');
+        } else if (!body.passwordData) {
+            throw new AppError('Password information is missing', 404, 'MISSING_DATA');
         }
 
-        const validatedBasicData = temporaryUserBasicDataSchema.parse(body);
+        const validatedBasicData = temporaryUserBasicDataSchema.parse(body.basicData);
+        const validatedPassword = temporaryUserPasswordSchema.parse(body.passwordData);
 
         let { profileName, email, year, day, month } = validatedBasicData;
+        let { password } = validatedPassword;
 
         // convert to lower case
         profileName = profileName.toLowerCase();
         email = email.toLowerCase();
-
-        // convert year, month, day to Date object
-        const dateOfBirth = new Date(`${year}-${('0' + month).slice(-2)}-${('0' + day).slice(-2)}`);
 
         // check if user already exists
         let existingUser;
@@ -38,11 +41,14 @@ export const registerTempUser = async (req: Request, res: Response, next: NextFu
             throw new AppError('Email is already in use', 400, 'EMAIL_TAKEN');
         }
 
+        // convert year, month, day to Date object
+        const dateOfBirth = new Date(`${year}-${('0' + month).slice(-2)}-${('0' + day).slice(-2)}`);
+
         // Hash the password before saving it
-        // const hashedPassword: string = await bcrypt.hash(password, 10);
+        const hashedPassword: string = await bcrypt.hash(password, 10);
 
         // Try to create a new temporary user
-        const response = await createTemporaryUser(profileName, email, dateOfBirth);
+        const response = await createTemporaryUser(profileName, email, dateOfBirth, hashedPassword);
 
         // Check if there was a unique constraint violation
         if ('error' in response) {
@@ -77,42 +83,6 @@ export const registerTempUser = async (req: Request, res: Response, next: NextFu
 
             res.status(200).json(successResponse);
         }
-    } catch (error) {
-        next(error);
-    }
-};
-
-export const updateTempUserPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    let body = req.body;
-    const user = req.user as LoggedInTemporaryUserDataType;
-
-    try {
-        if (!body) {
-            throw new AppError('User password is missing', 404, 'MISSING_DATA');
-        }
-
-        if (!user) {
-            throw new AppError('User not logged in', 404, 'NOT_LOGGED_IN');
-        }
-
-        const validatedPassword = temporaryUserPasswordSchema.parse(body);
-
-        let { password } = validatedPassword;
-
-        // Hash the password before saving it
-        const hashedPassword: string = await bcrypt.hash(password, 10);
-
-        // update temporary user
-        const response = await updateTemporaryUserPassword(user.id, hashedPassword);
-        if (!response) {
-            throw new AppError('User not found', 404, 'USER_NOT_FOUND');
-        }
-
-        const successResponse: SuccessResponse<SuccessfulRegisterResponseType> = {
-            success: true,
-        };
-
-        res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }

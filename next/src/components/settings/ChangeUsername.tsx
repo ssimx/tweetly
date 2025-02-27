@@ -9,7 +9,7 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Loader2 } from 'lucide-react';
 import { useUserContext } from '@/context/UserContextProvider';
-import { changeUsername, checkIfNewUsernameIsAvailable } from '@/actions/actions';
+import { changeUsername, checkIfUsernameIsAvailable } from '@/actions/actions';
 import { getErrorMessage } from 'tweetly-shared';
 
 type FormData = z.infer<typeof settingsChangeUsername>;
@@ -28,8 +28,8 @@ export default function ChangeUsername() {
         formState: { errors, isSubmitting },
         setError,
         clearErrors,
-        watch,        
-    } = useForm<FormData>({ 
+        watch,
+    } = useForm<FormData>({
         resolver: zodResolver(settingsChangeUsername),
         defaultValues: { newUsername: loggedInUser.username }
     });
@@ -62,7 +62,7 @@ export default function ChangeUsername() {
                 // Encode query for API requests
                 const encodedSearch = encodeURIComponent(decodedSearch);
 
-                const usernameAvailable = await checkIfNewUsernameIsAvailable(encodedSearch);
+                const usernameAvailable = await checkIfUsernameIsAvailable({ username: encodedSearch });
 
                 if (usernameAvailable !== true) {
                     setNewUsernameAvailable(false);
@@ -122,10 +122,10 @@ export default function ChangeUsername() {
 
             <div className='px-4 mt-4'>
                 <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
-                    <Input 
-                        {...register("newUsername")} 
+                    <Input
+                        {...register("newUsername")}
                         type="text" placeholder="Username"
-                        />
+                    />
                     {errors.newUsername && (
                         <p className="error-msg">{`${errors.newUsername.message}`}</p>
                     )}
@@ -148,7 +148,7 @@ export default function ChangeUsername() {
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Saving
                         </Button>
-                        : <Button disabled={ isSubmitting || isValidating && true } className='bg-primary font-bold'>Save</Button>
+                        : <Button disabled={isSubmitting || isValidating && true} className='bg-primary font-bold'>Save</Button>
                     }
                 </form>
             </div>

@@ -8,21 +8,26 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Loader2, X, Eye, EyeOff } from "lucide-react";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from '@/components/ui/input';
-import { updateTemporaryUserPassword } from '@/actions/actions';
+import { registerTemporaryUser } from '@/actions/actions';
 import { z } from 'zod';
 import Image from 'next/image';
 import { useDisplayContext } from '@/context/DisplayContextProvider';
 import { FormTemporaryUserPasswordType, getErrorMessage, isZodError, temporaryUserPasswordSchema } from 'tweetly-shared';
 import { SignUpStepType } from '../SignUpProcess';
 
-export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrationStep, customError, setCustomError }: SignUpStepType) {
+type SignUpStepOneProps = SignUpStepType & {
+    basicUserInfo: NonNullable<SignUpStepType['basicUserInfo']>;
+};
+
+export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrationStep, customError, setCustomError, basicUserInfo }: SignUpStepOneProps) {
     const { savedTheme } = useDisplayContext();
     const [passwordType, setPasswordType] = useState<'password' | 'text'>('password');
     const [confirmPasswordType, setConfirmPasswordType] = useState<'password' | 'text'>('password');
+    const [isSubmitButtonEnabled, setIsSubmitButtonEnabled] = useState(false);
     const formId = useId();
 
     const {
@@ -42,12 +47,12 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrati
         setCustomError(null);
 
         try {
-            const response = await updateTemporaryUserPassword(formData);
-
+            const response = await registerTemporaryUser(basicUserInfo, formData);
+            console.log(response)
             if (!response.success) {
                 if (response.error.details) throw new z.ZodError(response.error.details);
-                else if (response.error.code === 'NOT_LOGGED_IN') {
-                    setCustomError('Not logged in, please log in with existing email or register a new account');
+                else if (response.error.code === 'EMAIL_TAKEN') {
+                    setCustomError(`Provided email address is not available`);
                     setRegistrationStep(() => 0);
                     reset();
                     return;
@@ -55,6 +60,7 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrati
                 else throw new Error(response.error.message);
             }
 
+            setCustomError(null);
             setRegistrationStep(() => 3);
         } catch (error: unknown) {
 
@@ -77,6 +83,21 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrati
 
         }
     };
+
+    useEffect(() => {
+        setIsSubmitButtonEnabled(false);
+        const controller = new AbortController();
+
+        if (passwordWatch.length >= 8 && confirmPasswordWatch.length >= 8 && passwordWatch === confirmPasswordWatch) {
+            setTimeout(() => {
+                setIsSubmitButtonEnabled(true);
+            }, 300, controller.abort);
+        }
+
+        return (() => {
+            controller.abort();
+        })
+    }, [passwordWatch, confirmPasswordWatch]);
 
     return (
         <Dialog open={dialogOpen} >
@@ -112,11 +133,12 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrati
                     >
                         <div className="relative h-10 w-full">
                             <Input
-                                {...register('password')}
+                                {...register('password', {
+                                    onChange: (e) => setPasswordWatch(e.target.value)
+                                })}
                                 placeholder="Password"
                                 maxLength={50}
                                 type={passwordType}
-                                onChange={(e) => setPasswordWatch(e.target.value)}
                                 tabIndex={2}
                                 autoFocus={true}
                             />
@@ -156,11 +178,12 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrati
 
                         <div className="relative h-10 w-full">
                             <Input
-                                {...register('confirmPassword')}
+                                {...register('confirmPassword', {
+                                    onChange: (e) => setConfirmPasswordWatch(e.target.value)
+                                })}
                                 placeholder="Confirm password"
                                 maxLength={50}
                                 type={confirmPasswordType}
-                                onChange={(e) => setConfirmPasswordWatch(e.target.value)}
                                 tabIndex={3}
                             />
 
@@ -216,12 +239,7 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrati
                         <Button form={formId}
                             className='w-full h-[3rem] text-[1.1rem] bg-primary font-semibold text-white-1 mt-auto rounded-[25px]'
                             tabIndex={6}
-                            disabled={
-                                !(
-                                    passwordWatch.length >= 8 &&
-                                    confirmPasswordWatch.length >= 8
-                                )
-                            }
+                            disabled={!isSubmitButtonEnabled}
                         >
                             Next
                         </Button>

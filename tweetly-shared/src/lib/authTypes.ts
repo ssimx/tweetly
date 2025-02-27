@@ -1,10 +1,10 @@
 import { z } from 'zod';
 import { logInUserSchema, temporaryUserBasicDataSchema, registerUserDataSchema, temporaryUserPasswordSchema, temporaryUserUsernameSchema, temporaryUserProfilePictureSchema } from '../schemas/authSchemas';
 
-// Type for register temporary user data
+// Type for temporary user basic data
 export type FormTemporaryUserBasicDataType = z.infer<typeof temporaryUserBasicDataSchema>;
 
-// Type for updating temporary user password
+// Type for temporary user password
 export type FormTemporaryUserPasswordType = z.infer<typeof temporaryUserPasswordSchema>;
 
 // Type for updating temporary user username

@@ -12,7 +12,7 @@ import { useEffect, useId, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from '@/components/ui/input';
-import { checkIfNewUsernameIsAvailable, updateTemporaryUserUsername } from '@/actions/actions';
+import { checkIfUsernameIsAvailable, updateTemporaryUserUsername } from '@/actions/actions';
 import { z } from 'zod';
 import Image from 'next/image';
 import { useDisplayContext } from '@/context/DisplayContextProvider';
@@ -21,7 +21,7 @@ import { searchUsernameSchema } from '@/lib/schemas';
 import { SignUpStepType } from '../SignUpProcess';
 
 export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistrationStep, customError, setCustomError }: SignUpStepType) {
-    const { savedTheme } = useDisplayContext(); 
+    const { savedTheme } = useDisplayContext();
     const [isValidating, setIsValidating] = useState(false);
     const [validatedUsername, setValidatedUsername] = useState<string | undefined>(undefined);
     const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | undefined>(undefined);
@@ -84,7 +84,7 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
         if (usernameWatch.length === 0) return;
         if (usernameWatch === validatedUsername) return;
         setIsUsernameAvailable(undefined);
-        
+
         const timeout = setTimeout(async () => {
             try {
                 // Decode query before validation
@@ -95,7 +95,7 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
                 const encodedSearch = encodeURIComponent(decodedSearch);
 
                 setIsValidating(true);
-                const usernameAvailable = await checkIfNewUsernameIsAvailable(encodedSearch);
+                const usernameAvailable = await checkIfUsernameIsAvailable({ username: encodedSearch });
                 setValidatedUsername(decodedSearch);
 
                 if (usernameAvailable !== true) {

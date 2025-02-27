@@ -59,7 +59,7 @@ model TemporaryUser {
   email                String   @unique @db.VarChar(254)
   emailVerified        Boolean  @default(false)
   dateOfBirth          DateTime @db.Date
-  password             String?
+  password             String
   username             String?  @unique @db.VarChar(15)
   profilePicture       String?  @db.VarChar(255)
   registrationComplete Boolean  @default(false)

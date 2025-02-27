@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from 'react';
 import SignUpStepZero from './steps/SignUpStepZero';
 import SignUpStepOne from './steps/SignUpStepOne';
-import { LoggedInTemporaryUserDataType } from 'tweetly-shared';
+import { FormTemporaryUserBasicDataType, LoggedInTemporaryUserDataType } from 'tweetly-shared';
 import SignUpStepThree from './steps/SignUpStepThree';
 import SignUpStepFour from './steps/SignUpStepFour';
 
@@ -15,32 +15,40 @@ export type SignUpStepType = {
     setRegistrationStep: React.Dispatch<React.SetStateAction<number | undefined>>,
     customError: string | null,
     setCustomError: React.Dispatch<React.SetStateAction<string | null>>,
+    basicUserInfo?: FormTemporaryUserBasicDataType,
+    setBasicUserInfo?: React.Dispatch<React.SetStateAction<FormTemporaryUserBasicDataType | null>>,
 };
 
+// -------------------------------------------------------------------------------------
 // Registration process
+
 // Step 0
 //      - profile name, email, date of birth
 // Step 1
 //      - password
-// -------- step 0 and 1 data is combined and sent to DB to create temporary user --------
-
+// Step 1.5
+//      - step 0 and 1 data is combined and sent to DB to create temporary user --------
+// -------------------------------------------------------------------------------------
 // Step 2
 //      - email verification
-// -------- update temp. user emailVerified field --------
-
+// ------ update temp. user emailVerified field ----------------------------------------
+// -------------------------------------------------------------------------------------
 // Step 3
 //      - unique username
-// -------- update temp. user username field --------
-
+// ------ update temp. user username field ---------------------------------------------
+// -------------------------------------------------------------------------------------
 // Step 4
 //      - profile picture
-// -------- take temp. user saved data, create a new user with that data and profile picture --------
-// -------- remove temp. user, create user session JWT, send to frontend, remove temp. JWT and save new session JWT --------
+// ------ take temp. user saved data and create a new user -----------------------------
+// ------ remove temp. user, create user session JWT and remove temp JWT ---------------
+// -------------------------------------------------------------------------------------
 
 // Registration process completed
+// -------------------------------------------------------------------------------------
 
 export default function SignUpProcess({ user }: { user: LoggedInTemporaryUserDataType | null }) {
     const [registrationStep, setRegistrationStep] = useState<number | undefined>(undefined);
+    const [basicUserInfo, setBasicUserInfo] = useState<FormTemporaryUserBasicDataType | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [customError, setCustomError] = useState<string | null>(null);
 
@@ -101,6 +109,8 @@ export default function SignUpProcess({ user }: { user: LoggedInTemporaryUserDat
                     setRegistrationStep={setRegistrationStep}
                     customError={customError}
                     setCustomError={setCustomError}
+                    basicUserInfo={basicUserInfo!}
+                    setBasicUserInfo={setBasicUserInfo}
                 />
             )}
 
@@ -112,6 +122,7 @@ export default function SignUpProcess({ user }: { user: LoggedInTemporaryUserDat
                     setRegistrationStep={setRegistrationStep}
                     customError={customError}
                     setCustomError={setCustomError}
+                    basicUserInfo={basicUserInfo!}
                 />
             )}
 

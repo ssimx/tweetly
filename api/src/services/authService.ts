@@ -42,13 +42,14 @@ export const checkEmailAvailability = async (email: string) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const createTemporaryUser = async (profileName: string, email: string, dateOfBirth: Date) => {
+export const createTemporaryUser = async (profileName: string, email: string, dateOfBirth: Date, hashedPassword: string) => {
     try {
         return await prisma.temporaryUser.create({
             data: {
                 profileName,
                 email,
                 dateOfBirth,
+                password: hashedPassword
             },
         });
     } catch (error) {
@@ -61,19 +62,6 @@ export const createTemporaryUser = async (profileName: string, email: string, da
 
         return { error: getErrorMessage(error), fields: [] };
     }
-};
-
-// ---------------------------------------------------------------------------------------------------------
-
-export const updateTemporaryUserPassword = async (userId: number, password: string) => {
-    return await prisma.temporaryUser.update({
-        where: {
-            id: userId,
-        },
-        data: {
-            password: password
-        }
-    });
 };
 
 // ---------------------------------------------------------------------------------------------------------

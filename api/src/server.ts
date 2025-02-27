@@ -25,6 +25,7 @@ configurePassport(passport);
 
 // Unprotected routes
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/search', searchRouter);
 
 // JWT authentication for all routes under /api/v1 except for /api/v1/auth
 app.use('/api/v1', authenticateJWT);
@@ -33,7 +34,6 @@ app.use('/api/v1', authenticateJWT);
 app.use('/api/v1/posts', postRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/conversations', conversationRouter);
-app.use('/api/v1/search', searchRouter);
 
 // Error-handling
 app.use(errorHandler);

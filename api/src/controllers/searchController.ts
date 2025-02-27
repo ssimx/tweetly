@@ -1,18 +1,25 @@
 import { Request, Response } from 'express';
 import { searchQueryCleanup } from '../utils/searchQueryCleanup';
-import { getUserByUsername, getUsersBySearch } from '../services/userService';
+import { getUserByEmail, getUserByUsername, getUsersBySearch } from '../services/userService';
 import { UserProps } from '../lib/types';
 import { getLastPostBySearch, getMorePostsBySearch, getPostsBySearch } from '../services/postService';
+import { usernameOrEmailAvailibilitySchema } from 'tweetly-shared';
 
 // ---------------------------------------------------------------------------------------------------------
 
-export async function usernameAvailable(req: Request, res: Response) {
-    const query = req.query.q as string;
-    if (!query) return res.status(400).json({ error: "No search query provided" });
+export async function usernameOrEmailLookup(req: Request, res: Response) {
+    const type = req.query.type as string;
+    const data = req.query.data as string;
+    if (!type || !data) return res.status(400).json({ error: "No search query provided" });
 
     try {
+        // Decode and validate type and data
+        const decodedType = decodeURIComponent(type);
+        const decodedData = decodeURIComponent(data);
+        usernameOrEmailAvailibilitySchema.parse({ type: decodedType, data: decodedData });
+
         // fetch user
-        const fetchedUser = await getUserByUsername(query);
+        const fetchedUser = type === 'username' ? await getUserByUsername(data) : await getUserByEmail(data);
 
         return res.status(200).json(fetchedUser ? false : true);
     } catch (error) {

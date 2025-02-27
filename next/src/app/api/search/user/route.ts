@@ -1,51 +1,34 @@
-import { extractToken, removeSession, removeTemporarySession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { searchUsernameSchema } from "@/lib/schemas";
+import { usernameOrEmailAvailibilitySchema } from 'tweetly-shared';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
-        const authHeader = req.headers.get('Authorization');
-        const sessionToken = await extractToken(authHeader);
-        console.log(sessionToken)
-
-        if (sessionToken) {
-            // Check for session validity
-            const isSessionValid = await verifySession(sessionToken);
-
-            if (!isSessionValid.isAuth) {
-                await removeSession();
-                await removeTemporarySession();
-                return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 401 });
-            }
-
-        } else {
-            if (!sessionToken) return NextResponse.json({ message: 'Not logged in, please log in first' }, { status: 401 });
-        }
-
-        const searchParams = req.nextUrl.searchParams;
-
         try {
             const apiUrl = process.env.EXPRESS_API_URL;
-            const query = searchParams.get('q');
-            if (!query) return NextResponse.json({ message: 'No query provided' }, { status: 400 });
+            const searchParams = req.nextUrl.searchParams;
+            const type = searchParams.get('type');
+            const data = searchParams.get('data');
+            console.log(type, data)
+            if (!type || !data) return NextResponse.json({ message: 'No query provided' }, { status: 400 });
 
             try {
-                // Decode and validate query
-                const decodedQuery = decodeURIComponent(query);
-                searchUsernameSchema.parse({ q: decodedQuery });
+                // Decode and validate type and data
+                const decodedType = decodeURIComponent(type);
+                const decodedData = decodeURIComponent(data);
+                usernameOrEmailAvailibilitySchema.parse({ type: decodedType, data: decodedData });
 
                 // Encode query for backend API call
-                const encodedQuery = encodeURIComponent(decodedQuery);
+                const encodedType = encodeURIComponent(decodedType);
+                const encodedData = encodeURIComponent(decodedData);
 
                 // Proceed with API request if valid
-                const response = await fetch(`${apiUrl}/search/user?q=${encodedQuery}`, {
+                const response = await fetch(`${apiUrl}/search/user?type=${encodedType}&data=${encodedData}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${sessionToken}`,
                     },
                 });
 
