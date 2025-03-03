@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
 };
 
-export function formatPostDate(date: string | number) {
+export function formatPostDate(date: string | number | Date) {
     const postDate = new Date(date);
     const now = new Date();
     const hoursDiff = Math.abs(now.getTime() - postDate.getTime()) / (1000 * 60 * 60);

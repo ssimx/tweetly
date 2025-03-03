@@ -16,15 +16,14 @@ import { checkIfUsernameIsAvailable, updateTemporaryUserUsername } from '@/actio
 import { z } from 'zod';
 import Image from 'next/image';
 import { useDisplayContext } from '@/context/DisplayContextProvider';
-import { FormTemporaryUserUsernameType, getErrorMessage, isZodError, temporaryUserUsernameSchema } from 'tweetly-shared';
-import { searchUsernameSchema } from '@/lib/schemas';
+import { AppError, FormTemporaryUserUsernameType, getErrorMessage, isZodError, SuccessResponse, temporaryUserUsernameSchema } from 'tweetly-shared';
 import { SignUpStepType } from '../SignUpProcess';
 
 export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistrationStep, customError, setCustomError }: SignUpStepType) {
     const { savedTheme } = useDisplayContext();
     const [isValidating, setIsValidating] = useState(false);
-    const [validatedUsername, setValidatedUsername] = useState<string | undefined>(undefined);
-    const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | undefined>(undefined);
+    const [validatedUsername, setValidatedUsername] = useState<string | null>(null);
+    const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(null);
     const formId = useId();
 
     const {
@@ -33,6 +32,7 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
         handleSubmit,
         formState: { errors, isSubmitting },
         setError,
+        getValues,
         reset,
     } = useForm<FormTemporaryUserUsernameType>({ resolver: zodResolver(temporaryUserUsernameSchema) });
 
@@ -58,7 +58,6 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
 
             setRegistrationStep(() => 4);
         } catch (error: unknown) {
-
             if (isZodError(error)) {
                 error.issues.forEach((detail) => {
                     if (detail.path && detail.message) {
@@ -83,38 +82,61 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
         if (isSubmitting || isValidating) return;
         if (usernameWatch.length === 0) return;
         if (usernameWatch === validatedUsername) return;
-        setIsUsernameAvailable(undefined);
-
-        const timeout = setTimeout(async () => {
+        setIsUsernameAvailable(null);
+        setCustomError(null);
+        
+        const timeoutId = setTimeout(async () => {
             try {
-                // Decode query before validation
-                const decodedSearch = decodeURIComponent(usernameWatch);
-                searchUsernameSchema.parse({ q: decodedSearch });
+                const validatedUsername = temporaryUserUsernameSchema.parse({ username: usernameWatch });
 
                 // Encode query for API requests
-                const encodedSearch = encodeURIComponent(decodedSearch);
+                const encodedSearch = encodeURIComponent(validatedUsername.username);
 
                 setIsValidating(true);
-                const usernameAvailable = await checkIfUsernameIsAvailable({ username: encodedSearch });
-                setValidatedUsername(decodedSearch);
+                const response = await checkIfUsernameIsAvailable({ username: encodedSearch });
+                setValidatedUsername(usernameWatch);
 
-                if (usernameAvailable !== true) {
+                if (!response.success) {
+                    if (response.error.details) throw new z.ZodError(response.error.details);
+                    else throw new Error(response.error.message);
+                }
+
+                const { data } = response as SuccessResponse<{ available: boolean }>;
+                if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+                else if (data.available === undefined) throw new AppError('Available property is missing in data response', 404, 'MISSING_PROPERTY');
+
+                if (!data.available) {
                     setIsUsernameAvailable(false);
                 } else {
                     setIsUsernameAvailable(true);
                 }
-            } catch (error) {
-                console.error("Fetch error:", error);
+            } catch (error: unknown) {
+                if (isZodError(error)) {
+                    error.issues.forEach((detail) => {
+                        if (detail.path && detail.message) {
+                            setError(detail.path[0] as keyof FormTemporaryUserUsernameType, {
+                                type: 'manual',
+                                message: detail.message
+                            });
+                        }
+                    });
+                } else {
+                    const errorMessage = getErrorMessage(error);
+                    console.error('Registration error:', errorMessage);
+                    setCustomError(errorMessage ?? 'Something went wrong, refresh the page or remove cookies. If problem persists, contact the support');
+                    reset();
+                }
+
             } finally {
                 setIsValidating(false);
             }
         }, 500);
 
         return (() => {
-            clearTimeout(timeout);
+            clearTimeout(timeoutId);
             setIsValidating(false);
         });
-    }, [isSubmitting, isValidating, usernameWatch, validatedUsername]);
+    }, [isSubmitting, isValidating, usernameWatch, validatedUsername, getValues, reset, setCustomError, setError]);
 
     return (
         <Dialog open={dialogOpen} >

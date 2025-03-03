@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import UserHoverCard from '@/components/misc/UserHoverCard';
-import FollowBtn from '@/components/misc/FollowBtn';
+import FollowButton from '@/components/misc/FollowButton';
 import { UserInfoType } from '@/lib/types';
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
 import { useUserContext } from '@/context/UserContextProvider';
@@ -21,7 +21,7 @@ export default function UserCard({ user }: { user: UserInfoType }) {
     const [isFollowingTheUser, setIsFollowingTheUser] = useState<boolean>(user.following.length === 1);
 
     // Post author following & followers count to update hover card information when they're (un)followed/blocked by logged in user
-    const [followingCount, ] = useState(user._count.following);
+    const [followingCount,] = useState(user._count.following);
     const [followersCount, setFollowersCount] = useState(user._count.followers);
 
     useEffect(() => {
@@ -76,7 +76,7 @@ export default function UserCard({ user }: { user: UserInfoType }) {
 
             {loggedInUser.username !== user.username && (
                 <div className='ml-auto [&_button]:py-1'>
-                    <FollowBtn
+                    <FollowButton
                         username={user.username}
                         setFollowersCount={setFollowersCount}
                         isFollowedByTheUser={isFollowedByTheUser}

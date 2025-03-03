@@ -16,15 +16,19 @@ export default async function AuthorizedLayout({ children, modals }: Readonly<{ 
     const followSuggestionsPromise = getFollowSuggestions();
     const [userResponse, followSuggestionsResponse] = await Promise.all([userPromise, followSuggestionsPromise]);
 
-    if (!userResponse.success || !userResponse.data) {
-        console.error('Something went wrong while trying to log in the user');
+    if (!userResponse.success || userResponse.data === undefined || userResponse.data.user === undefined) {
+        console.error('Something went wrong while fetching user information');
         redirect('/logout');
     }
+
+    const suggestedUsers = followSuggestionsResponse.success && followSuggestionsResponse.data?.suggestedUsers
+        ? followSuggestionsResponse.data?.suggestedUsers
+        : [];
 
     return (
         <UserContextProvider userData={userResponse.data.user}>
             <TrendingContextProvider>
-                <FollowSuggestionContextProvider followSuggestions={followSuggestionsResponse}>
+                <FollowSuggestionContextProvider followSuggestions={suggestedUsers}>
                     <BlockedUsersContextProvider>
                         <PostInteractionContextProvider>
                             <main className="w-screen h-auto">

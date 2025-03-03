@@ -48,7 +48,7 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrati
 
         try {
             const response = await registerTemporaryUser(basicUserInfo, formData);
-            console.log(response)
+
             if (!response.success) {
                 if (response.error.details) throw new z.ZodError(response.error.details);
                 else if (response.error.code === 'EMAIL_TAKEN') {
@@ -63,7 +63,6 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrati
             setCustomError(null);
             setRegistrationStep(() => 3);
         } catch (error: unknown) {
-
             if (isZodError(error)) {
                 error.issues.forEach((detail) => {
                     console.log(detail.path)
@@ -86,16 +85,16 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrati
 
     useEffect(() => {
         setIsSubmitButtonEnabled(false);
-        const controller = new AbortController();
+        let timeoutId: NodeJS.Timeout | null = null;
 
         if (passwordWatch.length >= 8 && confirmPasswordWatch.length >= 8 && passwordWatch === confirmPasswordWatch) {
-            setTimeout(() => {
+            timeoutId = setTimeout(() => {
                 setIsSubmitButtonEnabled(true);
-            }, 300, controller.abort);
+            }, 300);
         }
 
         return (() => {
-            controller.abort();
+            timeoutId && clearTimeout(timeoutId);
         })
     }, [passwordWatch, confirmPasswordWatch]);
 

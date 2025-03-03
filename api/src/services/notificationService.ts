@@ -1,4 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
+import { AppError } from 'tweetly-shared';
 const prisma = new PrismaClient();
 
 // ---------------------------------------------------------------------------------------------------------
@@ -380,41 +381,52 @@ export const removeNotificationsForLike = async (postId: number, notifierId: num
 // ---------------------------------------------------------------------------------------------------------
 
 export const createNotificationForNewFollow = async (notifierId: number, receiverUsername: string) => {
-    const receiver = await prisma.user.findUnique({
-        where: { username: receiverUsername },
-        select: { id: true }
-    });
+    try {
+        const receiver = await prisma.user.findUnique({
+            where: { username: receiverUsername },
+            select: { id: true }
+        });
+        if (!receiver) throw new AppError('User not found', 404, 'USER_NOT_FOUND');
 
-    if (!receiver) return;
-
-    // Check if a follow notification already exists
-    const existingNotification = await prisma.notification.findFirst({
-        where: {
-            typeId: 5,
-            notifierId,
-            receiverId: receiver.id
-        }
-    });
-
-    if (existingNotification) {
-        // Instead of creating a new one, update the timestamp to push it to the top
-        return await prisma.notification.update({
-            where: { id: existingNotification.id },
-            data: {
-                createdAt: new Date(),
-                isRead: false
+        // Check if a follow notification already exists
+        const existingNotification = await prisma.notification.findFirst({
+            where: {
+                typeId: 5,
+                notifierId,
+                receiverId: receiver.id
             }
         });
-    }
 
-    // Otherwise, create a new notification
-    return await prisma.notification.createMany({
-        data: {
-            typeId: 5,
-            notifierId: notifierId,
-            receiverId: receiver.id
+        if (existingNotification) {
+            // Instead of creating a new one, update the timestamp to push it to the top
+            return await prisma.notification.update({
+                where: { id: existingNotification.id },
+                data: {
+                    createdAt: new Date(),
+                    isRead: false
+                }
+            });
         }
-    });
+
+        // Otherwise, create a new notification
+        await prisma.notification.createMany({
+            data: {
+                typeId: 5,
+                notifierId: notifierId,
+                receiverId: receiver.id
+            }
+        });
+
+        return true;
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === 'P2002') throw new AppError('Notification was already created', 400, 'NOTIFICATION_EXISTS');
+        }
+
+        if (error instanceof AppError) throw error;
+
+        throw new AppError('Internal server error', 500, 'INTERNAL_SERVER_ERROR');
+    }
 };
 
 // ---------------------------------------------------------------------------------------------------------

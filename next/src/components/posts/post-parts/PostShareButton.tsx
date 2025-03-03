@@ -1,9 +1,9 @@
 'use client';
-import { BasicPostType, BookmarkPostType, ReplyPostType } from '@/lib/types';
 import { Share, Link } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { BasePostDataType } from 'tweetly-shared';
 
-export default function PostShareButton({ post }: { post: BasicPostType | ReplyPostType | BookmarkPostType }) {
+export default function PostShareButton({ post }: { post: BasePostDataType }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const menuBtn = useRef<HTMLDivElement | null>(null);
     const copyProfileUrlAlert = useRef<HTMLDivElement | null>(null);

@@ -1,23 +1,21 @@
 'use client';
-import { BasicPostType } from '@/lib/types';
 import PostMenu from '../post-parts/PostMenu';
 import PostText from '../post-parts/PostText';
 import PostImages from '../post-parts/PostImages';
-import PostBtns from '../post-parts/PostBtns';
+import PostButtons from '../post-parts/PostButtons';
 import UserHoverCard from '@/components/misc/UserHoverCard';
 import PostAuthorImage from '../post-parts/PostAuthorImage';
 import PostDate from '../post-parts/PostDate';
+import { UserActionType } from '@/lib/userReducer';
+import { BasePostDataType, UserAndViewerRelationshipType, UserStatsType } from 'tweetly-shared';
 
 type BasicPostTemplateType = {
-    post: BasicPostType,
-    isFollowedByTheUser: boolean,
-    setIsFollowedByTheUser: React.Dispatch<React.SetStateAction<boolean>>,
-    isFollowingTheUser: boolean,
-    setIsFollowingTheUser: React.Dispatch<React.SetStateAction<boolean>>,
-    followingCount: number,
-    setFollowingCount: React.Dispatch<React.SetStateAction<number>>,
-    followersCount: number,
-    setFollowersCount: React.Dispatch<React.SetStateAction<number>>,
+    post: BasePostDataType,
+    userState: {
+        relationship: UserAndViewerRelationshipType,
+        stats: UserStatsType,
+    },
+    dispatch: React.Dispatch<UserActionType>,
     openPhoto: (photoIndex: number, authorUsername: string, postId: number) => void
     type?: 'normal' | 'parent',
     searchSegments?: string[],
@@ -26,14 +24,8 @@ type BasicPostTemplateType = {
 
 export default function BasicPostTemplate({
     post,
-    isFollowedByTheUser,
-    setIsFollowedByTheUser,
-    isFollowingTheUser,
-    setIsFollowingTheUser,
-    followingCount,
-    setFollowingCount,
-    followersCount,
-    setFollowersCount,
+    userState,
+    dispatch,
     openPhoto,
     type = 'normal',
     searchSegments,
@@ -60,23 +52,16 @@ export default function BasicPostTemplate({
                 <div className='flex gap-2 text-secondary-text'>
                     <UserHoverCard
                         user={post.author}
-                        _followingCount={followingCount}
-                        _followersCount={followersCount}
-                        _setFollowersCount={setFollowersCount}
-                        isFollowedByTheUser={isFollowedByTheUser}
-                        setIsFollowedByTheUser={setIsFollowedByTheUser}
-                        isFollowingTheUser={isFollowingTheUser} />
+                        userState={userState}
+                        dispatch={dispatch}
+                    />
                     <p>@{post.author.username}</p>
                     <p>·</p>
                     <PostDate createdAt={post.createdAt} />
                     <PostMenu
                         post={post}
-                        isFollowedByTheUser={isFollowedByTheUser}
-                        setIsFollowedByTheUser={setIsFollowedByTheUser}
-                        isFollowingTheUser={isFollowingTheUser}
-                        setIsFollowingTheUser={setIsFollowingTheUser}
-                        _setFollowersCount={setFollowersCount}
-                        _setFollowingCount={setFollowingCount}
+                        userState={userState}
+                        dispatch={dispatch}
                     />
                 </div>
 
@@ -90,10 +75,12 @@ export default function BasicPostTemplate({
                 </div>
 
                 {/* In case post has an inner post/parent (notification reply) */}
-                { children }
+                {children}
 
                 <div className='!border-t-0 py-1'>
-                    <PostBtns post={post} />
+                    <PostButtons
+                        post={post}
+                    />
                 </div>
             </div>
         </div>

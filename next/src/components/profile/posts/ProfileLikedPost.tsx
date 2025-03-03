@@ -1,43 +1,51 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useReducer } from 'react';
 import { useRouter } from 'next/navigation';
-import { BasicPostType } from '@/lib/types';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import BasicPostTemplate from '@/components/posts/templates/BasicPostTemplate';
+import { BasePostDataType, UserAndViewerRelationshipType, UserStatsType } from 'tweetly-shared';
+import { UserActionType, userInfoReducer, UserStateType } from '@/lib/userReducer';
 
-export default function ProfileLikedPost({ post }: { post: BasicPostType }) {
-    const { suggestions } = useFollowSuggestionContext();
+type ProfileLikedPostProps = {
+    post: BasePostDataType,
+    authorized: boolean,
+    userState: {
+        relationship: UserAndViewerRelationshipType,
+        stats: UserStatsType,
+    },
+    dispatch: React.Dispatch<UserActionType>,
+};
+
+export default function ProfileLikedPost({ post, authorized, userState, dispatch }: ProfileLikedPostProps) {
+    const { suggestions: userFollowSuggestions } = useFollowSuggestionContext();
     const router = useRouter();
 
     // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-    // if user is in suggestions, track it's isFollowed property instead
-    const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(
-        suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?.isFollowed
-        ?? post.author.followers.length === 1
-    );
-
-    // Is post author following the logged in user
-    const [isFollowingTheUser, setIsFollowingTheUser] = useState<boolean>(post.author.following.length === 1);
-
-    // Post author following & followers count to update hover card information when they're (un)followed/blocked by logged in user
-    const [followingCount, setFollowingCount] = useState(
-        suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?._count.following
-        ?? post.author._count.following
-    );
-    const [followersCount, setFollowersCount] = useState(
-        suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?._count.followers
-        ?? post.author._count.followers
-    );
+    // LIKED POST IS NOT NECESSARILY PROFILE USER'S OWN POST SO IT NEEDS NEW STATE IF THAT'S THE CASE
+    const userInitialState: UserStateType = {
+        relationship: {
+            isFollowingViewer: post.author.relationship.isFollowingViewer,
+            hasBlockedViewer: post.author.relationship.hasBlockedViewer,
+            isFollowedByViewer: post.author.relationship.isFollowedByViewer,
+            isBlockedByViewer: post.author.relationship.isBlockedByViewer,
+            notificationsEnabled: post.author.relationship.notificationsEnabled,
+        },
+        stats: {
+            followersCount: post.author.stats.followersCount,
+            followingCount: post.author.stats.followingCount,
+            postsCount: post.author.stats.postsCount,
+        }
+    };
+    const [_userState, _dispatch] = useReducer(userInfoReducer, userInitialState);
 
     useEffect(() => {
-        const suggestedUser = suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username);
+        const suggestedUser = userFollowSuggestions?.find((suggestedUser) => suggestedUser.username === post.author.username);
         if (suggestedUser) {
-            setIsFollowedByTheUser(suggestedUser.isFollowed);
-            setFollowingCount(suggestedUser._count.following);
-            setFollowersCount(suggestedUser._count.followers);
+            authorized
+                ? dispatch({ type: suggestedUser.isFollowed ? 'FOLLOW' : 'UNFOLLOW' })
+                : _dispatch({ type: suggestedUser.isFollowed ? 'FOLLOW' : 'UNFOLLOW' });
         }
-    }, [suggestions, post]);
+    }, [userFollowSuggestions, post, authorized, dispatch]);
 
     // - FUNCTIONS -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -79,14 +87,8 @@ export default function ProfileLikedPost({ post }: { post: BasicPostType }) {
 
             <BasicPostTemplate
                 post={post}
-                isFollowedByTheUser={isFollowedByTheUser}
-                setIsFollowedByTheUser={setIsFollowedByTheUser}
-                isFollowingTheUser={isFollowingTheUser}
-                setIsFollowingTheUser={setIsFollowingTheUser}
-                followingCount={followingCount}
-                setFollowingCount={setFollowingCount}
-                followersCount={followersCount}
-                setFollowersCount={setFollowersCount}
+                userState={authorized ? userState : _userState}
+                dispatch={authorized ? dispatch : _dispatch}
                 openPhoto={openPhoto}
             />
 

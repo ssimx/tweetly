@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { UserProps } from '../lib/types';
 import {
     addPostBookmark,
@@ -9,7 +9,7 @@ import {
     getFollowing30DayPosts,
     getGlobal30DayPosts,
     getLikes,
-    getOldestBookmark, 
+    getOldestBookmark,
     getOldestFollowing30DayPost,
     getOldestGlobal30DayPost,
     getOldestLike,
@@ -36,6 +36,9 @@ import {
 } from '../services/postService';
 import { createNotificationsForNewLike, createNotificationsForNewPost, createNotificationsForNewReply, createNotificationsForNewRepost, removeNotificationsForLike, removeNotificationsForRepost } from '../services/notificationService';
 import { deleteImageFromCloudinary } from './uploadController';
+import { AppError, BasePostDataType, SuccessResponse } from 'tweetly-shared';
+import { remapPostInformation, remapUserInformation } from '../lib/helpers';
+import { getProfile } from '../services/userService';
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -57,7 +60,7 @@ export const newPost = async (req: Request, res: Response): Promise<void> => {
         if (replyToId) {
             // Check if post exists
             const replyPost = await postExists(replyToId);
-            
+
             if (!replyPost) res.status(404).json({ error: 'Reply post does not exist' });
         }
 
@@ -72,7 +75,7 @@ export const newPost = async (req: Request, res: Response): Promise<void> => {
             });
             res.status(404).json({ error: 'Post has to contain either text or/and images' });
         }
-        
+
         const postId = post.id;
 
         // Delegate hashtag handling to service
@@ -145,7 +148,7 @@ export const global30DayPosts = async (req: Request, res: Response) => {
         } else {
             const oldestGlobalPostId = await getOldestGlobal30DayPost(user.id).then(res => res?.id);
             const posts = await getGlobal30DayPosts(user.id);
-            
+
             return res.status(200).json({
                 posts,
                 end: !oldestGlobalPostId
@@ -213,10 +216,10 @@ export const following30DayPosts = async (req: Request, res: Response) => {
             return res.status(200).json({
                 posts,
                 end: !oldestFollowingPostId
+                    ? true
+                    : posts.slice(-1)[0].id === oldestFollowingPostId
                         ? true
-                        : posts.slice(-1)[0].id === oldestFollowingPostId
-                            ? true
-                            : false
+                        : false
             });
         }
     } catch (error) {
@@ -266,17 +269,17 @@ export const getPost = async (req: Request, res: Response) => {
 
         // check whether last reply is the end of replies
         const oldestReplyLeastEnegagementId = await getOldestReplyLeastEnegagement(user.id, postId).then(res => res?.id);
-        
+
         return res.status(200).json({
             ...post,
             replies: [
                 ...post.replies,
             ],
             repliesEnd: !oldestReplyLeastEnegagementId
-                            ? true
-                            : post.replies.slice(-1)[0].id === oldestReplyLeastEnegagementId
-                                ? true
-                                : false
+                ? true
+                : post.replies.slice(-1)[0].id === oldestReplyLeastEnegagementId
+                    ? true
+                    : false
         })
     } catch (error) {
         console.error('Error: ', error);
@@ -293,7 +296,7 @@ export const postReplies = async (req: Request, res: Response) => {
     const cursor = Number(req.query.cursor);
 
     try {
-        if (cursor) { 
+        if (cursor) {
             // order posts by likes and find the oldest one with no engagemenet
             const oldestReplyLeastEnegagementId = await getOldestReplyLeastEnegagement(user.id, postId).then(res => res?.id);
             if (oldestReplyLeastEnegagementId) {
@@ -305,7 +308,7 @@ export const postReplies = async (req: Request, res: Response) => {
                         end: true
                     });
                 }
-            }            
+            }
 
             const posts = await getPostReplies(user.id, postId, Number(cursor));
 
@@ -327,10 +330,10 @@ export const postReplies = async (req: Request, res: Response) => {
             return res.status(200).json({
                 posts,
                 end: !oldestReplyLeastEnegagementId
+                    ? true
+                    : oldestReplyLeastEnegagementId === posts.slice(-1)[0].id
                         ? true
-                        : oldestReplyLeastEnegagementId === posts.slice(-1)[0].id
-                            ? true
-                            : false
+                        : false
             });
         }
     } catch (error) {
@@ -341,12 +344,16 @@ export const postReplies = async (req: Request, res: Response) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getUserPosts = async (req: Request, res: Response) => {
+export const getUserPosts = async (req: Request, res: Response, next: NextFunction) => {
     const username = req.params.username;
     const user = req.user as UserProps;
     const cursor = Number(req.query.cursor);
 
     try {
+        const userExists = await getProfile(user.id, username);
+        if (!userExists) throw new AppError('User not found', 404, 'USER_NOT_FOUND');
+        if (!userExists.profile) throw new AppError('User profile not found', 404, 'PROFILE_NOT_FOUND');
+
         if (cursor) {
             const userOldestPostId = await getOldestPost(username, user.id).then(res => res?.id);
             if (userOldestPostId) {
@@ -360,46 +367,82 @@ export const getUserPosts = async (req: Request, res: Response) => {
                 }
             }
 
-            const posts = await getPosts(user.id, username, Number(cursor));
+            let postsData = await getPosts(user.id, username, Number(cursor));
 
-            return res.status(200).json({
-                posts,
-                // check if older posts array is empty and if truthy set the end to true
-                // check if new cursor equals last post id
-                //  if truthy, return older posts and set the end to true
-                end: posts.length === 0
-                        ? true
-                        : userOldestPostId === posts.slice(1)[0].id
-                            ? true
-                            : false,
-            });
+            const posts = postsData.map((post) => {
+                // skip if there's no information
+                if (!post) return;
+                if (!post.author) return;
+                if (!post.author.profile) return;
+
+                const author = remapUserInformation({ ...post.author, profile: post.author.profile! });
+
+                return remapPostInformation({ ...post, content: post.content ?? undefined, author: author });
+            }).filter((post): post is NonNullable<typeof post> => post !== undefined);
+
+            const postsEnd = posts.length === 0
+                ? true
+                : userOldestPostId === posts.slice(-1)[0]?.id
+                    ? true
+                    : false
+
+            const successResponse: SuccessResponse<{ posts: BasePostDataType[] | [], end: boolean }> = {
+                success: true,
+                data: {
+                    posts: posts ?? [],
+                    end: postsEnd
+                },
+            };
+
+            res.status(200).json(successResponse);
         } else {
             const userOldestPostId = await getOldestPost(username, user.id).then(res => res?.id);
-            const posts = await getPosts(user.id, username);
-            
-            return res.status(200).json({
-                posts,
-                end: !userOldestPostId
-                        ? true 
-                        : userOldestPostId === posts.slice(-1)[0].id
-                            ? true 
-                            : false
-            });
+            const postsData = await getPosts(user.id, username);
+
+            const posts = postsData.map((post) => {
+                // skip if there's no information
+                if (!post) return;
+                if (!post.author) return;
+                if (!post.author.profile) return;
+
+                const author = remapUserInformation({ ...post.author, profile: post.author.profile! });
+
+                return remapPostInformation({ ...post, content: post.content ?? undefined, author: author });
+            }).filter((post): post is NonNullable<typeof post> => post !== undefined);
+
+            const postsEnd = posts.length === 0
+                ? true
+                : userOldestPostId === posts.slice(-1)[0]?.id
+                    ? true
+                    : false
+
+            const successResponse: SuccessResponse<{ posts: BasePostDataType[] | [], end: boolean }> = {
+                success: true,
+                data: {
+                    posts: posts ?? [],
+                    end: postsEnd
+                },
+            };
+
+            res.status(200).json(successResponse);
         }
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to fetch the posts' });
+        next(error);
     }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getUserReposts = async (req: Request, res: Response) => {
+export const getUserReposts = async (req: Request, res: Response, next: NextFunction) => {
     const username = req.params.username;
     const user = req.user as UserProps;
     const cursor = Number(req.query.cursor);
 
     try {
+        const userExists = await getProfile(user.id, username);
+        if (!userExists) throw new AppError('User not found', 404, 'USER_NOT_FOUND');
+        if (!userExists.profile) throw new AppError('User profile not found', 404, 'PROFILE_NOT_FOUND');
+
         if (cursor) {
             const userOldestRepostId = await getOldestRepost(username, user.id).then(res => res?.id);
             if (userOldestRepostId) {
@@ -413,46 +456,134 @@ export const getUserReposts = async (req: Request, res: Response) => {
                 }
             }
 
-            const posts = await getReposts(user.id, username, Number(cursor));
+            const repostsData = await getReposts(user.id, username, Number(cursor));
 
-            return res.status(200).json({
-                posts,
-                // check if older posts array is empty and if truthy set the end to true
-                // check if new cursor equals last post id
-                //  if truthy, return older posts and set the end to true
-                end: posts.length === 0
-                        ? true
-                        : userOldestRepostId === posts.slice(-1)[0].id
-                            ? true
-                            : false,
-            });
+            const reposts = repostsData.map((repost) => {
+                // skip if there's no information
+                if (!repost) return;
+                if (!repost.author) return;
+                if (!repost.author.profile) return;
+
+                if (repost.replyTo !== undefined) {
+                    // REMAP REPLYTO AUTHOR
+                    const replyAuthor = remapUserInformation({ ...repost.replyTo!.author, profile: repost.replyTo?.author.profile! });
+
+                    // REMAP ORIGINAL POST & AUTHOR
+                    const ogAuthor = remapUserInformation({ ...repost.author, profile: repost.author.profile! });
+                    const ogPost = remapPostInformation({
+                        ...repost,
+                        content: repost.content ?? undefined,
+                        author: ogAuthor,
+                        replyTo: {
+                            ...repost.replyTo!,
+                            content: repost.replyTo!.content ?? undefined,
+                            author: replyAuthor
+                        }
+                    });
+
+                    return ogPost;
+                } else {
+                    const author = remapUserInformation({ ...repost.author, profile: repost.author.profile! });
+                    const post = remapPostInformation({
+                        ...repost,
+                        content: repost.content ?? undefined,
+                        author: author,
+                        replyTo: undefined,
+                    });
+
+                    return post;
+                }
+            }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
+
+            const repostsEnd = reposts.length === 0
+                ? true
+                : userOldestRepostId === reposts.slice(-1)[0]?.id
+                    ? true
+                    : false
+
+            const successResponse: SuccessResponse<{ reposts: BasePostDataType[] | [], end: boolean }> = {
+                success: true,
+                data: {
+                    reposts: reposts ?? [],
+                    end: repostsEnd
+                },
+            };
+
+            res.status(200).json(successResponse);
         } else {
             const userOldestRepostId = await getOldestRepost(username, user.id).then(res => res?.id);
-            const posts = await getReposts(user.id, username);
-            
-            return res.status(200).json({
-                posts,
-                end: !userOldestRepostId
-                        ? true 
-                        : userOldestRepostId === posts.slice(-1)[0].id
-                            ? true 
-                            : false
-            });
+            const repostsData = await getReposts(user.id, username);
+
+            const reposts = repostsData.map((repost) => {
+                // skip if there's no information
+                if (!repost) return;
+                if (!repost.author) return;
+                if (!repost.author.profile) return;
+
+                if (repost.replyTo !== undefined) {
+                    // REMAP REPLYTO AUTHOR
+                    const replyAuthor = remapUserInformation({ ...repost.replyTo!.author, profile: repost.replyTo?.author.profile! });
+
+                    // REMAP ORIGINAL POST & AUTHOR
+                    const ogAuthor = remapUserInformation({ ...repost.author, profile: repost.author.profile! });
+                    const ogPost = remapPostInformation({
+                        ...repost,
+                        content: repost.content ?? undefined,
+                        author: ogAuthor,
+                        replyTo: {
+                            ...repost.replyTo!,
+                            content: repost.replyTo!.content ?? undefined,
+                            author: replyAuthor
+                        }
+                    });
+
+                    return ogPost;
+                } else {
+                    const author = remapUserInformation({ ...repost.author, profile: repost.author.profile! });
+                    const post = remapPostInformation({
+                        ...repost,
+                        content: repost.content ?? undefined,
+                        author: author,
+                        replyTo: undefined,
+                    });
+
+                    return post;
+                }
+            }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
+
+            const repostsEnd = reposts.length === 0
+                ? true
+                : userOldestRepostId === reposts.slice(-1)[0]?.id
+                    ? true
+                    : false
+
+            const successResponse: SuccessResponse<{ reposts: BasePostDataType[] | [], end: boolean }> = {
+                success: true,
+                data: {
+                    reposts: reposts ?? [],
+                    end: repostsEnd
+                },
+            };
+
+            res.status(200).json(successResponse);
         }
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to fetch reposts' });
+        next(error);
     }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getUserReplies = async (req: Request, res: Response) => {
+export const getUserReplies = async (req: Request, res: Response, next: NextFunction) => {
     const username = req.params.username;
     const user = req.user as UserProps;
     const cursor = Number(req.query.cursor);
 
     try {
+        const userExists = await getProfile(user.id, username);
+        if (!userExists) throw new AppError('User not found', 404, 'USER_NOT_FOUND');
+        if (!userExists.profile) throw new AppError('User profile not found', 404, 'PROFILE_NOT_FOUND');
+
         if (cursor) {
             const userOldestReplyId = await getOldestReply(username, user.id).then(res => res?.id);
             if (userOldestReplyId) {
@@ -466,46 +597,134 @@ export const getUserReplies = async (req: Request, res: Response) => {
                 }
             }
 
-            const posts = await getReplies(user.id, username, Number(cursor));
+            const repliesData = await getReplies(user.id, username, Number(cursor));
 
-            return res.status(200).json({
-                posts,
-                // check if older posts array is empty and if truthy set the end to true
-                // check if new cursor equals last post id
-                //  if truthy, return older posts and set the end to true
-                end: posts.length === 0
+            const replies = repliesData.map((reply) => {
+                // skip if there's no information
+                if (!reply) return;
+                if (!reply.author) return;
+                if (!reply.author.profile) return;
+
+                if (reply.replyTo !== undefined) {
+                    // REMAP REPLYTO AUTHOR
+                    const replyAuthor = remapUserInformation({ ...reply.replyTo!.author, profile: reply.replyTo?.author.profile! });
+
+                    // REMAP ORIGINAL REPLY & AUTHOR
+                    const ogAuthor = remapUserInformation({ ...reply.author, profile: reply.author.profile! });
+                    const ogPost = remapPostInformation({
+                        ...reply,
+                        content: reply.content ?? undefined,
+                        author: ogAuthor,
+                        replyTo: {
+                            ...reply.replyTo!,
+                            content: reply.replyTo!.content ?? undefined,
+                            author: replyAuthor
+                        }
+                    });
+
+                    return ogPost;
+                } else {
+                    const author = remapUserInformation({ ...reply.author, profile: reply.author.profile! });
+                    const post = remapPostInformation({
+                        ...reply,
+                        content: reply.content ?? undefined,
+                        author: author,
+                        replyTo: undefined,
+                    });
+
+                    return post;
+                }
+            }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
+
+            const repliesEnd = replies.length === 0
+                ? true
+                : userOldestReplyId === replies.slice(-1)[0]?.id
                     ? true
-                    : userOldestReplyId === posts.slice(-1)[0].id
-                        ? true
-                        : false,
-            });
+                    : false
+
+            const successResponse: SuccessResponse<{ replies: BasePostDataType[] | [], end: boolean }> = {
+                success: true,
+                data: {
+                    replies: replies ?? [],
+                    end: repliesEnd
+                },
+            };
+
+            res.status(200).json(successResponse);
         } else {
             const userOldestReplyId = await getOldestReply(username, user.id).then(res => res?.id);
-            const posts = await getReplies(user.id, username);
-            
-            return res.status(200).json({
-                posts,
-                end: !userOldestReplyId
-                        ? true 
-                        : userOldestReplyId === posts.slice(-1)[0].id
-                            ? true 
-                            : false
-            });
+            let repliesData = await getReplies(user.id, username);
+
+            const replies = repliesData.map((reply) => {
+                // skip if there's no information
+                if (!reply) return;
+                if (!reply.author) return;
+                if (!reply.author.profile) return;
+
+                if (reply.replyTo !== undefined) {
+                    // REMAP REPLYTO AUTHOR
+                    const replyAuthor = remapUserInformation({ ...reply.replyTo!.author, profile: reply.replyTo?.author.profile! });
+
+                    // REMAP ORIGINAL REPLY & AUTHOR
+                    const ogAuthor = remapUserInformation({ ...reply.author, profile: reply.author.profile! });
+                    const ogPost = remapPostInformation({
+                        ...reply,
+                        content: reply.content ?? undefined,
+                        author: ogAuthor,
+                        replyTo: {
+                            ...reply.replyTo!,
+                            content: reply.replyTo!.content ?? undefined,
+                            author: replyAuthor
+                        }
+                    });
+
+                    return ogPost;
+                } else {
+                    const author = remapUserInformation({ ...reply.author, profile: reply.author.profile! });
+                    const post = remapPostInformation({
+                        ...reply,
+                        content: reply.content ?? undefined,
+                        author: author,
+                        replyTo: undefined,
+                    });
+
+                    return post;
+                }
+            }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
+
+            const repliesEnd = replies.length === 0
+                ? true
+                : userOldestReplyId === replies.slice(-1)[0]?.id
+                    ? true
+                    : false
+
+            const successResponse: SuccessResponse<{ replies: BasePostDataType[] | [], end: boolean }> = {
+                success: true,
+                data: {
+                    replies: replies ?? [],
+                    end: repliesEnd
+                },
+            };
+
+            res.status(200).json(successResponse);
         }
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to fetch replies' });
+        next(error);
     }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getUserMedia = async (req: Request, res: Response) => {
+export const getUserMedia = async (req: Request, res: Response, next: NextFunction) => {
     const username = req.params.username;
     const user = req.user as UserProps;
     const cursor = Number(req.query.cursor);
 
     try {
+        const userExists = await getProfile(user.id, username);
+        if (!userExists) throw new AppError('User not found', 404, 'USER_NOT_FOUND');
+        if (!userExists.profile) throw new AppError('User profile not found', 404, 'PROFILE_NOT_FOUND');
+
         if (cursor) {
             const userOldestMediaId = await getOldestMedia(username, user.id).then(res => res?.id);
             if (userOldestMediaId) {
@@ -519,41 +738,125 @@ export const getUserMedia = async (req: Request, res: Response) => {
                 }
             }
 
-            const posts = await getMedia(user.id, username, Number(cursor));
+            const mediaData = await getMedia(user.id, username, Number(cursor));
 
-            return res.status(200).json({
-                posts,
-                // check if older posts array is empty and if truthy set the end to true
-                // check if new cursor equals last post id
-                //  if truthy, return older posts and set the end to true
-                end: posts.length === 0
-                        ? true
-                        : userOldestMediaId === posts.slice(-1)[0].id
-                            ? true
-                            : false,
-            });
+            const media = mediaData.map((media) => {
+                // skip if there's no information
+                if (!media) return;
+                if (!media.author) return;
+                if (!media.author.profile) return;
+
+                if (media.replyTo !== undefined) {
+                    // REMAP REPLYTO AUTHOR
+                    const replyAuthor = remapUserInformation({ ...media.replyTo!.author, profile: media.replyTo?.author.profile! });
+
+                    // REMAP ORIGINAL REPLY & AUTHOR
+                    const ogAuthor = remapUserInformation({ ...media.author, profile: media.author.profile! });
+                    const ogPost = remapPostInformation({
+                        ...media,
+                        content: media.content ?? undefined,
+                        author: ogAuthor,
+                        replyTo: {
+                            ...media.replyTo!,
+                            content: media.replyTo!.content ?? undefined,
+                            author: replyAuthor
+                        }
+                    });
+
+                    return ogPost;
+                } else {
+                    const author = remapUserInformation({ ...media.author, profile: media.author.profile! });
+                    const post = remapPostInformation({
+                        ...media,
+                        content: media.content ?? undefined,
+                        author: author,
+                        replyTo: undefined,
+                    });
+
+                    return post;
+                }
+            }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
+
+            const mediaEnd = media.length === 0
+                ? true
+                : userOldestMediaId === media.slice(-1)[0]?.id
+                    ? true
+                    : false
+
+            const successResponse: SuccessResponse<{ media: BasePostDataType[] | [], end: boolean }> = {
+                success: true,
+                data: {
+                    media: media ?? [],
+                    end: mediaEnd
+                },
+            };
+
+            res.status(200).json(successResponse);
         } else {
             const userOldestMediaId = await getOldestMedia(username, user.id).then(res => res?.id);
-            const posts = await getMedia(user.id, username);
-            
-            return res.status(200).json({
-                posts,
-                end: !userOldestMediaId 
-                        ? true 
-                        : userOldestMediaId === posts.slice(-1)[0].id
-                            ? true 
-                            : false
-            });
+            const mediaData = await getMedia(user.id, username);
+
+            const media = mediaData.map((media) => {
+                // skip if there's no information
+                if (!media) return;
+                if (!media.author) return;
+                if (!media.author.profile) return;
+
+                if (media.replyTo !== undefined) {
+                    // REMAP REPLYTO AUTHOR
+                    const replyAuthor = remapUserInformation({ ...media.replyTo!.author, profile: media.replyTo?.author.profile! });
+
+                    // REMAP ORIGINAL REPLY & AUTHOR
+                    const ogAuthor = remapUserInformation({ ...media.author, profile: media.author.profile! });
+                    const ogPost = remapPostInformation({
+                        ...media,
+                        content: media.content ?? undefined,
+                        author: ogAuthor,
+                        replyTo: {
+                            ...media.replyTo!,
+                            content: media.replyTo!.content ?? undefined,
+                            author: replyAuthor
+                        }
+                    });
+
+                    return ogPost;
+                } else {
+                    const author = remapUserInformation({ ...media.author, profile: media.author.profile! });
+                    const post = remapPostInformation({
+                        ...media,
+                        content: media.content ?? undefined,
+                        author: author,
+                        replyTo: undefined,
+                    });
+
+                    return post;
+                }
+            }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
+
+            const mediaEnd = media.length === 0
+                ? true
+                : userOldestMediaId === media.slice(-1)[0]?.id
+                    ? true
+                    : false
+
+            const successResponse: SuccessResponse<{ media: BasePostDataType[] | [], end: boolean }> = {
+                success: true,
+                data: {
+                    media: media ?? [],
+                    end: mediaEnd
+                },
+            };
+
+            res.status(200).json(successResponse);
         }
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to fetch the posts' });
+        next(error);
     }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getUserLikes = async (req: Request, res: Response) => {
+export const getUserLikes = async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as UserProps;
     const cursor = Number(req.query.cursor);
 
@@ -571,41 +874,125 @@ export const getUserLikes = async (req: Request, res: Response) => {
                 }
             }
 
-            const posts = await getLikes(user.id, Number(cursor)).then(res => res.map(like => like.post));
+            const likesData = await getLikes(user.id, Number(cursor)).then(res => res.map(like => like.post));
 
-            return res.status(200).json({
-                posts,
-                // check if older posts array is empty and if truthy set the end to true
-                // check if new cursor equals last post id
-                //  if truthy, return older posts and set the end to true
-                end: posts.length === 0
+            const likes = likesData.map((like) => {
+                // skip if there's no information
+                if (!like) return;
+                if (!like.author) return;
+                if (!like.author.profile) return;
+
+                if (like.replyTo !== undefined) {
+                    // REMAP REPLYTO AUTHOR
+                    const replyAuthor = remapUserInformation({ ...like.replyTo!.author, profile: like.replyTo?.author.profile! });
+
+                    // REMAP ORIGINAL REPLY & AUTHOR
+                    const ogAuthor = remapUserInformation({ ...like.author, profile: like.author.profile! });
+                    const ogPost = remapPostInformation({
+                        ...like,
+                        content: like.content ?? undefined,
+                        author: ogAuthor,
+                        replyTo: {
+                            ...like.replyTo!,
+                            content: like.replyTo!.content ?? undefined,
+                            author: replyAuthor
+                        }
+                    });
+
+                    return ogPost;
+                } else {
+                    const author = remapUserInformation({ ...like.author, profile: like.author.profile! });
+                    const post = remapPostInformation({
+                        ...like,
+                        content: like.content ?? undefined,
+                        author: author,
+                        replyTo: undefined,
+                    });
+
+                    return post;
+                }
+            }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
+
+            const likesEnd = likes.length === 0
+                ? true
+                : userOldestLikeId === likes.slice(-1)[0]?.id
                     ? true
-                    : userOldestLikeId === posts.slice(-1)[0].id
-                        ? true
-                        : false,
-            });
+                    : false
+
+            const successResponse: SuccessResponse<{ likes: BasePostDataType[] | [], end: boolean }> = {
+                success: true,
+                data: {
+                    likes: likes ?? [],
+                    end: likesEnd
+                },
+            };
+
+            res.status(200).json(successResponse);
         } else {
             const userOldestLikeId = await getOldestLike(user.id).then(res => res?.post.id);
-            const posts = await getLikes(user.id).then(res => res.map(like => like.post));
-            
-            return res.status(200).json({
-                posts,
-                end: !userOldestLikeId
-                        ? true 
-                        : userOldestLikeId === posts.slice(-1)[0].id
-                            ? true 
-                            : false
-            });
+            const likesData = await getLikes(user.id).then(res => res.map(like => like.post));
+
+            const likes = likesData.map((like) => {
+                // skip if there's no information
+                if (!like) return;
+                if (!like.author) return;
+                if (!like.author.profile) return;
+
+                if (like.replyTo !== undefined) {
+                    // REMAP REPLYTO AUTHOR
+                    const replyAuthor = remapUserInformation({ ...like.replyTo!.author, profile: like.replyTo?.author.profile! });
+
+                    // REMAP ORIGINAL REPLY & AUTHOR
+                    const ogAuthor = remapUserInformation({ ...like.author, profile: like.author.profile! });
+                    const ogPost = remapPostInformation({
+                        ...like,
+                        content: like.content ?? undefined,
+                        author: ogAuthor,
+                        replyTo: {
+                            ...like.replyTo!,
+                            content: like.replyTo!.content ?? undefined,
+                            author: replyAuthor
+                        }
+                    });
+
+                    return ogPost;
+                } else {
+                    const author = remapUserInformation({ ...like.author, profile: like.author.profile! });
+                    const post = remapPostInformation({
+                        ...like,
+                        content: like.content ?? undefined,
+                        author: author,
+                        replyTo: undefined,
+                    });
+
+                    return post;
+                }
+            }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
+
+            const likesEnd = likes.length === 0
+                ? true
+                : userOldestLikeId === likes.slice(-1)[0]?.id
+                    ? true
+                    : false
+
+            const successResponse: SuccessResponse<{ likes: BasePostDataType[] | [], end: boolean }> = {
+                success: true,
+                data: {
+                    likes: likes ?? [],
+                    end: likesEnd
+                },
+            };
+
+            res.status(200).json(successResponse);
         }
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to fetch likes' });
+        next(error);
     }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getUserBookmarks = async (req: Request, res: Response) => {
+export const getUserBookmarks = async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as UserProps;
     const cursor = Number(req.query.cursor);
 
@@ -623,35 +1010,119 @@ export const getUserBookmarks = async (req: Request, res: Response) => {
                 }
             }
 
-            const posts = await getBookmarks(user.id, Number(cursor)).then(res => res.map(bookmark => bookmark.post));
+            const bookmarksData = await getBookmarks(user.id, Number(cursor)).then(res => res.map(bookmark => bookmark.post));
 
-            return res.status(200).json({
-                posts,
-                // check if older posts array is empty and if truthy set the end to true
-                // check if new cursor equals last post id
-                //  if truthy, return older posts and set the end to true
-                end: posts.length === 0
+            const bookmarks = bookmarksData.map((bookmark) => {
+                // skip if there's no information
+                if (!bookmark) return;
+                if (!bookmark.author) return;
+                if (!bookmark.author.profile) return;
+
+                if (bookmark.replyTo !== undefined) {
+                    // REMAP REPLYTO AUTHOR
+                    const replyAuthor = remapUserInformation({ ...bookmark.replyTo!.author, profile: bookmark.replyTo?.author.profile! });
+
+                    // REMAP ORIGINAL REPLY & AUTHOR
+                    const ogAuthor = remapUserInformation({ ...bookmark.author, profile: bookmark.author.profile! });
+                    const ogPost = remapPostInformation({
+                        ...bookmark,
+                        content: bookmark.content ?? undefined,
+                        author: ogAuthor,
+                        replyTo: {
+                            ...bookmark.replyTo!,
+                            content: bookmark.replyTo!.content ?? undefined,
+                            author: replyAuthor
+                        }
+                    });
+
+                    return ogPost;
+                } else {
+                    const author = remapUserInformation({ ...bookmark.author, profile: bookmark.author.profile! });
+                    const post = remapPostInformation({
+                        ...bookmark,
+                        content: bookmark.content ?? undefined,
+                        author: author,
+                        replyTo: undefined,
+                    });
+
+                    return post;
+                }
+            }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
+
+            const bookmarksEnd = bookmarks.length === 0
+                ? true
+                : userOldestBookmarkId === bookmarks.slice(-1)[0]?.id
                     ? true
-                    : userOldestBookmarkId === posts.slice(-1)[0].id
-                        ? true
-                        : false,
-            });
+                    : false
+
+            const successResponse: SuccessResponse<{ bookmarks: BasePostDataType[] | [], end: boolean }> = {
+                success: true,
+                data: {
+                    bookmarks: bookmarks ?? [],
+                    end: bookmarksEnd
+                },
+            };
+
+            res.status(200).json(successResponse);
         } else {
             const userOldestBookmarkId = await getOldestLike(user.id).then(res => res?.post.id);
-            const posts = await getBookmarks(user.id).then(res => res.map(bookmark => bookmark.post));
-            
-            return res.status(200).json({
-                posts,
-                end: !userOldestBookmarkId
-                        ? true 
-                        : posts.slice(-1)[0].id === userOldestBookmarkId 
-                            ? true 
-                            : false
-            });
+            const bookmarksData = await getBookmarks(user.id).then(res => res.map(bookmark => bookmark.post));
+
+            const bookmarks = bookmarksData.map((bookmark) => {
+                // skip if there's no information
+                if (!bookmark) return;
+                if (!bookmark.author) return;
+                if (!bookmark.author.profile) return;
+
+                if (bookmark.replyTo !== undefined) {
+                    // REMAP REPLYTO AUTHOR
+                    const replyAuthor = remapUserInformation({ ...bookmark.replyTo!.author, profile: bookmark.replyTo?.author.profile! });
+
+                    // REMAP ORIGINAL REPLY & AUTHOR
+                    const ogAuthor = remapUserInformation({ ...bookmark.author, profile: bookmark.author.profile! });
+                    const ogPost = remapPostInformation({
+                        ...bookmark,
+                        content: bookmark.content ?? undefined,
+                        author: ogAuthor,
+                        replyTo: {
+                            ...bookmark.replyTo!,
+                            content: bookmark.replyTo!.content ?? undefined,
+                            author: replyAuthor
+                        }
+                    });
+
+                    return ogPost;
+                } else {
+                    const author = remapUserInformation({ ...bookmark.author, profile: bookmark.author.profile! });
+                    const post = remapPostInformation({
+                        ...bookmark,
+                        content: bookmark.content ?? undefined,
+                        author: author,
+                        replyTo: undefined,
+                    });
+
+                    return post;
+                }
+            }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
+
+            const bookmarksEnd = bookmarks.length === 0
+                ? true
+                : userOldestBookmarkId === bookmarks.slice(-1)[0]?.id
+                    ? true
+                    : false
+
+            const successResponse: SuccessResponse<{ bookmarks: BasePostDataType[] | [], end: boolean }> = {
+                success: true,
+                data: {
+                    bookmarks: bookmarks ?? [],
+                    end: bookmarksEnd
+                },
+            };
+
+            res.status(200).json(successResponse);
         }
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to fetch bookmarks' });
+        next(error);
     }
 };
 

@@ -1,14 +1,13 @@
-import { extractToken, getUserSessionToken, removeSession, verifySession } from "@/lib/session";
+import { extractToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
+import { AppError, ErrorResponse, getErrorMessage, SuccessResponse, UserDataType } from 'tweetly-shared';
 
 export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
         const authHeader = req.headers.get('Authorization');
-        const token = await extractToken(authHeader) || await getUserSessionToken();
-
+        const token = await extractToken(authHeader);
         if (token) {
             const isValid = await verifySession(token);
-
             if (!isValid.isAuth) {
                 await removeSession();
                 return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 400 });
@@ -27,18 +26,62 @@ export async function GET(req: NextRequest) {
                 },
             });
 
-            if (response.ok) {
-                const data = await response.json().then((res) => res.followSuggestions);
-                return NextResponse.json(data);
-            } else {
-                const errorData = await response.json();
-                return NextResponse.json({ error: errorData.error }, { status: response.status });
+            if (!response.ok) {
+                const errorData = await response.json() as ErrorResponse;
+                throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
             }
-        } catch (error) {
+
+            const { data } = await response.json() as SuccessResponse<{ suggestedUsers: UserDataType[] }>;
+            if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+            else if (!data.suggestedUsers) throw new AppError('suggestedUsers property is missing in data response', 404, 'MISSING_PROPERTY');
+
+            const successResponse: SuccessResponse<{ suggestedUsers: UserDataType[] }> = {
+                success: true,
+                data: {
+                    suggestedUsers: data.suggestedUsers,
+                }
+            };
+
+            return NextResponse.json(
+                successResponse,
+                { status: response.status }
+            );
+        } catch (error: unknown) {
+            if (error instanceof AppError) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        error: {
+                            message: error.message || 'Internal Server Error',
+                            code: error.code || 'INTERNAL_ERROR',
+                        },
+                    },
+                    { status: error.statusCode || 500 }
+                ) as NextResponse<ErrorResponse>;
+            }
+
             // Handle other errors
-            return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-        }
+            const errorMessage = getErrorMessage(error);
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: {
+                        message: errorMessage,
+                        code: error instanceof Error ? error.name.toUpperCase().replaceAll(' ', '_') : 'INTERNAL_ERROR',
+                    }
+                }
+            ) as NextResponse<ErrorResponse>;
+        };
     } else {
-        return NextResponse.json({ error: `Method ${req.method} Not Allowed` }, { status: 405 });
-    }
+        return NextResponse.json(
+            {
+                success: false,
+                error: {
+                    message: `HTTP Method ${req.method} Not Allowed`,
+                    code: 'INVALID_HTTP_METHOD',
+                },
+            },
+            { status: 405 }
+        ) as NextResponse<ErrorResponse>;
+    };
 };

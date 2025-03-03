@@ -1,4 +1,4 @@
-import { decryptSession, extractToken, removeSession, verifySession } from "@/lib/session";
+import { extractToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 import { AppError, ErrorResponse, getErrorMessage, LoggedInUserDataType, SuccessResponse } from 'tweetly-shared';
 
@@ -6,7 +6,6 @@ export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
         const authHeader = req.headers.get('Authorization');
         const token = await extractToken(authHeader);
-        const username = await decryptSession(token).then(res => res?.username);
 
         if (token) {
             const isValid = await verifySession(token);
@@ -36,12 +35,6 @@ export async function GET(req: NextRequest) {
             const { data } = await response.json() as SuccessResponse<{ user: LoggedInUserDataType }>;
             if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
             else if (!data.user) throw new AppError('User data is missing in data response', 404, 'MISSING_USER_DATA');
-
-            // check if token payload username matches fetched user
-            if (data.user.username !== username) {
-                await removeSession();
-                return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 400 });
-            }
 
             const successResponse: SuccessResponse<{ user: LoggedInUserDataType }> = {
                 success: true,

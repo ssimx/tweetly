@@ -6,7 +6,8 @@ import { deleteImageFromCloudinary } from './uploadController';
 import { getNotifications, getOldestNotification, updateNotificationsToRead } from '../services/notificationService';
 import { generateUserSessionToken } from '../utils/jwt';
 import bcrypt from 'bcrypt';
-import { AppError, LoggedInTemporaryUserDataType, LoggedInUserDataType, SuccessResponse } from 'tweetly-shared';
+import { AppError, LoggedInTemporaryUserDataType, LoggedInUserDataType, SuccessResponse, UserDataType } from 'tweetly-shared';
+import { remapUserInformation, remapUserProfileInformation } from '../lib/helpers';
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -90,39 +91,61 @@ export const getTemporaryUserInfo = async (req: Request, res: Response, next: Ne
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getUserFollowSuggestions = async (req: Request, res: Response) => {
-    const { id } = req.user as UserProps;
-
+export const getProfileInfo = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userData = await getUser(id);
-        if (!userData) return res.status(404).json({ error: 'User does not exist' });
+        const username = req.params.username;
+        const user = req.user as UserProps;
 
-        const followSuggestions = await getFollowSuggestions(id);
+        const userData = await getProfile(user.id, username);
+        if (!userData) throw new AppError('User not found', 404, 'USER_NOT_FOUND');
+        if (!userData.profile) throw new AppError('User profile not found', 404, 'PROFILE_NOT_FOUND');
 
-        console.log('fetch')
+        const profile = remapUserProfileInformation({ ...userData, profile: userData.profile! });
 
-        return res.status(201).json({ followSuggestions });
+        const successResponse: SuccessResponse<{ user: UserDataType }> = {
+            success: true,
+            data: {
+                user: profile
+            },
+        };
+
+        res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error getting user: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        next(error);
     }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getProfileInfo = async (req: Request, res: Response) => {
-    const username = req.params.username;
-    const user = req.user as UserProps;
+export const getUserFollowSuggestions = async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.user as UserProps;
 
     try {
-        const profile = await getProfile(user.id, username);
+        const userData = await getUser(id);
+        if (!userData) throw new AppError('User not found', 404, 'USER_NOT_FOUND');
 
-        if (!profile) return res.status(404).json({ error: 'Profile does not exist' });
+        const followSuggestionsData = await getFollowSuggestions(id);
 
-        return res.status(201).json({ profile });
+        const suggestedUsers = followSuggestionsData.map((user) => {
+            // skip if there's no information
+            if (!user) return;
+            if (!user.profile) return;
+
+            const remappedUser = remapUserInformation({ ...user, profile: user.profile! });
+
+            return remappedUser;
+        }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
+
+        const successResponse: SuccessResponse<{ suggestedUsers: UserDataType[] }> = {
+            success: true,
+            data: {
+                suggestedUsers: suggestedUsers ?? [],
+            },
+        };
+
+        res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error getting profile: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        next(error);
     }
 };
 
@@ -205,39 +228,43 @@ export const getProfileFollowing = async (req: Request, res: Response) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const followUser = async (req: Request, res: Response) => {
+export const followUser = async (req: Request, res: Response, next: NextFunction) => {
     const username = req.params.username;
     const user = req.user as UserProps;
 
     try {
-        const response = await addFollow(user.id, username);
-        if (!response) return res.status(404).json({ error: 'failure' })
-
+        await addFollow(user.id, username);
         createNotificationForNewFollow(user.id, username);
 
-        return res.status(201).json('success');
+        const successResponse: SuccessResponse<undefined> = {
+            success: true,
+            data: undefined
+        };
+
+        res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        next(error);
     };
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const unfollowUser = async (req: Request, res: Response) => {
+export const unfollowUser = async (req: Request, res: Response, next: NextFunction) => {
     const username = req.params.username;
     const user = req.user as UserProps;
 
     try {
-        const response = await removeFollow(user.id, username);
-        if (!response) return res.status(404).json({ error: 'failure' })
-
+        await removeFollow(user.id, username);
         removeNotificationForFollow(user.id, username);
 
-        return res.status(201).json('success');
+        const successResponse: SuccessResponse<undefined> = {
+            success: true,
+            data: undefined
+        };
+
+        res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        next(error);
     };
 };
 

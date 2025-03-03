@@ -6,7 +6,6 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { updateProfileSchema } from "@/lib/schemas";
-import { ProfileInfo } from "@/lib/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -18,6 +17,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Croppie, { CropType } from "croppie";
 import "croppie/croppie.css";
+import { UserDataType } from 'tweetly-shared';
 
 type ProfileInfoData = z.infer<typeof updateProfileSchema>;
 
@@ -58,17 +58,16 @@ type AppState = {
     croppedImage: string | null;
 };
 
-
-export default function ProfileEditBtn({ user }: { user: ProfileInfo }) {
+export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<UserDataType, 'profile'>['profile'] }) {
     const [open, setOpen] = useState(false);
-    const [name, setName] = useState(user.profile.name);
-    const [bio, setBio] = useState(user.profile.bio);
-    const [location, setLocation] = useState(user.profile.location);
-    const [website, setWebsite] = useState(user.profile.websiteUrl);
+    const [name, setName] = useState(profileInfo.name);
+    const [bio, setBio] = useState(profileInfo.bio);
+    const [location, setLocation] = useState(profileInfo.location);
+    const [website, setWebsite] = useState(profileInfo.websiteUrl);
     const [newBannerPicture, setNewBannerPicture] = useState<File | string | null>(null);
     const [newProfilePicture, setNewProfilePicture] = useState<File | null>(null);
-    const [bannerPicturePreview, setBannerPicturePreview] = useState<string>(user.profile.bannerPicture);
-    const [profilePicturePreview, setProfilePicturePreview] = useState<string>(user.profile.profilePicture);
+    const [bannerPicturePreview, setBannerPicturePreview] = useState<string>(profileInfo.bannerPicture);
+    const [profilePicturePreview, setProfilePicturePreview] = useState<string>(profileInfo.profilePicture);
     const bannerInputRef = useRef<HTMLInputElement | null>(null);
     const profileInputRef = useRef<HTMLInputElement | null>(null);
     const [isFileUploaded, setIsFileUploaded] = useState<AppState["isFileUploaded"]>(false);

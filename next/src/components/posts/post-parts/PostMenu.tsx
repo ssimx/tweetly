@@ -1,33 +1,39 @@
 'use client';
+import { blockUser, followUser, unblockUser, unfollowUser } from '@/actions/actions';
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import { useUserContext } from '@/context/UserContextProvider';
-import { BasicPostType } from '@/lib/types';
+import { UserActionType } from '@/lib/userReducer';
 import { Ellipsis } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { getErrorMessage } from 'tweetly-shared';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { BasePostDataType, getErrorMessage, UserAndViewerRelationshipType, UserStatsType } from 'tweetly-shared';
 
-interface PostMenuType {
-    post: BasicPostType,
-    isFollowedByTheUser: boolean,
-    setIsFollowedByTheUser: React.Dispatch<React.SetStateAction<boolean>>,
-    isFollowingTheUser: boolean,
-    setIsFollowingTheUser: React.Dispatch<React.SetStateAction<boolean>>,
-    _setFollowersCount: React.Dispatch<React.SetStateAction<number>>,
-    _setFollowingCount: React.Dispatch<React.SetStateAction<number>>,
+type PostMenuProps = {
+    post: BasePostDataType,
+    userState: {
+        relationship: UserAndViewerRelationshipType,
+        stats: UserStatsType,
+    },
+    dispatch: React.Dispatch<UserActionType>,
 }
 
-export default function PostMenu({ post, isFollowedByTheUser, setIsFollowedByTheUser, isFollowingTheUser, setIsFollowingTheUser}: PostMenuType) {
+export default function PostMenu({ post, userState, dispatch }: PostMenuProps) {
     const [menuOpen, setMenuOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const menuBtn = useRef<HTMLDivElement | null>(null);
     const followBtn = useRef<HTMLButtonElement | null>(null);
     const blockBtn = useRef<HTMLButtonElement | null>(null);
 
-    const { loggedInUser, setFollowersCount, setFollowingCount } = useUserContext();
-    const { updateFollowState } = useFollowSuggestionContext();
-    const { blockedUsers, addBlockedUser, removeBlockedUser } = useBlockedUsersContext();
-    const isBlockedByTheUser = blockedUsers.some((user) => user === post.author.username);
+    const { loggedInUser, setNewFollowing, setFollowersCount, setFollowingCount } = useUserContext();
+    const { updateFollowState: updateSuggestedUserFollowState } = useFollowSuggestionContext();
+    const { addBlockedUser, removeBlockedUser } = useBlockedUsersContext();
+
+    const {
+        isBlockedByViewer,
+        isFollowingViewer,
+        isFollowedByViewer
+    } = userState.relationship;
+
     const authorIsLoggedInUser = post.author.username === loggedInUser.username;
 
     const toggleMenu = (e: React.MouseEvent) => {
@@ -51,6 +57,147 @@ export default function PostMenu({ post, isFollowedByTheUser, setIsFollowedByThe
         }
     };
 
+    const handleFollowToggle = useCallback(
+        async (e: React.MouseEvent) => {
+            e.preventDefault();
+            if (isSubmitting) return;
+            setIsSubmitting(true);
+
+            try {
+                if (isFollowedByViewer) {
+                    // Optimistically update UI
+                    dispatch({ type: 'UNFOLLOW' });
+                    updateSuggestedUserFollowState(post.author.username, false);
+
+                    const response = await unfollowUser(post.author.username);
+
+                    if (!response.success) {
+                        throw new Error(response.error.message);
+                    }
+                } else {
+                    // Optimistically update UI
+                    dispatch({ type: 'FOLLOW' });
+                    setNewFollowing(true);
+                    updateSuggestedUserFollowState(post.author.username, true);
+
+                    isFollowingViewer && setFollowersCount((current) => current - 1);
+                    isFollowedByViewer && setFollowingCount((current) => current - 1);
+
+                    const response = await followUser(post.author.username);
+
+                    if (!response.success) {
+                        throw new Error(response.error.message);
+                    }
+                }
+            } catch (error: unknown) {
+                const errorMessage = getErrorMessage(error);
+                // Revert state if exception occurs
+                if (isFollowedByViewer) {
+                    console.error(`Error unfollowing the user:`, errorMessage);
+                    dispatch({ type: 'FOLLOW' });
+                    updateSuggestedUserFollowState(post.author.username, true);
+                } else {
+                    console.error(`Error following the user:`, errorMessage);
+                    dispatch({ type: 'UNFOLLOW' });
+                    setNewFollowing(false);
+                    updateSuggestedUserFollowState(post.author.username, false);
+                    isFollowingViewer && setFollowersCount((current) => current + 1);
+                    isFollowedByViewer && setFollowingCount((current) => current + 1);
+                }
+            } finally {
+                setIsSubmitting(false);
+            }
+        },
+        [
+            isFollowedByViewer,
+            dispatch,
+            post.author,
+            isSubmitting,
+            setNewFollowing,
+            isFollowingViewer,
+            setFollowersCount,
+            setFollowingCount,
+            updateSuggestedUserFollowState,
+        ],
+    );
+
+    const handleBlockToggle = useCallback(
+        async (e: React.MouseEvent) => {
+            e.preventDefault();
+            if (isSubmitting) return;
+            setIsSubmitting(true);
+
+            try {
+                if (isBlockedByViewer) {
+                    // Optimistically update UI
+                    dispatch({ type: 'UNBLOCK' });
+                    removeBlockedUser(post.author.username);
+
+                    const response = await unblockUser(post.author.username);
+
+                    if (!response.success) {
+                        throw new Error(response.error.message);
+                    }
+                } else {
+                    // Optimistically update UI
+                    dispatch({ type: 'BLOCK' });
+                    addBlockedUser(post.author.username);
+                    setNewFollowing(true);
+                    isFollowingViewer && setFollowersCount((current) => current - 1);
+                    isFollowedByViewer && setFollowingCount((current) => current - 1);
+
+                    const response = await blockUser(post.author.username);
+
+                    if (!response.success) {
+                        throw new Error(response.error.message);
+                    }
+                }
+            } catch (error: unknown) {
+                const errorMessage = getErrorMessage(error);
+                // Revert state if exception occurs
+                if (isBlockedByViewer) {
+                    console.error(`Error unblocking the user:`, errorMessage);
+                    dispatch({ type: 'BLOCK' });
+                    addBlockedUser(post.author.username);
+                } else {
+                    console.error(`Error blocking the user:`, errorMessage);
+                    dispatch({ type: 'UNBLOCK' });
+                    removeBlockedUser(post.author.username);
+                    setNewFollowing(false);
+                    isFollowingViewer && setFollowersCount((current) => current + 1);
+                    isFollowedByViewer && setFollowingCount((current) => current + 1);
+                }
+            } finally {
+                setIsSubmitting(false);
+            }
+        },
+        [
+            isBlockedByViewer,
+            dispatch,
+            post.author,
+            addBlockedUser,
+            removeBlockedUser,
+            isSubmitting,
+            setNewFollowing,
+            isFollowedByViewer,
+            isFollowingViewer,
+            setFollowersCount,
+            setFollowingCount,
+        ],
+    );
+
+    const pinPost = () => {
+        console.log('Pin post');
+    };
+
+    const removePost = () => {
+        console.log('Remove post');
+    };
+
+    const reportPost = () => {
+        console.log('Report post');
+    };
+
     useEffect(() => {
         if (menuOpen) {
             window.addEventListener('click', handleClickOutside);
@@ -64,127 +211,6 @@ export default function PostMenu({ post, isFollowedByTheUser, setIsFollowedByThe
         };
     }, [menuOpen]);
 
-    const pinPost = () => {
-        console.log('test')
-    };
-
-    const removePost = () => {
-
-    };
-
-    const reportPost = () => {
-
-    };
- 
-    const handleFollowUser = async () => {
-        if (isSubmitting) return;
-
-        setIsSubmitting(true);
-        followBtn.current && followBtn.current.setAttribute('disabled', "");
-
-        try {
-            if (isFollowedByTheUser) {
-                // optimistic change
-                setIsFollowedByTheUser(false);
-                setFollowersCount((current) => current - 1);
-                updateFollowState(post.author.username, false);
-
-                const unfollow = await fetch(`/api/users/removeFollow/${post.author.username}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-
-                if (!unfollow.ok) {
-                    throw new Error("Couldn't unfollow the user");
-                }
-            } else {
-                // optimistic change
-                setIsFollowedByTheUser(true);
-                setFollowersCount((current) => current + 1);
-                updateFollowState(post.author.username, true);
-
-                const follow = await fetch(`/api/users/follow/${post.author.username}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-
-                if (!follow.ok) {
-                    throw new Error("Couldn't follow the user");
-                }
-            }
-
-        } catch (error) {
-            console.error(getErrorMessage(error));
-            if (isFollowedByTheUser) {
-                // revert the changes in case of error
-                setIsFollowedByTheUser(true);
-                // setFollowersCount((current) => current + 1);
-                updateFollowState(post.author.username, true);
-            } else {
-                // revert the changes in case of error
-                setIsFollowedByTheUser(false);
-                // setFollowersCount((current) => current - 1);
-                updateFollowState(post.author.username, false);
-            }
-        } finally {
-            followBtn.current && followBtn.current.removeAttribute('disabled');
-            setIsSubmitting(false);
-        }
-    };
-
-    const handleBlockUser = async () => {
-        if (isBlockedByTheUser) {
-            try {
-                const response = await fetch(`/api/users/removeBlock/${post.author.username}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-
-                if (!response.ok) {
-                    console.error('User is not blocked');
-                    return;
-                }
-
-                removeBlockedUser(post.author.username);
-            } catch (error) {
-                console.error('Something went wrong');
-            }
-        } else {
-            try {
-                const response = await fetch(`/api/users/block/${post.author.username}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-
-                if (!response.ok) {
-                    console.error('User is already blocked');
-                    return;
-                }
-
-                // If logged in user is following the blocked user, decrease their followers count
-                isFollowedByTheUser && setFollowersCount((prev) => prev - 1);
-                isFollowedByTheUser && setIsFollowedByTheUser(false);
-                // If blocked user is following logged in user, set "follows you" to false and decrease logged in user followers count
-                isFollowingTheUser && setIsFollowingTheUser(false);
-                isFollowingTheUser && setFollowingCount((prev) => prev - 1);
-
-                updateFollowState(post.author.username, false);
-                addBlockedUser(post.author.username);
-                setMenuOpen(false);
-            } catch (error) {
-                console.error('Something went wrong');
-            }
-        }
-    };
-
     return (
         <div className='ml-auto w-[30px] h-[25px] relative flex-center'>
             {menuOpen &&
@@ -192,33 +218,33 @@ export default function PostMenu({ post, isFollowedByTheUser, setIsFollowedByThe
                     <button className='menu-overlay' onClick={toggleMenu}></button>
 
                     <div ref={menuBtn} className='shadow-menu bg-primary-foreground text-primary-text border border-primary-border overflow-hidden absolute top-0 right-[0%] z-50 w-[200px] h-fit rounded-[20px] py-[10px]'>
-                        { loggedInUser.username === post.author.username 
+                        {authorIsLoggedInUser
                             ? (
-                            <>
-                                <button onClick={pinPost}
-                                    className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[7px] hover:bg-card-hover'>
-                                    Pin post to profile
-                                </button>
+                                <>
+                                    <button onClick={pinPost}
+                                        className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[7px] hover:bg-card-hover'>
+                                        Pin post to profile
+                                    </button>
 
-                                <button onClick={removePost}
-                                    className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[7px] text-red-600 hover:bg-card-hover'>
-                                    Delete post
-                                </button>
-                            </> )
+                                    <button onClick={removePost}
+                                        className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[7px] text-red-600 hover:bg-card-hover'>
+                                        Delete post
+                                    </button>
+                                </>)
                             : (
                                 <>
-                                    <button 
-                                        onClick={handleFollowUser}
+                                    <button
+                                        onClick={handleFollowToggle}
                                         className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[7px] hover:bg-card-hover'
                                         ref={followBtn}>
-                                            {isFollowedByTheUser ? `Unfollow ${post.author.username}` : `Follow ${post.author.username}`}
+                                        {isFollowedByViewer ? `Unfollow ${post.author.username}` : `Follow ${post.author.username}`}
                                     </button>
 
                                     <button
-                                        onClick={handleBlockUser}
+                                        onClick={handleBlockToggle}
                                         className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[7px] hover:bg-card-hover'
                                         ref={blockBtn}>
-                                        {isBlockedByTheUser ? `Unblock ${post.author.username}` : `Block ${post.author.username}`}
+                                        {isBlockedByViewer ? `Unblock ${post.author.username}` : `Block ${post.author.username}`}
                                     </button>
 
                                     <button onClick={reportPost}

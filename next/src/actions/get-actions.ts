@@ -1,9 +1,10 @@
 'use server';
 import { getCurrentUserToken } from "@/data-acess-layer/auth";
 import { getLoggedInUser } from "@/data-acess-layer/user-dto";
-import { BasicPostType, BookmarkPostType, NotificationType, ProfilePostOrRepostType, ProfileReplyPostType, UserInfoType, VisitedPostType } from "@/lib/types";
+import { decryptSession } from '@/lib/session';
+import { BasicPostType, BookmarkPostType, NotificationType, ProfileReplyPostType, UserInfoType, VisitedPostType } from "@/lib/types";
 import { cache } from 'react';
-import { getErrorMessage } from 'tweetly-shared';
+import { ApiResponse, AppError, BasePostDataType, ErrorResponse, getErrorMessage, LoggedInUserJwtPayload, ProfilePostOrRepostDataType, SuccessResponse, UserDataType } from 'tweetly-shared';
 
 // GET actions for client/dynamic components
 
@@ -28,7 +29,7 @@ export async function getHomeGlobalFeed() {
 
         const globalFeedPosts = await response.json().then((res) => {
             if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as BasicPostType[], end: res.end as boolean}
+                return { posts: res.posts as BasicPostType[], end: res.end as boolean }
             }
             throw new Error('Invalid response format');
         });
@@ -60,7 +61,7 @@ export async function getMorePostsForHomeGlobalFeed(postCursor: number) {
 
         const globalFeedPosts = await response.json().then((res) => {
             if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as BasicPostType[], end: res.end as boolean}
+                return { posts: res.posts as BasicPostType[], end: res.end as boolean }
             }
             throw new Error('Invalid response format');
         });
@@ -92,7 +93,7 @@ export async function getNewPostsForHomeGlobalFeed(postCursor?: number) {
 
         const globalFeedPosts = await response.json().then((res) => {
             if (typeof res === 'object' && res !== null && 'posts' in res) {
-                return { posts: res.posts as BasicPostType[]}
+                return { posts: res.posts as BasicPostType[] }
             }
             throw new Error('Invalid response format');
         });
@@ -126,7 +127,7 @@ export async function getHomeFollowingFeed() {
 
         const followingFeedPosts = await response.json().then((res) => {
             if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as BasicPostType[], end: res.end as boolean}
+                return { posts: res.posts as BasicPostType[], end: res.end as boolean }
             }
             throw new Error('Invalid response format');
         });
@@ -158,7 +159,7 @@ export async function getMorePostsForHomeFollowingFeed(postCursor: number) {
 
         const followingFeedPosts = await response.json().then((res) => {
             if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as BasicPostType[], end: res.end as boolean}
+                return { posts: res.posts as BasicPostType[], end: res.end as boolean }
             }
             throw new Error('Invalid response format');
         });
@@ -190,7 +191,7 @@ export async function getNewPostsForHomeFollowingFeed(postCursor?: number) {
 
         const followingFeedPosts = await response.json().then((res) => {
             if (typeof res === 'object' && res !== null && 'posts' in res) {
-                return { posts: res.posts as BasicPostType[]}
+                return { posts: res.posts as BasicPostType[] }
             }
             throw new Error('Invalid response format');
         });
@@ -250,11 +251,11 @@ export async function getMoreRepliesForPost(postId: number, replyCursor: number)
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(getErrorMessage(errorData));
-        }        
-        
+        }
+
         const moreReplies = await response.json().then((res) => {
             if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as BasicPostType[], end: res.end as boolean}
+                return { posts: res.posts as BasicPostType[], end: res.end as boolean }
             }
             throw new Error('Invalid response format');
         });
@@ -285,7 +286,7 @@ export async function getMoreNotifications(notificationCursor: number) {
 
         const notifications = await response.json().then((res) => {
             if (typeof res === 'object' && res !== null && 'notifications' in res && 'end' in res) {
-                return { notifications: res.notifications as NotificationType[], end: res.end as boolean}
+                return { notifications: res.notifications as NotificationType[], end: res.end as boolean }
             }
             throw new Error('Invalid response format');
         });
@@ -317,7 +318,7 @@ export async function getMoreBookmarks(cursor: number) {
 
         const posts = await response.json().then((res) => {
             if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as BookmarkPostType[], end: res.end as boolean}
+                return { posts: res.posts as BookmarkPostType[], end: res.end as boolean }
             }
             throw new Error('Invalid response format');
         });
@@ -413,7 +414,7 @@ export async function getMoreSearchPosts(encodedSearch: string, cursor: number) 
 
         const posts = await response.json().then((res) => {
             if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as BasicPostType[], end: res.end as boolean};
+                return { posts: res.posts as BasicPostType[], end: res.end as boolean };
             }
             throw new Error('Invalid response format');
         });
@@ -460,10 +461,10 @@ export const getTrendingHashtags = cache(async () => {
     }
 });
 
-export const getFollowSuggestions = cache(async () => {
-    const token = await getCurrentUserToken();
-
+export const getFollowSuggestions = cache(async (): Promise<ApiResponse<{ suggestedUsers: UserDataType[] }>> => {
     try {
+        const token = await getCurrentUserToken();
+
         const response = await fetch('http://localhost:3000/api/users/followSuggestions', {
             method: 'GET',
             headers: {
@@ -473,20 +474,40 @@ export const getFollowSuggestions = cache(async () => {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const followSuggestions = await response.json() as FollowSuggestionType[];
-        const mappedUsers: FollowSuggestionType[] = followSuggestions.map((user: Omit<FollowSuggestionType, 'isFollowing'>) => {
-            return { ...user, isFollowed: false };
-        });
+        const { data } = await response.json() as SuccessResponse<{ suggestedUsers: UserDataType[] }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.suggestedUsers === undefined) throw new AppError('suggestedUsers property is missing in data response', 404, 'MISSING_PROPERTY');
+        
+        return {
+            success: true,
+            data: {
+                suggestedUsers: data.suggestedUsers,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
 
-        return mappedUsers;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error('Error fetching trending hashtags:', errorMessage);
-        return [];
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 });
 
@@ -500,11 +521,11 @@ export async function fetchLoggedInUser() {
 //                                             PROFILE ACTIONS
 // ---------------------------------------------------------------------------------------------------------
 
-export async function getPostsForProfile(profileUsername: string) {
-    const token = await getCurrentUserToken();
-
+export async function getPostsForProfile(profileUsername: string, postsCursor?: number): Promise<ApiResponse<{ posts: BasePostDataType[], end: boolean }>> {
     try {
-        const response = await fetch(`http://localhost:3000/api/posts/userPosts/${profileUsername}`, {
+        const token = await getCurrentUserToken();
+
+        const response = await fetch(`http://localhost:3000/api/posts/userPosts/${profileUsername}${postsCursor ? `?cursor=${postsCursor}` : ''}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -513,30 +534,49 @@ export async function getPostsForProfile(profileUsername: string) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const posts = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as ProfilePostOrRepostType[], end: res.end as boolean}
-            }
-            return { posts: [] as ProfilePostOrRepostType[], end: true };
-        });
+        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
 
-        return posts;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return { posts: null, end: true };
+        return {
+            success: true,
+            data: {
+                posts: data.posts,
+                end: data.end ?? true,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function getRepostsForProfile(profileUsername: string) {
-    const token = await getCurrentUserToken();
-
+export async function getRepostsForProfile(profileUsername: string, repostsCursor?: number): Promise<ApiResponse<{ reposts: BasePostDataType[], end: boolean }>> {
     try {
-        const response = await fetch(`http://localhost:3000/api/posts/userReposts/${profileUsername}`, {
+        const token = await getCurrentUserToken();
+
+        const response = await fetch(`http://localhost:3000/api/posts/userReposts/${profileUsername}${repostsCursor ? `?cursor=${repostsCursor}` : ''}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -545,97 +585,223 @@ export async function getRepostsForProfile(profileUsername: string) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const posts = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as ProfilePostOrRepostType[], end: res.end as boolean}
-            }
-            return { posts: [] as ProfilePostOrRepostType[], end: true };
-        });
+        const { data } = await response.json() as SuccessResponse<{ reposts: BasePostDataType[], end: boolean }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.reposts === undefined) throw new AppError('Reposts property is missing in data response', 404, 'MISSING_PROPERTY');
 
-        return posts;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return { posts: null, end: true };
+        return {
+            success: true,
+            data: {
+                reposts: data.reposts,
+                end: data.end ?? true,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function getRepliesForProfile(profileUsername: string) {
-    const token = await getCurrentUserToken();
-
+export async function getPostsAndRepostsForProfile(
+    profileUsername: string
+): Promise<ApiResponse<{
+    postsCursor: number | null,
+    postsEnd: boolean,
+    repostsCursor: number | null,
+    repostsEnd: boolean,
+    postsReposts: ProfilePostOrRepostDataType[],
+}>> {
     try {
-        const response = await fetch(`http://localhost:3000/api/posts/userReplies/${profileUsername}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-        });
+        const postsPromise = getPostsForProfile(profileUsername);
+        const repostsPromise = getRepostsForProfile(profileUsername);
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+        const [postsResponse, repostsResponse] = await Promise.all([postsPromise, repostsPromise]);
+
+        console.log(postsResponse)
+
+        if (!postsResponse.success) {
+            const errorData = postsResponse as ErrorResponse;
+            throw new AppError(errorData.error.message, 400, errorData.error.code, errorData.error.details);
+        } else if (!repostsResponse.success) {
+            const errorData = repostsResponse as ErrorResponse;
+            throw new AppError(errorData.error.message, 400, errorData.error.code, errorData.error.details);
         }
 
-        const posts = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as ProfileReplyPostType[], end: res.end as boolean}
-            }
-            return { posts: [] as ProfileReplyPostType[], end: true };
+        const { data: postsData } = postsResponse as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
+        if (postsData === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (postsData.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
+
+        const { data: repostsData } = repostsResponse as SuccessResponse<{ reposts: BasePostDataType[], end: boolean }>;
+        if (repostsData === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (repostsData.reposts === undefined) throw new AppError('Reposts property is missing in data response', 404, 'MISSING_PROPERTY');
+
+        const mappedPosts: ProfilePostOrRepostDataType[] = postsData.posts.map((post) => {
+            return { ...post, timeForSorting: new Date(post.createdAt).getTime(), type: 'POST' };
         });
 
-        return posts;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return { posts: null, end: true };
+        const mappedReposts: ProfilePostOrRepostDataType[] = repostsData.reposts.map((repost) => {
+            return { ...repost, timeForSorting: new Date(repost.createdAt).getTime(), type: 'REPOST' };
+        });
+
+        const mappedPostsReposts: ProfilePostOrRepostDataType[] = mappedPosts.concat(mappedReposts).sort((a, b) => {
+            return b.timeForSorting - a.timeForSorting
+        }) ?? [];
+
+        return {
+            success: true,
+            data: {
+                postsCursor: postsData.posts.length ? postsData.posts.slice(-1)[0].id : null,
+                postsEnd: postsData.end,
+                repostsCursor: repostsData.reposts.length ? repostsData.reposts.slice(-1)[0].id : null,
+                repostsEnd: repostsData.end,
+                postsReposts: mappedPostsReposts,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function getMediaForProfile(profileUsername: string) {
-    const token = await getCurrentUserToken();
-
+export async function getMorePostsAndRepostsForProfile(
+    profileUsername: string,
+    postsCursor: number | null,
+    repostsCursor: number | null,
+    postsEnd: boolean,
+    repostsEnd: boolean,
+): Promise<ApiResponse<{
+    postsCursor: number | null,
+    postsEnd: boolean,
+    repostsCursor: number | null,
+    repostsEnd: boolean,
+    postsReposts: ProfilePostOrRepostDataType[],
+}>> {
     try {
-        const response = await fetch(`http://localhost:3000/api/posts/userMedia/${profileUsername}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-        });
+        let postsPromise: Promise<ApiResponse<{ posts: BasePostDataType[], end: boolean; }>> | undefined = undefined;
+        let repostsPromise: Promise<ApiResponse<{ reposts: BasePostDataType[], end: boolean; }>> | undefined = undefined;
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+        if (!postsEnd && postsCursor) {
+            postsPromise = getPostsForProfile(profileUsername, postsCursor);
         }
 
-        const posts = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as BasicPostType[], end: res.end as boolean}
-            }
-            throw new Error('Invalid response format');
+        if (!repostsEnd && repostsCursor) {
+            repostsPromise = getRepostsForProfile(profileUsername, repostsCursor);
+        }
+
+        const [postsResponse, repostsResponse] = await Promise.all([postsPromise, repostsPromise]);
+
+        if (postsResponse && !postsResponse.success) {
+            const errorData = postsResponse as ErrorResponse;
+            throw new AppError(errorData.error.message, 400, errorData.error.code, errorData.error.details);
+        } else if (repostsResponse && !repostsResponse.success) {
+            const errorData = repostsResponse as ErrorResponse;
+            throw new AppError(errorData.error.message, 400, errorData.error.code, errorData.error.details);
+        }
+
+        let fetchedOlderPosts = { posts: [], end: true } as { posts: BasePostDataType[], end: boolean };
+        if (postsResponse !== undefined) {
+            const { data } = postsResponse as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
+            if (data === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+            else if (data.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
+            fetchedOlderPosts = { posts: data.posts, end: data.end };
+        }
+
+        let fetchedOlderReposts = { reposts: [], end: true } as { reposts: BasePostDataType[], end: boolean };
+        if (repostsResponse !== undefined) {
+            const { data } = repostsResponse as SuccessResponse<{ reposts: BasePostDataType[], end: boolean }>;
+            if (data === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+            else if (data.reposts === undefined) throw new AppError('Reposts property is missing in data response', 404, 'MISSING_PROPERTY');
+            fetchedOlderReposts = { reposts: data.reposts, end: data.end };
+        }
+
+        const mappedPosts: ProfilePostOrRepostDataType[] = fetchedOlderPosts.posts.map((post) => {
+            return { ...post, timeForSorting: new Date(post.createdAt).getTime(), type: 'POST' };
         });
 
-        return posts;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return { posts: null, end: true };
+        const mappedReposts: ProfilePostOrRepostDataType[] = fetchedOlderReposts.reposts.map((repost) => {
+            return { ...repost, timeForSorting: new Date(repost.createdAt).getTime(), type: 'REPOST' };
+        });
+
+        const mappedPostsReposts: ProfilePostOrRepostDataType[] = mappedPosts.concat(mappedReposts).sort((a, b) => {
+            return b.timeForSorting - a.timeForSorting
+        }) ?? [];
+
+        return {
+            success: true,
+            data: {
+                postsCursor: fetchedOlderPosts.posts.length ? fetchedOlderPosts.posts.slice(-1)[0].id : null,
+                postsEnd: fetchedOlderPosts.end,
+                repostsCursor: fetchedOlderReposts.reposts.length ? fetchedOlderReposts.reposts.slice(-1)[0].id : null,
+                repostsEnd: fetchedOlderReposts.end,
+                postsReposts: mappedPostsReposts,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function getLikesForProfile(profileUsername: string) {
-    const user = await getLoggedInUser();
-    const token = await getCurrentUserToken();
-
+export async function getRepliesForProfile(profileUsername: string, repliesCursor?: number): Promise<ApiResponse<{ replies: BasePostDataType[], end: boolean }>> {
     try {
-        if (user.username !== profileUsername) throw new Error(getErrorMessage("Profile user doesn't match logged in user"));
+        const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://localhost:3000/api/posts/userLikes`, {
+        const response = await fetch(`http://localhost:3000/api/posts/userReplies/${profileUsername}${repliesCursor ? `?cursor=${repliesCursor}` : ''}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -644,30 +810,49 @@ export async function getLikesForProfile(profileUsername: string) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const posts = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as ProfileLikePostType[], end: res.end as boolean}
-            }
-            return { posts: [] as ProfileLikePostType[], end: true };
-        });
+        const { data } = await response.json() as SuccessResponse<{ replies: BasePostDataType[], end: boolean }>;
+        if (data === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.replies === undefined) throw new AppError('Replies property is missing in data response', 404, 'MISSING_PROPERTY');
 
-        return posts;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return { posts: null, end: true };
+        return {
+            success: true,
+            data: {
+                replies: data.replies,
+                end: data.end ?? true,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function getMorePostsForProfile(profileUsername: string, postCursor: number) {
-    const token = await getCurrentUserToken();
-
+export async function getMediaForProfile(profileUsername: string, mediaCursor?: number): Promise<ApiResponse<{ media: BasePostDataType[], end: boolean }>> {
     try {
-        const response = await fetch(`http://localhost:3000/api/posts/userPosts/${profileUsername}?cursor=${postCursor}`, {
+        const token = await getCurrentUserToken();
+
+        const response = await fetch(`http://localhost:3000/api/posts/userMedia/${profileUsername}${mediaCursor ? `?cursor=${mediaCursor}` : ''}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -676,30 +861,53 @@ export async function getMorePostsForProfile(profileUsername: string, postCursor
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const globalFeedPosts = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as ProfilePostOrRepostType[], end: res.end as boolean}
-            }
-            return { posts: [] as ProfilePostOrRepostType[], end: true };
-        });
+        const { data } = await response.json() as SuccessResponse<{ media: BasePostDataType[], end: boolean }>;
+        console.log(data)
+        if (data === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.media === undefined) throw new AppError('Media property is missing in data response', 404, 'MISSING_PROPERTY');
 
-        return globalFeedPosts;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return { posts: undefined, end: true };
+        return {
+            success: true,
+            data: {
+                media: data.media,
+                end: data.end ?? true,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function getMoreRepostsForProfile(profileUsername: string, postCursor: number) {
-    const token = await getCurrentUserToken();
-
+export async function getLikesForProfile(profileUsername: string, likesCursor?: number): Promise<ApiResponse<{ likes: BasePostDataType[], end: boolean }>> {
     try {
-        const response = await fetch(`http://localhost:3000/api/posts/userReposts/${profileUsername}?cursor=${postCursor}`, {
+        const token = await getCurrentUserToken();
+        const payload = await decryptSession(token) as LoggedInUserJwtPayload;
+
+        if (payload.username !== profileUsername) throw new AppError('Unauthorized', 401, 'ANAUTHORIZED');
+
+        const response = await fetch(`http://localhost:3000/api/posts/userLikes${likesCursor ? `?cursor=${likesCursor}` : ''}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -708,120 +916,40 @@ export async function getMoreRepostsForProfile(profileUsername: string, postCurs
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const globalFeedPosts = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as ProfilePostOrRepostType[], end: res.end as boolean}
-            }
-            return { posts: [] as ProfilePostOrRepostType[], end: true };
-        });
+        const { data } = await response.json() as SuccessResponse<{ likes: BasePostDataType[], end: boolean }>;
+        if (data === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.likes === undefined) throw new AppError('Likes property is missing in data response', 404, 'MISSING_PROPERTY');
 
-        return globalFeedPosts;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return { posts: undefined, end: true };
-    }
-};
-
-export async function getMoreRepliesForProfile(profileUsername: string, postCursor: number) {
-    const token = await getCurrentUserToken();
-
-    try {
-        const response = await fetch(`http://localhost:3000/api/posts/userReplies/${profileUsername}?cursor=${postCursor}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
+        return {
+            success: true,
+            data: {
+                likes: data.likes,
+                end: data.end ?? true,
             },
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
         }
 
-        const globalFeedPosts = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as ProfileReplyPostType[], end: res.end as boolean}
-            }
-            return { posts: [] as ProfileReplyPostType[], end: true };
-        });
-
-        return globalFeedPosts;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return { posts: undefined, end: true };
-    }
-};
-
-export async function getMoreMediaForProfile(profileUsername: string, postCursor: number) {
-    const token = await getCurrentUserToken();
-
-    try {
-        const response = await fetch(`http://localhost:3000/api/posts/userMedia/${profileUsername}?cursor=${postCursor}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
             },
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
-        }
-
-        const globalFeedPosts = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as BasicPostType[], end: res.end as boolean}
-            }
-            throw new Error('Invalid response format');
-        });
-
-        return globalFeedPosts;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return { posts: undefined, end: true };
-    }
-};
-
-export async function getMoreLikesForProfile(profileUsername: string, postCursor: number) {
-    const user = await getLoggedInUser();
-    const token = await getCurrentUserToken();
-
-    try {
-        if (user.username !== profileUsername) throw new Error(getErrorMessage("Profile user doesn't match with logged in user"));
-
-        const response = await fetch(`http://localhost:3000/api/posts/userLikes?cursor=${postCursor}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
-        }
-
-        const globalFeedPosts = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as ProfileLikePostType[], end: res.end as boolean}
-            }
-            return { posts: [] as ProfileLikePostType[], end: true };
-        });
-
-        return globalFeedPosts;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return { posts: undefined, end: true };
+        };
     }
 };

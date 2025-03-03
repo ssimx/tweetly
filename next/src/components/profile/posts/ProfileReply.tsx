@@ -1,64 +1,57 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useReducer } from 'react';
 import { useRouter } from 'next/navigation';
-import { ProfileReplyPostType } from '@/lib/types';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import BasicPostTemplate from '@/components/posts/templates/BasicPostTemplate';
+import { BasePostDataType, UserAndViewerRelationshipType, UserStatsType } from 'tweetly-shared';
+import { UserActionType, userInfoReducer, UserStateType } from '@/lib/userReducer';
 
-export default function ProfileReply({ post }: { post: ProfileReplyPostType }) {
-    const { suggestions } = useFollowSuggestionContext();
+type ProfileReplyProps = {
+    post: BasePostDataType,
+    replyUserState: {
+        relationship: UserAndViewerRelationshipType,
+        stats: UserStatsType,
+    },
+    replyDispatch: React.Dispatch<UserActionType>,
+};
+
+export default function ProfileReply({ post, replyUserState, replyDispatch }: ProfileReplyProps) {
+    const { suggestions: userFollowSuggestions } = useFollowSuggestionContext();
     const router = useRouter();
 
     // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    // PARENT POST
+    // PARENT POST IS NOT NECESSARILY PROFILE USER'S OWN POST SO IT NEEDS NEW STATE IF THAT'S THE CASE
+    const parentInitialState: UserStateType = {
+        relationship: {
+            isFollowingViewer: post.replyTo!.author.relationship.isFollowingViewer,
+            hasBlockedViewer: post.replyTo!.author.relationship.hasBlockedViewer,
+            isFollowedByViewer: post.replyTo!.author.relationship.isFollowedByViewer,
+            isBlockedByViewer: post.replyTo!.author.relationship.isBlockedByViewer,
+            notificationsEnabled: post.replyTo!.author.relationship.notificationsEnabled,
+        },
+        stats: {
+            followersCount: post.replyTo!.author.stats.followersCount,
+            followingCount: post.replyTo!.author.stats.followingCount,
+            postsCount: post.replyTo!.author.stats.postsCount,
+        }
+    };
+    const [parentUserState, parentDispatch] = useReducer(userInfoReducer, parentInitialState);
 
-    // if user is in suggestions, track it's isFollowed property instead
-    const [isParentFollowedByTheUser, setParentIsFollowedByTheUser] = useState(
-        suggestions?.find((suggestedUser) => suggestedUser.username === post.replyTo.author.username)?.isFollowed
-        ?? post.replyTo.author.followers.length === 1
-    );
-
-    // Is post author following the logged in user
-    const [isParentFollowingTheUser, setParentIsFollowingTheUser] = useState<boolean>(post.replyTo.author.following.length === 1);
-
-    // Post author following & followers count to update hover card information when they're (un)followed/blocked by logged in user
-    const [parentFollowingCount, setParentFollowingCount] = useState(
-        suggestions?.find((suggestedUser) => suggestedUser.username === post.replyTo.author.username)?._count.following
-        ?? post.replyTo.author._count.following
-    );
-    const [parentFollowersCount, setParentFollowersCount] = useState(
-        suggestions?.find((suggestedUser) => suggestedUser.username === post.replyTo.author.username)?._count.followers
-        ?? post.replyTo.author._count.followers
-    );
-
-    // ORIGINAL POST
-
-    // if user is in suggestions, track it's isFollowed property instead
-    const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?.isFollowed ?? post.author.followers.length === 1);
-    // Is post author following the logged in user
-    const [isFollowingTheUser, setIsFollowingTheUser] = useState<boolean>(post.author.following.length === 1);
-
-    // Post author following & followers count to update hover card information when they're (un)followed/blocked by logged in user
-    const [FollowingCount, setFollowingCount] = useState(suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?._count.following ?? post.author._count.following);
-    const [FollowersCount, setFollowersCount] = useState(suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?._count.followers ?? post.author._count.followers);
+    // ORIGINAL POST (REPLY) SHARES STATE WITH PROFILE USER
 
     useEffect(() => {
-        const suggestedUsers = suggestions?.filter((suggestedUser) => suggestedUser.username === post.replyTo?.author.username || suggestedUser.username === post.author.username);
+        const suggestedUsers = userFollowSuggestions?.filter((suggestedUser) => suggestedUser.username === post.replyTo?.author.username || suggestedUser.username === post.author.username);
         if (suggestedUsers) {
             suggestedUsers.forEach((user, index) => {
                 if (user.username === post.replyTo?.author.username) {
-                    setParentIsFollowedByTheUser(suggestedUsers[index].isFollowed);
-                    setParentFollowingCount(suggestedUsers[index]._count.following);
-                    setParentFollowersCount(suggestedUsers[index]._count.followers);
+                    parentDispatch({ type: suggestedUsers[index].isFollowed ? 'FOLLOW' : 'UNFOLLOW' });
                 } else if (user.username === post.author.username) {
-                    setIsFollowedByTheUser(suggestedUsers[index].isFollowed);
-                    setFollowingCount(suggestedUsers[index]._count.following);
-                    setFollowersCount(suggestedUsers[index]._count.followers);
+                    replyDispatch({ type: suggestedUsers[index].isFollowed ? 'FOLLOW' : 'UNFOLLOW' });
                 }
             });
 
         }
-    }, [suggestions, post]);
+    }, [userFollowSuggestions, replyDispatch, post]);
 
     // - FUNCTIONS -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -97,18 +90,12 @@ export default function ProfileReply({ post }: { post: ProfileReplyPostType }) {
                 role="link"
                 tabIndex={0}
                 aria-label={`View post by ${post.author.username} that was replied to`}
-                onMouseDown={(e) => handleCardClick(e, post.replyTo.author.username, post.replyTo.id)} >
+                onMouseDown={(e) => handleCardClick(e, post.replyTo!.author.username, post.replyTo!.id)} >
 
                 <BasicPostTemplate
-                    post={post.replyTo}
-                    isFollowedByTheUser={isParentFollowedByTheUser}
-                    setIsFollowedByTheUser={setParentIsFollowedByTheUser}
-                    isFollowingTheUser={isParentFollowingTheUser}
-                    setIsFollowingTheUser={setParentIsFollowingTheUser}
-                    followingCount={parentFollowingCount}
-                    setFollowingCount={setParentFollowingCount}
-                    followersCount={parentFollowersCount}
-                    setFollowersCount={setParentFollowersCount}
+                    post={post.replyTo!}
+                    userState={post.replyTo!.author.username === post.author.username ? replyUserState : parentUserState}
+                    dispatch={post.replyTo!.author.username === post.author.username ? replyDispatch : parentDispatch}
                     openPhoto={openPhoto}
                     type={'parent'}
                 />
@@ -124,14 +111,8 @@ export default function ProfileReply({ post }: { post: ProfileReplyPostType }) {
 
                 <BasicPostTemplate
                     post={post}
-                    isFollowedByTheUser={isFollowedByTheUser}
-                    setIsFollowedByTheUser={setIsFollowedByTheUser}
-                    isFollowingTheUser={isFollowingTheUser}
-                    setIsFollowingTheUser={setIsFollowingTheUser}
-                    followingCount={FollowingCount}
-                    setFollowingCount={setFollowingCount}
-                    followersCount={FollowersCount}
-                    setFollowersCount={setFollowersCount}
+                    userState={replyUserState}
+                    dispatch={replyDispatch}
                     openPhoto={openPhoto}
                 />
 

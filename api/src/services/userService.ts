@@ -1,5 +1,6 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { ProfileInfo } from '../lib/types';
+import { AppError } from 'tweetly-shared';
 const prisma = new PrismaClient();
 
 // ---------------------------------------------------------------------------------------------------------
@@ -251,7 +252,7 @@ export const updateProfile = async (id: number, data: ProfileInfo) => {
 export const getFollowers = async (userId: number, username: string, cursor?: string) => {
     let followerId: number | null | undefined;
     let followeeId: number | null | undefined;
-    
+
     if (cursor) {
         followerId = await prisma.user.findUnique({
             where: { username },
@@ -456,13 +457,22 @@ interface SuggestionType {
     profile: {
         name: string;
         bio: string;
-        profilePicture: string;
+        location: string,
+        websiteUrl: string,
+        bannerPicture: string,
+        profilePicture: string,
     } | null;
     followers: {
         followerId: number;
     }[];
     following: {
         followeeId: number;
+    }[];
+    blockedBy: {
+        blockerId: number;
+    }[];
+    blockedUsers: {
+        blockedId: number;
     }[];
     _count: {
         followers: number,
@@ -503,18 +513,20 @@ export const getFollowSuggestions = async (userId: number) => {
                 select: {
                     id: true,
                     username: true,
+                    createdAt: true,
                     profile: {
                         select: {
                             name: true,
                             bio: true,
+                            location: true,
+                            websiteUrl: true,
+                            bannerPicture: true,
                             profilePicture: true,
-                        }
+                        },
                     },
                     followers: {
                         where: {
-                            follower: {
-                                id: userId,
-                            }
+                            followerId: userId
                         },
                         select: {
                             followerId: true
@@ -522,12 +534,26 @@ export const getFollowSuggestions = async (userId: number) => {
                     },
                     following: {
                         where: {
-                            followee: {
-                                id: userId,
-                            }
+                            followeeId: userId
                         },
                         select: {
                             followeeId: true
+                        }
+                    },
+                    blockedBy: {
+                        where: {
+                            blockerId: userId,
+                        },
+                        select: {
+                            blockerId: true,
+                        }
+                    },
+                    blockedUsers: {
+                        where: {
+                            blockedId: userId,
+                        },
+                        select: {
+                            blockedId: true,
                         }
                     },
                     _count: {
@@ -541,8 +567,75 @@ export const getFollowSuggestions = async (userId: number) => {
         },
     });
 
+    if (suggestions.length < 20) {
+        // If user doesn't follow anyone or there's just not enough suggestions,
+        //      fetch 20 most relevant users
+        const suggestions = await prisma.user.findMany({
+            orderBy: {
+                followers: {
+                    _count: 'desc'
+                }
+            },
+            take: 20,
+            select: {
+                username: true,
+                createdAt: true,
+                profile: {
+                    select: {
+                        name: true,
+                        bio: true,
+                        location: true,
+                        websiteUrl: true,
+                        bannerPicture: true,
+                        profilePicture: true,
+                    },
+                },
+                followers: {
+                    where: {
+                        followerId: userId
+                    },
+                    select: {
+                        followerId: true
+                    }
+                },
+                following: {
+                    where: {
+                        followeeId: userId
+                    },
+                    select: {
+                        followeeId: true
+                    }
+                },
+                blockedBy: {
+                    where: {
+                        blockerId: userId,
+                    },
+                    select: {
+                        blockerId: true,
+                    }
+                },
+                blockedUsers: {
+                    where: {
+                        blockedId: userId,
+                    },
+                    select: {
+                        blockedId: true,
+                    }
+                },
+                _count: {
+                    select: {
+                        followers: true,
+                        following: true,
+                    }
+                }
+            }
+        });
+
+        return suggestions;
+    }
+
     const filteredSuggestions = suggestions.filter((entry) => entry.followee.followers.length === 0 && entry.followee.id !== userId);
-    
+
     // Step 3: Aggregate and count occurrences of users
     const userFrequency: Record<number, { count: number; user: SuggestionType }> = {};
     for (const { followee } of filteredSuggestions) {
@@ -557,8 +650,8 @@ export const getFollowSuggestions = async (userId: number) => {
         .sort((a, b) => b.count - a.count) // Sort by frequency (count)
         .slice(0, 20) // Take top 20
         .map(({ user }) => {
-            const { username, profile, followers, following, _count } = user;
-            return { username, profile, followers, following, _count };
+            const { username, profile, followers, following, blockedBy, blockedUsers, _count } = user;
+            return { username, profile, followers, following, blockedBy, blockedUsers, _count };
         });
 
 
@@ -645,70 +738,59 @@ export const removePushNotfications = async (userId: number, username: string) =
 // ---------------------------------------------------------------------------------------------------------
 
 export const addFollow = async (userId: number, username: string) => {
-    const followee = await prisma.user.findUnique({
-        where: { username },
-        select: {
-            id: true
-        }
-    });
-
-    if (!followee) {
-        throw new Error('User not found');
-    }
-
     try {
-        const newFollow = await prisma.follow.create({
+        const followee = await prisma.user.findUnique({
+            where: { username },
+            select: {
+                id: true
+            }
+        });
+        if (!followee) throw new AppError('User not found', 404, 'USER_NOT_FOUND');
+
+        await prisma.follow.create({
             data: {
                 followerId: userId,
                 followeeId: followee.id
             }
         });
 
-        if (!newFollow) throw new Error("User not found or is already beeing followed");
-
-        await prisma.notification.create({
-            data: {
-                notifierId: userId,
-                receiverId: followee.id,
-                typeId: 4,
-            }
-        });
-
         return true;
     } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            if (error.code === 'P2002') {
-                throw { error: 'Unique constraint violation' };
-            }
+            if (error.code === 'P2002') throw new AppError('User is already being followed', 400, 'USER_ALREADY_FOLLOWED');
         }
 
-        throw error;
+        if (error instanceof AppError) throw error;
+
+        throw new AppError('Internal server error', 500, 'INTERNAL_SERVER_ERROR');
     }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
 export const removeFollow = async (followerId: number, username: string) => {
-    const followeeId = await prisma.user.findUnique({
-        where: { username },
-        select: {
-            id: true
-        }
-    }).then((res) => res?.id);
+    try {
+        const followeeId = await prisma.user.findUnique({
+            where: { username },
+            select: {
+                id: true
+            }
+        }).then((res) => res?.id);
+        if (!followeeId) throw new AppError('User not found', 404, 'USER_NOT_FOUND');
 
-    if (!followeeId) {
-        throw new Error('User not found');
+        const removed = await prisma.follow.delete({
+            where: {
+                followId: { followerId, followeeId }
+            }
+        });
+        if (!removed) throw new AppError('User is not being followed', 404, 'USER_NOT_FOLLOWED');
+
+        return true;
+    } catch (error) {
+        if (error instanceof AppError) throw error;
+
+        throw new AppError('Internal server error', 500, 'INTERNAL_SERVER_ERROR');
     }
-
-    const removed = await prisma.follow.delete({
-        where: {
-            followId: { followerId, followeeId }
-        }
-    });
-
-    if (!removed) throw new Error('Logged in user is not following the user');;
-
-    return true;
 };
 
 // ---------------------------------------------------------------------------------------------------------

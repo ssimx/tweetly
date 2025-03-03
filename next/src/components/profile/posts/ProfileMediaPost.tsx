@@ -2,10 +2,10 @@
 import React from 'react';
 import Image from 'next/image';
 import 'react-photo-view/dist/react-photo-view.css';
-import { BasicPostType } from '@/lib/types';
 import { useRouter } from 'next/navigation';
+import { BasePostDataType } from 'tweetly-shared';
 
-export default function ProfileMediaPost({ post }: { post: BasicPostType }) {
+export default function ProfileMediaPost({ post }: { post: BasePostDataType }) {
     const router = useRouter();
 
     const openPhoto = () => {

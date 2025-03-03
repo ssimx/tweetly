@@ -3,7 +3,7 @@ import { Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export default function ProfileMessageBtn({ profileUser, conversationId }: { profileUser: string, conversationId: string | undefined }) {
+export default function ProfileMessageBtn({ profileUser, conversationId }: { profileUser: string, conversationId: string | null }) {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 

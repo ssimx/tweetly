@@ -7,19 +7,32 @@ import ProfileMediaPost from './posts/ProfileMediaPost';
 import ProfileLikedPost from "./posts/ProfileLikedPost";
 import ProfileLikedPostReply from './posts/ProfileLikedReply';
 import { useInView } from "react-intersection-observer";
-import { BasicPostType, ProfileInfo, BasicPostOptionalReplyType, ProfilePostOrRepostType, ProfileReplyPostType, BasicPostWithReplyType } from "@/lib/types";
-import { getMoreLikesForProfile, getMoreMediaForProfile, getMorePostsForProfile, getMoreRepliesForProfile, getMoreRepostsForProfile, getLikesForProfile, getMediaForProfile, getPostsForProfile, getRepliesForProfile, getRepostsForProfile } from '@/actions/get-actions';
+import { getLikesForProfile, getMediaForProfile, getRepliesForProfile, getPostsAndRepostsForProfile, getMorePostsAndRepostsForProfile } from '@/actions/get-actions';
+import { BasePostDataType, ErrorResponse, getErrorMessage, ProfilePostOrRepostDataType, SuccessResponse, UserAndViewerRelationshipType, UserDataType, UserStatsType } from 'tweetly-shared';
+import ProfileNoContent from './ProfileNoContent';
+import { UserActionType } from '@/lib/userReducer';
 
-export default function ProfileContent({ userProfile, loggedInUser }: { userProfile: ProfileInfo, loggedInUser: boolean }) {
+type ProfileContentProps = {
+    user: UserDataType,
+    authorized: boolean,
+    userState: {
+        relationship: UserAndViewerRelationshipType,
+        stats: UserStatsType,
+    },
+    dispatch: React.Dispatch<UserActionType>,
+};
+
+export default function ProfileContent({ user, authorized, userState, dispatch }: ProfileContentProps) {
     const [activeTab, setActiveTab] = useState(0);
+
     // tab 0
-    const [postsReposts, setPostsReposts] = useState<ProfilePostOrRepostType[] | undefined | null>(undefined);
+    const [postsReposts, setPostsReposts] = useState<ProfilePostOrRepostDataType[] | undefined | null>(undefined);
     // tab 1
-    const [replies, setReplies] = useState<ProfileReplyPostType[] | undefined | null>(undefined);
+    const [replies, setReplies] = useState<BasePostDataType[] | undefined | null>(undefined);
     // tab 2
-    const [media, setMedia] = useState<BasicPostType[] | undefined | null>(undefined);
+    const [media, setMedia] = useState<BasePostDataType[] | undefined | null>(undefined);
     // tab 3
-    const [likedPosts, setLikedPosts] = useState<BasicPostOptionalReplyType[] | undefined | null>(undefined);
+    const [likedPosts, setLikedPosts] = useState<BasePostDataType[] | undefined | null>(undefined);
 
     const [hasFetchError, setHasFetchError] = useState(false);
 
@@ -46,111 +59,152 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
         if (inView && scrollPositionRef.current !== scrollPosition) {
             const fetchOldPosts = async () => {
                 if (activeTab === 0 && (!postsEndReached || !repostsEndReached)) {
-                    let postsPromise: Promise<{ posts: BasicPostType[], end: boolean; } | { posts: undefined, end: boolean }> | undefined = undefined;
-                    let repostsPromise: Promise<{ posts: BasicPostType[], end: boolean; } | { posts: undefined, end: boolean }> | undefined = undefined;
+                    try {
+                        const response = await getMorePostsAndRepostsForProfile(user.username, postsCursor, repostsCursor, postsEndReached, repostsEndReached);
 
-                    if (!postsEndReached && postsCursor) {
-                        postsPromise = getMorePostsForProfile(userProfile.username, postsCursor);
-                    }
-
-                    if (!repostsEndReached && repostsCursor) {
-                        repostsPromise = getMoreRepostsForProfile(userProfile.username, repostsCursor);
-                    }
-                    const [postsResponse, repostsResponse] = await Promise.all([postsPromise, repostsPromise]);
-
-                    let fetchedOlderPosts = [] as BasicPostType[] | undefined;
-                    if (postsResponse) {
-                        const { posts, end } = postsResponse;
-                        if (!posts) {
-                            setPostsEndReached(true);
-                        } else {
-                            fetchedOlderPosts = posts;
-                            setPostsCursor(fetchedOlderPosts?.slice(-1)[0].id ?? null);
-                            setPostsEndReached(end);
+                        if (!response.success) {
+                            const errorData = response as ErrorResponse;
+                            throw new Error(errorData.error.message);
                         }
+
+                        const { data } = response;
+                        if (!data) throw new Error('Data is missing in response');
+                        else if (data.postsCursor === undefined) throw new Error('postsCursor property is missing in data response');
+                        else if (data.postsEnd === undefined) throw new Error('postsEnd property is missing in data response');
+                        else if (data.repostsCursor === undefined) throw new Error('repostsCursor property is missing in data response');
+                        else if (data.repostsEnd === undefined) throw new Error('repostsEnd property is missing in data response');
+                        else if (data.postsReposts === undefined) throw new Error('postsReposts property is missing in data response');
+
+                        setPostsCursor(data.postsCursor);
+                        setPostsEndReached(data.postsEnd);
+                        setRepostsCursor(data.repostsCursor);
+                        setRepostsEndReached(data.repostsEnd)
+
+                        setPostsReposts((current) => [...current as ProfilePostOrRepostDataType[], ...postsReposts as ProfilePostOrRepostDataType[]]);
+                    } catch (error: unknown) {
+                        const errorMessage = getErrorMessage(error);
+                        console.error(errorMessage);
+                        setPostsCursor(null);
+                        setPostsEndReached(true);
+                        setRepostsCursor(null);
+                        setRepostsEndReached(true);
+                    } finally {
+                        setScrollPosition(scrollPositionRef.current);
                     }
-
-                    let fetchedOlderReposts = [] as BasicPostType[] | undefined;
-                    if (repostsResponse) {
-                        const { posts, end } = repostsResponse;
-                        if (!posts) {
-                            setRepostsEndReached(true);
-                        } {
-                            fetchedOlderReposts = posts;
-                            setRepostsCursor(fetchedOlderReposts?.slice(-1)[0].id ?? null);
-                            setRepostsEndReached(end);
-                        }
-                    }
-
-                    const mappedPosts: ProfilePostOrRepostType[] = fetchedOlderPosts?.map((post) => {
-                        return { ...post, timeForSorting: new Date(post.createdAt).getTime(), type: 'POST' };
-                    }) ?? [];
-
-                    const mappedReposts: ProfilePostOrRepostType[] = fetchedOlderReposts?.map((repost) => {
-                        return { ...repost, timeForSorting: new Date(repost.reposts[0].createdAt as string).getTime(), type: 'REPOST' };
-                    }) ?? [];
-
-                    const mappedPostsReposts: ProfilePostOrRepostType[] = mappedPosts.concat(mappedReposts).sort((a, b) => {
-                        return b.timeForSorting - a.timeForSorting
-                    });
-
-                    setPostsReposts((current) => [...current as ProfilePostOrRepostType[], ...mappedPostsReposts as ProfilePostOrRepostType[]]);
-                    setScrollPosition(scrollPositionRef.current);
                 } else if (activeTab === 1 && !repliesEndReached && repliesCursor) {
-                    const { posts, end } = await getMoreRepliesForProfile(userProfile.username, repliesCursor);
-                    if (!posts) {
+                    try {
+                        const response = await getRepliesForProfile(user.username, repliesCursor);
+
+                        if (!response.success) {
+                            const errorData = response as ErrorResponse;
+                            throw new Error(errorData.error.message);
+                        }
+
+                        const { data } = response as SuccessResponse<{ replies: BasePostDataType[], end: boolean }>;
+                        if (data === undefined) throw new Error('Data is missing in response');
+                        else if (data.replies === undefined) throw new Error('Replies property is missing in data response');
+
+                        setRepliesCursor(data.replies.slice(-1)[0].id ?? null);
+                        setReplies(current => [...current as BasePostDataType[], ...data.replies as BasePostDataType[]]);
+                        setRepliesEndReached(data.end);
+                    } catch (error: unknown) {
+                        const errorMessage = getErrorMessage(error);
+                        console.error(errorMessage);
+                        setRepliesCursor(null);
                         setRepliesEndReached(true);
-                    } else {
-                        setRepliesCursor(posts.slice(-1)[0].id ?? null);
-                        setReplies(current => [...current as ProfileReplyPostType[], ...posts as ProfileReplyPostType[]]);
-                        setRepliesEndReached(end);
+                    } finally {
+                        setScrollPosition(scrollPositionRef.current);
                     }
-
-                    setScrollPosition(scrollPositionRef.current);
                 } else if (activeTab === 2 && !mediaEndReached && mediaCursor) {
-                    const { posts, end } = await getMoreMediaForProfile(userProfile.username, mediaCursor);
-                    if (!posts) {
+                    try {
+                        const response = await getMediaForProfile(user.username, mediaCursor);
+
+                        if (!response.success) {
+                            const errorData = response as ErrorResponse;
+                            throw new Error(errorData.error.message);
+                        }
+
+                        const { data } = response as SuccessResponse<{ media: BasePostDataType[], end: boolean }>;
+                        if (data === undefined) throw new Error('Data is missing in response');
+                        else if (data.media === undefined) throw new Error('Media property is missing in data response');
+
+                        setMediaCursor(data.media.slice(-1)[0].id ?? null);
+                        setMedia(current => [...current as BasePostDataType[], ...data.media as BasePostDataType[]]);
+                        setMediaEndReached(data.end);
+                    } catch (error: unknown) {
+                        const errorMessage = getErrorMessage(error);
+                        console.error(errorMessage);
+                        setMediaCursor(null);
                         setMediaEndReached(true);
-                    } else {
-                        setMediaCursor(posts.length !== 0 ? posts.slice(-1)[0].id : null);
-                        setMedia(current => [...current as BasicPostType[], ...posts as BasicPostType[]]);
-                        setMediaEndReached(end);
+                    } finally {
+                        setScrollPosition(scrollPositionRef.current);
                     }
-
-                    setScrollPosition(scrollPositionRef.current);
                 } else if (activeTab === 3 && !likesEndReached && likesCursor) {
-                    const { posts, end } = await getMoreLikesForProfile(userProfile.username, likesCursor);
-                    if (!posts) {
-                        setLikesEndReached(true);
-                    } else {
-                        setLikesCursor(posts.length !== 0 ? posts.slice(-1)[0].id : null);
-                        setLikedPosts(current => [...current as BasicPostOptionalReplyType[], ...posts as BasicPostOptionalReplyType[]]);
-                        setLikesEndReached(end);
-                    }
+                    try {
+                        const response = await getLikesForProfile(user.username, likesCursor);
 
-                    setScrollPosition(scrollPositionRef.current);
+                        if (!response.success) {
+                            const errorData = response as ErrorResponse;
+                            throw new Error(errorData.error.message);
+                        }
+
+                        const { data } = response as SuccessResponse<{ likes: BasePostDataType[], end: boolean }>;
+                        if (data === undefined) throw new Error('Data is missing in response');
+                        else if (data.likes === undefined) throw new Error('Likes property is missing in data response');
+
+                        setLikesCursor(data.likes.slice(-1)[0].id ?? null);
+                        setLikedPosts(current => [...current as BasePostDataType[], ...data.likes as BasePostDataType[]]);
+                        setLikesEndReached(data.end);
+                    } catch (error: unknown) {
+                        const errorMessage = getErrorMessage(error);
+                        console.error(errorMessage);
+                        setLikesCursor(null);
+                        setLikesEndReached(true);
+                    } finally {
+                        setScrollPosition(scrollPositionRef.current);
+                    }
                 }
             };
 
             fetchOldPosts();
         }
-    }, [inView, activeTab, userProfile, postsCursor, postsEndReached, repostsCursor, repostsEndReached, repliesCursor, repliesEndReached, mediaCursor, mediaEndReached, likesCursor, likesEndReached, scrollPosition]);
+    }, [
+        inView,
+        activeTab,
+        user.username,
+        postsReposts,
+        postsCursor,
+        postsEndReached,
+        repostsCursor,
+        repostsEndReached,
+        repliesCursor,
+        repliesEndReached,
+        mediaCursor,
+        mediaEndReached,
+        likesCursor,
+        likesEndReached,
+        scrollPosition
+    ]);
 
     // Initial replies/likes fetch, save cursor
     useEffect(() => {
         if (activeTab === 1 && replies === undefined) {
             const fetchReplies = async () => {
                 try {
-                    const { posts, end } = await getRepliesForProfile(userProfile.username);
+                    const response = await getRepliesForProfile(user.username);
 
-                    // If request failed, throw an error
-                    if (posts === null) {
-                        throw new Error("Failed to fetch replies");
+                    if (!response.success) {
+                        const errorData = response as ErrorResponse;
+                        throw new Error(errorData.error.message);
                     }
 
-                    setRepliesEndReached(end);
-                    setRepliesCursor(posts.length ? posts.slice(-1)[0].id : null);
-                    setReplies(posts);
+                    const { data } = response as SuccessResponse<{ replies: BasePostDataType[], end: boolean }>;
+                    if (data === undefined) throw new Error('Data is missing in response');
+                    else if (data.replies === undefined) throw new Error('Replies property is missing in data response');
+
+                    setRepliesEndReached(data.end ?? true);
+                    setRepliesCursor(data.replies.length ? data.replies.slice(-1)[0].id : null);
+                    setReplies(data.replies);
                 } catch (error) {
                     console.error("Something went wrong:", error);
 
@@ -158,25 +212,30 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
                     setRepliesEndReached(true);
                     setRepliesCursor(null);
                     setReplies([]);
+                } finally {
+                    setScrollPosition(scrollPositionRef.current);
                 }
-
-                setScrollPosition(scrollPositionRef.current);
             }
 
             fetchReplies();
         } else if (activeTab === 2 && media === undefined) {
             const fetchMedia = async () => {
                 try {
-                    const { posts, end } = await getMediaForProfile(userProfile.username);
+                    const response = await getMediaForProfile(user.username);
 
-                    // If request failed, throw an error
-                    if (posts === null) {
-                        throw new Error("Failed to fetch media");
+                    if (!response.success) {
+                        const errorData = response as ErrorResponse;
+                        throw new Error(errorData.error.message);
                     }
 
-                    setMediaEndReached(end);
-                    setMediaCursor(posts.length ? posts.slice(-1)[0].id : null);
-                    setMedia(posts);
+                    const { data } = response as SuccessResponse<{ media: BasePostDataType[], end: boolean }>;
+                    console.log(data)
+                    if (data === undefined) throw new Error('Data is missing in response');
+                    else if (data.media === undefined) throw new Error('Media property is missing in data response');
+
+                    setMediaEndReached(data.end ?? true);
+                    setMediaCursor(data.media.length ? data.media.slice(-1)[0].id : null);
+                    setMedia(data.media);
                 } catch (error) {
                     console.error("Something went wrong:", error);
 
@@ -184,6 +243,8 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
                     setMediaEndReached(true);
                     setMediaCursor(null);
                     setMedia([]);
+                } finally {
+                    setScrollPosition(scrollPositionRef.current);
                 }
             }
 
@@ -191,16 +252,20 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
         } else if (activeTab === 3 && likedPosts === undefined) {
             const fetchLikedPosts = async () => {
                 try {
-                    const { posts, end } = await getLikesForProfile(userProfile.username);
+                    const response = await getLikesForProfile(user.username);
 
-                    // If request failed, throw an error
-                    if (posts === null) {
-                        throw new Error("Failed to fetch likes");
+                    if (!response.success) {
+                        const errorData = response as ErrorResponse;
+                        throw new Error(errorData.error.message);
                     }
 
-                    setLikesEndReached(end);
-                    setLikesCursor(posts.length ? posts.slice(-1)[0].id : null);
-                    setLikedPosts(posts);
+                    const { data } = response as SuccessResponse<{ likes: BasePostDataType[], end: boolean }>;
+                    if (data === undefined) throw new Error('Data is missing in response');
+                    else if (data.likes === undefined) throw new Error('Likes property is missing in data response');
+
+                    setLikesEndReached(data.end ?? true);
+                    setLikesCursor(data.likes.length ? data.likes.slice(-1)[0].id : null);
+                    setLikedPosts(data.likes);
                 } catch (error) {
                     console.error("Something went wrong:", error);
 
@@ -208,52 +273,40 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
                     setLikesEndReached(true);
                     setLikesCursor(null);
                     setLikedPosts([]);
+                } finally {
+                    setScrollPosition(scrollPositionRef.current);
                 }
             }
 
             fetchLikedPosts();
         }
-    }, [userProfile, activeTab, replies, media, likedPosts]);
+    }, [user.username, activeTab, replies, media, likedPosts]);
 
     // Initial posts/reposts fetch, save cursor
     useEffect(() => {
         const fetchPostsReposts = async () => {
-            let postsPromise: Promise<{ posts: BasicPostType[] | null, end: boolean; }> | undefined = undefined;
-            let repostsPromise: Promise<{ posts: BasicPostType[] | null, end: boolean; }> | undefined = undefined;
-
             try {
-                postsPromise = getPostsForProfile(userProfile.username);
-                repostsPromise = getRepostsForProfile(userProfile.username);
+                const response = await getPostsAndRepostsForProfile(user.username);
 
-                const [postsResponse, repostsResponse] = await Promise.all([postsPromise, repostsPromise]);
-
-                // If either request failed, throw an error
-                if (!postsResponse || postsResponse.posts === null || !repostsResponse || repostsResponse.posts === null) {
-                    throw new Error("Failed to fetch posts or reposts");
+                if (!response.success) {
+                    const errorData = response as ErrorResponse;
+                    throw new Error(errorData.error.message);
                 }
 
-                const fetchedPosts: BasicPostType[] = postsResponse.posts;
-                const fetchedReposts: BasicPostType[] = repostsResponse.posts;
+                const { data } = response;
+                console.log(data)
+                if (!data) throw new Error('Data is missing in response');
+                else if (data.postsCursor === undefined) throw new Error('postsCursor property is missing in data response');
+                else if (data.postsEnd === undefined) throw new Error('postsEnd property is missing in data response');
+                else if (data.repostsCursor === undefined) throw new Error('repostsCursor property is missing in data response');
+                else if (data.repostsEnd === undefined) throw new Error('repostsEnd property is missing in data response');
+                else if (data.postsReposts === undefined) throw new Error('postsReposts property is missing in data response');
 
-                setPostsEndReached(postsResponse.end);
-                setRepostsEndReached(repostsResponse.end);
-
-                setPostsCursor(fetchedPosts.length ? fetchedPosts.slice(-1)[0].id : null);
-                setRepostsCursor(fetchedReposts.length ? fetchedReposts.slice(-1)[0].id : null);
-
-                const mappedPosts: ProfilePostOrRepostType[] = fetchedPosts.map((post) => {
-                    return { ...post, timeForSorting: new Date(post.createdAt).getTime(), type: 'POST' };
-                });
-
-                const mappedReposts: ProfilePostOrRepostType[] = fetchedReposts.map((repost) => {
-                    return { ...repost, timeForSorting: new Date(repost.createdAt).getTime(), type: 'REPOST' };
-                });
-
-                const mappedPostsReposts: ProfilePostOrRepostType[] = mappedPosts.concat(mappedReposts).sort((a, b) => {
-                    return b.timeForSorting - a.timeForSorting
-                });
-
-                setPostsReposts(mappedPostsReposts);
+                setPostsCursor(data.postsCursor);
+                setPostsEndReached(data.postsEnd);
+                setRepostsCursor(data.repostsCursor);
+                setRepostsEndReached(data.repostsEnd)
+                setPostsReposts(data.postsReposts);
             } catch (error) {
                 console.error("Something went wrong:", error);
 
@@ -282,11 +335,11 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
         return () => {
             window.removeEventListener('scroll', handleScroll);
         };
-    }, [userProfile]);
+    }, [user.username]);
 
     return (
-        <div>
-            <ProfileContentTabs activeTab={activeTab} setActiveTab={setActiveTab} loggedInUser={loggedInUser} />
+        <div className='h-full grid grid-rows-[auto,auto,1fr]'>
+            <ProfileContentTabs activeTab={activeTab} setActiveTab={setActiveTab} authorized={authorized} />
 
             <div className='feed-hr-line'></div>
 
@@ -299,7 +352,11 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
                                 {postsReposts.map((post, index) => {
                                     return (
                                         <div key={post.id}>
-                                            <ProfilePost post={post} />
+                                            <ProfilePost
+                                                post={post}
+                                                userState={userState}
+                                                dispatch={dispatch}
+                                            />
                                             {(index + 1) !== postsReposts.length && <div className='feed-hr-line'></div>}
                                         </div>
                                     )
@@ -314,7 +371,7 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
                         )
                         : hasFetchError
                             ? <div>Something went wrong</div>
-                            : postsReposts && !postsReposts.length && <div> User has no posts</div>
+                            : postsReposts && !postsReposts.length && <ProfileNoContent type='POSTS' authorized={authorized} />
 
             )}
 
@@ -327,7 +384,11 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
                                 {replies.map((post, index) => {
                                     return (
                                         <div key={post.id}>
-                                            <ProfileReply post={post} />
+                                            <ProfileReply
+                                                post={post}
+                                                replyUserState={userState}
+                                                replyDispatch={dispatch}
+                                            />
                                             {(index + 1) !== replies.length && <div className='feed-hr-line'></div>}
                                         </div>
                                     )
@@ -342,7 +403,7 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
                         )
                         : hasFetchError
                             ? <div>Something went wrong</div>
-                            : replies && !replies.length && <div>User has no replies</div>
+                            : replies && !replies.length && <ProfileNoContent type='REPLIES' authorized={authorized} />
 
             )}
 
@@ -355,7 +416,9 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
                                 {media.map((post, index) => {
                                     return (
                                         <div key={post.id}>
-                                            <ProfileMediaPost post={post} />
+                                            <ProfileMediaPost
+                                                post={post}
+                                            />
                                             {(index + 1) !== media.length && <div className='feed-hr-line'></div>}
                                         </div>
                                     )
@@ -370,7 +433,7 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
                         )
                         : hasFetchError
                             ? <div>Something went wrong</div>
-                            : media && !media.length && <div>User has no media</div>
+                            : media && !media.length && <ProfileNoContent type='MEDIA' authorized={authorized} />
 
             )}
 
@@ -384,8 +447,18 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
                                     return (
                                         <div key={post.id}>
                                             {post.replyTo
-                                                ? <ProfileLikedPostReply post={post as BasicPostWithReplyType} />
-                                                : <ProfileLikedPost post={post as BasicPostType} />
+                                                ? <ProfileLikedPostReply
+                                                    post={post}
+                                                    authorized={authorized}
+                                                    replyUserState={userState}
+                                                    replyDispatch={dispatch}
+                                                />
+                                                : <ProfileLikedPost
+                                                    post={post}
+                                                    authorized={authorized}
+                                                    userState={userState}
+                                                    dispatch={dispatch}
+                                                />
                                             }
                                             {(index + 1) !== likedPosts.length && <div className='feed-hr-line'></div>}
                                         </div>
@@ -401,7 +474,7 @@ export default function ProfileContent({ userProfile, loggedInUser }: { userProf
                         )
                         : hasFetchError
                             ? <div>Something went wrong</div>
-                            : likedPosts && !likedPosts.length && <div>User has no likes</div>
+                            : likedPosts && !likedPosts.length && <ProfileNoContent type='LIKES' authorized={authorized} />
 
             )}
 

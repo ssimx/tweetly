@@ -1,18 +1,19 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { searchQueryCleanup } from '../utils/searchQueryCleanup';
 import { getUserByEmail, getUserByUsername, getUsersBySearch } from '../services/userService';
 import { UserProps } from '../lib/types';
-import { getLastPostBySearch, getMorePostsBySearch, getPostsBySearch } from '../services/postService';
-import { usernameOrEmailAvailibilitySchema } from 'tweetly-shared';
+import { getLastPostBySearch, getPostsBySearch } from '../services/postService';
+import { AppError, SuccessResponse, usernameOrEmailAvailibilitySchema } from 'tweetly-shared';
 
 // ---------------------------------------------------------------------------------------------------------
 
-export async function usernameOrEmailLookup(req: Request, res: Response) {
-    const type = req.query.type as string;
-    const data = req.query.data as string;
-    if (!type || !data) return res.status(400).json({ error: "No search query provided" });
-
+export async function usernameOrEmailLookup(req: Request, res: Response, next: NextFunction) {
+    const type = req.query.type as string | undefined;
+    const data = req.query.data as string | undefined;
+    
     try {
+        if (!type || !data) throw new AppError('Type/data search params are missing', 404, 'MISSING_PARAMS');
+        
         // Decode and validate type and data
         const decodedType = decodeURIComponent(type);
         const decodedData = decodeURIComponent(data);
@@ -21,10 +22,16 @@ export async function usernameOrEmailLookup(req: Request, res: Response) {
         // fetch user
         const fetchedUser = type === 'username' ? await getUserByUsername(data) : await getUserByEmail(data);
 
-        return res.status(200).json(fetchedUser ? false : true);
+        const successResponse: SuccessResponse<{ available: boolean }> = {
+            success: true,
+            data: {
+                available: fetchedUser ? false : true
+            },
+        };
+
+        res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error fetching user: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        next(error);
     }
 };
 

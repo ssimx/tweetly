@@ -110,7 +110,7 @@ export interface ProfileInfo {
 
 // ------ POST TYPES -------------------------------------------------------------------------------------------------------------
 
-interface BasePostType {
+interface BasePostDataType {
     id: number,
     content?: string,
     images: string[],
@@ -137,35 +137,35 @@ interface BasePostType {
 };
 
 // general post info, no reply info
-export type BasicPostType = BasePostType;
+export type BasicPostType = BasePostDataType;
 
 // general post info with optional reply info
-export type BasicPostOptionalReplyType = BasePostType & {
+export type BasicPostOptionalReplyType = BasePostDataType & {
     replyTo?: BasicPostType
 };
 
 // general post info with reply info
-export type BasicPostWithReplyType = BasePostType & {
+export type BasicPostWithReplyType = BasePostDataType & {
     replyTo: BasicPostType
 };
 
 // when post is visited, fetch post, parent post (if reply) and replies
-export type VisitedPostType = BasePostType & {
-    replyTo?: BasePostType;
-    replies: BasePostType[];
+export type VisitedPostType = BasePostDataType & {
+    replyTo?: BasePostDataType;
+    replies: BasePostDataType[];
     repliesEnd: boolean,
 };
 
 // on profile we fetch non-reply posts and reposts, then they're mapped together and sorted by the time
-export type ProfilePostOrRepostType = BasePostType & {
+export type ProfilePostOrRepostDataType = BasePostDataType & {
     type: 'POST' | 'REPOST',
     timeForSorting: number,
-    replyTo?: BasePostType,
+    replyTo?: BasePostDataType,
 };
 
 // on profile Replies tab fetches only posts by user that were a reply to other post
-export type ProfileReplyPostType = BasePostType & {
-    replyTo: BasePostType,
+export type ProfileReplyPostType = BasePostDataType & {
+    replyTo: BasePostDataType,
 };
 
 // freshly created post
@@ -180,8 +180,8 @@ export type NewPostType = {
 // -------------------------------------------------------------------------------------------------------------------------------------
 
 // bookmarked post can be either reply or non reply
-export type BookmarkedPostType = BasePostType & {
-    replyTo?: BasePostType,
+export type BookmarkedPostType = BasePostDataType & {
+    replyTo?: BasePostDataType,
 };
 
 export interface PostInfoType {
@@ -300,7 +300,7 @@ export interface PostRepostType {
     }
 };
 
-export type ReplyPostType = BasePostType & {
+export type ReplyPostType = BasePostDataType & {
     replyTo: {
         id: number,
         content?: string,

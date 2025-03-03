@@ -1,32 +1,39 @@
 import Image from "next/image";
 import ProfileDynamicInfo from "@/components/profile/ProfileDynamicInfo";
 import { getUserProfile } from "@/data-acess-layer/user-dto";
+import NotFound from './NotFound';
 
 export default async function Profile(props: { params: Promise<{ username: string }> }) {
     const params = await props.params;
-    const user = await getUserProfile(params.username);
+    const response = await getUserProfile(params.username);
+
+    if (!response.success || !response.data.user) {
+        return <NotFound username={params.username} />
+    }
+
+    const { user, authorized } = response.data;
 
     return (
-        <section className='w-full h-fit'>
-            <div className='profile-info'>
-                <div className='picture-banner-container'>
+        <section className='w-full min-h-screen h-fit grid grid-rows-[max-content,1fr]'>
+            <div className='w-full h-[200px]'>
+                <div className='h-full relative'>
                     <Image
-                        src={user.profile.profilePicture || 'https://res.cloudinary.com/ddj6z1ptr/image/upload/v1728503826/profilePictures/ynh7bq3eynvkv5xhivaf.png'}
+                        src={user.profile.profilePicture}
                         alt='User profile picture'
-                        height={100} width={100}
-                        className='h-[100px] w-[100px] absolute bottom-0 left-5 translate-y-[50%] rounded-full border-[#ffffff] border-4' />
+                        height={150} width={150}
+                        className='h-[150px] w-[150px] absolute bottom-0 left-5 translate-y-[50%] rounded-full border-primary-foreground border-4' />
                     {user.profile.bannerPicture
                         ? <Image
                             src={user.profile.bannerPicture}
                             alt='User banner picture'
                             height={1500} width={500}
                             className='w-full h-full' />
-                        : <div className='w-full h-full bg-slate-200'></div>
+                        : <div className='w-full h-full bg-gray-500'></div>
                     }
                 </div>
-
-                <ProfileDynamicInfo user={user} loggedInUser={user.authorized} />
             </div>
+
+            <ProfileDynamicInfo user={user} authorized={authorized} />
         </section>
     )
 }

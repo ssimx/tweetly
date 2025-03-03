@@ -4,15 +4,15 @@ import { getUserSessionToken, verifySession } from '@/lib/session'; // Adjust im
 export async function middleware(request: NextRequest) {
     console.log('middleware');
 
-    if (request.nextUrl.pathname.startsWith('/login/') || request.nextUrl.pathname.startsWith('/signup/')) {
-        const token = await getUserSessionToken();
-        const isValid = await verifySession(token);
-        if (isValid.isAuth) {
+    if (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup/')) {
+        const sessionToken = await getUserSessionToken();
+        const sessionIsValid = await verifySession(sessionToken);
+        if (sessionIsValid.isAuth) {
             return NextResponse.redirect(new URL('/', request.url)); // Redirect to root if logged in
         }
-
-        return NextResponse.next(); // Allow access if not logged in
     }
+
+    return NextResponse.next(); // Allow access if not logged in
 }
 
 export const config = {

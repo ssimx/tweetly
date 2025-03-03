@@ -1,37 +1,37 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Repeat2 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import { ProfilePostOrRepostType } from '@/lib/types';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import { useUserContext } from '@/context/UserContextProvider';
 import BasicPostTemplate from '@/components/posts/templates/BasicPostTemplate';
+import { ProfilePostOrRepostDataType, UserAndViewerRelationshipType, UserStatsType } from 'tweetly-shared';
+import { UserActionType } from '@/lib/userReducer';
 
-export default function ProfilePost({ post }: { post: ProfilePostOrRepostType }) {
-    const { suggestions } = useFollowSuggestionContext();
+type ProfilePostProps = {
+    post: ProfilePostOrRepostDataType,
+    userState: {
+        relationship: UserAndViewerRelationshipType,
+        stats: UserStatsType,
+    },
+    dispatch: React.Dispatch<UserActionType>,
+};
+
+export default function ProfilePost({ post, userState, dispatch }: ProfilePostProps) {
+    const { suggestions: userFollowSuggestions } = useFollowSuggestionContext();
     const { loggedInUser } = useUserContext();
     const router = useRouter();
     const path = usePathname();
 
     // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-    // if user is in suggestions, track it's isFollowed property instead
-    const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?.isFollowed ?? post.author.followers.length === 1);
-    // Is post author following the logged in user
-    const [isFollowingTheUser, setIsFollowingTheUser] = useState<boolean>(post.author.following.length === 1);
-
-    // Post author following & followers count to update hover card information when they're (un)followed/blocked by logged in user
-    const [followingCount, setFollowingCount] = useState(suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?._count.following ?? post.author._count.following);
-    const [followersCount, setFollowersCount] = useState(suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?._count.followers ?? post.author._count.followers);
+    // Profile post author is obviously same as profile user so they share userState
 
     useEffect(() => {
-        const suggestedUser = suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username);
+        const suggestedUser = userFollowSuggestions?.find((suggestedUser) => suggestedUser.username === post.author.username);
         if (suggestedUser) {
-            setIsFollowedByTheUser(suggestedUser.isFollowed);
-            setFollowingCount(suggestedUser._count.following);
-            setFollowersCount(suggestedUser._count.followers);
+            dispatch({ type: suggestedUser.isFollowed ? 'FOLLOW' : 'UNFOLLOW' });
         }
-    }, [suggestions, post.author.username]);
+    }, [userFollowSuggestions, dispatch, post.author.username]);
 
     // - FUNCTIONS -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -83,14 +83,8 @@ export default function ProfilePost({ post }: { post: ProfilePostOrRepostType })
 
             <BasicPostTemplate
                 post={post}
-                isFollowedByTheUser={isFollowedByTheUser}
-                setIsFollowedByTheUser={setIsFollowedByTheUser}
-                isFollowingTheUser={isFollowingTheUser}
-                setIsFollowingTheUser={setIsFollowingTheUser}
-                followingCount={followingCount}
-                setFollowingCount={setFollowingCount}
-                followersCount={followersCount}
-                setFollowersCount={setFollowersCount}
+                userState={userState}
+                dispatch={dispatch}
                 openPhoto={openPhoto}
             />
 

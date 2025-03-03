@@ -1,7 +1,9 @@
+import { TemporaryUserJwtPayload } from './../../../tweetly-shared/dist/types/lib/userTypes.d';
 import { JwtPayload } from './types';
 import 'server-only';
 import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
+import { LoggedInUserJwtPayload } from 'tweetly-shared';
 
 const secretKey = process.env.JWT_SECRET;
 const encodedKey = new TextEncoder().encode(secretKey);
@@ -28,7 +30,7 @@ export async function decryptSession(token: string | undefined) {
         const { payload } = await jwtVerify(token, encodedKey, {
             algorithms: ['HS256'],
         })
-        return payload;
+        return payload as LoggedInUserJwtPayload | TemporaryUserJwtPayload;
     } catch (error) {
         return;
     }

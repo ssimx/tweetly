@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Image from 'next/image';
-import FollowBtn from '../misc/FollowBtn';
+import FollowButton from '../misc/FollowButton';
 import ProfileMenuBtn from './ProfileMenuBtn';
 import { useUserContext } from '@/context/UserContextProvider';
 import { useRouter } from 'next/navigation';
@@ -67,7 +67,7 @@ export default function ProfileFollowersFollowingCard({ user, type }: { user: Us
             {loggedInUser.username !== user.username && (
                 <>
                     <div className='ml-auto [&_button]:py-1'>
-                        <FollowBtn
+                        <FollowButton
                             username={user.username}
                             setFollowersCount={setFollowersCount}
                             isFollowedByTheUser={isFollowedByTheUser}

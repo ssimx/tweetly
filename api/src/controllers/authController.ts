@@ -1,6 +1,6 @@
 import { AppError, FormLogInUserDataType, FormTemporaryUserBasicDataType, FormTemporaryUserPasswordType, LoggedInTemporaryUserDataType, LoggedInUserJwtPayload, logInUserSchema, SuccessfulLoginResponseType, SuccessfulRegisterResponseType, SuccessResponse, temporaryUserBasicDataSchema, temporaryUserPasswordSchema, temporaryUserProfilePictureSchema, temporaryUserUsernameSchema } from 'tweetly-shared';
 import { NextFunction, Request, Response } from 'express';
-import { checkEmailAvailability, createTemporaryUser, createUserAndProfile, getUserLogin, removeTemporaryUser, updateTemporaryUserProfilePicture, updateTemporaryUserUsername } from "../services/authService";
+import { checkEmailAvailability, createTemporaryUser, createUserAndProfile, getTemporaryUserLogin, getUserLogin, removeTemporaryUser, updateTemporaryUserProfilePicture, updateTemporaryUserUsername } from "../services/authService";
 import { generateSettingsToken, generateTemporaryUserToken, generateUserSessionToken } from '../utils/jwt';
 import { UserProps } from '../lib/types';
 import bcrypt from 'bcrypt';
@@ -224,9 +224,32 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
 
         // Find user in database
         const user = await getUserLogin(validatedData.usernameOrEmail);
-
+        let tempUser;
         if (!user) {
-            throw new AppError(`User with provided ${validatedData.usernameOrEmail.includes('@') ? 'email' : 'username'} doesn't exist`, 404, 'USER_NOT_FOUND');
+            tempUser = await getTemporaryUserLogin(validatedData.usernameOrEmail);
+            if (!tempUser) throw new AppError(`User with provided ${validatedData.usernameOrEmail.includes('@') ? 'email' : 'username'} doesn't exist`, 404, 'USER_NOT_FOUND');
+
+            const isPasswordValid = await bcrypt.compare(validatedData.password, tempUser.password);
+
+            if (!isPasswordValid) {
+                throw new AppError('Incorrect login password', 401, 'INCORRECT_PASSWORD');
+            }
+
+            // Generate and send JWT token
+            const token: string = generateTemporaryUserToken({
+                type: 'temporary',
+                id: tempUser!.id,
+                email: tempUser!.email
+            });
+
+            const successResponse: SuccessResponse<SuccessfulLoginResponseType> = {
+                success: true,
+                data: {
+                    token: token
+                },
+            };
+
+            return res.status(200).json(successResponse);
         }
 
         const isPasswordValid = await bcrypt.compare(validatedData.password, user.password);
@@ -235,19 +258,19 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
             throw new AppError('Incorrect login password', 401, 'INCORRECT_PASSWORD');
         }
 
-        const tokenPayload = {
+        // Generate and send JWT token
+        const token: string = generateUserSessionToken({
             type: 'user',
             id: user.id,
             username: user.username,
-            email: user.email,
-        } as LoggedInUserJwtPayload;
-
-        // Generate and send JWT token
-        const token: string = generateUserSessionToken(tokenPayload);
+            email: user.email
+        });
 
         const successResponse: SuccessResponse<SuccessfulLoginResponseType> = {
             success: true,
-            data: { token },
+            data: {
+                token: token
+            },
         };
 
         res.status(200).json(successResponse);

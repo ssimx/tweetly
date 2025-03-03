@@ -1,84 +1,108 @@
 'use client';
-import { ProfileInfo } from "@/lib/types";
 import { CalendarDays } from "lucide-react";
-import { useState } from "react";
-import FollowBtn from "../misc/FollowBtn";
+import { useEffect, useReducer, useState } from "react";
+import FollowButton from "../misc/FollowButton";
 import ProfileEditBtn from "./ProfileEditBtn";
-import ProfileNotificationBtn from "./ProfileNotificationBtn";
-import ProfileMenuBtn from "./ProfileMenuBtn";
+import ProfileNotificationBtn from "./ProfileNotificationButton";
 import ProfileContent from "./ProfileContent";
 import Link from "next/link";
 import ProfileMessageBtn from "./ProfileMessageBtn";
 import BlockedInfo from "../misc/BlockedInfo";
+import { UserDataType } from 'tweetly-shared';
+import { userInfoReducer, UserStateType } from '@/lib/userReducer';
+import ProfileMenuButton from './ProfileMenuButton';
 
-export default function ProfileDynamicInfo({ user, loggedInUser }: { user: ProfileInfo, loggedInUser: boolean }) {
-    // state for updating followers count when logged in user follows / blocks the profile
-    const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(user.followers.length === 1);
-    const [followersCount, setFollowersCount] = useState(user['_count'].followers);
+export default function ProfileDynamicInfo({ user, authorized }: { user: UserDataType, authorized: boolean }) {
+    const initialState: UserStateType = {
+        relationship: {
+            isFollowingViewer: user.relationship.isFollowingViewer,
+            hasBlockedViewer: user.relationship.hasBlockedViewer,
+            isFollowedByViewer: user.relationship.isFollowedByViewer,
+            isBlockedByViewer: user.relationship.isBlockedByViewer,
+            notificationsEnabled: user.relationship.notificationsEnabled,
+        },
+        stats: {
+            followersCount: user.stats.followersCount,
+            followingCount: user.stats.followingCount,
+            postsCount: user.stats.postsCount,
+        }
+    };
+    const [userState, dispatch] = useReducer(userInfoReducer, initialState);
+    const {
+        isFollowingViewer,
+        hasBlockedViewer,
+        isBlockedByViewer,
+        isFollowedByViewer,
+    } = userState.relationship;
 
-    // state to show whether the profile follows logged in user
-    //      and to update the count when logged in user blocks the profile
-    const [isFollowingTheUser, setIsFollowingTheUser] = useState(user.following.length === 1);
-    const [followingCount, setFollowingCount] = useState(user['_count'].following);
+    const {
+        followingCount,
+        followersCount,
+        postsCount
+    } = userState.stats;
 
-    const [notificationsEnabled, setNotificationsEnabled] = useState(user.notifying.length === 1);
+    // If the viewer has blocked the user, allow them to view posts if they want
     const [canView, setCanView] = useState(false);
-    const [isBlockedByTheUser, setIsBlockedByTheUser] = useState(user.blockedBy.length === 1);
-    const hasBlockedTheUser = user.blockedUsers.length === 1;
 
+    // Format dates
     const createdAt = new Date(user.createdAt);
     const joined = `${createdAt.toLocaleDateString('default', { month: 'long' })} ${createdAt.getFullYear()}`;
 
+    // Action handlers are defined inside related components
+    // Menu button has toggle block/unblock
+
+    useEffect(() => {
+
+    }, [user.username]);
+
     return (
-        <div>
-            {loggedInUser
+        <div className='h-full grid grid-rows-[auto,auto,1fr]'>
+            {authorized
                 ? (
                     <div className='edit-profile'>
-                        <ProfileEditBtn user={user} />
+                        <ProfileEditBtn profileInfo={user.profile} />
                     </div>
                 )
                 : (
                     <div className='profile-interaction'>
-                        <ProfileMenuBtn
+                        <ProfileMenuButton
                             user={user.username}
-                            isBlockedByTheUser={isBlockedByTheUser}
-                            setIsBlockedByTheUser={setIsBlockedByTheUser}
-
-                            isFollowedByTheUser={isFollowedByTheUser}
-                            setIsFollowedByTheUser={setIsFollowedByTheUser}
-                            setFollowersCount={setFollowersCount}
-
-                            isFollowingTheUser={isFollowingTheUser}
-                            setIsFollowingTheUser={setIsFollowingTheUser}
-                            setFollowingCount={setFollowingCount}
+                            userState={userState}
+                            dispatch={dispatch}
                         />
-                        {!hasBlockedTheUser && !isBlockedByTheUser && isFollowedByTheUser && (
-                            <ProfileMessageBtn profileUser={user.username} conversationId={user.conversationsParticipant.length === 1 ? user.conversationsParticipant[0].conversation.id : undefined} />
+
+                        {!isBlockedByViewer && !hasBlockedViewer && isFollowedByViewer && (
+                            <ProfileMessageBtn
+                                profileUser={user.username}
+                                conversationId={user.messaging?.conversationId ?? null}
+                            />
                         )}
 
-                        {!hasBlockedTheUser && !isBlockedByTheUser && isFollowedByTheUser && (
-                            <ProfileNotificationBtn username={user.username} notificationsEnabled={notificationsEnabled} setNotificationsEnabled={setNotificationsEnabled} />
+                        {!isBlockedByViewer && !hasBlockedViewer && isFollowedByViewer && (
+                            <ProfileNotificationBtn
+                                user={user.username}
+                                userState={userState}
+                                dispatch={dispatch}
+                            />
                         )}
 
-                        {!hasBlockedTheUser && !isBlockedByTheUser && (
-                            <FollowBtn
-                                username={user.username}
-                                setFollowersCount={setFollowersCount}
-                                isFollowedByTheUser={isFollowedByTheUser}
-                                setIsFollowedByTheUser={setIsFollowedByTheUser}
-                                setNotificationsEnabled={setNotificationsEnabled} />
+                        {!isBlockedByViewer && !hasBlockedViewer && (
+                            <FollowButton
+                                user={user.username}
+                                userState={userState}
+                                dispatch={dispatch}
+                            />
                         )}
                     </div>
                 )
             }
 
-
-            <div className='px-4 flex flex-col gap-2'>
+            <div className='mt-8 px-4 flex flex-col gap-2'>
                 <div>
-                    <p className='font-bold text-18'>{user.profile.name}</p>
+                    <p className='font-bold text-[1.5rem]'>{user.profile.name}</p>
                     <div className='flex gap-2 items-center text-secondary-text'>
-                        <p className='text-16'>@{user.username}</p>
-                        {isFollowingTheUser && (
+                        <p className='text-[1.1rem]'>@{user.username}</p>
+                        {isFollowingViewer && (
                             <p className='bg-secondary-foreground text-12 px-1 rounded-sm h-fit mt-[2px] font-medium'>Follows you</p>
                         )}
                     </div>
@@ -106,19 +130,28 @@ export default function ProfileDynamicInfo({ user, loggedInUser }: { user: Profi
                             <span className='text-secondary-text font-normal'> Followers</span>
                         </p>
                     </Link>
+
+                    <p className='text-secondary-text font-bold'>{postsCount}
+                        <span className='text-secondary-text font-normal'> Posts</span>
+                    </p>
                 </div>
             </div>
 
-            {!canView && (isBlockedByTheUser || hasBlockedTheUser)
+            {!canView && (isBlockedByViewer || hasBlockedViewer)
                 ? (
                     <BlockedInfo
                         username={user.username}
-                        isBlockedByTheUser={isBlockedByTheUser}
-                        hasBlockedTheUser={hasBlockedTheUser}
+                        isBlockedByTheUser={isBlockedByViewer}
+                        hasBlockedTheUser={hasBlockedViewer}
                         setCanView={setCanView} />
                 )
                 : (
-                    <ProfileContent userProfile={user} loggedInUser={loggedInUser} />
+                    <ProfileContent
+                        user={user}
+                        authorized={authorized}
+                        userState={userState}
+                        dispatch={dispatch}
+                    />
                 )
             }
 

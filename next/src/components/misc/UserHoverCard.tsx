@@ -3,32 +3,37 @@ import { useUserContext } from '@/context/UserContextProvider';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { UserInfoType } from '@/lib/types';
-import FollowBtn from './FollowBtn';
+import FollowButton from './FollowButton';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '../ui/hover-card';
+import { UserAndViewerRelationshipType, UserDataType, UserStatsType } from 'tweetly-shared';
+import { UserActionType } from '@/lib/userReducer';
 
 interface UserHoverCardType {
-    user: UserInfoType,
-    _followingCount: number,
-    _followersCount: number,
-    _setFollowersCount: React.Dispatch<React.SetStateAction<number>>,
-    isFollowedByTheUser: boolean,
-    setIsFollowedByTheUser: React.Dispatch<React.SetStateAction<boolean>>,
-    isFollowingTheUser: boolean,
+    user: UserDataType,
+    userState: {
+        relationship: UserAndViewerRelationshipType,
+        stats: UserStatsType,
+    },
+    dispatch: React.Dispatch<UserActionType>,
 };
 
 export default function UserHoverCard({
     user,
-    _followingCount,
-    _followersCount,
-    _setFollowersCount,
-    isFollowedByTheUser,
-    setIsFollowedByTheUser,
-    isFollowingTheUser,
+    userState,
+    dispatch,
 }: UserHoverCardType) {
-    const { loggedInUser, followersCount, followingCount } = useUserContext();
     const router = useRouter();
+    const { loggedInUser, followersCount, followingCount } = useUserContext();
     const userIsLoggedInUser = user.username === loggedInUser.username;
+
+    const {
+        isFollowingViewer,
+    } = userState.relationship;
+
+    const {
+        followersCount: _followersCount,
+        followingCount: _followingCount,
+    } = userState.stats;
 
     const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
         e.stopPropagation();
@@ -43,8 +48,8 @@ export default function UserHoverCard({
                     </Link>
                 </HoverCardTrigger>
                 <HoverCardContent>
-                    <div className='user-hover-card-info'>
-                        <div className='user-hover-card-header'>
+                    <div className='w-full flex flex-col gap-2 text-primary-text'>
+                        <div className='flex justify-between truncate'>
                             <Link href={`/${user.username}`} className='group w-fit' onClick={(e) => handleLinkClick(e)}>
                                 <Image
                                     src={user.profile.profilePicture}
@@ -54,11 +59,10 @@ export default function UserHoverCard({
                             </Link>
                             <div>
                                 {!userIsLoggedInUser && (
-                                    <FollowBtn
-                                        username={user.username}
-                                        isFollowedByTheUser={isFollowedByTheUser}
-                                        setIsFollowedByTheUser={setIsFollowedByTheUser}
-                                        setFollowersCount={_setFollowersCount}
+                                    <FollowButton
+                                        user={user.username}
+                                        userState={userState}
+                                        dispatch={dispatch}
                                     />
                                 )}
                             </div>
@@ -67,14 +71,14 @@ export default function UserHoverCard({
                             <Link href={`/${user.username}`} className='font-bold w-fit text-18 hover:underline' onClick={(e) => handleLinkClick(e)}>{user.profile.name}</Link>
                             <div className='flex gap-x-2 flex-wrap items-center text-secondary-text'>
                                 <p className='text-secondary-text'>@{user.username}</p>
-                                {loggedInUser.username !== user.username && isFollowingTheUser && (
+                                {loggedInUser.username !== user.username && isFollowingViewer && (
                                     <p className='bg-secondary-foreground text-12 px-1 rounded-sm h-fit mt-[2px] font-medium'>Follows you</p>
                                 )}
                             </div>
                         </div>
-                        <div>
-                            <p className='break-all'>{user.profile.bio}</p>
-                        </div>
+                        <p className='w-full break-words whitespace-normal bio-content'>
+                            {user.profile.bio}
+                        </p>
                         <div className='flex gap-4'>
                             <Link href={`/${user.username}/following`} className='hover:underline' onClick={(e) => handleLinkClick(e)}>
                                 <p className='font-bold'>

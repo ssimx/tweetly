@@ -27,11 +27,17 @@ export default function LogIn() {
 
         try {
             const response = await loginUser(formData);
-            console.log(response)
+
             if (!response.success) {
                 if (response.error.details) throw new z.ZodError(response.error.details);
                 else if (response.error.code === 'USER_NOT_FOUND') {
                     setError('usernameOrEmail' as keyof FormLogInUserDataType, {
+                        type: 'manual',
+                        message: response.error.message
+                    });
+                    return;
+                } else if (response.error.code === 'INCORRECT_PASSWORD') {
+                    setError('password' as keyof FormLogInUserDataType, {
                         type: 'manual',
                         message: response.error.message
                     });
@@ -41,7 +47,8 @@ export default function LogIn() {
             }
 
             setIsError(false);
-            router.replace('/');
+            if (response.data?.type === 'user') router.replace('/')
+            else if (response.data?.type === 'temporary') router.replace('/signup');
             router.refresh();
         } catch (error: unknown) {
             // Handle validation errors

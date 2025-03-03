@@ -161,3 +161,23 @@ export const getUserLogin = async (usernameOrEmail: string) => {
         });
     }
 };
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getTemporaryUserLogin = async (usernameOrEmail: string) => {
+    const isEmail = usernameOrEmail.includes('@');
+
+    if (isEmail) {
+        return await prisma.temporaryUser.findUnique({
+            where: {
+                email: usernameOrEmail
+            },
+        });
+    } else {
+        return await prisma.temporaryUser.findUnique({
+            where: {
+                username: usernameOrEmail
+            },
+        });
+    }
+};

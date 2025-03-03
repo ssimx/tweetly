@@ -1,13 +1,16 @@
 import { profileContentTabs } from '@/constants';
 import { SetStateAction } from 'react';
 
-export default function ProfileContentTabs({
-    activeTab,
-    setActiveTab,
-    loggedInUser
-}: { activeTab: number, setActiveTab: React.Dispatch<SetStateAction<number>>, loggedInUser: boolean }) {
-    const tabs: { name: string }[] = JSON.parse(JSON.stringify(profileContentTabs));
-    !loggedInUser && tabs.pop();
+type ProfileContentTabsProps = {
+    activeTab: number,
+    setActiveTab: React.Dispatch<SetStateAction<number>>,
+    authorized: boolean,
+};
+
+export default function ProfileContentTabs({ activeTab, setActiveTab, authorized }: ProfileContentTabsProps) {
+    const tabs = profileContentTabs.map((tab) => tab);
+    // If profile is not logged in user, remove Likes tab (private)
+    !authorized && tabs.pop();
 
     return (
         <div className='profile-content-header'>

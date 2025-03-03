@@ -1,6 +1,6 @@
 'use server';
 import { getCurrentTemporaryUserToken, getCurrentUserToken, verifyCurrentUserSettingsToken } from "@/data-acess-layer/auth";
-import { createSession, createSettingsSession, createTemporarySession, getUserSessionToken, removeSettingsToken, removeTemporarySession, updateSessionToken, verifySession } from '@/lib/session';
+import { createSession, createSettingsSession, createTemporarySession, decryptSession, getUserSessionToken, removeSettingsToken, removeTemporarySession, updateSessionToken, verifySession } from '@/lib/session';
 import { revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import {
@@ -33,15 +33,14 @@ import {
     getErrorMessage,
     logInUserSchema,
     FormLogInUserDataType,
-    emailAvailableSchema,
-    emailSchema,
     usernameSchema,
     usernameOrEmailAvailibilitySchema,
 } from 'tweetly-shared';
 
+// ---------------------------------------------------------------------------------------------------------
 // AUTH
 
-// registration 
+// -> registration
 // First step of the registration process, registers new temporary user with basic information
 export async function registerTemporaryUser(
     basicDataForm: FormTemporaryUserBasicDataType,
@@ -256,10 +255,10 @@ export async function updateTemporaryUserProfilePicture(
     }
 };
 
-// login
+// -> login
 export async function loginUser(
     formData: FormLogInUserDataType,
-): Promise<ApiResponse<undefined>> {
+): Promise<ApiResponse<{ type: 'user' | 'temporary' }>> {
     try {
         if (!formData) {
             throw new AppError('Log in data is missing', 404, 'MISSING_DATA');
@@ -284,10 +283,22 @@ export async function loginUser(
         if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
         else if (!data.token) throw new AppError('JWT is missing in data response', 404, 'MISSING_JWT');
 
-        await createSession(data.token);
+        const payload = await decryptSession(data.token);
+        if (!payload) {
+            throw new AppError('Payload is missing in JWT', 404, 'MISSING_PAYLOAD');
+        } else if (payload.type === 'user') {
+            await createSession(data.token);
+        } else if (payload.type === 'temporary') {
+            await createTemporarySession(data.token);
+        } else {
+            throw new AppError('Payload is incorrect', 404, 'INCORRECT_PAYLOAD');
+        }
 
         return {
             success: true,
+            data: {
+                type: payload.type
+            }
         }
     } catch (error: unknown) {
         // Handle validation errors
@@ -323,13 +334,14 @@ export async function loginUser(
 };
 
 // ---------------------------------------------------------------------------------------------------------
+// USER INTERACTION
 
-export async function followUser(username: string) {
-    const token = await getCurrentUserToken();
-
+export async function followUser(username: string): Promise<ApiResponse<undefined>> {
     try {
+        const token = await getCurrentUserToken();
+
         const response = await fetch(`http://localhost:3000/api/users/follow/${username}`, {
-            method: 'POST',
+            method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
@@ -337,24 +349,45 @@ export async function followUser(username: string) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw errorData;
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        return true;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return false;
+        revalidateTag('loggedInUser');
+
+        return {
+            success: true,
+            data: undefined
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function unfollowUser(username: string) {
-    const token = await getCurrentUserToken();
-
+export async function unfollowUser(username: string): Promise<ApiResponse<undefined>> {
     try {
+        const token = await getCurrentUserToken();
+
         const response = await fetch(`http://localhost:3000/api/users/removeFollow/${username}`, {
-            method: 'DELETE',
+            method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
@@ -362,15 +395,216 @@ export async function unfollowUser(username: string) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw errorData;
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        return true;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return false;
+        revalidateTag('loggedInUser');
+
+        return {
+            success: true,
+            data: undefined
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
+    }
+};
+
+export async function blockUser(username: string): Promise<ApiResponse<undefined>> {
+    try {
+        const token = await getCurrentUserToken();
+
+        const response = await fetch(`http://localhost:3000/api/users/block/${username}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+        }
+
+        revalidateTag('loggedInUser');
+
+        return {
+            success: true,
+            data: undefined
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
+    }
+};
+
+export async function unblockUser(username: string): Promise<ApiResponse<undefined>> {
+    try {
+        const token = await getCurrentUserToken();
+
+        const response = await fetch(`http://localhost:3000/api/users/removeBlock/${username}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+        }
+
+        revalidateTag('loggedInUser');
+
+        return {
+            success: true,
+            data: undefined
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
+    }
+};
+
+export async function enableNotificationsForUser(username: string): Promise<ApiResponse<undefined>> {
+    try {
+        const token = await getCurrentUserToken();
+
+        const response = await fetch(`http://localhost:3000/api/users/enableNotifications/${username}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+        }
+
+        return {
+            success: true,
+            data: undefined
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
+    }
+};
+
+export async function disableNotificationsForUser(username: string): Promise<ApiResponse<undefined>> {
+    try {
+        const token = await getCurrentUserToken();
+
+        const response = await fetch(`http://localhost:3000/api/users/disableNotifications/${username}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+        }
+
+        return {
+            success: true,
+            data: undefined
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
@@ -601,7 +835,7 @@ export async function verifyLoginPasswordForSettings(data: UserSettingsAccessTyp
     }
 };
 
-export async function checkIfUsernameIsAvailable(formData: { username: string }) {
+export async function checkIfUsernameIsAvailable(formData: { username: string }): Promise<ApiResponse<{ available: boolean }>> {
     try {
         const validatedData = usernameSchema.parse(formData);
 
@@ -613,17 +847,50 @@ export async function checkIfUsernameIsAvailable(formData: { username: string })
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const available = await response.json() as boolean;
-        console.log(available)
+        const { data } = await response.json() as SuccessResponse<{ available: boolean }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.available === undefined) throw new AppError('Available property is missing in data response', 404, 'MISSING_PROPERTY');
 
-        return available;
-    } catch (error) {
-        console.log(error)
-        return getErrorMessage(error);
+        return {
+            success: true,
+            data: {
+                available: data.available
+            }
+        }
+    } catch (error: unknown) {
+        // Handle validation errors
+        if (isZodError(error)) {
+            return {
+                success: false,
+                error: {
+                    message: 'Validation failed',
+                    code: 'VALIDATION_FAILED',
+                    details: error.issues,
+                }
+            } as ErrorResponse;
+        } else if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 

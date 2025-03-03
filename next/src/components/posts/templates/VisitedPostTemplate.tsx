@@ -6,7 +6,7 @@ import React from 'react';
 import PostMenu from '../post-parts/PostMenu';
 import PostText from '../post-parts/PostText';
 import PostImages from '../post-parts/PostImages';
-import PostBtns from '../post-parts/PostBtns';
+import PostButtons from '../post-parts/PostButtons';
 import NewPost from '@/components/feed/NewPost';
 import PostReplies from '../post-replies/PostReplies';
 
@@ -99,7 +99,7 @@ export default function VisitedPostTemplate({
                     <p>{postDate}</p>
                 </div>
                 <div className='post-btns'>
-                    <PostBtns post={post} />
+                    <PostButtons post={post} />
                 </div>
             </div>
             <div className='reply'>
