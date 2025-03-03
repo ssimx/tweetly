@@ -42,8 +42,8 @@ export default function ProfileLikedPost({ post, authorized, userState, dispatch
         const suggestedUser = userFollowSuggestions?.find((suggestedUser) => suggestedUser.username === post.author.username);
         if (suggestedUser) {
             authorized
-                ? dispatch({ type: suggestedUser.isFollowed ? 'FOLLOW' : 'UNFOLLOW' })
-                : _dispatch({ type: suggestedUser.isFollowed ? 'FOLLOW' : 'UNFOLLOW' });
+                ? dispatch({ type: suggestedUser.relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' })
+                : _dispatch({ type: suggestedUser.relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
         }
     }, [userFollowSuggestions, post, authorized, dispatch]);
 

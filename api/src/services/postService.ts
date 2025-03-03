@@ -54,32 +54,35 @@ export const getGlobal30DayPosts = async (userId: number, cursor?: number) => {
             images: true,
             createdAt: true,
             updatedAt: true,
-            replyToId: true,
             author: {
                 select: {
                     username: true,
+                    createdAt: true,
                     profile: {
                         select: {
                             name: true,
                             bio: true,
+                            location: true,
+                            websiteUrl: true,
                             profilePicture: true,
-                        },
+                            bannerPicture: true,
+                        }
                     },
                     followers: {
                         where: {
-                            followerId: userId,
+                            followerId: userId
                         },
                         select: {
-                            followerId: true,
-                        },
+                            followerId: true
+                        }
                     },
                     following: {
                         where: {
-                            followeeId: userId,
+                            followeeId: userId
                         },
                         select: {
-                            followeeId: true,
-                        },
+                            followeeId: true
+                        }
                     },
                     blockedBy: {
                         where: {
@@ -87,7 +90,15 @@ export const getGlobal30DayPosts = async (userId: number, cursor?: number) => {
                         },
                         select: {
                             blockerId: true,
+                        }
+                    },
+                    blockedUsers: {
+                        where: {
+                            blockedId: userId,
                         },
+                        select: {
+                            blockedId: true,
+                        }
                     },
                     _count: {
                         select: {
@@ -99,15 +110,16 @@ export const getGlobal30DayPosts = async (userId: number, cursor?: number) => {
             },
             reposts: {
                 where: {
-                    userId: userId,
+                    userId: userId
                 },
                 select: {
                     userId: true,
+                    createdAt: true,
                 },
             },
             likes: {
                 where: {
-                    userId: userId,
+                    userId: userId
                 },
                 select: {
                     userId: true,
@@ -115,7 +127,7 @@ export const getGlobal30DayPosts = async (userId: number, cursor?: number) => {
             },
             bookmarks: {
                 where: {
-                    userId: userId,
+                    userId: userId
                 },
                 select: {
                     userId: true,
@@ -123,9 +135,9 @@ export const getGlobal30DayPosts = async (userId: number, cursor?: number) => {
             },
             _count: {
                 select: {
-                    likes: true,
-                    reposts: true,
                     replies: true,
+                    reposts: true,
+                    likes: true,
                 },
             },
         },
@@ -229,32 +241,35 @@ export const getGlobal30DayNewPosts = async (
             images: true,
             createdAt: true,
             updatedAt: true,
-            replyToId: true,
             author: {
                 select: {
                     username: true,
+                    createdAt: true,
                     profile: {
                         select: {
                             name: true,
                             bio: true,
+                            location: true,
+                            websiteUrl: true,
                             profilePicture: true,
-                        },
+                            bannerPicture: true,
+                        }
                     },
                     followers: {
                         where: {
-                            followerId: userId,
+                            followerId: userId
                         },
                         select: {
-                            followerId: true,
-                        },
+                            followerId: true
+                        }
                     },
                     following: {
                         where: {
-                            followeeId: userId,
+                            followeeId: userId
                         },
                         select: {
-                            followeeId: true,
-                        },
+                            followeeId: true
+                        }
                     },
                     blockedBy: {
                         where: {
@@ -262,7 +277,15 @@ export const getGlobal30DayNewPosts = async (
                         },
                         select: {
                             blockerId: true,
+                        }
+                    },
+                    blockedUsers: {
+                        where: {
+                            blockedId: userId,
                         },
+                        select: {
+                            blockedId: true,
+                        }
                     },
                     _count: {
                         select: {
@@ -274,15 +297,16 @@ export const getGlobal30DayNewPosts = async (
             },
             reposts: {
                 where: {
-                    userId: userId,
+                    userId: userId
                 },
                 select: {
                     userId: true,
+                    createdAt: true,
                 },
             },
             likes: {
                 where: {
-                    userId: userId,
+                    userId: userId
                 },
                 select: {
                     userId: true,
@@ -290,7 +314,7 @@ export const getGlobal30DayNewPosts = async (
             },
             bookmarks: {
                 where: {
-                    userId: userId,
+                    userId: userId
                 },
                 select: {
                     userId: true,
@@ -298,9 +322,9 @@ export const getGlobal30DayNewPosts = async (
             },
             _count: {
                 select: {
-                    likes: true,
-                    reposts: true,
                     replies: true,
+                    reposts: true,
+                    likes: true,
                 },
             },
         },
@@ -358,32 +382,51 @@ export const getFollowing30DayPosts = async (
             images: true,
             createdAt: true,
             updatedAt: true,
-            replyToId: true,
             author: {
                 select: {
                     username: true,
+                    createdAt: true,
                     profile: {
                         select: {
                             name: true,
                             bio: true,
+                            location: true,
+                            websiteUrl: true,
                             profilePicture: true,
-                        },
+                            bannerPicture: true,
+                        }
                     },
                     followers: {
                         where: {
-                            followerId: userId,
+                            followerId: userId
                         },
                         select: {
-                            followerId: true,
-                        },
+                            followerId: true
+                        }
                     },
                     following: {
                         where: {
-                            followeeId: userId,
+                            followeeId: userId
                         },
                         select: {
-                            followeeId: true,
+                            followeeId: true
+                        }
+                    },
+                    blockedBy: {
+                        where: {
+                            blockerId: userId,
                         },
+                        select: {
+                            blockerId: true,
+                        }
+                    },
+                    blockedUsers: {
+                        where: {
+                            blockedId: userId,
+                        },
+                        select: {
+                            blockedId: true,
+                        }
                     },
                     _count: {
                         select: {
@@ -395,15 +438,16 @@ export const getFollowing30DayPosts = async (
             },
             reposts: {
                 where: {
-                    userId: userId,
+                    userId: userId
                 },
                 select: {
                     userId: true,
+                    createdAt: true,
                 },
             },
             likes: {
                 where: {
-                    userId: userId,
+                    userId: userId
                 },
                 select: {
                     userId: true,
@@ -411,7 +455,7 @@ export const getFollowing30DayPosts = async (
             },
             bookmarks: {
                 where: {
-                    userId: userId,
+                    userId: userId
                 },
                 select: {
                     userId: true,
@@ -419,9 +463,9 @@ export const getFollowing30DayPosts = async (
             },
             _count: {
                 select: {
-                    likes: true,
-                    reposts: true,
                     replies: true,
+                    reposts: true,
+                    likes: true,
                 },
             },
         },
@@ -531,32 +575,35 @@ export const getFollowing30DayNewPosts = async (
             images: true,
             createdAt: true,
             updatedAt: true,
-            replyToId: true,
             author: {
                 select: {
                     username: true,
+                    createdAt: true,
                     profile: {
                         select: {
                             name: true,
                             bio: true,
+                            location: true,
+                            websiteUrl: true,
                             profilePicture: true,
-                        },
+                            bannerPicture: true,
+                        }
                     },
                     followers: {
                         where: {
-                            followerId: userId,
+                            followerId: userId
                         },
                         select: {
-                            followerId: true,
-                        },
+                            followerId: true
+                        }
                     },
                     following: {
                         where: {
-                            followeeId: userId,
+                            followeeId: userId
                         },
                         select: {
-                            followeeId: true,
-                        },
+                            followeeId: true
+                        }
                     },
                     blockedBy: {
                         where: {
@@ -564,7 +611,15 @@ export const getFollowing30DayNewPosts = async (
                         },
                         select: {
                             blockerId: true,
+                        }
+                    },
+                    blockedUsers: {
+                        where: {
+                            blockedId: userId,
                         },
+                        select: {
+                            blockedId: true,
+                        }
                     },
                     _count: {
                         select: {
@@ -576,15 +631,16 @@ export const getFollowing30DayNewPosts = async (
             },
             reposts: {
                 where: {
-                    userId: userId,
+                    userId: userId
                 },
                 select: {
                     userId: true,
+                    createdAt: true,
                 },
             },
             likes: {
                 where: {
-                    userId: userId,
+                    userId: userId
                 },
                 select: {
                     userId: true,
@@ -592,7 +648,7 @@ export const getFollowing30DayNewPosts = async (
             },
             bookmarks: {
                 where: {
-                    userId: userId,
+                    userId: userId
                 },
                 select: {
                     userId: true,
@@ -600,9 +656,9 @@ export const getFollowing30DayNewPosts = async (
             },
             _count: {
                 select: {
-                    likes: true,
-                    reposts: true,
                     replies: true,
+                    reposts: true,
+                    likes: true,
                 },
             },
         },
@@ -625,28 +681,32 @@ export const getPostInfo = async (userId: number, postId: number) => {
             author: {
                 select: {
                     username: true,
+                    createdAt: true,
                     profile: {
                         select: {
                             name: true,
                             bio: true,
+                            location: true,
+                            websiteUrl: true,
                             profilePicture: true,
-                        },
+                            bannerPicture: true,
+                        }
                     },
                     followers: {
                         where: {
-                            followerId: userId,
+                            followerId: userId
                         },
                         select: {
-                            followerId: true,
-                        },
+                            followerId: true
+                        }
                     },
                     following: {
                         where: {
-                            followeeId: userId,
+                            followeeId: userId
                         },
                         select: {
-                            followeeId: true,
-                        },
+                            followeeId: true
+                        }
                     },
                     blockedBy: {
                         where: {
@@ -654,7 +714,15 @@ export const getPostInfo = async (userId: number, postId: number) => {
                         },
                         select: {
                             blockerId: true,
+                        }
+                    },
+                    blockedUsers: {
+                        where: {
+                            blockedId: userId,
                         },
+                        select: {
+                            blockedId: true,
+                        }
                     },
                     _count: {
                         select: {
@@ -664,202 +732,18 @@ export const getPostInfo = async (userId: number, postId: number) => {
                     },
                 },
             },
-            replyTo: {
-                select: {
-                    id: true,
-                    content: true,
-                    images: true,
-                    createdAt: true,
-                    updatedAt: true,
-                    author: {
-                        select: {
-                            username: true,
-                            profile: {
-                                select: {
-                                    name: true,
-                                    bio: true,
-                                    profilePicture: true,
-                                },
-                            },
-                            followers: {
-                                where: {
-                                    followerId: userId,
-                                },
-                                select: {
-                                    followerId: true,
-                                },
-                            },
-                            following: {
-                                where: {
-                                    followeeId: userId,
-                                },
-                                select: {
-                                    followeeId: true,
-                                },
-                            },
-                            blockedBy: {
-                                where: {
-                                    blockerId: userId,
-                                },
-                                select: {
-                                    blockerId: true,
-                                },
-                            },
-                            _count: {
-                                select: {
-                                    followers: true,
-                                    following: true,
-                                },
-                            },
-                        },
-                    },
-                    reposts: {
-                        where: {
-                            userId: userId,
-                        },
-                        select: {
-                            userId: true,
-                        },
-                    },
-                    likes: {
-                        where: {
-                            userId: userId,
-                        },
-                        select: {
-                            userId: true,
-                        },
-                    },
-                    bookmarks: {
-                        where: {
-                            userId: userId,
-                        },
-                        select: {
-                            userId: true,
-                        },
-                    },
-                    _count: {
-                        select: {
-                            likes: true,
-                            reposts: true,
-                            replies: true,
-                        },
-                    },
-                },
-            },
-            replies: {
-                orderBy: [
-                    {
-                        replies: {
-                            _count: 'desc',
-                        },
-                    },
-                    {
-                        reposts: {
-                            _count: 'desc',
-                        },
-                    },
-                    {
-                        likes: {
-                            _count: 'desc',
-                        },
-                    },
-                    {
-                        createdAt: 'desc',
-                    },
-                ],
-                take: 15,
-                select: {
-                    id: true,
-                    content: true,
-                    images: true,
-                    createdAt: true,
-                    updatedAt: true,
-                    author: {
-                        select: {
-                            username: true,
-                            profile: {
-                                select: {
-                                    name: true,
-                                    bio: true,
-                                    profilePicture: true,
-                                },
-                            },
-                            followers: {
-                                where: {
-                                    followerId: userId,
-                                },
-                                select: {
-                                    followerId: true,
-                                },
-                            },
-                            following: {
-                                where: {
-                                    followeeId: userId,
-                                },
-                                select: {
-                                    followeeId: true,
-                                },
-                            },
-                            blockedBy: {
-                                where: {
-                                    blockerId: userId,
-                                },
-                                select: {
-                                    blockerId: true,
-                                },
-                            },
-                            _count: {
-                                select: {
-                                    followers: true,
-                                    following: true,
-                                },
-                            },
-                        },
-                    },
-                    reposts: {
-                        where: {
-                            userId: userId,
-                        },
-                        select: {
-                            userId: true,
-                        },
-                    },
-                    likes: {
-                        where: {
-                            userId: userId,
-                        },
-                        select: {
-                            userId: true,
-                        },
-                    },
-                    bookmarks: {
-                        where: {
-                            userId: userId,
-                        },
-                        select: {
-                            userId: true,
-                        },
-                    },
-                    _count: {
-                        select: {
-                            likes: true,
-                            reposts: true,
-                            replies: true,
-                        },
-                    },
-                },
-            },
             reposts: {
                 where: {
-                    userId: userId,
+                    userId: userId
                 },
                 select: {
                     userId: true,
+                    createdAt: true,
                 },
             },
             likes: {
                 where: {
-                    userId: userId,
+                    userId: userId
                 },
                 select: {
                     userId: true,
@@ -867,7 +751,7 @@ export const getPostInfo = async (userId: number, postId: number) => {
             },
             bookmarks: {
                 where: {
-                    userId: userId,
+                    userId: userId
                 },
                 select: {
                     userId: true,
@@ -875,9 +759,9 @@ export const getPostInfo = async (userId: number, postId: number) => {
             },
             _count: {
                 select: {
-                    likes: true,
-                    reposts: true,
                     replies: true,
+                    reposts: true,
+                    likes: true,
                 },
             },
         },
@@ -1131,28 +1015,32 @@ export const getPostsBySearch = async (
             author: {
                 select: {
                     username: true,
+                    createdAt: true,
                     profile: {
                         select: {
                             name: true,
                             bio: true,
+                            location: true,
+                            websiteUrl: true,
                             profilePicture: true,
-                        },
+                            bannerPicture: true,
+                        }
                     },
                     followers: {
                         where: {
-                            followerId: userId,
+                            followerId: userId
                         },
                         select: {
-                            followerId: true,
-                        },
+                            followerId: true
+                        }
                     },
                     following: {
                         where: {
-                            followeeId: userId,
+                            followeeId: userId
                         },
                         select: {
-                            followeeId: true,
-                        },
+                            followeeId: true
+                        }
                     },
                     blockedBy: {
                         where: {
@@ -1160,7 +1048,15 @@ export const getPostsBySearch = async (
                         },
                         select: {
                             blockerId: true,
+                        }
+                    },
+                    blockedUsers: {
+                        where: {
+                            blockedId: userId,
                         },
+                        select: {
+                            blockedId: true,
+                        }
                     },
                     _count: {
                         select: {
@@ -1172,15 +1068,16 @@ export const getPostsBySearch = async (
             },
             reposts: {
                 where: {
-                    userId: userId,
+                    userId: userId
                 },
                 select: {
                     userId: true,
+                    createdAt: true,
                 },
             },
             likes: {
                 where: {
-                    userId: userId,
+                    userId: userId
                 },
                 select: {
                     userId: true,
@@ -1188,7 +1085,7 @@ export const getPostsBySearch = async (
             },
             bookmarks: {
                 where: {
-                    userId: userId,
+                    userId: userId
                 },
                 select: {
                     userId: true,
@@ -1327,28 +1224,32 @@ export const getMorePostsBySearch = async (
             author: {
                 select: {
                     username: true,
+                    createdAt: true,
                     profile: {
                         select: {
                             name: true,
                             bio: true,
+                            location: true,
+                            websiteUrl: true,
                             profilePicture: true,
-                        },
+                            bannerPicture: true,
+                        }
                     },
                     followers: {
                         where: {
-                            followerId: userId,
+                            followerId: userId
                         },
                         select: {
-                            followerId: true,
-                        },
+                            followerId: true
+                        }
                     },
                     following: {
                         where: {
-                            followeeId: userId,
+                            followeeId: userId
                         },
                         select: {
-                            followeeId: true,
-                        },
+                            followeeId: true
+                        }
                     },
                     blockedBy: {
                         where: {
@@ -1356,7 +1257,15 @@ export const getMorePostsBySearch = async (
                         },
                         select: {
                             blockerId: true,
+                        }
+                    },
+                    blockedUsers: {
+                        where: {
+                            blockedId: userId,
                         },
+                        select: {
+                            blockedId: true,
+                        }
                     },
                     _count: {
                         select: {
@@ -1368,15 +1277,16 @@ export const getMorePostsBySearch = async (
             },
             reposts: {
                 where: {
-                    userId: userId,
+                    userId: userId
                 },
                 select: {
                     userId: true,
+                    createdAt: true,
                 },
             },
             likes: {
                 where: {
-                    userId: userId,
+                    userId: userId
                 },
                 select: {
                     userId: true,
@@ -1384,7 +1294,7 @@ export const getMorePostsBySearch = async (
             },
             bookmarks: {
                 where: {
-                    userId: userId,
+                    userId: userId
                 },
                 select: {
                     userId: true,

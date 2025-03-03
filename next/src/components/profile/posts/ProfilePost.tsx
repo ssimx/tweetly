@@ -29,7 +29,7 @@ export default function ProfilePost({ post, userState, dispatch }: ProfilePostPr
     useEffect(() => {
         const suggestedUser = userFollowSuggestions?.find((suggestedUser) => suggestedUser.username === post.author.username);
         if (suggestedUser) {
-            dispatch({ type: suggestedUser.isFollowed ? 'FOLLOW' : 'UNFOLLOW' });
+            dispatch({ type: suggestedUser.relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
         }
     }, [userFollowSuggestions, dispatch, post.author.username]);
 

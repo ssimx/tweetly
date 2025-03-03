@@ -10,10 +10,10 @@ import { ApiResponse, AppError, BasePostDataType, ErrorResponse, getErrorMessage
 
 // GLOBAL/FOLLOWING FEED
 
-export async function getHomeGlobalFeed() {
-    const token = await getCurrentUserToken();
-
+export async function getHomeGlobalFeed(): Promise<ApiResponse<{ posts: BasePostDataType[], end: boolean }>> {
     try {
+        const token = await getCurrentUserToken();
+
         const response = await fetch(`http://localhost:3000/api/posts/feed/global`, {
             method: 'GET',
             headers: {
@@ -23,29 +23,49 @@ export async function getHomeGlobalFeed() {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const globalFeedPosts = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as BasicPostType[], end: res.end as boolean }
-            }
-            throw new Error('Invalid response format');
-        });
+        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
 
-        return globalFeedPosts;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return { posts: null, end: true };
+        return {
+            success: true,
+            data: {
+                posts: data.posts,
+                end: data.end ?? true,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function getMorePostsForHomeGlobalFeed(postCursor: number) {
-    const token = await getCurrentUserToken();
-
+export async function getMorePostsForHomeGlobalFeed(postCursor: number): Promise<ApiResponse<{ posts: BasePostDataType[], end: boolean }>> {
     try {
+        const token = await getCurrentUserToken();
+        if (!postCursor) throw new AppError('Post cursor is missing', 400, 'MISSING_CURSOR');
+
         const response = await fetch(`http://localhost:3000/api/posts/feed/global?cursor=${postCursor}&type=old`, {
             method: 'GET',
             headers: {
@@ -55,29 +75,49 @@ export async function getMorePostsForHomeGlobalFeed(postCursor: number) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const globalFeedPosts = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as BasicPostType[], end: res.end as boolean }
-            }
-            throw new Error('Invalid response format');
-        });
+        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
 
-        return globalFeedPosts;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return { posts: null, end: true };
+        return {
+            success: true,
+            data: {
+                posts: data.posts,
+                end: data.end ?? true,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function getNewPostsForHomeGlobalFeed(postCursor?: number) {
-    const token = await getCurrentUserToken();
-
+export async function getNewPostsForHomeGlobalFeed(postCursor: number | null): Promise<ApiResponse<{ posts: BasePostDataType[], end?: boolean }>> {
     try {
+        const token = await getCurrentUserToken();
+        if (postCursor === undefined) throw new AppError('Post cursor is missing', 400, 'MISSING_CURSOR');
+
         const response = await fetch(`http://localhost:3000/api/posts/feed/global?cursor=${postCursor}&type=new`, {
             method: 'GET',
             headers: {
@@ -87,28 +127,45 @@ export async function getNewPostsForHomeGlobalFeed(postCursor?: number) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const globalFeedPosts = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'posts' in res) {
-                return { posts: res.posts as BasicPostType[] }
-            }
-            throw new Error('Invalid response format');
-        });
+        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], end?: boolean }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
+        
+        return {
+            success: true,
+            data: {
+                posts: data.posts,
+                end: data.end ?? undefined,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
 
-        console.log(globalFeedPosts)
-
-        return globalFeedPosts;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return { posts: null };
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function getHomeFollowingFeed() {
+export async function getHomeFollowingFeed(): Promise<ApiResponse<{ posts: BasePostDataType[], end: boolean }>> {
     const token = await getCurrentUserToken();
 
     try {
@@ -121,29 +178,49 @@ export async function getHomeFollowingFeed() {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const followingFeedPosts = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as BasicPostType[], end: res.end as boolean }
-            }
-            throw new Error('Invalid response format');
-        });
+        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
 
-        return followingFeedPosts;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return { posts: null, end: true };
+        return {
+            success: true,
+            data: {
+                posts: data.posts,
+                end: data.end ?? true,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function getMorePostsForHomeFollowingFeed(postCursor: number) {
-    const token = await getCurrentUserToken();
-
+export async function getMorePostsForHomeFollowingFeed(postCursor: number): Promise<ApiResponse<{ posts: BasePostDataType[], end: boolean }>> {
     try {
+        const token = await getCurrentUserToken();
+        if (!postCursor) throw new AppError('Post cursor is missing', 400, 'MISSING_CURSOR');
+
         const response = await fetch(`http://localhost:3000/api/posts/feed/following?cursor=${postCursor}&type=old`, {
             method: 'GET',
             headers: {
@@ -153,29 +230,49 @@ export async function getMorePostsForHomeFollowingFeed(postCursor: number) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const followingFeedPosts = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as BasicPostType[], end: res.end as boolean }
-            }
-            throw new Error('Invalid response format');
-        });
+        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
 
-        return followingFeedPosts;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return { posts: null, end: true };
+        return {
+            success: true,
+            data: {
+                posts: data.posts,
+                end: data.end ?? true,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function getNewPostsForHomeFollowingFeed(postCursor?: number) {
-    const token = await getCurrentUserToken();
-
+export async function getNewPostsForHomeFollowingFeed(postCursor: number | null): Promise<ApiResponse<{ posts: BasePostDataType[], end?: boolean }>>  {
     try {
+        const token = await getCurrentUserToken();
+        if (!postCursor) throw new AppError('Post cursor is missing', 400, 'MISSING_CURSOR');
+
         const response = await fetch(`http://localhost:3000/api/posts/feed/following?cursor=${postCursor}&type=new`, {
             method: 'GET',
             headers: {
@@ -185,24 +282,41 @@ export async function getNewPostsForHomeFollowingFeed(postCursor?: number) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const followingFeedPosts = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'posts' in res) {
-                return { posts: res.posts as BasicPostType[] }
-            }
-            throw new Error('Invalid response format');
-        });
+        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], end?: boolean }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
 
-        console.log(followingFeedPosts)
+        return {
+            success: true,
+            data: {
+                posts: data.posts,
+                end: data.end ?? undefined,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
 
-        return followingFeedPosts;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return { posts: null };
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 

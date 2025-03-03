@@ -6,7 +6,6 @@ export async function GET(req: NextRequest) {
     if (req.method === 'GET') {
         const authHeader = req.headers.get('Authorization');
         const token = await extractToken(authHeader);
-
         if (token) {
             const isValid = await verifySession(token);
             if (!isValid.isAuth) {

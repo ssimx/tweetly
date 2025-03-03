@@ -1,5 +1,4 @@
 'use client';
-import { BasicPostType } from "@/lib/types";
 import { useEffect, useRef, useState } from "react";
 import FeedHeaderTabs from "./FeedHeaderTabs";
 import NewPost from "./NewPost";
@@ -7,12 +6,13 @@ import { socket } from '@/lib/socket';
 import { useUserContext } from "@/context/UserContextProvider";
 import FeedTab from "./FeedTab";
 import { useInView } from "react-intersection-observer";
-import { getHomeFollowingFeed, getMorePostsForHomeFollowingFeed, getMorePostsForHomeGlobalFeed, getNewPostsForHomeGlobalFeed } from "@/actions/get-actions";
+import { getHomeFollowingFeed, getMorePostsForHomeFollowingFeed, getMorePostsForHomeGlobalFeed, getNewPostsForHomeFollowingFeed, getNewPostsForHomeGlobalFeed } from "@/actions/get-actions";
+import { BasePostDataType, ErrorResponse, SuccessResponse } from 'tweetly-shared';
 
-export default function FeedContent({ initialPosts }: { initialPosts: { posts: BasicPostType[], end: boolean } | undefined }) {
+export default function FeedContent({ initialPosts }: { initialPosts: { posts: BasePostDataType[], end: boolean } | undefined }) {
     const [activeTab, setActiveTab] = useState(0);
-    const [globalPosts, setGlobalPosts] = useState<BasicPostType[] | undefined>(initialPosts ? initialPosts.posts : undefined);
-    const [followingPosts, setFollowingPosts] = useState<BasicPostType[] | undefined | null>(null);
+    const [globalPosts, setGlobalPosts] = useState<BasePostDataType[] | undefined>(initialPosts ? initialPosts.posts : undefined);
+    const [followingPosts, setFollowingPosts] = useState<BasePostDataType[] | undefined | null>(null);
     const [newGlobalPostCount, setNewGlobalPostCount] = useState(0);
     const [newFollowingPostCount, setNewFollowingPostCount] = useState(0);
     const { loggedInUser, newFollowing, setNewFollowing } = useUserContext();
@@ -29,22 +29,53 @@ export default function FeedContent({ initialPosts }: { initialPosts: { posts: B
         delay: 100,
     });
 
-    // reset
+    // For fetching new posts after websocket signal
     const fetchNewPosts = async () => {
         if (activeTab === 0) {
             setNewGlobalPostCount(0);
+            try {
+                const response = await getNewPostsForHomeGlobalFeed(globalPosts?.[0].id ?? null);
 
-            const { posts } = await getNewPostsForHomeGlobalFeed(globalPosts && globalPosts[0].id);
-            if (!posts) return;
+                if (!response.success) {
+                    const errorData = response as ErrorResponse;
+                    throw new Error(errorData.error.message);
+                }
 
-            setGlobalPosts((currentPosts) => currentPosts ? [...posts, ...currentPosts] : [...posts]);
+                const { data } = response as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
+                if (data === undefined) throw new Error('Data is missing in response');
+                else if (data.posts === undefined) throw new Error('Posts property is missing in data response');
+                console.log(data)
+
+                if (data.end) setGlobalFeedEndReached(data.end);
+                setGlobalFeedCursor(data.posts.length ? data.posts.slice(-1)[0].id : null);
+                setGlobalPosts(currentPosts => [ ...data.posts as BasePostDataType[], ...currentPosts as BasePostDataType[] ]);
+            } catch (error) {
+                console.error("Something went wrong:", error);
+            } finally {
+                setScrollPosition(scrollPositionRef.current);
+            }
         } else {
             setNewFollowingPostCount(0);
+            try {
+                const response = await getNewPostsForHomeFollowingFeed(followingPosts?.[0].id ?? null);
 
-            const { posts } = await getNewPostsForHomeGlobalFeed(globalPosts && globalPosts[0].id);
-            if (!posts) return;
+                if (!response.success) {
+                    const errorData = response as ErrorResponse;
+                    throw new Error(errorData.error.message);
+                }
 
-            setFollowingPosts((currentPosts) => currentPosts ? [...posts, ...currentPosts] : [...posts]);
+                const { data } = response as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
+                if (data === undefined) throw new Error('Data is missing in response');
+                else if (data.posts === undefined) throw new Error('Posts property is missing in data response');
+
+                if (data.end) setFollowingFeedEndReached(data.end);
+                setFollowingFeedCursor(data.posts.length ? data.posts.slice(-1)[0].id : null);
+                setFollowingPosts(currentPosts => [...data.posts as BasePostDataType[], ...currentPosts as BasePostDataType[] ]);
+            } catch (error) {
+                console.error("Something went wrong:", error);
+            } finally {
+                setScrollPosition(scrollPositionRef.current);
+            }
         }
     };
 
@@ -58,21 +89,55 @@ export default function FeedContent({ initialPosts }: { initialPosts: { posts: B
         if (inView && scrollPositionRef.current !== scrollPosition) {
             const fetchOldPosts = async () => {
                 if (activeTab === 0 && !globalFeedEndReached && globalFeedCursor) {
-                    const { posts, end } = await getMorePostsForHomeGlobalFeed(globalFeedCursor);
-                    if (!posts) return;
+                    try {
+                        const response = await getMorePostsForHomeGlobalFeed(globalFeedCursor);
 
-                    setGlobalPosts(currentPosts => [...currentPosts as BasicPostType[], ...posts as BasicPostType[]]);
-                    setGlobalFeedCursor(posts?.length ? posts.slice(-1)[0].id : null);
-                    setScrollPosition(scrollPositionRef.current);
-                    setGlobalFeedEndReached(end);
+                        if (!response.success) {
+                            const errorData = response as ErrorResponse;
+                            throw new Error(errorData.error.message);
+                        }
+
+                        const { data } = response as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
+                        if (data === undefined) throw new Error('Data is missing in response');
+                        else if (data.posts === undefined) throw new Error('Posts property is missing in data response');
+
+                        setGlobalFeedEndReached(data.end ?? true);
+                        setGlobalFeedCursor(data.posts.length ? data.posts.slice(-1)[0].id : null);
+                        setGlobalPosts(currentPosts => [...currentPosts as BasePostDataType[], ...data.posts as BasePostDataType[]]);
+                    } catch (error) {
+                        console.error("Something went wrong:", error);
+
+                        setGlobalFeedEndReached(true);
+                        setGlobalFeedCursor(null);
+                        setGlobalPosts([]);
+                    } finally {
+                        setScrollPosition(scrollPositionRef.current);
+                    }
                 } else if (activeTab === 1 && !followingFeedEndReached && followingFeedCursor) {
-                    const { posts, end } = await getMorePostsForHomeFollowingFeed(followingFeedCursor);
-                    if (!posts) return;
+                    try {
+                        const response = await getMorePostsForHomeFollowingFeed(followingFeedCursor);
 
-                    setFollowingPosts(currentPosts => [...currentPosts as BasicPostType[], ...posts as BasicPostType[]]);
-                    setFollowingFeedCursor(posts?.length ? posts.slice(-1)[0].id : null);
-                    setScrollPosition(scrollPositionRef.current);
-                    setFollowingFeedEndReached(end);
+                        if (!response.success) {
+                            const errorData = response as ErrorResponse;
+                            throw new Error(errorData.error.message);
+                        }
+
+                        const { data } = response as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
+                        if (data === undefined) throw new Error('Data is missing in response');
+                        else if (data.posts === undefined) throw new Error('Posts property is missing in data response');
+
+                        setFollowingFeedEndReached(data.end ?? true);
+                        setFollowingFeedCursor(data.posts.length ? data.posts.slice(-1)[0].id : null);
+                        setGlobalPosts(currentPosts => [...currentPosts as BasePostDataType[], ...data.posts as BasePostDataType[]]);
+                    } catch (error) {
+                        console.error("Something went wrong:", error);
+
+                        setFollowingFeedEndReached(true);
+                        setFollowingFeedCursor(null);
+                        setGlobalPosts([]);
+                    } finally {
+                        setScrollPosition(scrollPositionRef.current);
+                    }
                 }
             };
 
@@ -84,12 +149,30 @@ export default function FeedContent({ initialPosts }: { initialPosts: { posts: B
         // for fetching following tab, check for active tab AND whether followingPosts has yet been fetched OR logged in user has followed new user
         if (activeTab === 1 && (followingPosts === null || newFollowing === true)) {
             const fetchFeedPosts = async () => {
-                const { posts, end } = await getHomeFollowingFeed();
+                try {
+                    const response = await getHomeFollowingFeed();
 
-                setFollowingPosts(posts);
-                setFollowingFeedCursor(posts ? posts.length !== 0 ? posts.slice(-1)[0].id : null : undefined);
-                setFollowingFeedEndReached(end);
-                setNewFollowing(false);
+                    if (!response.success) {
+                        const errorData = response as ErrorResponse;
+                        throw new Error(errorData.error.message);
+                    }
+
+                    const { data } = response as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
+                    if (data === undefined) throw new Error('Data is missing in response');
+                    else if (data.posts === undefined) throw new Error('Posts property is missing in data response');
+
+                    setFollowingFeedEndReached(data.end ?? true);
+                    setFollowingFeedCursor(data.posts.length ? data.posts.slice(-1)[0].id : null);
+                    setFollowingPosts(data.posts);
+                } catch (error) {
+                    console.error("Something went wrong:", error);
+
+                    setFollowingFeedEndReached(true);
+                    setFollowingFeedCursor(null);
+                    setFollowingPosts(undefined);
+                } finally {
+                    setScrollPosition(scrollPositionRef.current);
+                }
             }
 
             fetchFeedPosts();

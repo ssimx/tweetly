@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react'
-import { BasicPostType } from '@/lib/types';
 import FeedPost from '../posts/PostCard';
+import { BasePostDataType } from 'tweetly-shared';
 
 interface FeedTabType {
-    posts: BasicPostType[],
+    posts: BasePostDataType[],
     loadingRef: (node?: Element | null) => void;
     scrollPositionRef: React.RefObject<number>;
     endReached: boolean;

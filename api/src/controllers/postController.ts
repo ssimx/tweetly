@@ -102,7 +102,7 @@ export const newPost = async (req: Request, res: Response): Promise<void> => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const global30DayPosts = async (req: Request, res: Response) => {
+export const global30DayPosts = async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as UserProps;
     const params = req.query;
     const cursor = params.cursor;
@@ -123,50 +123,142 @@ export const global30DayPosts = async (req: Request, res: Response) => {
                     }
                 }
 
-                const posts = await getGlobal30DayPosts(user.id, Number(cursor));
+                const postsData = await getGlobal30DayPosts(user.id, Number(cursor));
 
-                return res.status(200).json({
-                    posts: posts,
-                    // check if older posts array is empty and if truthy set the end to true
-                    // check if new cursor equals last post id
-                    //  if truthy, return older posts and set the end to true
-                    end: posts.length === 0
+                const posts = postsData.map((post) => {
+                    // skip if there's no information
+                    if (!post) return;
+                    if (!post.author) return;
+                    if (!post.author.profile) return;
+
+                    const author = remapUserInformation({ ...post.author, profile: post.author.profile! });
+
+                    return remapPostInformation({ ...post, content: post.content ?? undefined, author: author });
+                }).filter((post): post is NonNullable<typeof post> => post !== undefined);
+
+                const postsEnd = posts.length === 0
+                    ? true
+                    : oldestGlobalPostId === posts.slice(-1)[0]?.id
                         ? true
-                        : oldestGlobalPostId === posts.slice(-1)[0].id
-                            ? true
-                            : false,
-                });
-            } else if (type === 'NEW') {
-                const posts = await getGlobal30DayNewPosts(user.id, Number(cursor));
+                        : false
 
-                return res.status(200).json({
-                    posts: posts,
-                });
+                const successResponse: SuccessResponse<{ posts: BasePostDataType[], end: boolean }> = {
+                    success: true,
+                    data: {
+                        posts: posts ?? [],
+                        end: postsEnd
+                    },
+                };
+
+                res.status(200).json(successResponse);
+            } else if (type === 'NEW') {
+                if (cursor === 'null') {
+                    const oldestGlobalPostId = await getOldestGlobal30DayPost(user.id).then(res => res?.id);
+                    if (oldestGlobalPostId) {
+                        // check if current cursor equals last post id
+                        // if truthy, return empty array and set the end to true
+                        if (Number(cursor) === oldestGlobalPostId) {
+                            return res.status(200).json({
+                                posts: [],
+                                end: true
+                            });
+                        }
+                    }
+
+                    const postsData = await getGlobal30DayPosts(user.id, Number(cursor));
+
+                    const posts = postsData.map((post) => {
+                        // skip if there's no information
+                        if (!post) return;
+                        if (!post.author) return;
+                        if (!post.author.profile) return;
+
+                        const author = remapUserInformation({ ...post.author, profile: post.author.profile! });
+
+                        return remapPostInformation({ ...post, content: post.content ?? undefined, author: author });
+                    }).filter((post): post is NonNullable<typeof post> => post !== undefined);
+
+                    const postsEnd = posts.length === 0
+                        ? true
+                        : oldestGlobalPostId === posts.slice(-1)[0]?.id
+                            ? true
+                            : false
+
+                    const successResponse: SuccessResponse<{ posts: BasePostDataType[], end: boolean }> = {
+                        success: true,
+                        data: {
+                            posts: posts ?? [],
+                            end: postsEnd
+                        },
+                    };
+
+                    res.status(200).json(successResponse);
+                }
+
+                const postsData = await getGlobal30DayNewPosts(user.id, Number(cursor));
+                const posts = postsData.map((post) => {
+                    // skip if there's no information
+                    if (!post) return;
+                    if (!post.author) return;
+                    if (!post.author.profile) return;
+
+                    const author = remapUserInformation({ ...post.author, profile: post.author.profile! });
+
+                    return remapPostInformation({ ...post, content: post.content ?? undefined, author: author });
+                }).filter((post): post is NonNullable<typeof post> => post !== undefined);
+
+                console.log(posts)
+
+                const successResponse: SuccessResponse<{ posts: BasePostDataType[] }> = {
+                    success: true,
+                    data: {
+                        posts: posts ?? [],
+                    },
+                };
+
+                res.status(200).json(successResponse);
             } else {
-                return res.status(404).json({ error: 'Unknown type' });
+                throw new AppError(`Uknown type (${type}) in search params`, 400, 'UKNOWN_TYPE');
             }
         } else {
             const oldestGlobalPostId = await getOldestGlobal30DayPost(user.id).then(res => res?.id);
-            const posts = await getGlobal30DayPosts(user.id);
+            const postsData = await getGlobal30DayPosts(user.id);
 
-            return res.status(200).json({
-                posts,
-                end: !oldestGlobalPostId
+            const posts = postsData.map((post) => {
+                // skip if there's no information
+                if (!post) return;
+                if (!post.author) return;
+                if (!post.author.profile) return;
+
+                const author = remapUserInformation({ ...post.author, profile: post.author.profile! });
+
+                return remapPostInformation({ ...post, content: post.content ?? undefined, author: author });
+            }).filter((post): post is NonNullable<typeof post> => post !== undefined);
+
+            const postsEnd = posts.length === 0
+                ? true
+                : oldestGlobalPostId === posts.slice(-1)[0]?.id
                     ? true
-                    : posts.slice(-1)[0].id === oldestGlobalPostId
-                        ? true
-                        : false
-            });
+                    : false
+
+            const successResponse: SuccessResponse<{ posts: BasePostDataType[], end: boolean }> = {
+                success: true,
+                data: {
+                    posts: posts ?? [],
+                    end: postsEnd
+                },
+            };
+
+            res.status(200).json(successResponse);
         }
     } catch (error) {
-        console.error('Error fetching data: ', error);
-        return res.status(500).json({ error: 'Failed to fetch posts' });
+        next(error);
     }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const following30DayPosts = async (req: Request, res: Response) => {
+export const following30DayPosts = async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as UserProps;
     const params = req.query;
     const cursor = params.cursor;
@@ -187,44 +279,92 @@ export const following30DayPosts = async (req: Request, res: Response) => {
                     }
                 }
 
-                const posts = await getFollowing30DayPosts(user.id, Number(cursor));
+                const postsData = await getFollowing30DayPosts(user.id, Number(cursor));
 
-                return res.status(200).json({
-                    posts: posts,
-                    // check if older posts array is empty and if truthy set the end to true
-                    // check if new cursor equals last post id
-                    //  if truthy, return older posts and set the end to true
-                    end: posts.length === 0
+                const posts = postsData.map((post) => {
+                    // skip if there's no information
+                    if (!post) return;
+                    if (!post.author) return;
+                    if (!post.author.profile) return;
+
+                    const author = remapUserInformation({ ...post.author, profile: post.author.profile! });
+
+                    return remapPostInformation({ ...post, content: post.content ?? undefined, author: author });
+                }).filter((post): post is NonNullable<typeof post> => post !== undefined);
+
+                const postsEnd = posts.length === 0
+                    ? true
+                    : oldestFollowingPostId === posts.slice(-1)[0]?.id
                         ? true
-                        : oldestFollowingPostId === posts.slice(-1)[0].id
-                            ? true
-                            : false,
-                });
-            } else if (type === 'NEW') {
-                const posts = await getFollowing30DayNewPosts(user.id, Number(cursor));
+                        : false
 
-                return res.status(200).json({
-                    posts: posts,
-                });
+                const successResponse: SuccessResponse<{ posts: BasePostDataType[], end: boolean }> = {
+                    success: true,
+                    data: {
+                        posts: posts ?? [],
+                        end: postsEnd
+                    },
+                };
+
+                res.status(200).json(successResponse);
+            } else if (type === 'NEW') {
+                const postsData = await getFollowing30DayNewPosts(user.id, Number(cursor));
+
+                const posts = postsData.map((post) => {
+                    // skip if there's no information
+                    if (!post) return;
+                    if (!post.author) return;
+                    if (!post.author.profile) return;
+
+                    const author = remapUserInformation({ ...post.author, profile: post.author.profile! });
+
+                    return remapPostInformation({ ...post, content: post.content ?? undefined, author: author });
+                }).filter((post): post is NonNullable<typeof post> => post !== undefined);
+
+                const successResponse: SuccessResponse<{ posts: BasePostDataType[] }> = {
+                    success: true,
+                    data: {
+                        posts: posts ?? [],
+                    },
+                };
+
+                res.status(200).json(successResponse);
             } else {
-                return res.status(404).json({ error: 'Unknown type' });
+                throw new AppError(`Uknown type (${type}) in search params`, 400, 'UKNOWN_TYPE');
             }
         } else {
             const oldestFollowingPostId = await getOldestFollowing30DayPost(user.id).then(res => res?.id);
-            const posts = await getFollowing30DayPosts(user.id);
+            const postsData = await getFollowing30DayPosts(user.id);
 
-            return res.status(200).json({
-                posts,
-                end: !oldestFollowingPostId
+            const posts = postsData.map((post) => {
+                // skip if there's no information
+                if (!post) return;
+                if (!post.author) return;
+                if (!post.author.profile) return;
+
+                const author = remapUserInformation({ ...post.author, profile: post.author.profile! });
+
+                return remapPostInformation({ ...post, content: post.content ?? undefined, author: author });
+            }).filter((post): post is NonNullable<typeof post> => post !== undefined);
+
+            const postsEnd = posts.length === 0
+                ? true
+                : oldestFollowingPostId === posts.slice(-1)[0]?.id
                     ? true
-                    : posts.slice(-1)[0].id === oldestFollowingPostId
-                        ? true
-                        : false
-            });
+                    : false
+
+            const successResponse: SuccessResponse<{ posts: BasePostDataType[], end: boolean }> = {
+                success: true,
+                data: {
+                    posts: posts ?? [],
+                    end: postsEnd
+                },
+            };
+
+            res.status(200).json(successResponse);
         }
     } catch (error) {
-        console.error('Error fetching data: ', error);
-        return res.status(500).json({ error: 'Failed to fetch posts' });
+        next(error);
     }
 };
 
