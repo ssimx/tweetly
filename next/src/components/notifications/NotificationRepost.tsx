@@ -69,10 +69,10 @@ export default function NotificationRepost({ post, notifier, isRead }: { post: B
         if (suggestedUsers) {
             suggestedUsers.forEach((user, index) => {
                 if (user.username === notifier.username) {
-                    setNotifierIsFollowedByTheUser(suggestedUsers[index].isFollowed);
+                    setNotifierIsFollowedByTheUser(suggestedUsers[index].relationship.isFollowedByViewer);
                     setNotifierFollowersCount(suggestedUsers[index]._count.followers);
                 } else if (user.username === post.author.username) {
-                    setIsFollowedByTheUser(suggestedUsers[index].isFollowed);
+                    setIsFollowedByTheUser(suggestedUsers[index].relationship.isFollowedByViewer);
                     setFollowingCount(suggestedUsers[index]._count.following);
                     setFollowersCount(suggestedUsers[index]._count.followers);
                 }

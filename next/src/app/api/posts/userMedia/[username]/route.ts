@@ -37,14 +37,15 @@ export async function GET(req: NextRequest, props: { params: Promise<{ username:
                     throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
                 }
 
-                const { data } = await response.json() as SuccessResponse<{ media: BasePostDataType[], end: boolean }>;
+                const { data } = await response.json() as SuccessResponse<{ media: BasePostDataType[], cursor: number | null, end: boolean }>;
                 if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
                 else if (!data.media) throw new AppError('Media property is missing in data response', 404, 'MISSING_PROPERTY');
 
-                const successResponse: SuccessResponse<{ media: BasePostDataType[], end: boolean }> = {
+                const successResponse: SuccessResponse<{ media: BasePostDataType[], cursor: number | null, end: boolean }> = {
                     success: true,
                     data: {
                         media: data.media,
+                        cursor: data.cursor ?? null,
                         end: data.end ?? true
                     }
                 };
@@ -67,15 +68,15 @@ export async function GET(req: NextRequest, props: { params: Promise<{ username:
                     throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
                 }
 
-                const { data } = await response.json() as SuccessResponse<{ media: BasePostDataType[], end: boolean }>;
-                console.log(data)
+                const { data } = await response.json() as SuccessResponse<{ media: BasePostDataType[], cursor: number | null, end: boolean }>;
                 if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
                 else if (!data.media) throw new AppError('Media property is missing in data response', 404, 'MISSING_PROPERTY');
 
-                const successResponse: SuccessResponse<{ media: BasePostDataType[], end: boolean }> = {
+                const successResponse: SuccessResponse<{ media: BasePostDataType[], cursor: number | null, end: boolean }> = {
                     success: true,
                     data: {
                         media: data.media,
+                        cursor: data.cursor ?? null,
                         end: data.end ?? true
                     }
                 };

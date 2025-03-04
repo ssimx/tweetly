@@ -73,10 +73,10 @@ export default function NotificationReply({ post, isRead }: { post: ReplyPostTyp
         if (suggestedUsers) {
             suggestedUsers.forEach((user, index) => {
                 if (user.username === post.replyTo.author.username) {
-                    setParentIsFollowedByTheUser(suggestedUsers[index].isFollowed);
+                    setParentIsFollowedByTheUser(suggestedUsers[index].relationship.isFollowedByViewer);
                     setParentFollowersCount(suggestedUsers[index]._count.followers);
                 } else if (user.username === post.author.username) {
-                    setIsFollowedByTheUser(suggestedUsers[index].isFollowed);
+                    setIsFollowedByTheUser(suggestedUsers[index].relationship.isFollowedByViewer);
                     setFollowingCount(suggestedUsers[index]._count.following);
                     setFollowersCount(suggestedUsers[index]._count.followers);
                 }

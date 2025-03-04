@@ -36,8 +36,8 @@ import {
 } from '../services/postService';
 import { createNotificationsForNewLike, createNotificationsForNewPost, createNotificationsForNewReply, createNotificationsForNewRepost, removeNotificationsForLike, removeNotificationsForRepost } from '../services/notificationService';
 import { deleteImageFromCloudinary } from './uploadController';
-import { AppError, BasePostDataType, SuccessResponse } from 'tweetly-shared';
-import { remapPostInformation, remapUserInformation } from '../lib/helpers';
+import { AppError, BasePostDataType, SuccessResponse, VisitedPostDataType } from 'tweetly-shared';
+import { remapPostInformation, remapUserInformation, remapVisitedPostInformation } from '../lib/helpers';
 import { getProfile } from '../services/userService';
 
 // ---------------------------------------------------------------------------------------------------------
@@ -49,7 +49,7 @@ export interface NewPostType {
     replyToId?: number,
 }
 
-export const newPost = async (req: Request, res: Response): Promise<void> => {
+export const newPost = async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as UserProps;
     const { text, images, imagesPublicIds, replyToId } = req.body as NewPostType;
     const postData = { text, images, replyToId, imagesPublicIds };
@@ -60,23 +60,15 @@ export const newPost = async (req: Request, res: Response): Promise<void> => {
         if (replyToId) {
             // Check if post exists
             const replyPost = await postExists(replyToId);
-
-            if (!replyPost) res.status(404).json({ error: 'Reply post does not exist' });
+            if (!replyPost) throw new AppError('Reply post not found', 404, 'REPLY_NOT_FOUND');
         }
 
         if ((postData.text === undefined || postData.text.length === 0) && (postData.images === undefined || postData.images.length === 0)) {
-            res.status(404).json({ error: 'Post does not have any content' });
+            throw new AppError('Post content is missing', 404, 'MISSING_CONTENT');
         }
 
-        const post = await createPost(user.id, postData);
-        if (!post) {
-            imagesPublicIds?.forEach((img) => {
-                deleteImageFromCloudinary(img);
-            });
-            res.status(404).json({ error: 'Post has to contain either text or/and images' });
-        }
-
-        const postId = post.id;
+        const newPostData = await createPost(user.id, postData);
+        const postId = newPostData.id;
 
         // Delegate hashtag handling to service
         if (hashtags) {
@@ -90,13 +82,34 @@ export const newPost = async (req: Request, res: Response): Promise<void> => {
             createNotificationsForNewReply(postId, user.id);
         }
 
-        res.status(201).json({ ...post });
+        if (newPostData.replyTo !== undefined) {
+            const post = remapPostInformation(newPostData);
+
+            const successResponse: SuccessResponse<{ post: BasePostDataType }> = {
+                success: true,
+                data: {
+                    post: post,
+                },
+            };
+
+            res.status(200).json(successResponse);
+        }
+
+        const post = remapPostInformation(newPostData);
+
+        const successResponse: SuccessResponse<{ post: BasePostDataType }> = {
+            success: true,
+            data: {
+                post: post,
+            },
+        };
+
+        res.status(200).json(successResponse);
     } catch (error) {
         imagesPublicIds?.forEach((img) => {
             deleteImageFromCloudinary(img);
         });
-        console.error('Error saving post data: ', error);
-        return res.status(500).json({ error: 'Failed to process the data' });
+        next(error);
     }
 };
 
@@ -118,6 +131,7 @@ export const global30DayPosts = async (req: Request, res: Response, next: NextFu
                     if (Number(cursor) === oldestGlobalPostId) {
                         return res.status(200).json({
                             posts: [],
+                            cursor: null,
                             end: true
                         });
                     }
@@ -131,10 +145,9 @@ export const global30DayPosts = async (req: Request, res: Response, next: NextFu
                     if (!post.author) return;
                     if (!post.author.profile) return;
 
-                    const author = remapUserInformation({ ...post.author, profile: post.author.profile! });
-
-                    return remapPostInformation({ ...post, content: post.content ?? undefined, author: author });
+                    return remapPostInformation(post);
                 }).filter((post): post is NonNullable<typeof post> => post !== undefined);
+
 
                 const postsEnd = posts.length === 0
                     ? true
@@ -142,11 +155,12 @@ export const global30DayPosts = async (req: Request, res: Response, next: NextFu
                         ? true
                         : false
 
-                const successResponse: SuccessResponse<{ posts: BasePostDataType[], end: boolean }> = {
+                const successResponse: SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }> = {
                     success: true,
                     data: {
                         posts: posts ?? [],
-                        end: postsEnd
+                        cursor: posts.slice(-1)[0]?.id ?? null,
+                        end: postsEnd ?? true,
                     },
                 };
 
@@ -173,9 +187,7 @@ export const global30DayPosts = async (req: Request, res: Response, next: NextFu
                         if (!post.author) return;
                         if (!post.author.profile) return;
 
-                        const author = remapUserInformation({ ...post.author, profile: post.author.profile! });
-
-                        return remapPostInformation({ ...post, content: post.content ?? undefined, author: author });
+                        return remapPostInformation({ ...post, content: post.content ?? undefined });
                     }).filter((post): post is NonNullable<typeof post> => post !== undefined);
 
                     const postsEnd = posts.length === 0
@@ -184,11 +196,12 @@ export const global30DayPosts = async (req: Request, res: Response, next: NextFu
                             ? true
                             : false
 
-                    const successResponse: SuccessResponse<{ posts: BasePostDataType[], end: boolean }> = {
+                    const successResponse: SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }> = {
                         success: true,
                         data: {
                             posts: posts ?? [],
-                            end: postsEnd
+                            cursor: posts.slice(-1)[0]?.id ?? null,
+                            end: postsEnd ?? true,
                         },
                     };
 
@@ -202,12 +215,8 @@ export const global30DayPosts = async (req: Request, res: Response, next: NextFu
                     if (!post.author) return;
                     if (!post.author.profile) return;
 
-                    const author = remapUserInformation({ ...post.author, profile: post.author.profile! });
-
-                    return remapPostInformation({ ...post, content: post.content ?? undefined, author: author });
+                    return remapPostInformation({ ...post, content: post.content ?? undefined });
                 }).filter((post): post is NonNullable<typeof post> => post !== undefined);
-
-                console.log(posts)
 
                 const successResponse: SuccessResponse<{ posts: BasePostDataType[] }> = {
                     success: true,
@@ -230,9 +239,7 @@ export const global30DayPosts = async (req: Request, res: Response, next: NextFu
                 if (!post.author) return;
                 if (!post.author.profile) return;
 
-                const author = remapUserInformation({ ...post.author, profile: post.author.profile! });
-
-                return remapPostInformation({ ...post, content: post.content ?? undefined, author: author });
+                return remapPostInformation(post);
             }).filter((post): post is NonNullable<typeof post> => post !== undefined);
 
             const postsEnd = posts.length === 0
@@ -241,11 +248,12 @@ export const global30DayPosts = async (req: Request, res: Response, next: NextFu
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ posts: BasePostDataType[], end: boolean }> = {
+            const successResponse: SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     posts: posts ?? [],
-                    end: postsEnd
+                    cursor: posts.slice(-1)[0]?.id ?? null,
+                    end: postsEnd ?? true,
                 },
             };
 
@@ -287,9 +295,7 @@ export const following30DayPosts = async (req: Request, res: Response, next: Nex
                     if (!post.author) return;
                     if (!post.author.profile) return;
 
-                    const author = remapUserInformation({ ...post.author, profile: post.author.profile! });
-
-                    return remapPostInformation({ ...post, content: post.content ?? undefined, author: author });
+                    return remapPostInformation(post);
                 }).filter((post): post is NonNullable<typeof post> => post !== undefined);
 
                 const postsEnd = posts.length === 0
@@ -316,9 +322,7 @@ export const following30DayPosts = async (req: Request, res: Response, next: Nex
                     if (!post.author) return;
                     if (!post.author.profile) return;
 
-                    const author = remapUserInformation({ ...post.author, profile: post.author.profile! });
-
-                    return remapPostInformation({ ...post, content: post.content ?? undefined, author: author });
+                    return remapPostInformation(post);
                 }).filter((post): post is NonNullable<typeof post> => post !== undefined);
 
                 const successResponse: SuccessResponse<{ posts: BasePostDataType[] }> = {
@@ -342,9 +346,7 @@ export const following30DayPosts = async (req: Request, res: Response, next: Nex
                 if (!post.author) return;
                 if (!post.author.profile) return;
 
-                const author = remapUserInformation({ ...post.author, profile: post.author.profile! });
-
-                return remapPostInformation({ ...post, content: post.content ?? undefined, author: author });
+                return remapPostInformation(post);
             }).filter((post): post is NonNullable<typeof post> => post !== undefined);
 
             const postsEnd = posts.length === 0
@@ -397,88 +399,123 @@ export const trendingHashtags = async (req: Request, res: Response) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getPost = async (req: Request, res: Response) => {
+export const getPost = async (req: Request, res: Response, next: NextFunction) => {
     const postId = Number(req.params.id);
-    if (!postId) return res.status(404).json({ error: 'Missing post ID param' });
     const user = req.user as UserProps;
 
     try {
+        if (!postId) throw new AppError('Missing postId search param', 404, 'MISSING_PARAM');
+
         // get original post, parent post if its a reply, and replies
-        const post = await getPostInfo(user.id, postId);
-        if (!post) return res.status(404).json({ error: 'Post not found' });
+        const postData = await getPostInfo(user.id, postId);
+        if (!postData) throw new AppError('Post not found', 404, 'POST_NOT_FOUND');
+        const post = remapVisitedPostInformation(postData);
 
         // check whether last reply is the end of replies
         const oldestReplyLeastEnegagementId = await getOldestReplyLeastEnegagement(user.id, postId).then(res => res?.id);
-
-        return res.status(200).json({
-            ...post,
-            replies: [
-                ...post.replies,
-            ],
-            repliesEnd: !oldestReplyLeastEnegagementId
+        const repliesEnd = post.replies.posts.length === 0
+            ? true
+            : oldestReplyLeastEnegagementId === post.replies.posts.slice(-1)[0]?.id
                 ? true
-                : post.replies.slice(-1)[0].id === oldestReplyLeastEnegagementId
-                    ? true
-                    : false
-        })
+                : false
+
+        const successResponse: SuccessResponse<{ post: VisitedPostDataType, cursor: number, end: boolean }> = {
+            success: true,
+            data: {
+                post: post ?? [],
+                cursor: post.replies.posts.slice(-1)[0]?.id,
+                end: repliesEnd
+            },
+        };
+
+        res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to fetch the post' });
+        next(error);
     }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const postReplies = async (req: Request, res: Response) => {
+export const postReplies = async (req: Request, res: Response, next: NextFunction) => {
     const postId = Number(req.params.id);
     const user = req.user as UserProps;
 
     const cursor = Number(req.query.cursor);
 
     try {
+        if (!postId) throw new AppError('Missing postId search param', 404, 'MISSING_PARAM');
+
         if (cursor) {
-            // order posts by likes and find the oldest one with no engagemenet
+            // order replies by likes and find the oldest one with no engagemenet
             const oldestReplyLeastEnegagementId = await getOldestReplyLeastEnegagement(user.id, postId).then(res => res?.id);
             if (oldestReplyLeastEnegagementId) {
                 // check if current cursor equals last reply id
                 // if truthy, return empty array and set the end to true
                 if (cursor === oldestReplyLeastEnegagementId) {
                     return res.status(200).json({
-                        posts: [],
+                        replies: [],
                         end: true
                     });
                 }
             }
 
-            const posts = await getPostReplies(user.id, postId, Number(cursor));
+            const repliesData = await getPostReplies(user.id, postId, Number(cursor));
+            const replies = repliesData.map((reply) => {
+                // skip if there's no information
+                if (!reply) return;
+                if (!reply.author) return;
+                if (!reply.author.profile) return;
 
-            return res.status(200).json({
-                posts,
-                // check if replies array is empty and if truthy set the end to true
-                // check if new cursor equals last post id
-                //      if truthy, return replies and set the end to true
-                end: posts.length === 0
+                return remapPostInformation(reply);
+            }).filter((reply): reply is NonNullable<typeof reply> => reply !== undefined);
+
+            const repliesEnd = replies.length === 0
+                ? true
+                : oldestReplyLeastEnegagementId === replies.slice(-1)[0]?.id
                     ? true
-                    : oldestReplyLeastEnegagementId === posts.slice(-1)[0].id
-                        ? true
-                        : false,
-            });
+                    : false
+
+            const successResponse: SuccessResponse<{ replies: BasePostDataType[], cursor: number | null, end: boolean }> = {
+                success: true,
+                data: {
+                    replies: replies ?? [],
+                    cursor: replies.slice(-1)[0]?.id ?? null,
+                    end: repliesEnd ?? true,
+                },
+            };
+
+            res.status(200).json(successResponse);
         } else {
             const oldestReplyLeastEnegagementId = await getOldestReplyLeastEnegagement(user.id, postId).then(res => res?.id);
-            const posts = await getPostReplies(user.id, postId);
+            const repliesData = await getPostReplies(user.id, postId);
+            const replies = repliesData.map((reply) => {
+                // skip if there's no information
+                if (!reply) return;
+                if (!reply.author) return;
+                if (!reply.author.profile) return;
 
-            return res.status(200).json({
-                posts,
-                end: !oldestReplyLeastEnegagementId
+                return remapPostInformation(reply);
+            }).filter((reply): reply is NonNullable<typeof reply> => reply !== undefined);
+
+            const repliesEnd = replies.length === 0
+                ? true
+                : oldestReplyLeastEnegagementId === replies.slice(-1)[0]?.id
                     ? true
-                    : oldestReplyLeastEnegagementId === posts.slice(-1)[0].id
-                        ? true
-                        : false
-            });
+                    : false
+
+            const successResponse: SuccessResponse<{ replies: BasePostDataType[], cursor: number | null, end: boolean }> = {
+                success: true,
+                data: {
+                    replies: replies ?? [],
+                    cursor: replies.slice(-1)[0]?.id ?? null,
+                    end: repliesEnd ?? true,
+                },
+            };
+
+            res.status(200).json(successResponse);
         }
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to fetch post replies' });
+        next(error);
     }
 };
 
@@ -515,9 +552,7 @@ export const getUserPosts = async (req: Request, res: Response, next: NextFuncti
                 if (!post.author) return;
                 if (!post.author.profile) return;
 
-                const author = remapUserInformation({ ...post.author, profile: post.author.profile! });
-
-                return remapPostInformation({ ...post, content: post.content ?? undefined, author: author });
+                return remapPostInformation(post);
             }).filter((post): post is NonNullable<typeof post> => post !== undefined);
 
             const postsEnd = posts.length === 0
@@ -526,10 +561,11 @@ export const getUserPosts = async (req: Request, res: Response, next: NextFuncti
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ posts: BasePostDataType[] | [], end: boolean }> = {
+            const successResponse: SuccessResponse<{ posts: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     posts: posts ?? [],
+                    cursor: posts.slice(-1)[0]?.id ?? null,
                     end: postsEnd
                 },
             };
@@ -545,9 +581,7 @@ export const getUserPosts = async (req: Request, res: Response, next: NextFuncti
                 if (!post.author) return;
                 if (!post.author.profile) return;
 
-                const author = remapUserInformation({ ...post.author, profile: post.author.profile! });
-
-                return remapPostInformation({ ...post, content: post.content ?? undefined, author: author });
+                return remapPostInformation(post);
             }).filter((post): post is NonNullable<typeof post> => post !== undefined);
 
             const postsEnd = posts.length === 0
@@ -556,10 +590,11 @@ export const getUserPosts = async (req: Request, res: Response, next: NextFuncti
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ posts: BasePostDataType[] | [], end: boolean }> = {
+            const successResponse: SuccessResponse<{ posts: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     posts: posts ?? [],
+                    cursor: posts.slice(-1)[0]?.id ?? null,
                     end: postsEnd
                 },
             };
@@ -604,35 +639,7 @@ export const getUserReposts = async (req: Request, res: Response, next: NextFunc
                 if (!repost.author) return;
                 if (!repost.author.profile) return;
 
-                if (repost.replyTo !== undefined) {
-                    // REMAP REPLYTO AUTHOR
-                    const replyAuthor = remapUserInformation({ ...repost.replyTo!.author, profile: repost.replyTo?.author.profile! });
-
-                    // REMAP ORIGINAL POST & AUTHOR
-                    const ogAuthor = remapUserInformation({ ...repost.author, profile: repost.author.profile! });
-                    const ogPost = remapPostInformation({
-                        ...repost,
-                        content: repost.content ?? undefined,
-                        author: ogAuthor,
-                        replyTo: {
-                            ...repost.replyTo!,
-                            content: repost.replyTo!.content ?? undefined,
-                            author: replyAuthor
-                        }
-                    });
-
-                    return ogPost;
-                } else {
-                    const author = remapUserInformation({ ...repost.author, profile: repost.author.profile! });
-                    const post = remapPostInformation({
-                        ...repost,
-                        content: repost.content ?? undefined,
-                        author: author,
-                        replyTo: undefined,
-                    });
-
-                    return post;
-                }
+                return remapPostInformation(repost);
             }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
 
             const repostsEnd = reposts.length === 0
@@ -641,10 +648,11 @@ export const getUserReposts = async (req: Request, res: Response, next: NextFunc
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ reposts: BasePostDataType[] | [], end: boolean }> = {
+            const successResponse: SuccessResponse<{ reposts: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     reposts: reposts ?? [],
+                    cursor: reposts.slice(-1)[0]?.id ?? null,
                     end: repostsEnd
                 },
             };
@@ -660,35 +668,7 @@ export const getUserReposts = async (req: Request, res: Response, next: NextFunc
                 if (!repost.author) return;
                 if (!repost.author.profile) return;
 
-                if (repost.replyTo !== undefined) {
-                    // REMAP REPLYTO AUTHOR
-                    const replyAuthor = remapUserInformation({ ...repost.replyTo!.author, profile: repost.replyTo?.author.profile! });
-
-                    // REMAP ORIGINAL POST & AUTHOR
-                    const ogAuthor = remapUserInformation({ ...repost.author, profile: repost.author.profile! });
-                    const ogPost = remapPostInformation({
-                        ...repost,
-                        content: repost.content ?? undefined,
-                        author: ogAuthor,
-                        replyTo: {
-                            ...repost.replyTo!,
-                            content: repost.replyTo!.content ?? undefined,
-                            author: replyAuthor
-                        }
-                    });
-
-                    return ogPost;
-                } else {
-                    const author = remapUserInformation({ ...repost.author, profile: repost.author.profile! });
-                    const post = remapPostInformation({
-                        ...repost,
-                        content: repost.content ?? undefined,
-                        author: author,
-                        replyTo: undefined,
-                    });
-
-                    return post;
-                }
+                return remapPostInformation(repost);
             }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
 
             const repostsEnd = reposts.length === 0
@@ -697,10 +677,11 @@ export const getUserReposts = async (req: Request, res: Response, next: NextFunc
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ reposts: BasePostDataType[] | [], end: boolean }> = {
+            const successResponse: SuccessResponse<{ reposts: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     reposts: reposts ?? [],
+                    cursor: reposts.slice(-1)[0]?.id ?? null,
                     end: repostsEnd
                 },
             };
@@ -745,35 +726,7 @@ export const getUserReplies = async (req: Request, res: Response, next: NextFunc
                 if (!reply.author) return;
                 if (!reply.author.profile) return;
 
-                if (reply.replyTo !== undefined) {
-                    // REMAP REPLYTO AUTHOR
-                    const replyAuthor = remapUserInformation({ ...reply.replyTo!.author, profile: reply.replyTo?.author.profile! });
-
-                    // REMAP ORIGINAL REPLY & AUTHOR
-                    const ogAuthor = remapUserInformation({ ...reply.author, profile: reply.author.profile! });
-                    const ogPost = remapPostInformation({
-                        ...reply,
-                        content: reply.content ?? undefined,
-                        author: ogAuthor,
-                        replyTo: {
-                            ...reply.replyTo!,
-                            content: reply.replyTo!.content ?? undefined,
-                            author: replyAuthor
-                        }
-                    });
-
-                    return ogPost;
-                } else {
-                    const author = remapUserInformation({ ...reply.author, profile: reply.author.profile! });
-                    const post = remapPostInformation({
-                        ...reply,
-                        content: reply.content ?? undefined,
-                        author: author,
-                        replyTo: undefined,
-                    });
-
-                    return post;
-                }
+                return remapPostInformation(reply);
             }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
 
             const repliesEnd = replies.length === 0
@@ -782,10 +735,11 @@ export const getUserReplies = async (req: Request, res: Response, next: NextFunc
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ replies: BasePostDataType[] | [], end: boolean }> = {
+            const successResponse: SuccessResponse<{ replies: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     replies: replies ?? [],
+                    cursor: replies.slice(-1)[0]?.id ?? null,
                     end: repliesEnd
                 },
             };
@@ -801,35 +755,7 @@ export const getUserReplies = async (req: Request, res: Response, next: NextFunc
                 if (!reply.author) return;
                 if (!reply.author.profile) return;
 
-                if (reply.replyTo !== undefined) {
-                    // REMAP REPLYTO AUTHOR
-                    const replyAuthor = remapUserInformation({ ...reply.replyTo!.author, profile: reply.replyTo?.author.profile! });
-
-                    // REMAP ORIGINAL REPLY & AUTHOR
-                    const ogAuthor = remapUserInformation({ ...reply.author, profile: reply.author.profile! });
-                    const ogPost = remapPostInformation({
-                        ...reply,
-                        content: reply.content ?? undefined,
-                        author: ogAuthor,
-                        replyTo: {
-                            ...reply.replyTo!,
-                            content: reply.replyTo!.content ?? undefined,
-                            author: replyAuthor
-                        }
-                    });
-
-                    return ogPost;
-                } else {
-                    const author = remapUserInformation({ ...reply.author, profile: reply.author.profile! });
-                    const post = remapPostInformation({
-                        ...reply,
-                        content: reply.content ?? undefined,
-                        author: author,
-                        replyTo: undefined,
-                    });
-
-                    return post;
-                }
+                return remapPostInformation(reply);
             }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
 
             const repliesEnd = replies.length === 0
@@ -838,10 +764,11 @@ export const getUserReplies = async (req: Request, res: Response, next: NextFunc
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ replies: BasePostDataType[] | [], end: boolean }> = {
+            const successResponse: SuccessResponse<{ replies: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     replies: replies ?? [],
+                    cursor: replies.slice(-1)[0]?.id ?? null,
                     end: repliesEnd
                 },
             };
@@ -886,35 +813,7 @@ export const getUserMedia = async (req: Request, res: Response, next: NextFuncti
                 if (!media.author) return;
                 if (!media.author.profile) return;
 
-                if (media.replyTo !== undefined) {
-                    // REMAP REPLYTO AUTHOR
-                    const replyAuthor = remapUserInformation({ ...media.replyTo!.author, profile: media.replyTo?.author.profile! });
-
-                    // REMAP ORIGINAL REPLY & AUTHOR
-                    const ogAuthor = remapUserInformation({ ...media.author, profile: media.author.profile! });
-                    const ogPost = remapPostInformation({
-                        ...media,
-                        content: media.content ?? undefined,
-                        author: ogAuthor,
-                        replyTo: {
-                            ...media.replyTo!,
-                            content: media.replyTo!.content ?? undefined,
-                            author: replyAuthor
-                        }
-                    });
-
-                    return ogPost;
-                } else {
-                    const author = remapUserInformation({ ...media.author, profile: media.author.profile! });
-                    const post = remapPostInformation({
-                        ...media,
-                        content: media.content ?? undefined,
-                        author: author,
-                        replyTo: undefined,
-                    });
-
-                    return post;
-                }
+                return remapPostInformation(media);
             }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
 
             const mediaEnd = media.length === 0
@@ -923,10 +822,11 @@ export const getUserMedia = async (req: Request, res: Response, next: NextFuncti
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ media: BasePostDataType[] | [], end: boolean }> = {
+            const successResponse: SuccessResponse<{ media: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     media: media ?? [],
+                    cursor: media.slice(-1)[0]?.id ?? null,
                     end: mediaEnd
                 },
             };
@@ -942,35 +842,7 @@ export const getUserMedia = async (req: Request, res: Response, next: NextFuncti
                 if (!media.author) return;
                 if (!media.author.profile) return;
 
-                if (media.replyTo !== undefined) {
-                    // REMAP REPLYTO AUTHOR
-                    const replyAuthor = remapUserInformation({ ...media.replyTo!.author, profile: media.replyTo?.author.profile! });
-
-                    // REMAP ORIGINAL REPLY & AUTHOR
-                    const ogAuthor = remapUserInformation({ ...media.author, profile: media.author.profile! });
-                    const ogPost = remapPostInformation({
-                        ...media,
-                        content: media.content ?? undefined,
-                        author: ogAuthor,
-                        replyTo: {
-                            ...media.replyTo!,
-                            content: media.replyTo!.content ?? undefined,
-                            author: replyAuthor
-                        }
-                    });
-
-                    return ogPost;
-                } else {
-                    const author = remapUserInformation({ ...media.author, profile: media.author.profile! });
-                    const post = remapPostInformation({
-                        ...media,
-                        content: media.content ?? undefined,
-                        author: author,
-                        replyTo: undefined,
-                    });
-
-                    return post;
-                }
+                return remapPostInformation(media);
             }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
 
             const mediaEnd = media.length === 0
@@ -979,10 +851,11 @@ export const getUserMedia = async (req: Request, res: Response, next: NextFuncti
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ media: BasePostDataType[] | [], end: boolean }> = {
+            const successResponse: SuccessResponse<{ media: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     media: media ?? [],
+                    cursor: media.slice(-1)[0]?.id ?? null,
                     end: mediaEnd
                 },
             };
@@ -1022,35 +895,7 @@ export const getUserLikes = async (req: Request, res: Response, next: NextFuncti
                 if (!like.author) return;
                 if (!like.author.profile) return;
 
-                if (like.replyTo !== undefined) {
-                    // REMAP REPLYTO AUTHOR
-                    const replyAuthor = remapUserInformation({ ...like.replyTo!.author, profile: like.replyTo?.author.profile! });
-
-                    // REMAP ORIGINAL REPLY & AUTHOR
-                    const ogAuthor = remapUserInformation({ ...like.author, profile: like.author.profile! });
-                    const ogPost = remapPostInformation({
-                        ...like,
-                        content: like.content ?? undefined,
-                        author: ogAuthor,
-                        replyTo: {
-                            ...like.replyTo!,
-                            content: like.replyTo!.content ?? undefined,
-                            author: replyAuthor
-                        }
-                    });
-
-                    return ogPost;
-                } else {
-                    const author = remapUserInformation({ ...like.author, profile: like.author.profile! });
-                    const post = remapPostInformation({
-                        ...like,
-                        content: like.content ?? undefined,
-                        author: author,
-                        replyTo: undefined,
-                    });
-
-                    return post;
-                }
+                return remapPostInformation(like);
             }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
 
             const likesEnd = likes.length === 0
@@ -1059,10 +904,11 @@ export const getUserLikes = async (req: Request, res: Response, next: NextFuncti
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ likes: BasePostDataType[] | [], end: boolean }> = {
+            const successResponse: SuccessResponse<{ likes: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     likes: likes ?? [],
+                    cursor: likes.slice(-1)[0]?.id ?? null,
                     end: likesEnd
                 },
             };
@@ -1078,35 +924,7 @@ export const getUserLikes = async (req: Request, res: Response, next: NextFuncti
                 if (!like.author) return;
                 if (!like.author.profile) return;
 
-                if (like.replyTo !== undefined) {
-                    // REMAP REPLYTO AUTHOR
-                    const replyAuthor = remapUserInformation({ ...like.replyTo!.author, profile: like.replyTo?.author.profile! });
-
-                    // REMAP ORIGINAL REPLY & AUTHOR
-                    const ogAuthor = remapUserInformation({ ...like.author, profile: like.author.profile! });
-                    const ogPost = remapPostInformation({
-                        ...like,
-                        content: like.content ?? undefined,
-                        author: ogAuthor,
-                        replyTo: {
-                            ...like.replyTo!,
-                            content: like.replyTo!.content ?? undefined,
-                            author: replyAuthor
-                        }
-                    });
-
-                    return ogPost;
-                } else {
-                    const author = remapUserInformation({ ...like.author, profile: like.author.profile! });
-                    const post = remapPostInformation({
-                        ...like,
-                        content: like.content ?? undefined,
-                        author: author,
-                        replyTo: undefined,
-                    });
-
-                    return post;
-                }
+                return remapPostInformation(like);
             }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
 
             const likesEnd = likes.length === 0
@@ -1115,10 +933,11 @@ export const getUserLikes = async (req: Request, res: Response, next: NextFuncti
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ likes: BasePostDataType[] | [], end: boolean }> = {
+            const successResponse: SuccessResponse<{ likes: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     likes: likes ?? [],
+                    cursor: likes.slice(-1)[0]?.id ?? null,
                     end: likesEnd
                 },
             };
@@ -1158,35 +977,7 @@ export const getUserBookmarks = async (req: Request, res: Response, next: NextFu
                 if (!bookmark.author) return;
                 if (!bookmark.author.profile) return;
 
-                if (bookmark.replyTo !== undefined) {
-                    // REMAP REPLYTO AUTHOR
-                    const replyAuthor = remapUserInformation({ ...bookmark.replyTo!.author, profile: bookmark.replyTo?.author.profile! });
-
-                    // REMAP ORIGINAL REPLY & AUTHOR
-                    const ogAuthor = remapUserInformation({ ...bookmark.author, profile: bookmark.author.profile! });
-                    const ogPost = remapPostInformation({
-                        ...bookmark,
-                        content: bookmark.content ?? undefined,
-                        author: ogAuthor,
-                        replyTo: {
-                            ...bookmark.replyTo!,
-                            content: bookmark.replyTo!.content ?? undefined,
-                            author: replyAuthor
-                        }
-                    });
-
-                    return ogPost;
-                } else {
-                    const author = remapUserInformation({ ...bookmark.author, profile: bookmark.author.profile! });
-                    const post = remapPostInformation({
-                        ...bookmark,
-                        content: bookmark.content ?? undefined,
-                        author: author,
-                        replyTo: undefined,
-                    });
-
-                    return post;
-                }
+                return remapPostInformation(bookmark);
             }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
 
             const bookmarksEnd = bookmarks.length === 0
@@ -1195,10 +986,11 @@ export const getUserBookmarks = async (req: Request, res: Response, next: NextFu
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ bookmarks: BasePostDataType[] | [], end: boolean }> = {
+            const successResponse: SuccessResponse<{ bookmarks: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     bookmarks: bookmarks ?? [],
+                    cursor: bookmarks.slice(-1)[0]?.id ?? null,
                     end: bookmarksEnd
                 },
             };
@@ -1214,35 +1006,7 @@ export const getUserBookmarks = async (req: Request, res: Response, next: NextFu
                 if (!bookmark.author) return;
                 if (!bookmark.author.profile) return;
 
-                if (bookmark.replyTo !== undefined) {
-                    // REMAP REPLYTO AUTHOR
-                    const replyAuthor = remapUserInformation({ ...bookmark.replyTo!.author, profile: bookmark.replyTo?.author.profile! });
-
-                    // REMAP ORIGINAL REPLY & AUTHOR
-                    const ogAuthor = remapUserInformation({ ...bookmark.author, profile: bookmark.author.profile! });
-                    const ogPost = remapPostInformation({
-                        ...bookmark,
-                        content: bookmark.content ?? undefined,
-                        author: ogAuthor,
-                        replyTo: {
-                            ...bookmark.replyTo!,
-                            content: bookmark.replyTo!.content ?? undefined,
-                            author: replyAuthor
-                        }
-                    });
-
-                    return ogPost;
-                } else {
-                    const author = remapUserInformation({ ...bookmark.author, profile: bookmark.author.profile! });
-                    const post = remapPostInformation({
-                        ...bookmark,
-                        content: bookmark.content ?? undefined,
-                        author: author,
-                        replyTo: undefined,
-                    });
-
-                    return post;
-                }
+                return remapPostInformation(bookmark);
             }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
 
             const bookmarksEnd = bookmarks.length === 0
@@ -1251,10 +1015,11 @@ export const getUserBookmarks = async (req: Request, res: Response, next: NextFu
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ bookmarks: BasePostDataType[] | [], end: boolean }> = {
+            const successResponse: SuccessResponse<{ bookmarks: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     bookmarks: bookmarks ?? [],
+                    cursor: bookmarks.slice(-1)[0]?.id ?? null,
                     end: bookmarksEnd
                 },
             };

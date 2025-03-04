@@ -294,7 +294,6 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                 }
 
                 const { data } = response;
-                console.log(data)
                 if (!data) throw new Error('Data is missing in response');
                 else if (data.postsCursor === undefined) throw new Error('postsCursor property is missing in data response');
                 else if (data.postsEnd === undefined) throw new Error('postsEnd property is missing in data response');

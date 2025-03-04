@@ -28,16 +28,16 @@ export const usePostInteractionContext = () => {
 
 export default function PostInteractionContextProvider({ children}: { children: React.ReactNode }) {
     const [interactedPosts, setInteractedPosts] = useState<InteractedPostsMap>(new Map());
-    console.log(interactedPosts)
+
     const updateInteractedPosts = ({ postId, repostsCount, likesCount, bookmarked }: InteractedPostType) => {
         setInteractedPosts((prev) => {
             const newMap = new Map(prev);
 
             if (newMap.size === 1000) {
-                // Get the last added entry (the newest one)
-                const lastKey = Array.from(newMap.keys()).pop();
-                if (lastKey) {
-                    newMap.set(lastKey, { postId, repostsCount, likesCount, bookmarked });
+                // if map is full, replace first (oldest) element
+                const firstKey = Array.from(newMap.keys()).slice(1,2)[0];
+                if (firstKey) {
+                    newMap.set(firstKey, { postId, repostsCount, likesCount, bookmarked });
                 }
             } else {
                 newMap.set(postId, { postId, repostsCount, likesCount, bookmarked });
@@ -46,8 +46,6 @@ export default function PostInteractionContextProvider({ children}: { children: 
             return newMap;
         });
     };
-
-
 
     return (
         <PostInteractionContext.Provider value={{ interactedPosts, setInteractedPosts, updateInteractedPosts }}>

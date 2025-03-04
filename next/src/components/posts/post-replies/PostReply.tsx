@@ -1,46 +1,42 @@
 'use client';
-import { BasicPostType } from '@/lib/types';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useReducer } from 'react';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
 import PostMenu from '../post-parts/PostMenu';
 import BasicPostTemplate from '../templates/BasicPostTemplate';
+import { BasePostDataType } from 'tweetly-shared';
+import { userInfoReducer, UserStateType } from '@/lib/userReducer';
 
-export default function ReplyPost({ post }: { post: BasicPostType }) {
-    const { suggestions } = useFollowSuggestionContext();
+export default function ReplyPost({ post }: { post: BasePostDataType }) {
+    const { suggestions: userFollowSuggestions } = useFollowSuggestionContext();
     const { blockedUsers } = useBlockedUsersContext();
     const router = useRouter();
 
     // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-    // if user is in suggestions, track it's isFollowed property instead
-    const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(
-        suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?.isFollowed
-        ?? post.author.followers.length === 1
-    );
-
-    // Is post author following the logged in user
-    const [isFollowingTheUser, setIsFollowingTheUser] = useState<boolean>(post.author.following.length === 1);
-
-    // Post author following & followers count to update hover card information when they're (un)followed/blocked by logged in user
-    const [followingCount, setFollowingCount] = useState(
-        suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?._count.following
-        ?? post.author._count.following
-    );
-    const [followersCount, setFollowersCount] = useState(
-        suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)?._count.followers
-        ?? post.author._count.followers
-    );
-
-    useEffect(() => {
-        const suggestedUser = suggestions?.find((suggestedUser) => suggestedUser.username === post.author.username);
-        if (suggestedUser) {
-            setIsFollowedByTheUser(suggestedUser.isFollowed);
-            setFollowingCount(suggestedUser._count.following);
-            setFollowersCount(suggestedUser._count.followers);
+    const userInitialState: UserStateType = {
+        relationship: {
+            isFollowingViewer: post.author.relationship.isFollowingViewer,
+            hasBlockedViewer: post.author.relationship.hasBlockedViewer,
+            isFollowedByViewer: post.author.relationship.isFollowedByViewer,
+            isBlockedByViewer: post.author.relationship.isBlockedByViewer,
+        },
+        stats: {
+            followersCount: post.author.stats.followersCount,
+            followingCount: post.author.stats.followingCount,
+            postsCount: post.author.stats.postsCount,
         }
-    }, [suggestions, post.author.username]);
+    };
+    const [userState, dispatch] = useReducer(userInfoReducer, userInitialState);
+
+    // For syncing author's state if they appear in different places at the same time
+    useEffect(() => {
+        const suggestedUser = userFollowSuggestions?.find((suggestedUser) => suggestedUser.username === post.author.username);
+        if (suggestedUser) {
+            dispatch({ type: suggestedUser.relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
+        }
+    }, [userFollowSuggestions, dispatch, post.author.username]);
+
 
     // - FUNCTIONS --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -78,12 +74,8 @@ export default function ReplyPost({ post }: { post: BasicPostType }) {
                 <p className="text-secondary-text">You&apos;ve blocked this user. <span>Unblock to see their posts.</span></p>
                 <PostMenu
                     post={post}
-                    isFollowedByTheUser={isFollowedByTheUser}
-                    setIsFollowedByTheUser={setIsFollowedByTheUser}
-                    isFollowingTheUser={isFollowingTheUser}
-                    setIsFollowingTheUser={setIsFollowingTheUser}
-                    _setFollowersCount={setFollowersCount}
-                    _setFollowingCount={setFollowingCount}
+                    userState={userState}
+                    dispatch={dispatch}
                 />
             </div>
         )
@@ -99,14 +91,8 @@ export default function ReplyPost({ post }: { post: BasicPostType }) {
 
             <BasicPostTemplate
                 post={post}
-                isFollowedByTheUser={isFollowedByTheUser}
-                setIsFollowedByTheUser={setIsFollowedByTheUser}
-                isFollowingTheUser={isFollowingTheUser}
-                setIsFollowingTheUser={setIsFollowingTheUser}
-                followingCount={followingCount}
-                setFollowingCount={setFollowingCount}
-                followersCount={followersCount}
-                setFollowersCount={setFollowersCount}
+                userState={userState}
+                dispatch={dispatch}
                 openPhoto={openPhoto}
             />
 

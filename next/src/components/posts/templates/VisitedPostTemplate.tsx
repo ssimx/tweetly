@@ -9,27 +9,31 @@ import PostImages from '../post-parts/PostImages';
 import PostButtons from '../post-parts/PostButtons';
 import NewPost from '@/components/feed/NewPost';
 import PostReplies from '../post-replies/PostReplies';
+import { BasePostDataType, UserAndViewerRelationshipType, UserStatsType } from 'tweetly-shared';
+import { UserActionType } from '@/lib/userReducer';
 
 type VisitedPostTemplateType = {
-    post: VisitedPostType,
+    // POST INFO
+    post: BasePostDataType,
     postRef: React.RefObject<HTMLDivElement | null>,
     scrollRef?: React.RefObject<HTMLDivElement | null>
     postTime: string,
     postDate: string,
-    replies: BasicPostType[],
-    setReplies: React.Dispatch<React.SetStateAction<BasicPostType[]>>
+    
+    replies: BasePostDataType[],
+    setReplies: React.Dispatch<React.SetStateAction<BasePostDataType[]>>
     repliesCursor: number | null,
     setRepliesCursor: React.Dispatch<React.SetStateAction<number | null>>
     repliesEndReached: boolean,
     setRepliesEndReached: React.Dispatch<React.SetStateAction<boolean>>
-    isFollowedByTheUser: boolean,
-    setIsFollowedByTheUser: React.Dispatch<React.SetStateAction<boolean>>,
-    isFollowingTheUser: boolean,
-    setIsFollowingTheUser: React.Dispatch<React.SetStateAction<boolean>>,
-    followingCount: number,
-    setFollowingCount: React.Dispatch<React.SetStateAction<number>>,
-    followersCount: number,
-    setFollowersCount: React.Dispatch<React.SetStateAction<number>>,
+
+    // USER RELATIONSHIP
+    userState: {
+        relationship: UserAndViewerRelationshipType,
+        stats: UserStatsType,
+    },
+    dispatch: React.Dispatch<UserActionType>,
+
     openPhoto: (photoIndex: number, authorUsername: string, postId: number) => void
     type?: 'normal' | 'overlay',
 }
@@ -46,14 +50,8 @@ export default function VisitedPostTemplate({
     setRepliesCursor,
     repliesEndReached,
     setRepliesEndReached,
-    isFollowedByTheUser,
-    setIsFollowedByTheUser,
-    isFollowingTheUser,
-    setIsFollowingTheUser,
-    followingCount,
-    setFollowingCount,
-    followersCount,
-    setFollowersCount,
+    userState,
+    dispatch,
     openPhoto,
     type = 'normal'
 }: VisitedPostTemplateType) {
@@ -70,22 +68,15 @@ export default function VisitedPostTemplate({
                     <div className=''>
                         <UserHoverCard
                             user={post.author}
-                            _followingCount={followingCount}
-                            _followersCount={followersCount}
-                            _setFollowersCount={setFollowersCount}
-                            isFollowedByTheUser={isFollowedByTheUser}
-                            setIsFollowedByTheUser={setIsFollowedByTheUser}
-                            isFollowingTheUser={isFollowingTheUser} />
-                        <p>@{post.author.username}</p>
+                            userState={userState}
+                            dispatch={dispatch}
+                        />
+                        <p className='text-secondary-text'>@{post.author.username}</p>
                     </div>
                     <PostMenu
                         post={post}
-                        isFollowedByTheUser={isFollowedByTheUser}
-                        setIsFollowedByTheUser={setIsFollowedByTheUser}
-                        isFollowingTheUser={isFollowingTheUser}
-                        setIsFollowingTheUser={setIsFollowingTheUser}
-                        _setFollowersCount={setFollowersCount}
-                        _setFollowingCount={setFollowingCount}
+                        userState={userState}
+                        dispatch={dispatch}
                     />
                 </div>
 
@@ -113,7 +104,8 @@ export default function VisitedPostTemplate({
                 setRepliesCursor={setRepliesCursor}
                 repliesEndReached={repliesEndReached}
                 setRepliesEndReached={setRepliesEndReached}
-                scrollElementRef={scrollRef} />
+                scrollElementRef={scrollRef}
+            />
         </>
     )
 }

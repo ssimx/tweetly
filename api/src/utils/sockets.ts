@@ -54,7 +54,6 @@ const socketConnection = (server: HttpServer) => {
     });
 
     io.on("connection", (socket) => {
-        console.log('user connected');
 
         // Fetch the list of users the connected user is following
         socket.on('get_following', async (userId) => {

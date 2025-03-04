@@ -62,11 +62,11 @@ export default function ProfileLikedReply({ post, authorized, replyUserState, re
         if (suggestedUsers) {
             suggestedUsers.forEach((user, index) => {
                 if (user.username === post.replyTo?.author.username) {
-                    parentDispatch({ type: suggestedUsers[index].isFollowed ? 'FOLLOW' : 'UNFOLLOW' });
+                    parentDispatch({ type: suggestedUsers[index].relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
                 } else if (user.username === post.author.username) {
                     authorized
-                        ? replyDispatch({ type: suggestedUsers[index].isFollowed ? 'FOLLOW' : 'UNFOLLOW' })
-                        : _replyDispatch({ type: suggestedUsers[index].isFollowed ? 'FOLLOW' : 'UNFOLLOW' });
+                        ? replyDispatch({ type: suggestedUsers[index].relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' })
+                        : _replyDispatch({ type: suggestedUsers[index].relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
                 }
             });
 

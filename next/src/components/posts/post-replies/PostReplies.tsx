@@ -1,14 +1,14 @@
 'use client';
-import { BasicPostType } from '@/lib/types';
 import ReplyPost from './PostReply';
 import { useEffect, useRef, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { getMoreRepliesForPost } from '@/actions/get-actions';
+import { BasePostDataType, ErrorResponse, getErrorMessage } from 'tweetly-shared';
 
 type PostRepliesType = {
     parentPostId: number,
-    replies: BasicPostType[],
-    setReplies: React.Dispatch<React.SetStateAction<BasicPostType[]>>,
+    replies: BasePostDataType[],
+    setReplies: React.Dispatch<React.SetStateAction<BasePostDataType[]>>,
     repliesCursor: number | null,
     setRepliesCursor: React.Dispatch<React.SetStateAction<number | null>>,
     repliesEndReached: boolean,
@@ -47,16 +47,34 @@ export default function PostReplies({ parentPostId, replies, setReplies, replies
 
     // Infinite scroll - fetch more replies when inView is true
     useEffect(() => {
-        console.log(inView, scrollPositionRef.current, scrollPosition)
         if (inView && !repliesEndReached && scrollPositionRef.current !== scrollPosition) {
             const fetchMoreReplies = async () => {
-                const { posts, end } = await getMoreRepliesForPost(parentPostId, repliesCursor as number);
-                console.log(posts)
-                
-                setRepliesCursor(posts?.length ? posts.slice(-1)[0].id : null);
-                setReplies(currentPosts => [...currentPosts as BasicPostType[], ...posts as BasicPostType[]]);
-                setRepliesEndReached(end);
-                setScrollPosition(scrollPositionRef.current);
+                try {
+                    const response = await getMoreRepliesForPost(parentPostId, Number(repliesCursor));
+
+                    if (!response.success) {
+                        const errorData = response as ErrorResponse;
+                        throw new Error(errorData.error.message);
+                    }
+
+                    const { data } = response;
+                    if (!data) throw new Error('Data is missing in response');
+                    else if (data.replies === undefined) throw new Error('Replies property is missing in data response');
+                    else if (data.replies.posts === undefined) throw new Error('Posts property is missing in replies response');
+                    else if (data.replies.cursor === undefined) throw new Error('Replies cursor property is missing in replies response');
+
+                    setReplies(currentPosts => [...currentPosts as BasePostDataType[], ...data.replies.posts as BasePostDataType[]]);
+                    setRepliesCursor(data.replies.cursor);
+                    setRepliesEndReached(data.replies.end);
+                } catch (error: unknown) {
+                    const errorMessage = getErrorMessage(error);
+                    console.error(errorMessage);
+
+                    setRepliesCursor(null);
+                    setRepliesEndReached(true);
+                } finally {
+                    setScrollPosition(scrollPositionRef.current);
+                }
             };
 
             fetchMoreReplies();

@@ -37,14 +37,15 @@ export async function GET(req: NextRequest, props: { params: Promise<{ username:
                     throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
                 }
 
-                const { data } = await response.json() as SuccessResponse<{ reposts: BasePostDataType[], end: boolean }>;
+                const { data } = await response.json() as SuccessResponse<{ reposts: BasePostDataType[], cursor: number | null, end: boolean }>;
                 if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
                 else if (!data.reposts) throw new AppError('Reposts property is missing in data response', 404, 'MISSING_PROPERTY');
 
-                const successResponse: SuccessResponse<{ reposts: BasePostDataType[], end: boolean }> = {
+                const successResponse: SuccessResponse<{ reposts: BasePostDataType[], cursor: number | null, end: boolean }> = {
                     success: true,
                     data: {
                         reposts: data.reposts,
+                        cursor: data.cursor ?? null,
                         end: data.end ?? true
                     }
                 };
@@ -67,14 +68,15 @@ export async function GET(req: NextRequest, props: { params: Promise<{ username:
                     throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
                 }
 
-                const { data } = await response.json() as SuccessResponse<{ reposts: BasePostDataType[], end: boolean }>;
+                const { data } = await response.json() as SuccessResponse<{ reposts: BasePostDataType[], cursor: number | null, end: boolean }>;
                 if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
                 else if (!data.reposts) throw new AppError('Reposts property is missing in data response', 404, 'MISSING_PROPERTY');
 
-                const successResponse: SuccessResponse<{ reposts: BasePostDataType[], end: boolean }> = {
+                const successResponse: SuccessResponse<{ reposts: BasePostDataType[], cursor: number | null, end: boolean }> = {
                     success: true,
                     data: {
                         reposts: data.reposts,
+                        cursor: data.cursor ?? null,
                         end: data.end ?? true
                     }
                 };

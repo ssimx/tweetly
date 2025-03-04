@@ -4,13 +4,13 @@ import { getLoggedInUser } from "@/data-acess-layer/user-dto";
 import { decryptSession } from '@/lib/session';
 import { BasicPostType, BookmarkPostType, NotificationType, ProfileReplyPostType, UserInfoType, VisitedPostType } from "@/lib/types";
 import { cache } from 'react';
-import { ApiResponse, AppError, BasePostDataType, ErrorResponse, getErrorMessage, LoggedInUserJwtPayload, ProfilePostOrRepostDataType, SuccessResponse, UserDataType } from 'tweetly-shared';
+import { ApiResponse, AppError, BasePostDataType, ErrorResponse, getErrorMessage, LoggedInUserJwtPayload, ProfilePostOrRepostDataType, SuccessResponse, UserDataType, VisitedPostDataType } from 'tweetly-shared';
 
 // GET actions for client/dynamic components
 
 // GLOBAL/FOLLOWING FEED
 
-export async function getHomeGlobalFeed(): Promise<ApiResponse<{ posts: BasePostDataType[], end: boolean }>> {
+export async function getHomeGlobalFeed(): Promise<ApiResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }>> {
     try {
         const token = await getCurrentUserToken();
 
@@ -27,7 +27,7 @@ export async function getHomeGlobalFeed(): Promise<ApiResponse<{ posts: BasePost
             throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
+        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }>;
         if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
         else if (data.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
 
@@ -35,6 +35,7 @@ export async function getHomeGlobalFeed(): Promise<ApiResponse<{ posts: BasePost
             success: true,
             data: {
                 posts: data.posts,
+                cursor: data.cursor ?? null,
                 end: data.end ?? true,
             },
         }
@@ -61,7 +62,7 @@ export async function getHomeGlobalFeed(): Promise<ApiResponse<{ posts: BasePost
     }
 };
 
-export async function getMorePostsForHomeGlobalFeed(postCursor: number): Promise<ApiResponse<{ posts: BasePostDataType[], end: boolean }>> {
+export async function getMorePostsForHomeGlobalFeed(postCursor: number): Promise<ApiResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }>> {
     try {
         const token = await getCurrentUserToken();
         if (!postCursor) throw new AppError('Post cursor is missing', 400, 'MISSING_CURSOR');
@@ -79,7 +80,7 @@ export async function getMorePostsForHomeGlobalFeed(postCursor: number): Promise
             throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
+        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }>;
         if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
         else if (data.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
 
@@ -87,6 +88,7 @@ export async function getMorePostsForHomeGlobalFeed(postCursor: number): Promise
             success: true,
             data: {
                 posts: data.posts,
+                cursor: data.cursor ?? null,
                 end: data.end ?? true,
             },
         }
@@ -113,7 +115,7 @@ export async function getMorePostsForHomeGlobalFeed(postCursor: number): Promise
     }
 };
 
-export async function getNewPostsForHomeGlobalFeed(postCursor: number | null): Promise<ApiResponse<{ posts: BasePostDataType[], end?: boolean }>> {
+export async function getNewPostsForHomeGlobalFeed(postCursor: number | null): Promise<ApiResponse<{ posts: BasePostDataType[], cursor: number | null, end?: boolean }>> {
     try {
         const token = await getCurrentUserToken();
         if (postCursor === undefined) throw new AppError('Post cursor is missing', 400, 'MISSING_CURSOR');
@@ -131,14 +133,15 @@ export async function getNewPostsForHomeGlobalFeed(postCursor: number | null): P
             throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], end?: boolean }>;
+        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end?: boolean }>;
         if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
         else if (data.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
-        
+
         return {
             success: true,
             data: {
                 posts: data.posts,
+                cursor: data.cursor ?? null,
                 end: data.end ?? undefined,
             },
         }
@@ -165,7 +168,7 @@ export async function getNewPostsForHomeGlobalFeed(postCursor: number | null): P
     }
 };
 
-export async function getHomeFollowingFeed(): Promise<ApiResponse<{ posts: BasePostDataType[], end: boolean }>> {
+export async function getHomeFollowingFeed(): Promise<ApiResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }>> {
     const token = await getCurrentUserToken();
 
     try {
@@ -182,7 +185,7 @@ export async function getHomeFollowingFeed(): Promise<ApiResponse<{ posts: BaseP
             throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
+        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }>;
         if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
         else if (data.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
 
@@ -190,6 +193,7 @@ export async function getHomeFollowingFeed(): Promise<ApiResponse<{ posts: BaseP
             success: true,
             data: {
                 posts: data.posts,
+                cursor: data.cursor ?? null,
                 end: data.end ?? true,
             },
         }
@@ -216,7 +220,7 @@ export async function getHomeFollowingFeed(): Promise<ApiResponse<{ posts: BaseP
     }
 };
 
-export async function getMorePostsForHomeFollowingFeed(postCursor: number): Promise<ApiResponse<{ posts: BasePostDataType[], end: boolean }>> {
+export async function getMorePostsForHomeFollowingFeed(postCursor: number): Promise<ApiResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }>> {
     try {
         const token = await getCurrentUserToken();
         if (!postCursor) throw new AppError('Post cursor is missing', 400, 'MISSING_CURSOR');
@@ -234,7 +238,7 @@ export async function getMorePostsForHomeFollowingFeed(postCursor: number): Prom
             throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
+        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }>;
         if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
         else if (data.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
 
@@ -242,6 +246,7 @@ export async function getMorePostsForHomeFollowingFeed(postCursor: number): Prom
             success: true,
             data: {
                 posts: data.posts,
+                cursor: data.cursor ?? null,
                 end: data.end ?? true,
             },
         }
@@ -268,7 +273,7 @@ export async function getMorePostsForHomeFollowingFeed(postCursor: number): Prom
     }
 };
 
-export async function getNewPostsForHomeFollowingFeed(postCursor: number | null): Promise<ApiResponse<{ posts: BasePostDataType[], end?: boolean }>>  {
+export async function getNewPostsForHomeFollowingFeed(postCursor: number | null): Promise<ApiResponse<{ posts: BasePostDataType[], cursor: number | null, end?: boolean }>> {
     try {
         const token = await getCurrentUserToken();
         if (!postCursor) throw new AppError('Post cursor is missing', 400, 'MISSING_CURSOR');
@@ -286,7 +291,7 @@ export async function getNewPostsForHomeFollowingFeed(postCursor: number | null)
             throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], end?: boolean }>;
+        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end?: boolean }>;
         if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
         else if (data.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
 
@@ -294,6 +299,7 @@ export async function getNewPostsForHomeFollowingFeed(postCursor: number | null)
             success: true,
             data: {
                 posts: data.posts,
+                cursor: data.cursor ?? null,
                 end: data.end ?? undefined,
             },
         }
@@ -322,10 +328,10 @@ export async function getNewPostsForHomeFollowingFeed(postCursor: number | null)
 
 // POSTS
 
-export async function getPostInfo(postId: number) {
-    const token = await getCurrentUserToken();
-
+export async function getPostInfo(postId: number): Promise<ApiResponse<{ post: VisitedPostDataType }>> {
     try {
+        const token = await getCurrentUserToken();
+
         const response = await fetch(`http://localhost:3000/api/posts/get/${postId}`, {
             method: 'GET',
             headers: {
@@ -336,20 +342,44 @@ export async function getPostInfo(postId: number) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const post = await response.json() as VisitedPostType;
-        return post;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return undefined;
+        const { data } = await response.json() as SuccessResponse<{ post: VisitedPostDataType }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.post === undefined) throw new AppError('Post property is missing in data response', 404, 'MISSING_PROPERTY');
+
+        return {
+            success: true,
+            data: {
+                post: data.post,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function getMoreRepliesForPost(postId: number, replyCursor: number) {
+export async function getMoreRepliesForPost(postId: number, replyCursor: number): Promise<ApiResponse<{ replies: Pick<VisitedPostDataType, 'replies'>['replies'] }>> {
     const token = await getCurrentUserToken();
 
     try {
@@ -362,22 +392,46 @@ export async function getMoreRepliesForPost(postId: number, replyCursor: number)
             cache: 'no-cache',
         });
 
+
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const moreReplies = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as BasicPostType[], end: res.end as boolean }
-            }
-            throw new Error('Invalid response format');
-        });
-        return moreReplies;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return { posts: null, end: true };
+        const { data } = await response.json() as SuccessResponse<{ replies: Pick<VisitedPostDataType, 'replies'>['replies'] }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.replies === undefined) throw new AppError('Replies property is missing in data response', 404, 'MISSING_PROPERTY');
+
+        return {
+            success: true,
+            data: {
+                replies: {
+                    posts: data.replies.posts,
+                    cursor: data.replies.cursor,
+                    end: data.replies.end
+                },
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
@@ -595,7 +649,7 @@ export const getFollowSuggestions = cache(async (): Promise<ApiResponse<{ sugges
         const { data } = await response.json() as SuccessResponse<{ suggestedUsers: UserDataType[] }>;
         if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
         else if (data.suggestedUsers === undefined) throw new AppError('suggestedUsers property is missing in data response', 404, 'MISSING_PROPERTY');
-        
+
         return {
             success: true,
             data: {
@@ -635,7 +689,7 @@ export async function fetchLoggedInUser() {
 //                                             PROFILE ACTIONS
 // ---------------------------------------------------------------------------------------------------------
 
-export async function getPostsForProfile(profileUsername: string, postsCursor?: number): Promise<ApiResponse<{ posts: BasePostDataType[], end: boolean }>> {
+export async function getPostsForProfile(profileUsername: string, postsCursor?: number): Promise<ApiResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }>> {
     try {
         const token = await getCurrentUserToken();
 
@@ -652,7 +706,7 @@ export async function getPostsForProfile(profileUsername: string, postsCursor?: 
             throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
+        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }>;
         if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
         else if (data.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
 
@@ -660,6 +714,7 @@ export async function getPostsForProfile(profileUsername: string, postsCursor?: 
             success: true,
             data: {
                 posts: data.posts,
+                cursor: data.cursor ?? null,
                 end: data.end ?? true,
             },
         }
@@ -686,7 +741,7 @@ export async function getPostsForProfile(profileUsername: string, postsCursor?: 
     }
 };
 
-export async function getRepostsForProfile(profileUsername: string, repostsCursor?: number): Promise<ApiResponse<{ reposts: BasePostDataType[], end: boolean }>> {
+export async function getRepostsForProfile(profileUsername: string, repostsCursor?: number): Promise<ApiResponse<{ reposts: BasePostDataType[], cursor: number | null, end: boolean }>> {
     try {
         const token = await getCurrentUserToken();
 
@@ -703,7 +758,7 @@ export async function getRepostsForProfile(profileUsername: string, repostsCurso
             throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const { data } = await response.json() as SuccessResponse<{ reposts: BasePostDataType[], end: boolean }>;
+        const { data } = await response.json() as SuccessResponse<{ reposts: BasePostDataType[], cursor: number | null, end: boolean }>;
         if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
         else if (data.reposts === undefined) throw new AppError('Reposts property is missing in data response', 404, 'MISSING_PROPERTY');
 
@@ -711,6 +766,7 @@ export async function getRepostsForProfile(profileUsername: string, repostsCurso
             success: true,
             data: {
                 reposts: data.reposts,
+                cursor: data.cursor ?? null,
                 end: data.end ?? true,
             },
         }
@@ -762,11 +818,11 @@ export async function getPostsAndRepostsForProfile(
             throw new AppError(errorData.error.message, 400, errorData.error.code, errorData.error.details);
         }
 
-        const { data: postsData } = postsResponse as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
+        const { data: postsData } = postsResponse as SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }>;
         if (postsData === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
         else if (postsData.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
 
-        const { data: repostsData } = repostsResponse as SuccessResponse<{ reposts: BasePostDataType[], end: boolean }>;
+        const { data: repostsData } = repostsResponse as SuccessResponse<{ reposts: BasePostDataType[], cursor: number | null, end: boolean }>;
         if (repostsData === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
         else if (repostsData.reposts === undefined) throw new AppError('Reposts property is missing in data response', 404, 'MISSING_PROPERTY');
 
@@ -785,9 +841,9 @@ export async function getPostsAndRepostsForProfile(
         return {
             success: true,
             data: {
-                postsCursor: postsData.posts.length ? postsData.posts.slice(-1)[0].id : null,
+                postsCursor: postsData.cursor,
                 postsEnd: postsData.end,
-                repostsCursor: repostsData.reposts.length ? repostsData.reposts.slice(-1)[0].id : null,
+                repostsCursor: repostsData.cursor,
                 repostsEnd: repostsData.end,
                 postsReposts: mappedPostsReposts,
             },
@@ -829,8 +885,8 @@ export async function getMorePostsAndRepostsForProfile(
     postsReposts: ProfilePostOrRepostDataType[],
 }>> {
     try {
-        let postsPromise: Promise<ApiResponse<{ posts: BasePostDataType[], end: boolean; }>> | undefined = undefined;
-        let repostsPromise: Promise<ApiResponse<{ reposts: BasePostDataType[], end: boolean; }>> | undefined = undefined;
+        let postsPromise: Promise<ApiResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean; }>> | undefined = undefined;
+        let repostsPromise: Promise<ApiResponse<{ reposts: BasePostDataType[], cursor: number | null, end: boolean; }>> | undefined = undefined;
 
         if (!postsEnd && postsCursor) {
             postsPromise = getPostsForProfile(profileUsername, postsCursor);
@@ -850,20 +906,20 @@ export async function getMorePostsAndRepostsForProfile(
             throw new AppError(errorData.error.message, 400, errorData.error.code, errorData.error.details);
         }
 
-        let fetchedOlderPosts = { posts: [], end: true } as { posts: BasePostDataType[], end: boolean };
+        let fetchedOlderPosts = { posts: [], cursor: null, end: true } as { posts: BasePostDataType[], cursor: number | null, end: boolean };
         if (postsResponse !== undefined) {
-            const { data } = postsResponse as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
+            const { data } = postsResponse as SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }>;
             if (data === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
             else if (data.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
-            fetchedOlderPosts = { posts: data.posts, end: data.end };
+            fetchedOlderPosts = { posts: data.posts, cursor: data.cursor, end: data.end };
         }
 
-        let fetchedOlderReposts = { reposts: [], end: true } as { reposts: BasePostDataType[], end: boolean };
+        let fetchedOlderReposts = { reposts: [], cursor: null, end: true } as { reposts: BasePostDataType[], cursor: number | null, end: boolean };
         if (repostsResponse !== undefined) {
-            const { data } = repostsResponse as SuccessResponse<{ reposts: BasePostDataType[], end: boolean }>;
+            const { data } = repostsResponse as SuccessResponse<{ reposts: BasePostDataType[], cursor: number | null, end: boolean }>;
             if (data === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
             else if (data.reposts === undefined) throw new AppError('Reposts property is missing in data response', 404, 'MISSING_PROPERTY');
-            fetchedOlderReposts = { reposts: data.reposts, end: data.end };
+            fetchedOlderReposts = { reposts: data.reposts, cursor: data.cursor, end: data.end };
         }
 
         const mappedPosts: ProfilePostOrRepostDataType[] = fetchedOlderPosts.posts.map((post) => {
@@ -881,9 +937,9 @@ export async function getMorePostsAndRepostsForProfile(
         return {
             success: true,
             data: {
-                postsCursor: fetchedOlderPosts.posts.length ? fetchedOlderPosts.posts.slice(-1)[0].id : null,
+                postsCursor: fetchedOlderPosts.cursor,
                 postsEnd: fetchedOlderPosts.end,
-                repostsCursor: fetchedOlderReposts.reposts.length ? fetchedOlderReposts.reposts.slice(-1)[0].id : null,
+                repostsCursor: fetchedOlderReposts.cursor,
                 repostsEnd: fetchedOlderReposts.end,
                 postsReposts: mappedPostsReposts,
             },
@@ -911,7 +967,7 @@ export async function getMorePostsAndRepostsForProfile(
     }
 };
 
-export async function getRepliesForProfile(profileUsername: string, repliesCursor?: number): Promise<ApiResponse<{ replies: BasePostDataType[], end: boolean }>> {
+export async function getRepliesForProfile(profileUsername: string, repliesCursor?: number): Promise<ApiResponse<{ replies: BasePostDataType[], cursor: number | null, end: boolean }>> {
     try {
         const token = await getCurrentUserToken();
 
@@ -928,7 +984,7 @@ export async function getRepliesForProfile(profileUsername: string, repliesCurso
             throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const { data } = await response.json() as SuccessResponse<{ replies: BasePostDataType[], end: boolean }>;
+        const { data } = await response.json() as SuccessResponse<{ replies: BasePostDataType[], cursor: number | null, end: boolean }>;
         if (data === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
         else if (data.replies === undefined) throw new AppError('Replies property is missing in data response', 404, 'MISSING_PROPERTY');
 
@@ -936,6 +992,7 @@ export async function getRepliesForProfile(profileUsername: string, repliesCurso
             success: true,
             data: {
                 replies: data.replies,
+                cursor: data.cursor ?? null,
                 end: data.end ?? true,
             },
         }
@@ -962,7 +1019,7 @@ export async function getRepliesForProfile(profileUsername: string, repliesCurso
     }
 };
 
-export async function getMediaForProfile(profileUsername: string, mediaCursor?: number): Promise<ApiResponse<{ media: BasePostDataType[], end: boolean }>> {
+export async function getMediaForProfile(profileUsername: string, mediaCursor?: number): Promise<ApiResponse<{ media: BasePostDataType[], cursor: number | null, end: boolean }>> {
     try {
         const token = await getCurrentUserToken();
 
@@ -979,8 +1036,7 @@ export async function getMediaForProfile(profileUsername: string, mediaCursor?: 
             throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const { data } = await response.json() as SuccessResponse<{ media: BasePostDataType[], end: boolean }>;
-        console.log(data)
+        const { data } = await response.json() as SuccessResponse<{ media: BasePostDataType[], cursor: number | null, end: boolean }>;
         if (data === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
         else if (data.media === undefined) throw new AppError('Media property is missing in data response', 404, 'MISSING_PROPERTY');
 
@@ -988,6 +1044,7 @@ export async function getMediaForProfile(profileUsername: string, mediaCursor?: 
             success: true,
             data: {
                 media: data.media,
+                cursor: data.cursor ?? null,
                 end: data.end ?? true,
             },
         }
@@ -1014,7 +1071,7 @@ export async function getMediaForProfile(profileUsername: string, mediaCursor?: 
     }
 };
 
-export async function getLikesForProfile(profileUsername: string, likesCursor?: number): Promise<ApiResponse<{ likes: BasePostDataType[], end: boolean }>> {
+export async function getLikesForProfile(profileUsername: string, likesCursor?: number): Promise<ApiResponse<{ likes: BasePostDataType[], cursor: number | null, end: boolean }>> {
     try {
         const token = await getCurrentUserToken();
         const payload = await decryptSession(token) as LoggedInUserJwtPayload;
@@ -1034,7 +1091,7 @@ export async function getLikesForProfile(profileUsername: string, likesCursor?: 
             throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const { data } = await response.json() as SuccessResponse<{ likes: BasePostDataType[], end: boolean }>;
+        const { data } = await response.json() as SuccessResponse<{ likes: BasePostDataType[], cursor: number | null, end: boolean }>;
         if (data === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
         else if (data.likes === undefined) throw new AppError('Likes property is missing in data response', 404, 'MISSING_PROPERTY');
 
@@ -1042,6 +1099,7 @@ export async function getLikesForProfile(profileUsername: string, likesCursor?: 
             success: true,
             data: {
                 likes: data.likes,
+                cursor: data.cursor ?? null,
                 end: data.end ?? true,
             },
         }

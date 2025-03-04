@@ -10,13 +10,31 @@ import VisitedPostTemplate from './templates/VisitedPostTemplate';
 import { BasePostDataType, VisitedPostDataType } from 'tweetly-shared';
 import { userInfoReducer, UserStateType } from '@/lib/userReducer';
 
-export default function VisitedPostInfo({ post, photoId }: { post: VisitedPostDataType, photoId?: number }) {
+export default function VisitedReplyInfo({ post, photoId }: { post: VisitedPostDataType, photoId?: number }) {
     const { suggestions: userFollowSuggestions } = useFollowSuggestionContext();
     const router = useRouter();
     const pathname = usePathname();
 
     // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    const userInitialState: UserStateType = {
+    // PARENT POST IS NOT NECESSARILY PROFILE USER'S OWN POST SO IT NEEDS NEW STATE IF THAT'S THE CASE
+    const parentInitialState: UserStateType = {
+        relationship: {
+            isFollowingViewer: post.replyTo!.author.relationship.isFollowingViewer,
+            hasBlockedViewer: post.replyTo!.author.relationship.hasBlockedViewer,
+            isFollowedByViewer: post.replyTo!.author.relationship.isFollowedByViewer,
+            isBlockedByViewer: post.replyTo!.author.relationship.isBlockedByViewer,
+            notificationsEnabled: post.replyTo!.author.relationship.notificationsEnabled,
+        },
+        stats: {
+            followersCount: post.replyTo!.author.stats.followersCount,
+            followingCount: post.replyTo!.author.stats.followingCount,
+            postsCount: post.replyTo!.author.stats.postsCount,
+        }
+    };
+    const [parentUserState, parentDispatch] = useReducer(userInfoReducer, parentInitialState);
+
+    // ORIGINAL POST
+    const replyInitialState: UserStateType = {
         relationship: {
             isFollowingViewer: post.author.relationship.isFollowingViewer,
             hasBlockedViewer: post.author.relationship.hasBlockedViewer,
@@ -29,7 +47,7 @@ export default function VisitedPostInfo({ post, photoId }: { post: VisitedPostDa
             postsCount: post.author.stats.postsCount,
         }
     };
-    const [userState, dispatch] = useReducer(userInfoReducer, userInitialState);
+    const [replyUserState, replyDispatch] = useReducer(userInfoReducer, replyInitialState);
 
     const postRef = useRef<HTMLDivElement>(null);
     const postDate = new Date(post.createdAt);
@@ -48,13 +66,27 @@ export default function VisitedPostInfo({ post, photoId }: { post: VisitedPostDa
     const [overlayCurrentImageIndex, setOverlayCurrentImageIndex] = useState<number | null>(null);
     const [isPostInfoVisible, setIsPostInfoVisible] = useState(true);
 
+    // For handling scroll on load
+    useEffect(() => {
+        isOverlayVisible
+            ? post.replyTo && scrollElementRef.current && overlayPostInfoRef.current && scrollElementRef.current.scrollTo(0, (overlayPostInfoRef.current.offsetTop - 50))
+            : post.replyTo && postRef.current && window.scrollTo(0, (postRef.current.offsetTop - 50));
+    }, [post.replyTo, isOverlayVisible]);
+
     // For syncing author's state if they appear in different places at the same time
     useEffect(() => {
-        const suggestedUser = userFollowSuggestions?.find((suggestedUser) => suggestedUser.username === post.author.username);
-        if (suggestedUser) {
-            dispatch({ type: suggestedUser.relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
+        const suggestedUsers = userFollowSuggestions?.filter((suggestedUser) => suggestedUser.username === post.replyTo?.author.username || suggestedUser.username === post.author.username);
+        if (suggestedUsers) {
+            suggestedUsers.forEach((user, index) => {
+                if (user.username === post.replyTo?.author.username) {
+                    parentDispatch({ type: suggestedUsers[index].relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
+                } else if (user.username === post.author.username) {
+                    replyDispatch({ type: suggestedUsers[index].relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
+                }
+            });
+
         }
-    }, [userFollowSuggestions, dispatch, post.author.username]);
+    }, [userFollowSuggestions, replyDispatch, post]);
 
     // photoId validity checkup
     useEffect(() => {
@@ -122,6 +154,16 @@ export default function VisitedPostInfo({ post, photoId }: { post: VisitedPostDa
     return (
         <>
             <div className='flex flex-col'>
+                <div onClick={(e) => handleCardClick(e, post.replyTo!.author.username, post.replyTo!.id)} className='profile-content-post'>
+                    <BasicPostTemplate
+                        post={post.replyTo as BasePostDataType}
+                        userState={parentUserState}
+                        dispatch={parentDispatch}
+                        openPhoto={openPhoto}
+                        type='parent'
+                    />
+                </div>
+
                 <VisitedPostTemplate
                     post={post}
                     postRef={postRef}
@@ -133,8 +175,8 @@ export default function VisitedPostInfo({ post, photoId }: { post: VisitedPostDa
                     setRepliesCursor={setRepliesCursor}
                     repliesEndReached={repliesEndReached}
                     setRepliesEndReached={setRepliesEndReached}
-                    userState={userState}
-                    dispatch={dispatch}
+                    userState={replyUserState}
+                    dispatch={replyDispatch}
                     openPhoto={openPhoto}
                 />
             </div>
@@ -196,24 +238,22 @@ export default function VisitedPostInfo({ post, photoId }: { post: VisitedPostDa
                         <div ref={scrollElementRef}
                             className={`bg-primary-foreground p-2 border-l-[1px] border-primary-border overflow-y-auto max-h-[100vh] ${!isPostInfoVisible ? 'translate-x-[100%]' : null}`} >
 
-                            {post.replyTo && (
-                                <div
-                                    className='px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'
-                                    role="link"
-                                    tabIndex={0}
-                                    aria-label={`View post by ${post.replyTo!.author.username} that was replied to`}
-                                    onMouseDown={(e) => handleCardClick(e, post.replyTo!.author.username, post.replyTo!.id)} >
+                            <div
+                                className='px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'
+                                role="link"
+                                tabIndex={0}
+                                aria-label={`View post by ${post.replyTo!.author.username} that was replied to`}
+                                onMouseDown={(e) => handleCardClick(e, post.replyTo!.author.username, post.replyTo!.id)} >
 
-                                    <BasicPostTemplate
-                                        post={post.replyTo}
-                                        userState={userState}
-                                        dispatch={dispatch}
-                                        openPhoto={openPhoto}
-                                        type='parent'
-                                    />
+                                <BasicPostTemplate
+                                    post={post.replyTo as BasePostDataType}
+                                    userState={parentUserState}
+                                    dispatch={parentDispatch}
+                                    openPhoto={openPhoto}
+                                    type='parent'
+                                />
 
-                                </div>
-                            )}
+                            </div>
 
                             <VisitedPostTemplate
                                 post={post}
@@ -227,11 +267,12 @@ export default function VisitedPostInfo({ post, photoId }: { post: VisitedPostDa
                                 setRepliesCursor={setRepliesCursor}
                                 repliesEndReached={repliesEndReached}
                                 setRepliesEndReached={setRepliesEndReached}
-                                userState={userState}
-                                dispatch={dispatch}
+                                userState={replyUserState}
+                                dispatch={replyDispatch}
                                 openPhoto={openPhoto}
                                 type='overlay'
                             />
+                            
                         </div>
                     </div>,
                     document.body // Append to <body>

@@ -44,3 +44,11 @@ export type ProfilePostOrRepostDataType = BasePostDataType & {
     type: 'POST' | 'REPOST',
     timeForSorting: number,
 };
+
+export type VisitedPostDataType = BasePostDataType & {
+    replies: {
+        posts: BasePostDataType[],
+        cursor: number | null,
+        end: boolean,
+    },
+};

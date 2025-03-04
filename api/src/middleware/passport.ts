@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { Strategy, ExtractJwt, StrategyOptions, VerifiedCallback } from 'passport-jwt';
 import { PassportStatic } from 'passport';
-import { UserProps } from '../lib/types';
+
 const prisma = new PrismaClient({
     omit: {
         user: {
@@ -22,7 +22,6 @@ const options: StrategyOptions = {
 
 const strategy = new Strategy(options, async (payload: { type: 'user' | 'temporary', id: number }, done: VerifiedCallback) => {
     try {
-        console.log(payload);
         if (payload.type === 'user') {
             const user = await prisma.user.findUnique({
                 where: {

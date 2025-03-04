@@ -245,9 +245,9 @@ export default function PostButtons({ post, setPostIsVisible }: PostButtonsProps
         ]
     );
 
+    // For syncing post's button's state if post was interacted with somewhere else (modal)
     useEffect(() => {
         const interactedPost = interactedPosts.get(post.id);
-        // Update interaction info if post id is inside the interactedPost map and data is stale
         if (interactedPost) {
             if (interactedPost.repostsCount !== repostsCounter) {
                 setReposted(interactedPost.repostsCount > repostsCounter ? true : false)

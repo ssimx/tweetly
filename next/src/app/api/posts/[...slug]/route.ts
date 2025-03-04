@@ -1,5 +1,6 @@
-import { extractToken, getUserSessionToken, removeSession, verifySession } from "@/lib/session";
+import { extractToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
+import { AppError, BasePostDataType, ErrorResponse, getErrorMessage, SuccessResponse, VisitedPostDataType } from 'tweetly-shared';
 
 export async function GET(
     req: NextRequest,
@@ -7,16 +8,15 @@ export async function GET(
 ) {
     if (req.method === 'GET') {
         const authHeader = req.headers.get('Authorization');
-        const token = await extractToken(authHeader) || await getUserSessionToken();
+        const token = await extractToken(authHeader);
         if (token) {
             const isValid = await verifySession(token);
-
             if (!isValid.isAuth) {
                 await removeSession();
-                return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 401 });
+                return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 400 });
             }
         } else {
-            return NextResponse.json({ error: 'Not logged in. Please log in first' }, { status: 401 })
+            return NextResponse.json({ message: 'Not logged in, please log in first' }, { status: 401 });
         }
 
         const params = await props.params;
@@ -33,20 +33,65 @@ export async function GET(
                 },
             });
 
-            if (response.ok) {
-                const post = await response.json();
-                return NextResponse.json(post);
-            } else {
-                const errorData = await response.json();
-                return NextResponse.json({ error: errorData.error }, { status: response.status });
+            if (!response.ok) {
+                const errorData = await response.json() as ErrorResponse;
+                throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
             }
-        } catch (error) {
-            return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-        }
+
+            const { data } = await response.json() as SuccessResponse<{ post: VisitedPostDataType }>;
+            if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+            else if (!data.post) throw new AppError('Post property is missing in data response', 404, 'MISSING_PROPERTY');
+
+            const successResponse: SuccessResponse<{ post: VisitedPostDataType }> = {
+                success: true,
+                data: {
+                    post: data.post,
+                }
+            };
+
+            return NextResponse.json(
+                successResponse,
+                { status: response.status }
+            );
+        } catch (error: unknown) {
+            if (error instanceof AppError) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        error: {
+                            message: error.message || 'Internal Server Error',
+                            code: error.code || 'INTERNAL_ERROR',
+                        },
+                    },
+                    { status: error.statusCode || 500 }
+                ) as NextResponse<ErrorResponse>;
+            }
+
+            // Handle other errors
+            const errorMessage = getErrorMessage(error);
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: {
+                        message: errorMessage,
+                        code: error instanceof Error ? error.name.toUpperCase().replaceAll(' ', '_') : 'INTERNAL_ERROR',
+                    }
+                }
+            ) as NextResponse<ErrorResponse>;
+        };
     } else {
-        NextResponse.json({ error: `Method ${req.method} Not Allowed` }, { status: 405 });
-    }
-};
+        return NextResponse.json(
+            {
+                success: false,
+                error: {
+                    message: `HTTP Method ${req.method} Not Allowed`,
+                    code: 'INVALID_HTTP_METHOD',
+                },
+            },
+            { status: 405 }
+        ) as NextResponse<ErrorResponse>;
+    };
+}
 
 export async function POST(
     req: NextRequest,
@@ -54,16 +99,15 @@ export async function POST(
 ) {
     if (req.method === 'POST') {
         const authHeader = req.headers.get('Authorization');
-        const token = await extractToken(authHeader) || await getUserSessionToken();
+        const token = await extractToken(authHeader);
         if (token) {
             const isValid = await verifySession(token);
-
             if (!isValid.isAuth) {
                 await removeSession();
-                return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 401 });
+                return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 400 });
             }
         } else {
-            return NextResponse.json({ error: 'Not logged in. Please log in first' }, { status: 401 })
+            return NextResponse.json({ message: 'Not logged in, please log in first' }, { status: 401 });
         }
 
         const params = await props.params;
@@ -80,18 +124,58 @@ export async function POST(
                 },
             });
 
-            if (response.ok) {
-                return NextResponse.json({ message: 'Success' }, { status: 200 });
-            } else {
-                const errorData = await response.json();
-                return NextResponse.json({ error: errorData.error }, { status: response.status });
+            if (!response.ok) {
+                const errorData = await response.json() as ErrorResponse;
+                throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
             }
-        } catch (error) {
-            return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-        }
+
+            const successResponse: SuccessResponse<undefined> = {
+                success: true,
+                data: undefined
+            };
+
+            return NextResponse.json(
+                successResponse,
+                { status: response.status }
+            );
+        } catch (error: unknown) {
+            if (error instanceof AppError) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        error: {
+                            message: error.message || 'Internal Server Error',
+                            code: error.code || 'INTERNAL_ERROR',
+                        },
+                    },
+                    { status: error.statusCode || 500 }
+                ) as NextResponse<ErrorResponse>;
+            }
+
+            // Handle other errors
+            const errorMessage = getErrorMessage(error);
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: {
+                        message: errorMessage,
+                        code: error instanceof Error ? error.name.toUpperCase().replaceAll(' ', '_') : 'INTERNAL_ERROR',
+                    }
+                }
+            ) as NextResponse<ErrorResponse>;
+        };
     } else {
-        NextResponse.json({ error: `Method ${req.method} Not Allowed` }, { status: 405 });
-    }
+        return NextResponse.json(
+            {
+                success: false,
+                error: {
+                    message: `HTTP Method ${req.method} Not Allowed`,
+                    code: 'INVALID_HTTP_METHOD',
+                },
+            },
+            { status: 405 }
+        ) as NextResponse<ErrorResponse>;
+    };
 }
 
 export async function DELETE(
@@ -101,16 +185,15 @@ export async function DELETE(
     const params = await props.params;
     if (req.method === 'DELETE') {
         const authHeader = req.headers.get('Authorization');
-        const token = await extractToken(authHeader) || await getUserSessionToken();
+        const token = await extractToken(authHeader);
         if (token) {
             const isValid = await verifySession(token);
-
             if (!isValid.isAuth) {
                 await removeSession();
-                return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 401 });
+                return NextResponse.json({ message: 'Invalid session. Please re-log' }, { status: 400 });
             }
         } else {
-            return NextResponse.json({ error: 'Not logged in. Please log in first' }, { status: 401 })
+            return NextResponse.json({ message: 'Not logged in, please log in first' }, { status: 401 });
         }
 
         const action = params.slug[0];
@@ -126,16 +209,56 @@ export async function DELETE(
                 },
             });
 
-            if (response.ok) {
-                return NextResponse.json({ message: 'Success' }, { status: 200 });
-            } else {
-                const errorData = await response.json();
-                return NextResponse.json({ error: errorData.error }, { status: response.status });
+            if (!response.ok) {
+                const errorData = await response.json() as ErrorResponse;
+                throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
             }
-        } catch (error) {
-            return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-        }
+
+            const successResponse: SuccessResponse<undefined> = {
+                success: true,
+                data: undefined
+            };
+
+            return NextResponse.json(
+                successResponse,
+                { status: response.status }
+            );
+        } catch (error: unknown) {
+            if (error instanceof AppError) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        error: {
+                            message: error.message || 'Internal Server Error',
+                            code: error.code || 'INTERNAL_ERROR',
+                        },
+                    },
+                    { status: error.statusCode || 500 }
+                ) as NextResponse<ErrorResponse>;
+            }
+
+            // Handle other errors
+            const errorMessage = getErrorMessage(error);
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: {
+                        message: errorMessage,
+                        code: error instanceof Error ? error.name.toUpperCase().replaceAll(' ', '_') : 'INTERNAL_ERROR',
+                    }
+                }
+            ) as NextResponse<ErrorResponse>;
+        };
     } else {
-        NextResponse.json({ error: `Method ${req.method} Not Allowed` }, { status: 405 });
-    }
+        return NextResponse.json(
+            {
+                success: false,
+                error: {
+                    message: `HTTP Method ${req.method} Not Allowed`,
+                    code: 'INVALID_HTTP_METHOD',
+                },
+            },
+            { status: 405 }
+        ) as NextResponse<ErrorResponse>;
+    };
 }
