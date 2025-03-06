@@ -1,13 +1,12 @@
 import { verifySession, extractToken, removeSession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
-import { getErrorMessage, AppError, ErrorResponse, SuccessResponse, temporaryUserUsernameSchema } from 'tweetly-shared';
+import { getErrorMessage, AppError, ErrorResponse, SuccessResponse, temporaryUserUsernameSchema, isZodError } from 'tweetly-shared';
 
 export async function PATCH(req: NextRequest) {
     if (req.method === 'PATCH') {
         try {
             const authHeader = req.headers.get('Authorization');
             const token = await extractToken(authHeader);
-
             if (token) {
                 const isValid = await verifySession(token);
 
@@ -50,7 +49,20 @@ export async function PATCH(req: NextRequest) {
                 { status: response.status }
             );
         } catch (error: unknown) {
-            if (error instanceof AppError) {
+            // Handle validation errors
+            if (isZodError(error)) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        error: {
+                            message: 'Validation failed',
+                            code: 'VALIDATION_FAILED',
+                            details: error.issues,
+                        },
+                    },
+                    { status: 403 }
+                ) as NextResponse<ErrorResponse>;
+            } else if (error instanceof AppError) {
                 return NextResponse.json(
                     {
                         success: false,

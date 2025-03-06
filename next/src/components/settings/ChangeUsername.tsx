@@ -1,7 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react'
 import SettingsHeaderInfo from './SettingsHeaderInfo'
-import { searchUsernameSchema, settingsChangeUsername } from '@/lib/schemas';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -10,15 +9,14 @@ import { Button } from '../ui/button';
 import { Loader2 } from 'lucide-react';
 import { useUserContext } from '@/context/UserContextProvider';
 import { changeUsername, checkIfUsernameIsAvailable } from '@/actions/actions';
-import { getErrorMessage } from 'tweetly-shared';
-
-type FormData = z.infer<typeof settingsChangeUsername>;
+import { AppError, getErrorMessage, isZodError, SuccessResponse, usernameSchema, userUpdateUsernameSchema, UserUpdateUsernameType } from 'tweetly-shared';
 
 export default function ChangeUsername() {
     const { loggedInUser, refetchUserData } = useUserContext();
-    const [newUsername, setNewUsername] = useState<string | null>(null);
-    const [isValidating, setIsValidating] = useState(true);
-    const [newUsernameAvailable, setNewUsernameAvailable] = useState(false);
+    const [isValidating, setIsValidating] = useState(false);
+    const [validatedUsername, setValidatedUsername] = useState<string | null>(null);
+    const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(null);
+    const [usernameChanged, setUsernameChanged] = useState(false);
     const [customError, setCustomError] = useState<string | null>(null);
 
     const {
@@ -27,91 +25,105 @@ export default function ChangeUsername() {
         reset,
         formState: { errors, isSubmitting },
         setError,
-        clearErrors,
         watch,
-    } = useForm<FormData>({
-        resolver: zodResolver(settingsChangeUsername),
+    } = useForm<UserUpdateUsernameType>({
+        resolver: zodResolver(userUpdateUsernameSchema),
         defaultValues: { newUsername: loggedInUser.username }
     });
 
-    const usernameText = watch("newUsername"); // Watch for changes to the username field
+    const usernameWatch = watch("newUsername");
 
     // check for new username availability
     useEffect(() => {
-        setIsValidating(true);
-        if (isSubmitting) return;
-        else if (!usernameText) return;
-        else if (usernameText === loggedInUser.username) {
-            clearErrors("newUsername");
-            return;
-        } else if (newUsername === usernameText) {
-            return;
-        }
+        if (isSubmitting || isValidating) return;
 
-        // reset states after text field has been changed
-        setNewUsername(null);
+        const trimmedUsername = usernameWatch.trim();
+        if (trimmedUsername === validatedUsername) return;
+
+        setIsUsernameAvailable(null);
+        setUsernameChanged(false);
         setCustomError(null);
 
-        const timeout = setTimeout(async () => {
-
+        const timeoutId = setTimeout(async () => {
             try {
-                // Decode query before validation
-                const decodedSearch = decodeURIComponent(usernameText);
-                searchUsernameSchema.parse({ q: decodedSearch });
+                usernameSchema.parse({ username: trimmedUsername });
+                setValidatedUsername(trimmedUsername);
 
-                // Encode query for API requests
-                const encodedSearch = encodeURIComponent(decodedSearch);
+                const encodedSearch = encodeURIComponent(trimmedUsername);
 
-                const usernameAvailable = await checkIfUsernameIsAvailable({ username: encodedSearch });
+                setIsValidating(true);
+                const response = await checkIfUsernameIsAvailable({ username: encodedSearch });
+                setValidatedUsername(usernameWatch);
 
-                if (usernameAvailable !== true) {
-                    setNewUsernameAvailable(false);
-                    setError("newUsername", { type: "manual", message: 'That username has been taken. Please choose another.' });
-                } else {
-                    clearErrors("newUsername");
-                    setIsValidating(false);
-                    setNewUsernameAvailable(true);
+                if (!response.success) {
+                    if (response.error.details) throw new z.ZodError(response.error.details);
+                    else throw new Error(response.error.message);
                 }
-            } catch (error) {
-                console.error("Fetch error:", error);
+
+                const { data } = response as SuccessResponse<{ available: boolean }>;
+                if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+                else if (data.available === undefined) throw new AppError('Available property is missing in data response', 404, 'MISSING_PROPERTY');
+
+                setIsUsernameAvailable(data.available);
+            } catch (error: unknown) {
+                if (isZodError(error)) {
+                    error.issues.forEach((detail) => {
+                        if (detail.path && detail.message) {
+                            setError(detail.path[0] as keyof UserUpdateUsernameType, {
+                                type: 'manual',
+                                message: detail.message
+                            });
+                        }
+                    });
+                } else {
+                    const errorMessage = getErrorMessage(error);
+                    console.error('Error:', errorMessage);
+                    setCustomError(errorMessage ?? 'Something went wrong, refresh the page or remove cookies. If problem persists, contact the support');
+                    reset();
+                }
+            } finally {
+                setIsValidating(false);
             }
         }, 500);
 
         return (() => {
-            clearTimeout(timeout);
-            setIsValidating(false);
+            clearTimeout(timeoutId);
         });
-    }, [usernameText, newUsername, setError, clearErrors, loggedInUser.username, isSubmitting]);
+    }, [isSubmitting, isValidating, usernameWatch, validatedUsername, reset, setCustomError, setError]);
 
-    const onSubmit = async (data: FormData) => {
+    const onSubmit = async (formData: UserUpdateUsernameType) => {
         if (isSubmitting || isValidating) return;
+        setCustomError(null);
 
         try {
-            const response = await changeUsername(data);
+            const response = await changeUsername(formData);
 
-            if (response !== true) {
-                throw new Error(response);
+            if (!response.success) {
+                if (response.error.details) throw new z.ZodError(response.error.details);
+                else if (response.error.code === 'USERNAME_TAKEN') {
+                    setCustomError('Username is already taken');
+                    return;
+                }
+                else throw new Error(response.error.message);
             }
 
-            setCustomError(null);
-            setNewUsername(data.newUsername);
-            setNewUsernameAvailable(false);
-            await refetchUserData();
-        } catch (error) {
-            const errorMessage = getErrorMessage(error);
-            console.error(errorMessage);
-
-            if (errorMessage === 'That username has been taken. Please choose another.') {
-                setError("newUsername", { type: "manual", message: errorMessage });
-            } else if (errorMessage === "New username must be different than the current one.") {
-                setError("newUsername", { type: "manual", message: errorMessage });
+            setIsUsernameAvailable(null);
+            setUsernameChanged(true);
+            refetchUserData();
+        } catch (error: unknown) {
+            if (isZodError(error)) {
+                error.issues.forEach((detail) => {
+                    if (detail.path && detail.message) {
+                        setError(detail.path[0] as keyof UserUpdateUsernameType, {
+                            type: 'manual',
+                            message: detail.message
+                        });
+                    }
+                });
             } else {
-                setCustomError(getErrorMessage(error));
+                const errorMessage = getErrorMessage(error);
+                setCustomError(`${errorMessage ?? 'Something went wrong'}, refresh the page or remove cookies. If problem persists, contact the support`);
             }
-
-            setNewUsername(null);
-            setNewUsernameAvailable(false);
-            reset();
         }
     };
 
@@ -125,6 +137,7 @@ export default function ChangeUsername() {
                     <Input
                         {...register("newUsername")}
                         type="text" placeholder="Username"
+                        maxLength={15}
                     />
                     {errors.newUsername && (
                         <p className="error-msg">{`${errors.newUsername.message}`}</p>
@@ -134,21 +147,24 @@ export default function ChangeUsername() {
                         <div className='error-msg'>{customError}</div>
                     )}
 
-                    {newUsernameAvailable && (
+                    {customError === null && isUsernameAvailable && (
                         <p className="error-msg !text-green-400">{`Username is available`}</p>
                     )}
 
-                    {newUsername !== null && (
-                        <div className='error-msg !text-green-400'>Username successfully changed</div>
+                    {customError === null && isUsernameAvailable === false && loggedInUser.username !== usernameWatch && (
+                        <p className="error-msg !text-red-500">{`Username is not available`}</p>
                     )}
 
+                    {customError === null && usernameChanged && (
+                        <div className='error-msg !text-green-400'>Username successfully changed</div>
+                    )}
 
                     {isSubmitting
                         ? <Button disabled>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Saving
                         </Button>
-                        : <Button disabled={isSubmitting || isValidating && true} className='bg-primary font-bold'>Save</Button>
+                        : <Button disabled={!isUsernameAvailable || loggedInUser.username.toLowerCase() === usernameWatch.toLowerCase()} className='bg-primary font-bold'>Save</Button>
                     }
                 </form>
             </div>

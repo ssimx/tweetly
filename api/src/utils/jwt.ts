@@ -6,9 +6,9 @@ import jwt from 'jsonwebtoken';
 const SECRET_KEY = process.env.JWT_SECRET || 'tweetly';
 
 // generate a session token
-export const generateUserSessionToken = (payload: LoggedInUserJwtPayload ): string => {
+export const generateUserSessionToken = (payload: LoggedInUserJwtPayload): string => {
     return jwt.sign({
-        type: payload.type,
+        type: 'user',
         id: payload.id,
         email: payload.email,
         username: payload.username,
@@ -20,7 +20,7 @@ export const generateUserSessionToken = (payload: LoggedInUserJwtPayload ): stri
 // generate a temporary user token
 export const generateTemporaryUserToken = (payload: TemporaryUserJwtPayload): string => {
     return jwt.sign({
-        type: payload.type,
+        type: 'temporary',
         id: payload.id,
         email: payload.email,
     }, SECRET_KEY, {
@@ -29,9 +29,12 @@ export const generateTemporaryUserToken = (payload: TemporaryUserJwtPayload): st
 };
 
 // generate a settings token
-export const generateSettingsToken = (user: UserTokenProps): string => {
+export const generateUserSettingsToken = (payload: LoggedInUserJwtPayload): string => {
     return jwt.sign({
-        id: user.id,
+        type: 'settings',
+        id: payload.id,
+        email: payload.email,
+        username: payload.username,
     }, SECRET_KEY, {
         expiresIn: '15m',
     });

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AppError, ErrorResponse, FormLogInUserDataType, getErrorMessage, logInUserSchema, SuccessResponse } from 'tweetly-shared';
+import { AppError, ErrorResponse, FormLogInUserDataType, getErrorMessage, isZodError, logInUserSchema, SuccessResponse } from 'tweetly-shared';
 
 export async function POST(req: NextRequest) {
     if (req.method === 'POST') {
@@ -38,7 +38,20 @@ export async function POST(req: NextRequest) {
                 }
             }) as NextResponse<SuccessResponse<{ token: string }>>
         } catch (error: unknown) {
-            if (error instanceof AppError) {
+            // Handle validation errors
+            if (isZodError(error)) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        error: {
+                            message: 'Validation failed',
+                            code: 'VALIDATION_FAILED',
+                            details: error.issues,
+                        },
+                    },
+                    { status: 403 }
+                ) as NextResponse<ErrorResponse>;
+            } else if (error instanceof AppError) {
                 return NextResponse.json(
                     {
                         success: false,

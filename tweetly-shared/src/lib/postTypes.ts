@@ -3,7 +3,7 @@ import { newPostDataSchema } from '../schemas/postSchemas';
 import { UserDataType } from './userTypes';
 
 // Type for new post data
-export type NewPostDataType = z.infer<typeof newPostDataSchema>;
+export type FormNewPostDataType = z.infer<typeof newPostDataSchema>;
 
 // Type for relationship between post and logged in user
 export type PostAndViewerRelationshipDataType = {

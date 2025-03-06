@@ -1,6 +1,6 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { ProfileInfo } from '../lib/types';
-import { AppError } from 'tweetly-shared';
+import { AppError, getErrorMessage } from 'tweetly-shared';
 const prisma = new PrismaClient();
 
 // ---------------------------------------------------------------------------------------------------------
@@ -56,33 +56,55 @@ export const getUserPassword = async (id: number) => {
 // ---------------------------------------------------------------------------------------------------------
 
 export const updateUserUsername = async (id: number, newUsername: string) => {
-    return await prisma.user.update({
-        where: { id },
-        data: {
-            username: newUsername,
-        },
-        select: {
-            id: true,
-            username: true,
-            email: true,
+    try {
+        return await prisma.user.update({
+            where: { id },
+            data: {
+                username: newUsername,
+            },
+            select: {
+                id: true,
+                username: true,
+                email: true,
+            }
+        });
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === 'P2002') {
+                // Unique constraint violation (e.g. username or email already exists)
+                return { error: 'Unique constraint violation', fields: (error.meta?.target as string[]) ?? [] };
+            }
         }
-    });
+
+        return { error: getErrorMessage(error), fields: [] };
+    }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
 export const updateUserEmail = async (id: number, newEmail: string) => {
-    return await prisma.user.update({
-        where: { id },
-        data: {
-            email: newEmail,
-        },
-        select: {
-            id: true,
-            username: true,
-            email: true,
+    try {
+        return await prisma.user.update({
+            where: { id },
+            data: {
+                email: newEmail,
+            },
+            select: {
+                id: true,
+                username: true,
+                email: true,
+            }
+        });
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === 'P2002') {
+                // Unique constraint violation (e.g. username or email already exists)
+                return { error: 'Unique constraint violation', fields: (error.meta?.target as string[]) ?? [] };
+            }
         }
-    });
+
+        return { error: getErrorMessage(error), fields: [] };
+    }
 };
 
 // ---------------------------------------------------------------------------------------------------------

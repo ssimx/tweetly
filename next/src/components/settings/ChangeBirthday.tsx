@@ -1,8 +1,6 @@
 'use client';
 import React, { useState } from 'react'
 import SettingsHeaderInfo from './SettingsHeaderInfo'
-import { settingsChangeBirthday } from '@/lib/schemas';
-import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Button } from '../ui/button';
@@ -10,9 +8,8 @@ import { Loader2 } from 'lucide-react';
 import { useUserContext } from '@/context/UserContextProvider';
 import { DateOfBirthSelect } from '../forms/DateOfBirthSelect';
 import { changeBirthday } from '@/actions/actions';
-import { getErrorMessage } from 'tweetly-shared';
-
-type FormData = z.infer<typeof settingsChangeBirthday>;
+import { getErrorMessage, isZodError, userUpdateBirthdaySchema, UserUpdateBirthdayType } from 'tweetly-shared';
+import { z } from 'zod';
 
 export default function ChangeBirthday() {
     const { loggedInUser, refetchUserData } = useUserContext();
@@ -22,18 +19,17 @@ export default function ChangeBirthday() {
     const {
         register,
         handleSubmit,
-        reset,
         formState: { errors, isSubmitting },
         setValue,
-        setError,
         getValues,
         watch,
-    } = useForm<FormData>({
-        resolver: zodResolver(settingsChangeBirthday),
+        setError
+    } = useForm<UserUpdateBirthdayType>({
+        resolver: zodResolver(userUpdateBirthdaySchema),
         defaultValues: {
-            year: String(new Date(loggedInUser.dateOfBirth).getFullYear()),
-            month: String(new Date(loggedInUser.dateOfBirth).getMonth() + 1),
-            day: String(new Date(loggedInUser.dateOfBirth).getDate()),
+            year: new Date(loggedInUser.dateOfBirth).getFullYear(),
+            month: new Date(loggedInUser.dateOfBirth).getMonth() + 1,
+            day: new Date(loggedInUser.dateOfBirth).getDate(),
         }
     });
 
@@ -41,24 +37,35 @@ export default function ChangeBirthday() {
     const currentMonth = watch('month');
     const currentDay = watch('day');
 
-    const onSubmit = async (data: FormData) => {
+    const onSubmit = async (formData: UserUpdateBirthdayType) => {
         if (isSubmitting) return;
+        setCustomError(null);
+        setBirthdayChanged(false);
 
         try {
-            const response = await changeBirthday(data);
-
-            if (response !== true) {
-                throw new Error(response);
+            const response = await changeBirthday(formData);
+            if (!response.success) {
+                if (response.error.details) throw new z.ZodError(response.error.details);
+                else throw new Error(response.error.message);
             }
 
-            setCustomError(null);
             setBirthdayChanged(true);
-            await refetchUserData();
-        } catch (error) {
-            const errorMessage = getErrorMessage(error);
-            console.error(errorMessage);
-            setCustomError(errorMessage);
-            reset();
+            refetchUserData();
+        } catch (error: unknown) {
+            if (isZodError(error)) {
+                error.issues.forEach((detail) => {
+                    if (detail.path && detail.message) {
+                        setError(detail.path[0] as keyof UserUpdateBirthdayType, {
+                            type: 'manual',
+                            message: detail.message
+                        });
+                    }
+                });
+            } else {
+                const errorMessage = getErrorMessage(error);
+                setCustomError(`${errorMessage ?? 'Something went wrong'}, refresh the page or remove cookies. If problem persists, contact the support`);
+            }
+
         }
     };
 
@@ -75,7 +82,7 @@ export default function ChangeBirthday() {
                         <p className="error-msg-date">{customError}</p>
                     )}
 
-                    {birthdayChanged && (
+                    {customError === null && birthdayChanged && (
                         <div className='text-green-400 text-14'>Birthday successfully changed</div>
                     )}
 
@@ -86,9 +93,9 @@ export default function ChangeBirthday() {
                         </Button>
                         : <Button className='bg-primary font-bold'
                             disabled={
-                                (String(new Date(loggedInUser.dateOfBirth).getFullYear()) === currentYear)
-                                && (String(new Date(loggedInUser.dateOfBirth).getMonth() + 1) === currentMonth)
-                                && (String(new Date(loggedInUser.dateOfBirth).getDate()) === currentDay)
+                                new Date(loggedInUser.dateOfBirth).getFullYear() === currentYear
+                                && new Date(loggedInUser.dateOfBirth).getMonth() + 1 === currentMonth
+                                && new Date(loggedInUser.dateOfBirth).getDate() === currentDay
                             }>Save</Button>
                     }
                 </form>

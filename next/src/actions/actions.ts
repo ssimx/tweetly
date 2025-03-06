@@ -8,7 +8,7 @@ import {
     AppError,
     ErrorResponse,
     newPostDataSchema,
-    NewPostDataType,
+    FormNewPostDataType,
     SuccessfulRegisterResponseType,
     SuccessResponse,
     userSettingsAccessSchema,
@@ -35,6 +35,7 @@ import {
     FormLogInUserDataType,
     usernameSchema,
     usernameOrEmailAvailibilitySchema,
+    BasePostDataType,
 } from 'tweetly-shared';
 
 // ---------------------------------------------------------------------------------------------------------
@@ -68,7 +69,7 @@ export async function registerTemporaryUser(
 
         const { data } = await response.json() as SuccessResponse<SuccessfulRegisterResponseType>;
         if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
-        else if (!data.token) throw new AppError('JWT is missing in data response', 404, 'MISSING_JWT');
+        else if (data.token === undefined) throw new AppError('JWT is missing in data response', 404, 'MISSING_JWT');
 
         await createTemporarySession(data.token);
 
@@ -76,7 +77,6 @@ export async function registerTemporaryUser(
             success: true,
         }
     } catch (error: unknown) {
-
         // Handle validation errors
         if (isZodError(error)) {
             return {
@@ -141,8 +141,7 @@ export async function updateTemporaryUserUsername(
             success: true,
             data: undefined,
         }
-    } catch (error) {
-
+    } catch (error: unknown) {
         // Handle validation errors
         if (isZodError(error)) {
             return {
@@ -211,7 +210,7 @@ export async function updateTemporaryUserProfilePicture(
 
         const { data } = await response.json() as SuccessResponse<{ token: string }>;
         if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
-        else if (!data.token) throw new AppError('JWT is missing in data response', 404, 'MISSING_JWT');
+        else if (data.token === undefined) throw new AppError('JWT is missing in data response', 404, 'MISSING_JWT');
 
         console.log(data.token)
         await removeTemporarySession();
@@ -221,8 +220,7 @@ export async function updateTemporaryUserProfilePicture(
             success: true,
             data: undefined,
         }
-    } catch (error) {
-
+    } catch (error: unknown) {
         // Handle validation errors
         if (isZodError(error)) {
             return {
@@ -281,7 +279,7 @@ export async function loginUser(
 
         const { data } = await response.json() as SuccessResponse<{ token: string }>;
         if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
-        else if (!data.token) throw new AppError('JWT is missing in data response', 404, 'MISSING_JWT');
+        else if (data.token === undefined) throw new AppError('JWT is missing in data response', 404, 'MISSING_JWT');
 
         const payload = await decryptSession(data.token);
         if (!payload) {
@@ -608,31 +606,84 @@ export async function disableNotificationsForUser(username: string): Promise<Api
     }
 };
 
-export async function createPost(data: unknown) {
-    const token = await getCurrentUserToken();
-
+export async function createPost(formData: FormNewPostDataType): Promise<ApiResponse<{ post: BasePostDataType }>> {
     try {
-        const validatedData = newPostDataSchema.parse(data);
-        const response = await fetch('http://localhost:3000/api/posts/create', {
+        const token = await getCurrentUserToken();
+        newPostDataSchema.parse(formData);
+
+        const newFormData = new FormData();
+
+        if (formData.text) {
+            newFormData.append('text', String(formData.text));
+        }
+
+        if (Array.isArray(formData.images)) {
+            formData.images.forEach((file) => {
+                newFormData.append(`images`, file);
+            });
+        } else if (formData.images) {
+            newFormData.append('image', formData.images); // Single file case
+        }
+
+        if (formData.replyToId) {
+            newFormData.append('replyToId', String(formData.replyToId));
+        }
+
+        console.log()
+
+        const response = await fetch(`http://localhost:3000/api/posts/create`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
             },
-            body: JSON.stringify(validatedData),
+            body: newFormData
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw errorData;
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const postData = await response.json() as NewPostDataType;
-        return postData;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        redirect(`http://localhost:3000/`);
+        const { data } = await response.json() as SuccessResponse<{ post: BasePostDataType }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (!data.post) throw new AppError('Post is missing in data response', 404, 'MISSING_POST');
+
+        return {
+            success: true,
+            data: {
+                post: data.post,
+            }
+        }
+    } catch (error: unknown) {
+        // Handle validation errors
+        if (isZodError(error)) {
+            return {
+                success: false,
+                error: {
+                    message: 'Validation failed',
+                    code: 'VALIDATION_FAILED',
+                    details: error.issues,
+                }
+            } as ErrorResponse;
+        } else if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
@@ -795,7 +846,7 @@ export async function hardRedirect(uri: string) {
 //                                             ACCOUNT ACTIONS
 // ---------------------------------------------------------------------------------------------------------
 
-export async function verifyLoginPasswordForSettings(data: UserSettingsAccessType) {
+export async function verifyLoginPasswordForSettings(formData: UserSettingsAccessType): Promise<ApiResponse<undefined>> {
     const sessionToken = await getCurrentUserToken();
 
     try {
@@ -804,7 +855,8 @@ export async function verifyLoginPasswordForSettings(data: UserSettingsAccessTyp
             throw new Error('User already has valid token');
         }
 
-        const validatedData = userSettingsAccessSchema.parse(data);
+        const validatedData = userSettingsAccessSchema.parse(formData);
+
         const response = await fetch('http://localhost:3000/api/auth/settings', {
             method: 'POST',
             headers: {
@@ -815,23 +867,50 @@ export async function verifyLoginPasswordForSettings(data: UserSettingsAccessTyp
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const settingsToken = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'token' in res) {
-                return res.token as string;
-            }
-            throw new Error('Invalid response format');
-        });
+        const { data } = await response.json() as SuccessResponse<{ token: string }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.token === undefined) throw new AppError('JWT is missing in data response', 404, 'MISSING_JWT');
 
-        await createSettingsSession(settingsToken);
+        await createSettingsSession(data.token);
 
-        return true;
-    } catch (error) {
-        console.log(error)
-        return getErrorMessage(error);
+        return {
+            success: true,
+            data: undefined
+        }
+    } catch (error: unknown) {
+        // Handle validation errors
+        if (isZodError(error)) {
+            return {
+                success: false,
+                error: {
+                    message: 'Validation failed',
+                    code: 'VALIDATION_FAILED',
+                    details: error.issues,
+                }
+            } as ErrorResponse;
+        } else if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
@@ -894,16 +973,16 @@ export async function checkIfUsernameIsAvailable(formData: { username: string })
     }
 };
 
-export async function changeUsername(data: UserUpdateUsernameType) {
+export async function changeUsername(formData: UserUpdateUsernameType): Promise<ApiResponse<undefined>> {
     const sessionToken = await getCurrentUserToken();
     const settingsToken = await verifyCurrentUserSettingsToken();
 
     try {
         if (!settingsToken) {
-            throw new Error('Invalid settings token');
+            throw new AppError('Invalid settings token', 401, 'UNAUTHORIZED');
         }
 
-        const validatedData = userUpdateUsernameSchema.parse(data);
+        const validatedData = userUpdateUsernameSchema.parse(formData);
 
         const response = await fetch(`http://localhost:3000/api/users/username`, {
             method: 'PATCH',
@@ -916,60 +995,56 @@ export async function changeUsername(data: UserUpdateUsernameType) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const newSessionToken = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'token' in res) {
-                return res.token as string
-            }
-            throw new Error('Invalid response format');
-        });
+        const { data } = await response.json() as SuccessResponse<{ accessToken: string, settingsToken: string }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.accessToken === undefined) throw new AppError('Session JWT is missing in data response', 404, 'MISSING_JWT');
+        else if (data.settingsToken === undefined) throw new AppError('Settings JWT is missing in data response', 404, 'MISSING_JWT');
 
-
-
-        // don't need to update settings token because it's saving only user ID
-        await updateSessionToken(newSessionToken);
+        await updateSessionToken(data.accessToken);
+        await createSettingsSession(data.settingsToken);
         revalidateTag("loggedInUser");
 
-        return true;
-    } catch (error) {
-        console.log(error)
-        return getErrorMessage(error);
-    }
-};
-
-export async function checkIfEmailIsAvailable(formData: { email: string }) {
-    try {
-        // Decode and validate type and data
-        const decodedData = decodeURIComponent(formData.email);
-        usernameOrEmailAvailibilitySchema.parse({ type: 'email', data: decodedData });
-
-        // Encode query for backend API call
-        const encodedData = encodeURIComponent(decodedData);
-
-        const response = await fetch(`http://localhost:3000/api/search/user?type=email&data=${encodedData}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+        return {
+            success: true,
+        }
+    } catch (error: unknown) {
+        // Handle validation errors
+        if (isZodError(error)) {
+            return {
+                success: false,
+                error: {
+                    message: 'Validation failed',
+                    code: 'VALIDATION_FAILED',
+                    details: error.issues,
+                }
+            } as ErrorResponse;
+        } else if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
         }
 
-        const available = await response.json() as boolean;
-        return available;
-    } catch (error) {
-        console.log(error)
-        return getErrorMessage(error);
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function changeEmail(data: UserUpdateEmailType) {
+export async function changeEmail(formData: UserUpdateEmailType): Promise<ApiResponse<undefined>> {
     const sessionToken = await getCurrentUserToken();
     const settingsToken = await verifyCurrentUserSettingsToken();
 
@@ -978,7 +1053,7 @@ export async function changeEmail(data: UserUpdateEmailType) {
             throw new Error('Invalid settings token');
         }
 
-        const validatedData = userUpdateEmailSchema.parse(data);
+        const validatedData = userUpdateEmailSchema.parse(formData);
 
         const response = await fetch(`http://localhost:3000/api/users/email`, {
             method: 'PATCH',
@@ -991,31 +1066,56 @@ export async function changeEmail(data: UserUpdateEmailType) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const newSessionToken = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'token' in res) {
-                return res.token as string
-            }
-            throw new Error('Invalid response format');
-        });
+        const { data } = await response.json() as SuccessResponse<{ accessToken: string, settingsToken: string }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.accessToken === undefined) throw new AppError('Session JWT is missing in data response', 404, 'MISSING_JWT');
+        else if (data.settingsToken === undefined) throw new AppError('Settings JWT is missing in data response', 404, 'MISSING_JWT');
 
-
-
-        // don't need to update settings token because it's saving only user ID
-        await updateSessionToken(newSessionToken);
+        await updateSessionToken(data.accessToken);
+        await createSettingsSession(data.settingsToken);
         revalidateTag("loggedInUser");
 
-        return true;
-    } catch (error) {
-        console.log(error)
-        return getErrorMessage(error);
+        return {
+            success: true,
+        }
+    } catch (error: unknown) {
+        // Handle validation errors
+        if (isZodError(error)) {
+            return {
+                success: false,
+                error: {
+                    message: 'Validation failed',
+                    code: 'VALIDATION_FAILED',
+                    details: error.issues,
+                }
+            } as ErrorResponse;
+        } else if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function changeBirthday(data: UserUpdateBirthdayType) {
+export async function changeBirthday(formData: UserUpdateBirthdayType): Promise<ApiResponse<undefined>> {
     const sessionToken = await getCurrentUserToken();
     const settingsToken = await verifyCurrentUserSettingsToken();
 
@@ -1024,7 +1124,7 @@ export async function changeBirthday(data: UserUpdateBirthdayType) {
             throw new Error('Invalid settings token');
         }
 
-        const validatedData = userUpdateBirthdaySchema.parse(data);
+        const validatedData = userUpdateBirthdaySchema.parse(formData);
 
         const response = await fetch(`http://localhost:3000/api/users/birthday`, {
             method: 'PATCH',
@@ -1037,30 +1137,59 @@ export async function changeBirthday(data: UserUpdateBirthdayType) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
+        await response.json() as SuccessResponse<undefined>;
         revalidateTag("loggedInUser");
 
-        return true;
-    } catch (error) {
-        console.log(error)
-        return getErrorMessage(error);
+        return {
+            success: true,
+        }
+    } catch (error: unknown) {
+        // Handle validation errors
+        if (isZodError(error)) {
+            return {
+                success: false,
+                error: {
+                    message: 'Validation failed',
+                    code: 'VALIDATION_FAILED',
+                    details: error.issues,
+                }
+            } as ErrorResponse;
+        } else if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function changePassword(data: UserUpdatePasswordType) {
+export async function changePassword(formData: UserUpdatePasswordType): Promise<ApiResponse<undefined>> {
     const sessionToken = await getCurrentUserToken();
     const settingsToken = await verifyCurrentUserSettingsToken();
 
     try {
         if (!settingsToken) {
-            await removeSettingsToken();
-            throw new Error('Invalid settings token');
+            throw new AppError('Invalid settings token', 401, 'UNAUTHORIZED');
         }
 
-        const validatedData = userUpdatePasswordSchema.parse(data);
+        const validatedData = userUpdatePasswordSchema.parse(formData);
 
         const response = await fetch(`http://localhost:3000/api/users/password`, {
             method: 'PATCH',
@@ -1073,13 +1202,45 @@ export async function changePassword(data: UserUpdatePasswordType) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        return true;
-    } catch (error) {
-        console.log(error)
-        return getErrorMessage(error);
+        await response.json() as SuccessResponse<undefined>;
+        revalidateTag("loggedInUser");
+
+        return {
+            success: true,
+        }
+    } catch (error: unknown) {
+        // Handle validation errors
+        if (isZodError(error)) {
+            return {
+                success: false,
+                error: {
+                    message: 'Validation failed',
+                    code: 'VALIDATION_FAILED',
+                    details: error.issues,
+                }
+            } as ErrorResponse;
+        } else if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };

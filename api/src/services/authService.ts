@@ -67,14 +67,25 @@ export const createTemporaryUser = async (profileName: string, email: string, da
 // ---------------------------------------------------------------------------------------------------------
 
 export const updateTemporaryUserUsername = async (userId: number, username: string) => {
-    return await prisma.temporaryUser.update({
-        where: {
-            id: userId,
-        },
-        data: {
-            username: username
+    try {
+        return await prisma.temporaryUser.update({
+            where: {
+                id: userId,
+            },
+            data: {
+                username: username
+            }
+        });
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === 'P2002') {
+                // Unique constraint violation (e.g. username or email already exists)
+                return { error: 'Unique constraint violation', fields: (error.meta?.target as string[]) ?? [] };
+            }
         }
-    });
+
+        return { error: getErrorMessage(error), fields: [] };
+    }
 };
 
 // ---------------------------------------------------------------------------------------------------------

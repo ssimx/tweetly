@@ -7,7 +7,6 @@ export async function PATCH(req: NextRequest) {
         try {
             const authHeader = req.headers.get('Authorization');
             const token = await extractToken(authHeader);
-
             if (token) {
                 const isValid = await verifySession(token);
 

@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 import { z } from "zod";
 import SettingsHeaderInfo from "./SettingsHeaderInfo";
 import { verifyLoginPasswordForSettings } from '@/actions/actions';
-import { getErrorMessage } from 'tweetly-shared';
+import { FormUserSettingsAccessType, getErrorMessage, isZodError, userSettingsAccessSchema } from 'tweetly-shared';
 
 type FormData = z.infer<typeof settingsPasswordSchema>;
 
@@ -17,33 +17,36 @@ export default function SettingsLogin() {
     const {
         register,
         handleSubmit,
-        reset,
         formState: { errors, isSubmitting },
         setError,
-        resetField,
-    } = useForm<FormData>({ resolver: zodResolver(settingsPasswordSchema) });
+    } = useForm<FormData>({ resolver: zodResolver(userSettingsAccessSchema) });
 
-    const onSubmit = async (data: FormData) => {
+    const onSubmit = async (formData: FormUserSettingsAccessType) => {
         if (isSubmitting) return;
 
         try {
-            const response = await verifyLoginPasswordForSettings(data);
+            const response = await verifyLoginPasswordForSettings(formData);
 
-            if (response !== true) {
-                if (response === 'Incorrect password') {
-                    setError("password", { type: "manual", message: response });
-                    resetField("password", { keepError: true });
-                } else {
-                    console.error(response);
-                    reset();
-                }
-
-                return;
+            if (!response.success) {
+                if (response.error.details) throw new z.ZodError(response.error.details);
+                else throw new Error(response.error.message);
             }
-
-        } catch (error) {
-            console.error(getErrorMessage(error));
-            reset();
+        } catch (error: unknown) {
+            // Handle validation errors
+            if (isZodError(error)) {
+                error.issues.forEach((detail) => {
+                    if (detail.path && detail.message) {
+                        console.error(detail.message);
+                        setError(detail.path[0] as keyof FormUserSettingsAccessType, {
+                            type: 'manual',
+                            message: detail.message
+                        });
+                    }
+                });
+            } else {
+                const errorMessage = getErrorMessage(error);
+                console.error('Something went wrong:', errorMessage);
+            }
         }
     };
 

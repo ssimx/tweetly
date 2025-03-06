@@ -5,9 +5,9 @@ import postRouter from './routes/postRoutes';
 import userRouter from './routes/userRoutes';
 import searchRouter from './routes/searchRoutes';
 import conversationRouter from './routes/conversationRoutes';
-import { configurePassport } from './middleware/passport';
+import { configurePassport, configureSettingsPassport } from './middleware/passport';
 import { socketConnection } from './utils/sockets';
-import { authenticateJWT } from './middleware/authenticateJWT';
+import { authenticateSessionJWT } from './middleware/authenticateSessionJWT';
 import { errorHandler } from './middleware/errorHandler';
 import passport from 'passport';
 import cors from 'cors';
@@ -22,13 +22,14 @@ app.use(cors());
 
 // Passport configuration
 configurePassport(passport);
+configureSettingsPassport(passport);
 
 // Unprotected routes
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/search', searchRouter);
 
 // JWT authentication for all routes under /api/v1 except for /api/v1/auth
-app.use('/api/v1', authenticateJWT);
+app.use('/api/v1', authenticateSessionJWT);
 
 // JWT protected routes
 app.use('/api/v1/posts', postRouter);

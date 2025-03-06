@@ -32,50 +32,10 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
         handleSubmit,
         formState: { errors, isSubmitting },
         setError,
-        getValues,
         reset,
     } = useForm<FormTemporaryUserUsernameType>({ resolver: zodResolver(temporaryUserUsernameSchema) });
 
     const usernameWatch = useWatch({ control, name: 'username', defaultValue: '' });
-
-    const onSubmit = async (formData: FormTemporaryUserUsernameType) => {
-        if (isSubmitting || isValidating) return;
-        setCustomError(null);
-
-        try {
-            const response = await updateTemporaryUserUsername(formData);
-
-            if (!response.success) {
-                if (response.error.details) throw new z.ZodError(response.error.details);
-                else if (response.error.code === 'NOT_LOGGED_IN') {
-                    setCustomError('Not logged in, please log in with existing email or register a new account');
-                    setRegistrationStep(() => 0);
-                    reset();
-                    return;
-                }
-                else throw new Error(response.error.message);
-            }
-
-            setRegistrationStep(() => 4);
-        } catch (error: unknown) {
-            if (isZodError(error)) {
-                error.issues.forEach((detail) => {
-                    if (detail.path && detail.message) {
-                        setError(detail.path[0] as keyof FormTemporaryUserUsernameType, {
-                            type: 'manual',
-                            message: detail.message
-                        });
-                    }
-                });
-            } else {
-                const errorMessage = getErrorMessage(error);
-                console.error('Registration error:', errorMessage);
-                setCustomError(errorMessage ?? 'Something went wrong, refresh the page or remove cookies. If problem persists, contact the support');
-                reset();
-            }
-
-        }
-    };
 
     // check for new username availability
     useEffect(() => {
@@ -84,7 +44,7 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
         if (usernameWatch === validatedUsername) return;
         setIsUsernameAvailable(null);
         setCustomError(null);
-        
+
         const timeoutId = setTimeout(async () => {
             try {
                 const validatedUsername = temporaryUserUsernameSchema.parse({ username: usernameWatch });
@@ -126,7 +86,6 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
                     setCustomError(errorMessage ?? 'Something went wrong, refresh the page or remove cookies. If problem persists, contact the support');
                     reset();
                 }
-
             } finally {
                 setIsValidating(false);
             }
@@ -136,7 +95,49 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
             clearTimeout(timeoutId);
             setIsValidating(false);
         });
-    }, [isSubmitting, isValidating, usernameWatch, validatedUsername, getValues, reset, setCustomError, setError]);
+    }, [isSubmitting, isValidating, usernameWatch, validatedUsername, reset, setCustomError, setError]);
+
+    const onSubmit = async (formData: FormTemporaryUserUsernameType) => {
+        if (isSubmitting || isValidating) return;
+        setCustomError(null);
+
+        try {
+            const response = await updateTemporaryUserUsername(formData);
+
+            if (!response.success) {
+                if (response.error.details) throw new z.ZodError(response.error.details);
+                else if (response.error.code === 'NOT_LOGGED_IN') {
+                    setCustomError('Not logged in, please log in with existing email or register a new account');
+                    setRegistrationStep(() => 0);
+                    reset();
+                    return;
+                } else if (response.error.code === 'USERNAME_TAKEN') {
+                    setCustomError('Username is already taken');
+                    return;
+                }
+                else throw new Error(response.error.message);
+            }
+
+            setRegistrationStep(() => 4);
+        } catch (error: unknown) {
+            if (isZodError(error)) {
+                error.issues.forEach((detail) => {
+                    if (detail.path && detail.message) {
+                        setError(detail.path[0] as keyof FormTemporaryUserUsernameType, {
+                            type: 'manual',
+                            message: detail.message
+                        });
+                    }
+                });
+            } else {
+                const errorMessage = getErrorMessage(error);
+                console.error('Registration error:', errorMessage);
+                setCustomError(errorMessage ?? 'Something went wrong, refresh the page or remove cookies. If problem persists, contact the support');
+                reset();
+            }
+
+        }
+    };
 
     return (
         <Dialog open={dialogOpen} >
@@ -173,7 +174,7 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
                             <Input
                                 {...register("username")}
                                 placeholder="username"
-                                maxLength={50}
+                                maxLength={15}
                                 type='username'
                                 className="pl-8 pr-3 py-2 text-md w-full rounded shadow-sm"
                             />

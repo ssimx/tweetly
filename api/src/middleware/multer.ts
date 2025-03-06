@@ -19,6 +19,23 @@ const uploadSingle = multer({
     },
 });
 
+export const uploadSingleImageCheckup = (req: Request, res: Response, next: NextFunction) => {
+    if (!req.headers["content-type"]?.startsWith("multipart/form-data")) {
+        return next(); // Skip multer if no file is being uploaded
+    }
+
+    uploadSingle.array("image", 1)(req, res, (err: any) => {
+        if (err) {
+            if (err instanceof multer.MulterError) {
+                return next(new AppError(err.message, 400, err.code));
+            }
+            return next(new AppError("File format is not supported", 400, "INVALID_FILE_FORMAT"));
+        }
+        next(); // Call next() only if there is no error
+    });
+};
+
+
 const uploadMultiple = multer({
     storage: storage,
     limits: { fileSize: 5 * 1024 * 1024, files: 4 }, // 5MB file size limit
@@ -32,34 +49,36 @@ const uploadMultiple = multer({
     },
 });
 
-export const uploadSingleImageCheckup = (req: Request, res: Response, next: NextFunction) => {
-    if (!req.headers["content-type"]?.startsWith("multipart/form-data")) {
-        return next(); // Skip multer if no file is being uploaded
-    }
-    
-    uploadSingle.array("image", 1)(req, res, (err: any) => {
-        if (err) {
-            if (err instanceof multer.MulterError) {
-                return next(new AppError(err.message, 400, err.code));
-            }
-            return next(new AppError("File format is not supported", 400, "INVALID_FILE_FORMAT"));
-        }
-        next(); // Call next() only if there is no error
-    });
-};
-
-export const uploadMultipleImagesCheckup = (req: Request, res: Response, next: NextFunction) => {
+export const newPostCheckup = (req: Request, res: Response, next: NextFunction) => {
     if (!req.headers["content-type"]?.startsWith("multipart/form-data")) {
         return next(); // Skip multer if no file is being uploaded
     }
 
-    uploadMultiple.array("image", 4)(req, res, (err: any) => {
+    uploadMultiple.fields([
+        { name: "images", maxCount: 4 },
+        { name: "text", maxCount: 1 },
+        { name: "replyToId", maxCount: 1 }
+    ])(req, res, (err: any) => {
         if (err) {
-            if (err instanceof multer.MulterError) {
-                return next(new AppError(err.message, 400, err.code));
-            }
-            return next(new AppError("File format is not supported", 400, "INVALID_FILE_FORMAT"));
+            return next(err); // Pass any errors to the next middleware (e.g. multer errors)
         }
-        next(); // Call next() only if there is no error
+
+        // Explicitly type req.files to allow indexing with 'images'
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] | undefined }; // Cast files to the expected type
+
+        const text: string | undefined = req.body.text ?? undefined;
+        const replyToId: string | undefined = req.body.replyToId ?? undefined;
+        const images: Express.Multer.File[] | undefined = files["images"] ?? undefined;
+
+        if ((text === undefined || text.trim().length === 0) && (images === undefined || images.length === 0)) {
+            return next(new AppError('Post content is missing', 404, 'MISSING_CONTENT'));
+        }
+
+        // Attach parsed fields to req for use in your route handler
+        req.body.text = text;
+        req.body.replyToId = replyToId;
+        req.body.files = images;
+
+        next(); // Proceed to the next middleware/handler
     });
 };

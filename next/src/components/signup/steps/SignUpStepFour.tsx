@@ -66,7 +66,7 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
 
         try {
             const response = await updateTemporaryUserProfilePicture(formData);
-            console.log(response)
+
             if (!response.success) {
                 if (response.error.details) throw new z.ZodError(response.error.details);
                 else if (response.error.code === 'NOT_LOGGED_IN') {

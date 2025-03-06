@@ -7,7 +7,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { RegisterTemporaryUserBasicDataType } from 'tweetly-shared';
+import { FormTemporaryUserBasicDataType } from 'tweetly-shared';
 
 type DateOfBirthDataType = {
     year: number;
@@ -17,8 +17,8 @@ type DateOfBirthDataType = {
 
 type DateOfBirthProps = {
     // For new user registration process
-    signUpRegister?: UseFormRegister<RegisterTemporaryUserBasicDataType>;
-    signUpSetValues?: UseFormSetValue<RegisterTemporaryUserBasicDataType>;
+    signUpRegister?: UseFormRegister<FormTemporaryUserBasicDataType>;
+    signUpSetValues?: UseFormSetValue<FormTemporaryUserBasicDataType>;
     
     // For user settings
     settingsRegister?: UseFormRegister<DateOfBirthDataType>;
@@ -56,7 +56,6 @@ export function DateOfBirthSelect({ signUpRegister, signUpSetValues, settingsReg
     const savedDay = settingsGetValues?.("day");
 
     const handleFieldChange = (value: string, type: 'year' | 'month' | 'day') => {
-
         // Zod schema validates number type, not string
         const numericValue = Number(value);
 

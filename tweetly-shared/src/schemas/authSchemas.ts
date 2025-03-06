@@ -19,7 +19,7 @@ export const temporaryUserBasicDataSchema = z.object({
         .number()
         .int()
         .gt(new Date().getFullYear() - 100, "User can't be older than 100")
-        .lt(new Date().getFullYear() - 13, 'User must be older than 13'),
+        .lt(new Date().getFullYear() - 12, 'User must be older than 13'),
     month: z
         .number()
         .int()
@@ -170,4 +170,11 @@ export const logInUserSchema = z.object({
         .string()
         .trim()
         .min(1, "Please enter password"),
+});
+
+export const userSettingsAccessSchema = z.object({
+    password: z
+        .string()
+        .trim()
+        .min(8, "Password must contain at least 8 characters"),
 });

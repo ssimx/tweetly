@@ -1,7 +1,6 @@
 'use client';
 import React, { useState } from 'react'
 import SettingsHeaderInfo from './SettingsHeaderInfo'
-import { settingsChangeEmail } from '@/lib/schemas';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -10,56 +9,60 @@ import { Button } from '../ui/button';
 import { Loader2 } from 'lucide-react';
 import { useUserContext } from '@/context/UserContextProvider';
 import { changeEmail } from '@/actions/actions';
-import { getErrorMessage } from 'tweetly-shared';
-
-type FormData = z.infer<typeof settingsChangeEmail>;
+import { getErrorMessage, isZodError, userUpdateEmailSchema, UserUpdateEmailType } from 'tweetly-shared';
 
 export default function ChangeEmail() {
     const { loggedInUser, refetchUserData } = useUserContext();
-    const [newEmail, setNewEmail] = useState<string | null>(null);
+    const [emailChanged, setEmailChanged] = useState<boolean | null>(null);
     const [customError, setCustomError] = useState<string | null>(null);
 
     const {
         register,
         handleSubmit,
-        reset,
         formState: { errors, isSubmitting },
         setError,
         watch,
-    } = useForm<FormData>({
-        resolver: zodResolver(settingsChangeEmail),
+    } = useForm<UserUpdateEmailType>({
+        resolver: zodResolver(userUpdateEmailSchema),
         defaultValues: { newEmail: loggedInUser.email }
     });
 
-    const emailText = watch("newEmail"); // Watch for changes to the email field
+    const emailWatch = watch("newEmail");
 
-    const onSubmit = async (data: FormData) => {
+    const onSubmit = async (formData: UserUpdateEmailType) => {
         if (isSubmitting) return;
+        setCustomError(null);
+        setEmailChanged(false);
 
         try {
-            const response = await changeEmail(data);
-
-            if (response !== true) {
-                throw new Error(response);
+            const response = await changeEmail(formData);
+            console.log(response)
+            if (!response.success) {
+                if (response.error.details) throw new z.ZodError(response.error.details);
+                else if (response.error.code === 'EMAIL_TAKEN') {
+                    setCustomError('Email is already taken');
+                    return;
+                }
+                else throw new Error(response.error.message);
             }
 
-            setCustomError(null);
-            setNewEmail(emailText);
-            await refetchUserData();
-        } catch (error) {
-            const errorMessage = getErrorMessage(error);
-            console.error(errorMessage);
-
-            if (errorMessage === 'That email has been taken. Please choose another.') {
-                setError("newEmail", { type: "manual", message: errorMessage });
-            } else if (errorMessage === "New email must be different than the current one.") {
-                setError("newEmail", { type: "manual", message: errorMessage });
+            setEmailChanged(true);
+            refetchUserData();
+        } catch (error: unknown) {
+            if (isZodError(error)) {
+                error.issues.forEach((detail) => {
+                    if (detail.path && detail.message) {
+                        setError(detail.path[0] as keyof UserUpdateEmailType, {
+                            type: 'manual',
+                            message: detail.message
+                        });
+                    }
+                });
             } else {
-                setCustomError(errorMessage);
+                const errorMessage = getErrorMessage(error);
+                setCustomError(`${errorMessage ?? 'Something went wrong'}, refresh the page or remove cookies. If problem persists, contact the support`);
             }
 
-            setNewEmail(null);
-            reset();
         }
     };
 
@@ -83,7 +86,7 @@ export default function ChangeEmail() {
                         <div className='error-msg'>{customError}</div>
                     )}
 
-                    {newEmail && (
+                    {customError === null && emailChanged && (
                         <div className='text-green-400 text-14'>Email successfully changed</div>
                     )}
 
@@ -93,7 +96,7 @@ export default function ChangeEmail() {
                             Saving
                         </Button>
                         : <Button
-                            disabled={(isSubmitting || emailText.toLowerCase() === loggedInUser.email.toLowerCase()) && true}
+                            disabled={(isSubmitting || emailWatch.toLowerCase() === loggedInUser.email.toLowerCase()) && true}
                             className='bg-primary font-bold'>Save</Button>
                     }
                 </form>

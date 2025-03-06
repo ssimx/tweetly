@@ -19,9 +19,9 @@ import {
     exploreRandomPosts,
     getUserMedia,
 } from "../controllers/postController";
-
 import express from 'express';
-
+import { newPostCheckup } from '../middleware/multer';
+import { uploadToCloudinary } from './../middleware/cloudinary';
 
 const router = express.Router();
 
@@ -36,7 +36,7 @@ router.get('/status/:id', getPost);
 router.get('/postReplies/:id', postReplies);
 router.get('/feed/global', global30DayPosts);
 router.get('/feed/following', following30DayPosts);
-router.post('/create', newPost);
+router.post('/create', newPostCheckup, uploadToCloudinary, newPost);
 router.post('/repost/:id', addRepost);
 router.delete('/removeRepost/:id', removeRepost);
 router.post('/like/:id', addLike);

@@ -1,12 +1,13 @@
+import { NextResponse } from 'next/server';
 import { createNotificationForNewFollow, removeNotificationForFollow } from './../services/notificationService';
 import { NextFunction, Request, Response } from 'express';
 import { addBlock, addFollow, addPushNotifications, deactivateUser, getFollowers, getFollowing, getFollowSuggestions, getProfile, getTemporaryUser, getUser, getUserByEmail, getUserByUsername, getUserPassword, isUserDeactivated, removeBlock, removeFollow, removePushNotfications, updateProfile, updateUserBirthday, updateUserEmail, updateUserPassword, updateUserUsername } from '../services/userService';
 import { ProfileInfo, UserProps } from '../lib/types';
 import { deleteImageFromCloudinary } from './uploadController';
 import { getNotifications, getOldestNotification, updateNotificationsToRead } from '../services/notificationService';
-import { generateUserSessionToken } from '../utils/jwt';
+import { generateUserSettingsToken, generateUserSessionToken } from '../utils/jwt';
 import bcrypt from 'bcrypt';
-import { AppError, LoggedInTemporaryUserDataType, LoggedInUserDataType, SuccessResponse, UserDataType } from 'tweetly-shared';
+import { AppError, LoggedInTemporaryUserDataType, LoggedInUserDataType, LoggedInUserJwtPayload, SuccessResponse, UserDataType, userUpdateBirthdaySchema, userUpdateEmailSchema, userUpdatePasswordSchema, userUpdateUsernameSchema } from 'tweetly-shared';
 import { remapUserInformation, remapUserProfileInformation } from '../lib/helpers';
 
 // ---------------------------------------------------------------------------------------------------------
@@ -396,129 +397,189 @@ export const getUserNotifications = async (req: Request, res: Response) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const changeUsername = async (req: Request, res: Response) => {
-    const user = req.user as UserProps;
-    const { newUsername } = req.body;
+export const changeUsername = async (req: Request, res: Response, next: NextResponse) => {
+    const user = req.user as LoggedInUserDataType;
+    let body = req.body;
 
     try {
-        if (user.username === newUsername) return res.status(401).json({ error: 'New username must be different than the current one.' });
-
-        const fetchedUser = await getUserByUsername(newUsername);
-        if (fetchedUser) return res.status(401).json({ error: 'That username has been taken. Please choose another.' });
-
-        newUsername.toLowerCase();
-        const updatedInfo = await updateUserUsername(user.id, newUsername);
-
-        const tokenPayload = {
-            id: updatedInfo.id,
-            username: updatedInfo.username,
-            email: updatedInfo.email,
+        if (!body) {
+            throw new AppError('New username is missing', 404, 'MISSING_DATA');
         }
 
-        // Generate and send JWT token
-        const token: string = generateUserSessionToken(tokenPayload);
+        const { newUsername: username } = userUpdateUsernameSchema.parse(body);
 
-        return res.status(201).json({ token });
+        if (user.username === username) {
+            throw new AppError('New username must be different than the current one', 401, 'INVALID_USERNAME');
+        }
+
+        const response = await updateUserUsername(user.id, username);
+        if ('error' in response) {
+            if (response.fields?.includes('username')) {
+                throw new AppError('Username is already in use', 400, 'USERNAME_TAKEN');
+            }
+
+            // Fallback error if `fields` exist but don't match expected values
+            if (response.fields?.length) {
+                throw new AppError(
+                    `Unexpected unique constraint violation on: ${response.fields.join(', ')}`,
+                    400,
+                    'UNEXPECTED_FIELD_ERROR'
+                );
+            }
+
+            // If no specific fields were provided, throw a generic database error
+            throw new AppError('Database error while creating a new user', 500, 'DB_ERROR');
+        }
+
+        const tokenPayload = {
+            id: response.id,
+            email: response.email,
+            username: response.username,
+        } as LoggedInUserJwtPayload;
+
+        const accessToken = generateUserSessionToken(tokenPayload);
+        const settingsToken = generateUserSettingsToken(tokenPayload);
+
+        const successResponse: SuccessResponse<{ accessToken: string, settingsToken: string }> = {
+            success: true,
+            data: {
+                accessToken: accessToken,
+                settingsToken: settingsToken,
+            }
+        };
+
+        res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error updating password: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        next(error);
     }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const changeEmail = async (req: Request, res: Response) => {
-    const user = req.user as UserProps;
-    const { newEmail } = req.body;
+export const changeEmail = async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as LoggedInUserDataType;
+    const body = req.body;
 
     try {
-        if (user.email === newEmail) return res.status(401).json({ error: 'New email must be different than the current one.' });
-
-        const fetchedUser = await getUserByEmail(newEmail);
-        if (fetchedUser) return res.status(401).json({ error: 'That email has been taken. Please choose another.' });
-
-        newEmail.toLowerCase();
-        const updatedInfo = await updateUserEmail(user.id, newEmail);
-
-        const tokenPayload = {
-            id: updatedInfo.id,
-            username: updatedInfo.username,
-            email: updatedInfo.email,
+        if (!body) {
+            throw new AppError('New email is missing', 404, 'MISSING_DATA');
         }
 
-        // Generate and send JWT token
-        const token: string = generateToken(tokenPayload);
+        const { newEmail: email } = userUpdateEmailSchema.parse(body);
 
-        return res.status(201).json({ token });
+        if (user.email === email) {
+            throw new AppError('New email must be different than the current one', 401, 'INVALID_EMAIL');
+        }
+
+        const response = await updateUserEmail(user.id, email);
+        if ('error' in response) {
+            if (response.fields?.includes('email')) {
+                throw new AppError('Email is already in use', 400, 'EMAIL_TAKEN');
+            }
+
+            // Fallback error if `fields` exist but don't match expected values
+            if (response.fields?.length) {
+                throw new AppError(
+                    `Unexpected unique constraint violation on: ${response.fields.join(', ')}`,
+                    400,
+                    'UNEXPECTED_FIELD_ERROR'
+                );
+            }
+
+            // If no specific fields were provided, throw a generic database error
+            throw new AppError('Database error while creating a new user', 500, 'DB_ERROR');
+        }
+
+        const tokenPayload = {
+            id: response.id,
+            email: response.email,
+            username: response.username,
+        } as LoggedInUserJwtPayload;
+
+        const accessToken = generateUserSessionToken(tokenPayload);
+        const settingsToken = generateUserSettingsToken(tokenPayload);
+
+        const successResponse: SuccessResponse<{ accessToken: string, settingsToken: string }> = {
+            success: true,
+            data: {
+                accessToken: accessToken,
+                settingsToken: settingsToken,
+            }
+        };
+
+        res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error updating password: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        next(error);
     }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const changeBirthday = async (req: Request, res: Response) => {
-    const user = req.user as UserProps;
-    const { year, month, day } = req.body as { year: String, month: String, day: String };
+export const changeBirthday = async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as LoggedInUserDataType;
+    const body = req.body;
 
     try {
+        if (!body) {
+            throw new AppError('New birthday is missing', 404, 'MISSING_DATA');
+        }
+
+        const { year, month, day } = userUpdateBirthdaySchema.parse(body);
         const birthDate = new Date(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
-        const now = new Date();
 
-        let age = now.getFullYear() - birthDate.getFullYear();
-
-        // Adjust age if birthday hasn't occurred this year yet
-        if (now.getMonth() < birthDate.getMonth() ||
-            (now.getMonth() === birthDate.getMonth() && now.getDate() < birthDate.getDate())) {
-            age--;
+        if (user.dateOfBirth === birthDate) {
+            throw new AppError('New birthday must be different than the current one', 401, 'INVALID_BIRTHDAY');
         }
 
-        if (age < 13) return res.status(401).json({ error: 'User must be older than 13' });
+        const response = await updateUserBirthday(user.id, new Date(Date.UTC(Number(year), Number(month) - 1, Number(day))));
+        if (!response) {
+            throw new AppError('User not found', 404, 'USER_NOT_FOUND');
+        }
 
-        let currentBirthday = await getUser(user.id).then(res => res?.dateOfBirth);
-        if (!currentBirthday) return res.status(401).json({ error: 'User not found' });
+        const successResponse: SuccessResponse<undefined> = {
+            success: true,
+            data: undefined
+        };
 
-        const currentYear = String(currentBirthday.getFullYear());
-        const currentMonth = String(currentBirthday.getMonth() + 1);
-        const currentDay = String(currentBirthday.getDate());
-        if (currentYear == year && currentMonth === month && currentDay === day) return res.status(401).json({ error: 'New birth date must be different than the current one' });
-
-        await updateUserBirthday(user.id, new Date(Date.UTC(Number(year), Number(month) - 1, Number(day))));
-
-        return res.status(201).json(true);
+        res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error updating birthday: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        next(error);
     }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-interface ChangePasswordProps {
-    currentPassword: string,
-    newPassword: string,
-};
-
-export const changePassword = async (req: Request, res: Response) => {
-    const user = req.user as UserProps;
-    const { currentPassword, newPassword } = req.body as ChangePasswordProps;
+export const changePassword = async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as LoggedInUserDataType;
+    const body = req.body;
 
     try {
+        if (!body) {
+            throw new AppError('New password is missing', 404, 'MISSING_DATA');
+        }
+
+        const { currentPassword, newPassword } = userUpdatePasswordSchema.parse(body);
+
         // Check if the current password is correct
         const userCurrentPassword: string = await getUserPassword(user.id).then(res => res?.password) as string;
-
         if (!(await bcrypt.compare(currentPassword, userCurrentPassword))) {
-            return res.status(401).json({ error: 'Incorrect current password' });
+            throw new AppError('Incorrect current password', 400, 'INCORRECT_CURRENT_PASSWORD');
         }
 
         const hashedNewPassword: string = await bcrypt.hash(newPassword, 10);
-        await updateUserPassword(user.id, hashedNewPassword);
+        const response = await updateUserPassword(user.id, hashedNewPassword);
+        if (!response) {
+            throw new AppError('User not found', 404, 'USER_NOT_FOUND');
+        }
 
-        return res.status(201).json('success');
+        const successResponse: SuccessResponse<undefined> = {
+            success: true,
+            data: undefined
+        };
+
+        res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error updating password: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        next(error);
     }
 };
 

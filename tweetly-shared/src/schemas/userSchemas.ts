@@ -1,15 +1,7 @@
 import { z } from 'zod';
+import { getAge } from '../lib/utils';
 
 // UPDATE USER INFO
-
-export const userSettingsAccessSchema = z.object({
-    password: z
-        .string()
-        .trim()
-        .min(1, "Please enter password"),
-});
-
-export type UserSettingsAccessType = z.infer<typeof userSettingsAccessSchema>;
 
 export const userUpdatePasswordSchema = z.object({
     currentPassword: z
@@ -20,7 +12,7 @@ export const userUpdatePasswordSchema = z.object({
         .string()
         .trim()
         .min(8, "New password must contain at least 8 characters"),
-    newConfirmPassword: z
+    confirmNewPassword: z
         .string()
         .trim(),
 }).superRefine((data, ctx) => {
@@ -28,17 +20,17 @@ export const userUpdatePasswordSchema = z.object({
     if (data.currentPassword === data.newPassword) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: "New password can't be the same as the old one",
+            message: "New password can't be the same as the current one",
             path: ['newPassword'], // Path for error message
         });
     }
 
-    // Check if newPassword matches newConfirmPassword
-    if (data.newPassword !== data.newConfirmPassword) {
+    // Check if newPassword matches confirmNewPassword
+    if (data.newPassword !== data.confirmNewPassword) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: 'Passwords do not match',
-            path: ['newConfirmPassword'], // Path for error message
+            path: ['confirmNewPassword'], // Path for error message
         });
     }
 });
@@ -80,17 +72,30 @@ export type UserUpdateEmailType = z.infer<typeof userUpdateEmailSchema>;
 
 export const userUpdateBirthdaySchema = z.object({
     year: z
-        .string()
-        .trim()
-        .min(4, "Year is required"),
+        .number()
+        .int()
+        .gt(new Date().getFullYear() - 100, "User can't be older than 100")
+        .lt(new Date().getFullYear() - 12, 'User must be older than 13'),
     month: z
-        .string()
-        .trim()
-        .min(1, "Month is required"),
+        .number()
+        .int()
+        .nonnegative("Month can't be negative number")
+        .lte(11, "Month does not exist"),
     day: z
-        .string()
-        .trim()
-        .min(1, "Day is required"),
+        .number()
+        .int()
+        .nonnegative("Day can't be negative number")
+        .lte(11, "Day does not exist"),
+}).superRefine((data, ctx) => {
+    // Check if DoB is older than 13
+    const birthDate = `${data.year}-${String(data.month).padStart(2, '0')}-${String(data.day).padStart(2, '0')}`;
+    if (getAge(birthDate) < 13) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'User must be older than 13',
+            path: ['year'], // Path for error message
+        });
+    }
 });
 
 export type UserUpdateBirthdayType = z.infer<typeof userUpdateBirthdaySchema>;

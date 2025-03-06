@@ -1,7 +1,7 @@
-import { AppError, FormLogInUserDataType, FormTemporaryUserBasicDataType, FormTemporaryUserPasswordType, LoggedInTemporaryUserDataType, LoggedInUserJwtPayload, logInUserSchema, SuccessfulLoginResponseType, SuccessfulRegisterResponseType, SuccessResponse, temporaryUserBasicDataSchema, temporaryUserPasswordSchema, temporaryUserProfilePictureSchema, temporaryUserUsernameSchema } from 'tweetly-shared';
+import { AppError, FormLogInUserDataType, FormTemporaryUserBasicDataType, FormTemporaryUserPasswordType, LoggedInTemporaryUserDataType, LoggedInUserJwtPayload, logInUserSchema, SuccessfulLoginResponseType, SuccessfulRegisterResponseType, SuccessResponse, temporaryUserBasicDataSchema, temporaryUserPasswordSchema, temporaryUserProfilePictureSchema, temporaryUserUsernameSchema, userSettingsAccessSchema } from 'tweetly-shared';
 import { NextFunction, Request, Response } from 'express';
 import { checkEmailAvailability, createTemporaryUser, createUserAndProfile, getTemporaryUserLogin, getUserLogin, removeTemporaryUser, updateTemporaryUserProfilePicture, updateTemporaryUserUsername } from "../services/authService";
-import { generateSettingsToken, generateTemporaryUserToken, generateUserSessionToken } from '../utils/jwt';
+import { generateUserSettingsToken, generateTemporaryUserToken, generateUserSessionToken } from '../utils/jwt';
 import { UserProps } from '../lib/types';
 import bcrypt from 'bcrypt';
 
@@ -52,7 +52,7 @@ export const registerTempUser = async (req: Request, res: Response, next: NextFu
 
         // Check if there was a unique constraint violation
         if ('error' in response) {
-            if (response.fields?.includes('email')) {
+            if (response.fields?.includes('username')) {
                 throw new AppError('Email is already in use', 400, 'EMAIL_TAKEN');
             }
 
@@ -67,22 +67,22 @@ export const registerTempUser = async (req: Request, res: Response, next: NextFu
 
             // If no specific fields were provided, throw a generic database error
             throw new AppError('Database error while creating a new user', 500, 'DB_ERROR');
-        } else {
-            const tokenPayload = {
-                type: 'temporary' as 'temporary',
-                id: response.id,
-                email: email,
-            }
-
-            const token: string = generateTemporaryUserToken(tokenPayload);
-
-            const successResponse: SuccessResponse<SuccessfulRegisterResponseType> = {
-                success: true,
-                data: { token },
-            };
-
-            res.status(200).json(successResponse);
         }
+
+        const tokenPayload = {
+            type: 'temporary' as 'temporary',
+            id: response.id,
+            email: email,
+        }
+
+        const token: string = generateTemporaryUserToken(tokenPayload);
+
+        const successResponse: SuccessResponse<SuccessfulRegisterResponseType> = {
+            success: true,
+            data: { token },
+        };
+
+        res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }
@@ -105,11 +105,26 @@ export const updateTempUserUsername = async (req: Request, res: Response, next: 
 
         // update temporary user
         const response = await updateTemporaryUserUsername(user.id, validatedUsername.username);
-        if (!response) {
-            throw new AppError('User not found', 404, 'USER_NOT_FOUND');
+
+        if ('error' in response) {
+            if (response.fields?.includes('username')) {
+                throw new AppError('Username is already in use', 400, 'USERNAME_TAKEN');
+            }
+
+            // Fallback error if `fields` exist but don't match expected values
+            if (response.fields?.length) {
+                throw new AppError(
+                    `Unexpected unique constraint violation on: ${response.fields.join(', ')}`,
+                    400,
+                    'UNEXPECTED_FIELD_ERROR'
+                );
+            }
+
+            // If no specific fields were provided, throw a generic database error
+            throw new AppError('Database error while creating a new user', 500, 'DB_ERROR');
         }
 
-        const successResponse: SuccessResponse<SuccessfulRegisterResponseType> = {
+        const successResponse: SuccessResponse<undefined> = {
             success: true,
         };
 
@@ -190,11 +205,10 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
             throw new AppError('Database error while creating a new user', 500, 'DB_ERROR');
         } else {
             const tokenPayload = {
-                type: 'user' as 'user',
                 id: newUser.user.id,
                 email: newUser.user.email,
                 username: newUser.user.username
-            }
+            } as LoggedInUserJwtPayload;
 
             const token: string = generateUserSessionToken(tokenPayload);
 
@@ -258,13 +272,14 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
             throw new AppError('Incorrect login password', 401, 'INCORRECT_PASSWORD');
         }
 
-        // Generate and send JWT token
-        const token: string = generateUserSessionToken({
-            type: 'user',
+        const tokenPayload = {
             id: user.id,
             username: user.username,
             email: user.email
-        });
+        } as LoggedInUserJwtPayload;
+
+        // Generate and send JWT token
+        const token: string = generateUserSessionToken(tokenPayload);
 
         const successResponse: SuccessResponse<SuccessfulLoginResponseType> = {
             success: true,
@@ -281,35 +296,44 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const settingsAccess = async (req: Request, res: Response) => {
+export const settingsAccess = async (req: Request, res: Response, next: NextFunction) => {
     const { password } = req.body as { password: string };
     const user = req.user as UserProps;
 
     try {
         // Find user in database
         const userInfo = await getUserLogin(user.username);
-
         if (!userInfo) {
-            return res.status(401).json({ error: 'User not found' });
+            throw new AppError('User not found', 404, 'USER_NOT_FOUND');
         }
 
-        const isPasswordValid = await bcrypt.compare(password, userInfo.password);
+        userSettingsAccessSchema.parse({ password });
 
+        const isPasswordValid = await bcrypt.compare(password, userInfo.password);
         if (!isPasswordValid) {
-            return res.status(401).json({ error: 'Incorrect password' });
+            throw new AppError('Incorrect password', 404, 'INCORRECT_PASSWORD');
         }
 
         const tokenPayload = {
             id: userInfo.id,
             username: userInfo.username,
             email: userInfo.email,
-        }
+        } as LoggedInUserJwtPayload;
 
         // Generate and send settings JWT token with 15m expiry
-        const token: string = generateSettingsToken(tokenPayload);
-        return res.status(200).json({ token });
+        const token: string = generateUserSettingsToken(tokenPayload);
+
+        console.log(token)
+
+        const successResponse: SuccessResponse<{ token: string }> = {
+            success: true,
+            data: {
+                token: token
+            },
+        };
+
+        return res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Internal server error' });
+        next(error);
     }
 };

@@ -13,14 +13,16 @@ import TextareaAutosize from 'react-textarea-autosize';
 import { useUserContext } from "@/context/UserContextProvider";
 import { socket } from "@/lib/socket";
 import { createPost } from "@/actions/actions";
-import { newPostDataSchema, NewPostDataType } from 'tweetly-shared';
+import { BasePostDataType, FormNewPostDataType, getErrorMessage, isZodError, newPostDataSchema, SuccessResponse } from 'tweetly-shared';
+import { z } from 'zod';
 
 export default function NewPost({ reply, placeholder }: { reply?: number, placeholder?: string }) {
     const [text, setText] = useState('');
     const [, setInputActive] = useState(false);
-    const [selectedImages, setSelectedImages] = useState<string[]>([]);
+    const [selectedImagesPreview, setSelectedImagesPreview] = useState<string[]>([]);
     const [selectedImagesFiles, setSelectedImagesFiles] = useState<File[]>([]);
     const [newPostError, setNewPostError] = useState('');
+    
     const formRef = useRef<HTMLFormElement | null>(null);
     const imageInputRef = useRef<HTMLInputElement | null>(null);
     const maxChars = 280;
@@ -31,12 +33,12 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
     const {
         register,
         handleSubmit,
-        reset,
         formState: { errors, isSubmitting },
         setError,
         clearErrors,
         setValue,
-    } = useForm<NewPostDataType>({ resolver: zodResolver(newPostDataSchema) });
+
+    } = useForm<FormNewPostDataType>({ resolver: zodResolver(newPostDataSchema) });
 
     const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setText(e.target.value);
@@ -59,7 +61,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
     };
 
     const handleSelectedImages = async (files: FileList) => {
-        if (files.length + selectedImages.length > 4) {
+        if (files.length + selectedImagesFiles.length > 4) {
             setError('images', {
                 type: 'manual',
                 message: 'Please choose up to 4 photos.'
@@ -84,74 +86,59 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
         });
         
         setSelectedImagesFiles((current) => [...current, ...validFiles]); // Array of file objects
-        setSelectedImages((current) => [...current, ...validFiles.map((file) => URL.createObjectURL(file))]); // Array of image previews
-        setValue('images', [...selectedImages, ...validFiles.map((file) => URL.createObjectURL(file))]);
+        setSelectedImagesPreview((current) => [...current, ...validFiles.map((file) => URL.createObjectURL(file))]); // Array of image previews
+        setValue('images', [
+            ...selectedImagesFiles,
+            ...validFiles
+        ]);
     };
 
-    const onSubmitPost = async (data: NewPostDataType) => {
+    const onSubmitPost = async (formData: FormNewPostDataType) => {
         if (isSubmitting) return;
 
         try {
-            data.replyToId = reply;
+            formData['replyToId'] = String(reply);
 
-            if (selectedImagesFiles.length !== 0) {
-                const imagesUploadPromises = selectedImagesFiles.map((image) => {
-                    const formData = new FormData();
-                    formData.append('file', image);
-                    formData.append('upload_preset', 'postPictures');
-                    return fetch('https://api.cloudinary.com/v1_1/ddj6z1ptr/image/upload', {
-                        method: 'POST',
-                        body: formData,
-                    });
-                });
+            const response = await createPost(formData);
 
-                const imagesResult = await Promise.all([...imagesUploadPromises])
-                    .then((responses) => Promise.all(responses.map((res) => res.json())))
-                    .then((imageResults) => imageResults.map((image) => {
-                        if (typeof image === 'object' && image !== null && 'secure_url' in image && 'public_id' in image) {
-                            return {
-                                secure_url: image.secure_url as string,
-                                public_id: image.public_id as string,
-                            };
-                        }
-                        console.error('Image upload failed');
-                        return;
-                    }));
-
-                console.log(data)
-                data.images = imagesResult.length !== 0
-                    ? imagesResult.filter((img): img is { secure_url: string, public_id: string } => img?.secure_url !== undefined).map((img) => img.secure_url)
-                    : undefined;
-                console.log(data)
-                data.imagesPublicIds = imagesResult.length !== 0
-                    ? imagesResult.filter((img): img is { secure_url: string, public_id: string } => img?.public_id !== undefined).map((img) => img.public_id)
-                    : undefined;
+            if (!response.success) {
+                if (response.error.details) throw new z.ZodError(response.error.details);
+                else throw new Error(response.error.message);
             }
 
-            const postData = await createPost(data);
-            console.log(postData)
-
-            if (!postData) {
-                setNewPostError('Something went wrong');
-                throw new Error('Something went wrong');
-            }
+            const { data } = response as SuccessResponse<{ post: BasePostDataType }>;
+            if (data === undefined) throw new Error('Data is missing in response');
+            else if (data.post === undefined) throw new Error('Post property is missing in data response');
 
             // update feed only if it's not a reply
             if (!reply) {
                 socket.emit('new_global_post');
-                socket.emit('new_following_post', postData.author.id)
+                socket.emit('new_following_post', loggedInUser.id)
             }
 
-            // send notification to users
-            socket.emit('new_user_notification', postData.author.id);
+            // send notification to users who have notifications enabled
+            socket.emit('new_user_notification', loggedInUser.id);
 
-            // hard redirect server action does not work
-            return window.location.href = `http://localhost:3000/${postData.author.username}/status/${postData.id}`;
-        } catch (error) {
-            console.error(error);
-            setSelectedImages([]);
-            setText('');
-            reset();
+            // hard redirect server action does not work, modal stays mounted / open
+            return window.location.href = `http://localhost:3000/${data.post.author.username}/status/${data.post.id}`;
+        } catch (error: unknown) {
+            // Handle validation errors
+            if (isZodError(error)) {
+                error.issues.forEach((detail) => {
+                    if (detail.path && detail.message) {
+                        console.error(detail.message);
+                        setError(detail.path[0] as keyof FormNewPostDataType, {
+                            type: 'manual',
+                            message: detail.message
+                        });
+                    }
+                });
+                setNewPostError('Something went wrong, contact support');
+            } else {
+                const errorMessage = getErrorMessage(error);
+                console.error('Registration error:', errorMessage);
+                setNewPostError(errorMessage);
+            }
         }
     };
 
@@ -169,32 +156,42 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
                         onClick={(e) => handleClick(e)}
                         {...register("text", {
                             onChange: (e) => handleTextChange(e),
-                        })} />
+                        })}
+                    />
+                    <Progress value={charsPercentage} className={`mt-2 mb-4 ${text.length === 0 && 'invisible'}`} />
+                    {charsPercentage === 100 && <p className='text-center text-red-600 font-bold text-xs'>Max characters reached</p>}
+                    {errors.text && (
+                        <p className="text-center text-red-600 font-bold text-xs">{`${errors.text.message}`}</p>
+                    )}
                     { // selected images preview
-                    selectedImages.length === 1
+                    selectedImagesPreview.length === 1
                         ? (
                             <div className="mt-2 relative inline-block w-fit max-h-[500px]">
-                                <Image src={selectedImages[0]} alt="Selected preview" className="max-h-[500px] w-auto object-contain rounded-md" width={400} height={400} />
+                                <Image src={selectedImagesPreview[0]} alt="Selected preview" className="max-h-[500px] w-auto object-contain rounded-md" width={400} height={400} />
                                 <button type='button' className='absolute top-2 right-2 group rounded-full bg-black-1/40 p-1 flex-center'
                                     onClick={() => {
-                                        setSelectedImages([]);
+                                        setSelectedImagesPreview([]);
+                                        setSelectedImagesFiles([]);
                                         setValue('images', []);
                                     }}>
                                     <X size={20} className='' />
                                 </button>
                             </div>
                         )
-                        : (selectedImages.length > 1 && selectedImages.length < 5)
+                        : (selectedImagesPreview.length > 1 && selectedImagesPreview.length < 5)
                             ? (
-                                <div className={`mt-2 grid gap-1 w-full h-[300px] ${selectedImages.length === 2 ? 'grid-cols-2 grid-rows-1' : 'grid-cols-2 grid-rows-2'}`}>
-                                    {selectedImages.map((image, index) => (
+                                <div className={`mt-2 grid gap-1 w-full h-[300px] ${selectedImagesPreview.length === 2 ? 'grid-cols-2 grid-rows-1' : 'grid-cols-2 grid-rows-2'}`}>
+                                    {selectedImagesPreview.map((image, index) => (
                                         <div key={index} className='h-full relative'>
                                             <Image src={image} alt="Selected preview" className="h-full w-full object-cover rounded-md" width={400} height={400} />
                                             <button type='button' className='absolute top-2 right-2 group rounded-full bg-black-1/40 p-1 flex-center'
                                                 onClick={() => {
-                                                    const updatedImages = selectedImages.toSpliced(index, 1);
-                                                    setSelectedImages(updatedImages);
-                                                    setValue('images', updatedImages);
+                                                    const updatedImagesPreview = selectedImagesPreview.toSpliced(index, 1);
+                                                    setSelectedImagesPreview(updatedImagesPreview);
+
+                                                    const updatedImagesFiles = selectedImagesFiles.toSpliced(index, 1);
+                                                    setSelectedImagesFiles(updatedImagesFiles)
+                                                    setValue('images', updatedImagesFiles);
                                                 }}>
                                                 <X size={20} className='' />
                                             </button>
@@ -206,16 +203,9 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
                     }
                 </form>
             </div>
-
-            <Progress value={charsPercentage} className={`mt-auto ${text.length === 0 && 'invisible'}`} />
-            {charsPercentage === 100 && <p className='text-center text-red-600 font-bold text-xs'>Max characters reached</p>}
-            {errors.text && (
-                <p className="text-center text-red-600 font-bold text-xs">{`${errors.text.message}`}</p>
-            )}
-
             <DialogFooter>
                 <button className='group'
-                    disabled={selectedImages.length >= 4}
+                    disabled={selectedImagesFiles.length >= 4}
                     onClick={() => imageInputRef.current?.click()}>
                     <Img size={24} className="text-primary group-hover:text-primary-text group-disabled:text-gray-500" />
                 </button>
@@ -232,7 +222,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
                     ref={(e) => {
                         imageInputRef.current = e; // Assign the ref for button
                         register("images").ref(e); // Connect the ref to React Hook Form
-                        setValue('images', []);
+                        setValue('images', selectedImagesFiles);
                     }}
                 />
                 {errors.images && (
@@ -248,7 +238,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
                     </Button>)
                     : (<Button type="submit"
                         className='ml-auto font-bold w-fit rounded-3xl text-white-1'
-                        disabled={(text.length > 280 || text.length === 0) && (selectedImages.length === 0 || selectedImages.length > 4)}
+                        disabled={(text.length > 280 || text.length === 0) && (selectedImagesFiles.length === 0 || selectedImagesFiles.length > 4)}
                         form={formId}
                     >
                         Post

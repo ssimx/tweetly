@@ -50,20 +50,18 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<S
                 { status: response.status }
             );
         } catch (error: unknown) {
-
             // Handle validation errors
             if (isZodError(error)) {
-                const err = error as z.ZodError;
                 return NextResponse.json(
                     {
                         success: false,
                         error: {
                             message: 'Validation failed',
                             code: 'VALIDATION_FAILED',
-                            details: err.issues
+                            details: error.issues,
                         },
                     },
-                    { status: 400 }
+                    { status: 403 }
                 ) as NextResponse<ErrorResponse>;
             } else if (error instanceof AppError) {
                 return NextResponse.json(

@@ -1,5 +1,4 @@
 import UserHoverCard from '@/components/misc/UserHoverCard';
-import { BasicPostType, VisitedPostType } from '@/lib/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import React from 'react';

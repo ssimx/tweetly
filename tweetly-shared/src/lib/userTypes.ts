@@ -68,9 +68,6 @@ export type UserStatsType = {
     postsCount?: number,
 };
 
-// Type for raw user information which is remaped to UserDataType
-
-
 // Type for user information, can be profile / post author / follow suggestion...
 export type UserDataType = {
     // Basic profile information

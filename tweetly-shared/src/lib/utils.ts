@@ -6,9 +6,15 @@ export function getAge(date: string) {
 
     let age = now.getFullYear() - birthDate.getFullYear();
 
+    // Create a date object for this year's birthday
+    const birthdayThisYear = new Date(
+        now.getFullYear(),
+        birthDate.getMonth(),
+        birthDate.getDate()
+    );
+
     // Adjust age if birthday hasn't occurred this year yet
-    if (now.getMonth() < birthDate.getMonth() ||
-        (now.getMonth() === birthDate.getMonth() && now.getDate() < birthDate.getDate())) {
+    if (now < birthdayThisYear) {
         age--;
     }
 

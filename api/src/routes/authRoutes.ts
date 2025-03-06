@@ -1,5 +1,5 @@
 import { loginUser, registerTempUser, registerUser, settingsAccess, updateTempUserProfilePicture, updateTempUserUsername } from "../controllers/authController";
-import { authenticateJWT } from "../middleware/authenticateJWT";
+import { authenticateSessionJWT } from "../middleware/authenticateSessionJWT";
 import { uploadToCloudinary } from '../middleware/cloudinary';
 import { uploadSingleImageCheckup } from '../middleware/multer';
 import express from 'express';
@@ -11,8 +11,8 @@ router.post('/register', registerTempUser);
 router.post('/login', loginUser);
 
 // Protected routes (require authentication)
-router.patch('/temporary/username', authenticateJWT, updateTempUserUsername);
-router.patch('/temporary/profilePicture', authenticateJWT, uploadSingleImageCheckup, uploadToCloudinary, updateTempUserProfilePicture, registerUser);
-router.post('/settings', authenticateJWT, settingsAccess);
+router.patch('/temporary/username', authenticateSessionJWT, updateTempUserUsername);
+router.patch('/temporary/profilePicture', authenticateSessionJWT, uploadSingleImageCheckup, uploadToCloudinary, updateTempUserProfilePicture, registerUser);
+router.post('/settings', authenticateSessionJWT, settingsAccess);
 
 export default router;

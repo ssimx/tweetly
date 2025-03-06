@@ -51,23 +51,29 @@ export interface NewPostType {
 
 export const newPost = async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as UserProps;
-    const { text, images, imagesPublicIds, replyToId } = req.body as NewPostType;
-    const postData = { text, images, replyToId, imagesPublicIds };
+    const text = req.body.text;
+    const replyToId = req.body.replyToId;
+    const images = req.body.cloudinaryUrls;
+
     const hashtagRegex = /#(\w+)/g;
-    const hashtags = postData.text && Array.from(new Set(postData.text.match(hashtagRegex)?.map((tag) => tag.slice(1)) || []));
+    const hashtags = text && Array.from(new Set(text.match(hashtagRegex)?.map((tag: string[]) => tag.slice(1)) || []));
 
     try {
         if (replyToId) {
+            if (isNaN(Number(replyToId))) {
+                throw new AppError('Incorrect reply value type', 404, 'INCORRECT_VALUE_TYPE');
+            }
+
             // Check if post exists
-            const replyPost = await postExists(replyToId);
+            const replyPost = await postExists(Number(replyToId));
             if (!replyPost) throw new AppError('Reply post not found', 404, 'REPLY_NOT_FOUND');
         }
 
-        if ((postData.text === undefined || postData.text.length === 0) && (postData.images === undefined || postData.images.length === 0)) {
+        if ((text === undefined || text.length === 0) && (images === undefined || images.length === 0)) {
             throw new AppError('Post content is missing', 404, 'MISSING_CONTENT');
         }
 
-        const newPostData = await createPost(user.id, postData);
+        const newPostData = await createPost(user.id, { text, replyToId: Number(replyToId), images });
         const postId = newPostData.id;
 
         // Delegate hashtag handling to service
@@ -82,19 +88,6 @@ export const newPost = async (req: Request, res: Response, next: NextFunction) =
             createNotificationsForNewReply(postId, user.id);
         }
 
-        if (newPostData.replyTo !== undefined) {
-            const post = remapPostInformation(newPostData);
-
-            const successResponse: SuccessResponse<{ post: BasePostDataType }> = {
-                success: true,
-                data: {
-                    post: post,
-                },
-            };
-
-            res.status(200).json(successResponse);
-        }
-
         const post = remapPostInformation(newPostData);
 
         const successResponse: SuccessResponse<{ post: BasePostDataType }> = {
@@ -106,9 +99,6 @@ export const newPost = async (req: Request, res: Response, next: NextFunction) =
 
         res.status(200).json(successResponse);
     } catch (error) {
-        imagesPublicIds?.forEach((img) => {
-            deleteImageFromCloudinary(img);
-        });
         next(error);
     }
 };

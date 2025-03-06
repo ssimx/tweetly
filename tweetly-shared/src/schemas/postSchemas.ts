@@ -7,17 +7,13 @@ export const newPostDataSchema = z.object({
         .max(280, "Post can't exceed 280 characters")
         .optional(),
     images: z
-        .array(z.string())
-        .optional(),
-    imagesPublicIds: z
-        .array(z.string())
-        .optional(),
+        .instanceof(File).array().optional(),
     replyToId: z
-        .number()
+        .string()
         .optional(),
 }).superRefine((data, ctx) => {
     // Check if text is empty
-    if (!data.images && data.text?.length === 0) {
+    if (data.images?.length === 0 && data.text?.length === 0) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: "Please enter the post content",

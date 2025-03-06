@@ -38,7 +38,6 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrati
         reset,
     } = useForm<FormTemporaryUserPasswordType>({ resolver: zodResolver(temporaryUserPasswordSchema) });
 
-    // React hook form's watch API is causing performance issue
     const [passwordWatch, setPasswordWatch] = useState('');
     const [confirmPasswordWatch, setConfirmPasswordWatch] = useState('');
 
@@ -128,7 +127,6 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrati
                         onSubmit={handleSubmit(onSubmit)}
                         className='flex flex-col gap-5 w-full'
                         id={formId}
-                        tabIndex={1}
                     >
                         <div className="relative h-10 w-full">
                             <Input
@@ -138,38 +136,18 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrati
                                 placeholder="Password"
                                 maxLength={50}
                                 type={passwordType}
-                                tabIndex={2}
                                 autoFocus={true}
+                                tabIndex={1}
                             />
-
-                            {passwordType === 'password'
-                                ? (
-                                    <button
-                                        title='Show password'
-                                        type='button'
-                                        onClick={() => setPasswordType('text')}
-                                    >
-                                        <EyeOff
-                                            size={18}
-                                            className="absolute right-0 mr-3 top-1/2 transform -translate-y-1/2 text-secondary-text z-10"
-                                            tabIndex={4}
-                                        />
-                                    </button>
-                                )
-                                : (
-                                    <button
-                                        title='Hide password'
-                                        type='button'
-                                        onClick={() => setPasswordType('password')}
-                                    >
-                                        <Eye
-                                            size={18}
-                                            className="absolute right-0 mr-3 top-1/2 transform -translate-y-1/2 text-primary z-10"
-                                            tabIndex={4}
-                                        />
-                                    </button>
-                                )
-                            }
+                            <button
+                                title={passwordType === 'password' ? 'Show password' : 'Hide password'}
+                                type='button'
+                                onClick={() => setPasswordType(passwordType === 'password' ? 'text' : 'password')}
+                                className="absolute right-0 mr-3 top-1/2 transform -translate-y-1/2 text-secondary-text z-10"
+                                tabIndex={3}
+                            >
+                                {passwordType === 'password' ? <EyeOff size={18} /> : <Eye size={18} className='text-primary' />}
+                            </button>
                         </div>
                         {errors.password && (
                             <p className="error-msg">{`${errors.password.message}`}</p>
@@ -183,37 +161,17 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrati
                                 placeholder="Confirm password"
                                 maxLength={50}
                                 type={confirmPasswordType}
-                                tabIndex={3}
+                                tabIndex={2}
                             />
-
-                            {confirmPasswordType === 'password'
-                                ? (
-                                    <button
-                                        title='Show password'
-                                        type='button'
-                                        onClick={() => setConfirmPasswordType('text')}
-                                    >
-                                        <EyeOff
-                                            size={18}
-                                            className="absolute right-0 mr-3 top-1/2 transform -translate-y-1/2 text-secondary-text z-10"
-                                            tabIndex={5}
-                                        />
-                                    </button>
-                                )
-                                : (
-                                    <button
-                                        title='Hide password'
-                                        type='button'
-                                        onClick={() => setConfirmPasswordType('password')}
-                                    >
-                                        <Eye
-                                            size={18}
-                                            className="absolute right-0 mr-3 top-1/2 transform -translate-y-1/2 text-primary z-10"
-                                            tabIndex={5}
-                                        />
-                                    </button>
-                                )
-                            }
+                            <button
+                                title={confirmPasswordType === 'password' ? 'Show password' : 'Hide password'}
+                                type='button'
+                                onClick={() => setConfirmPasswordType(confirmPasswordType === 'password' ? 'text' : 'password')}
+                                className="absolute right-0 mr-3 top-1/2 transform -translate-y-1/2 text-secondary-text z-10"
+                                tabIndex={4}
+                            >
+                                {confirmPasswordType === 'password' ? <EyeOff size={18} /> : <Eye size={18} className='text-primary' />}
+                            </button>
                         </div>
                         {errors.confirmPassword && (
                             <p className="error-msg">{`${errors.confirmPassword.message}`}</p>

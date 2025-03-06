@@ -23,13 +23,13 @@ export function formatPostDate(date: string | number | Date) {
     }
 };
 
-export function formatDate(date: string) {
+export function formatDate(date: string | Date) {
     const postDate = new Date(date);
     const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: "numeric" };
     return postDate.toLocaleDateString('en-US', options);
 }
 
-export function getAge(date: string) {
+export function getAge(date: string | Date) {
     const birthDate = new Date(date);
     const now = new Date();
 
