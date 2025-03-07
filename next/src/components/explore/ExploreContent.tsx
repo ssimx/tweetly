@@ -1,11 +1,10 @@
 'use client';
-
-import { BasicPostType } from '@/lib/types';
 import PostCard from '../posts/PostCard';
 import ExploreTrendingHashtags from './ExploreTrendingHashtags';
 import Link from 'next/link';
+import { BasePostDataType } from 'tweetly-shared';
 
-export default function ExploreContent({ posts }: { posts: BasicPostType[] | null }) {
+export default function ExploreContent({ posts }: { posts: BasePostDataType[] | null }) {
 
     return (
         <section className='w-full h-fit'>
@@ -22,10 +21,12 @@ export default function ExploreContent({ posts }: { posts: BasicPostType[] | nul
                                 <div className='feed-hr-line'></div>
                             </div>
                         ))
-                        : <div>No posts</div>
+                        : posts === null
+                            ? <div>Something went wrong</div>
+                            : <div>There&lsquo;s no posts</div>
                     }
                     <div className='w-full flex-center p-4'>
-                        <Link href={'/'} className='w-fit px-4 py-2 text-primary font-bold rounded-[15px] border border-primary/90'>More posts</Link>
+                        <Link href={'/'} className='w-fit px-4 py-2 text-primary font-bold rounded-[15px] border border-primary/90'>Explore more posts</Link>
                     </div>
                 </div>
             </div>

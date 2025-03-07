@@ -362,15 +362,34 @@ export const following30DayPosts = async (req: Request, res: Response, next: Nex
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const exploreRandomPosts = async (req: Request, res: Response) => {
+export const exploreRandomPosts = async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as UserProps;
 
     try {
-        const posts = await getTopPosts(user.id);
-        return res.status(200).json({ posts })
+        const postsData = await getTopPosts(user.id);
+
+        const posts = postsData.map((post) => {
+            // skip if there's no information
+            if (!post) return;
+            if (!post.author) return;
+            if (!post.author.profile) return;
+
+            return remapPostInformation(post);
+        }).filter((post): post is NonNullable<typeof post> => post !== undefined);
+
+        const orderedPosts = posts?.sort((a, b) => (b.stats.likesCount + b.stats.repliesCount + b.stats.repostsCount) - (a.stats.likesCount + a.stats.repliesCount + a.stats.repostsCount)) ?? [];
+
+
+        const successResponse: SuccessResponse<{ posts: BasePostDataType[] }> = {
+            success: true,
+            data: {
+                posts: orderedPosts,
+            },
+        };
+
+        res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error fetching data: ', error);
-        return res.status(500).json({ error: 'Failed to fetch posts' });
+        next(error);
     }
 };
 

@@ -1537,56 +1537,96 @@ export const getTopPosts = async (userId: number) => {
     // Infer the type of newPosts and assign it to posts
     type PostWithRelations = Prisma.PostGetPayload<{
         select: {
-            id: true;
-            content: true;
-            createdAt: true;
-            updatedAt: true;
+            id: true,
+            content: true,
+            images: true,
+            createdAt: true,
+            updatedAt: true,
             author: {
                 select: {
-                    username: true;
+                    username: true,
                     profile: {
                         select: {
-                            name: true;
-                            bio: true;
-                            profilePicture: true;
-                        };
-                    };
+                            name: true,
+                            bio: true,
+                            location: true,
+                            websiteUrl: true,
+                            profilePicture: true,
+                            bannerPicture: true,
+                        }
+                    },
                     followers: {
-                        where: { followerId: number };
-                        select: { followerId: true };
-                    };
+                        where: {
+                            followerId: userId
+                        },
+                        select: {
+                            followerId: true
+                        }
+                    },
                     following: {
-                        where: { followeeId: number };
-                        select: { followeeId: true };
-                    };
+                        where: {
+                            followeeId: userId
+                        },
+                        select: {
+                            followeeId: true
+                        }
+                    },
+                    blockedBy: {
+                        where: {
+                            blockerId: userId,
+                        },
+                        select: {
+                            blockerId: true,
+                        }
+                    },
+                    blockedUsers: {
+                        where: {
+                            blockedId: userId,
+                        },
+                        select: {
+                            blockedId: true,
+                        }
+                    },
                     _count: {
                         select: {
-                            followers: true;
-                            following: true;
-                        };
-                    };
-                };
-            };
+                            followers: true,
+                            following: true,
+                        },
+                    },
+                },
+            },
             reposts: {
-                where: { userId: number };
-                select: { userId: true };
-            };
+                where: {
+                    userId: userId
+                },
+                select: {
+                    userId: true,
+                },
+            },
             likes: {
-                where: { userId: number };
-                select: { userId: true };
-            };
+                where: {
+                    userId: userId
+                },
+                select: {
+                    userId: true,
+                },
+            },
             bookmarks: {
-                where: { userId: number };
-                select: { userId: true };
-            };
+                where: {
+                    userId: userId
+                },
+                select: {
+                    userId: true,
+                },
+            },
             _count: {
                 select: {
-                    replies: true;
-                    reposts: true;
-                    likes: true;
-                };
-            };
-        };
+                    replies: true,
+                    reposts: true,
+                    likes: true,
+                },
+            },
+        }
     }>;
     let posts: PostWithRelations[] = [];
 
@@ -1655,24 +1695,27 @@ export const getTopPosts = async (userId: number) => {
                             select: {
                                 name: true,
                                 bio: true,
+                                location: true,
+                                websiteUrl: true,
                                 profilePicture: true,
-                            },
+                                bannerPicture: true,
+                            }
                         },
                         followers: {
                             where: {
-                                followerId: userId,
+                                followerId: userId
                             },
                             select: {
-                                followerId: true,
-                            },
+                                followerId: true
+                            }
                         },
                         following: {
                             where: {
-                                followeeId: userId,
+                                followeeId: userId
                             },
                             select: {
-                                followeeId: true,
-                            },
+                                followeeId: true
+                            }
                         },
                         blockedBy: {
                             where: {
@@ -1680,7 +1723,15 @@ export const getTopPosts = async (userId: number) => {
                             },
                             select: {
                                 blockerId: true,
+                            }
+                        },
+                        blockedUsers: {
+                            where: {
+                                blockedId: userId,
                             },
+                            select: {
+                                blockedId: true,
+                            }
                         },
                         _count: {
                             select: {
@@ -1692,7 +1743,7 @@ export const getTopPosts = async (userId: number) => {
                 },
                 reposts: {
                     where: {
-                        userId: userId,
+                        userId: userId
                     },
                     select: {
                         userId: true,
@@ -1700,7 +1751,7 @@ export const getTopPosts = async (userId: number) => {
                 },
                 likes: {
                     where: {
-                        userId: userId,
+                        userId: userId
                     },
                     select: {
                         userId: true,
@@ -1708,7 +1759,7 @@ export const getTopPosts = async (userId: number) => {
                 },
                 bookmarks: {
                     where: {
-                        userId: userId,
+                        userId: userId
                     },
                     select: {
                         userId: true,
@@ -1721,7 +1772,7 @@ export const getTopPosts = async (userId: number) => {
                         likes: true,
                     },
                 },
-            },
+            }
         });
 
         posts = [...posts, ...newPosts];

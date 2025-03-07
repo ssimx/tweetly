@@ -2,7 +2,7 @@
 import { getCurrentUserToken } from "@/data-acess-layer/auth";
 import { getLoggedInUser } from "@/data-acess-layer/user-dto";
 import { decryptSession } from '@/lib/session';
-import { BasicPostType, BookmarkPostType, NotificationType, ProfileReplyPostType, UserInfoType, VisitedPostType } from "@/lib/types";
+import { BasicPostType, BookmarkPostType, NotificationType, UserInfoType, } from "@/lib/types";
 import { cache } from 'react';
 import { ApiResponse, AppError, BasePostDataType, ErrorResponse, getErrorMessage, LoggedInUserJwtPayload, ProfilePostOrRepostDataType, SuccessResponse, UserDataType, VisitedPostDataType } from 'tweetly-shared';
 
@@ -499,10 +499,10 @@ export async function getMoreBookmarks(cursor: number) {
     }
 };
 
-export async function getExplorePosts() {
-    const token = await getCurrentUserToken();
-
+export async function getExplorePosts(): Promise<ApiResponse<{ posts: BasePostDataType[] }>> {
     try {
+        const token = await getCurrentUserToken();
+
         const response = await fetch(`http://localhost:3000/api/posts/explore/`, {
             method: 'GET',
             headers: {
@@ -512,22 +512,40 @@ export async function getExplorePosts() {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const posts = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'posts' in res) {
-                return { posts: res.posts as BasicPostType[] };
-            }
-            throw new Error('Invalid response format');
-        });
+        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[] }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
 
-        return posts;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return { posts: null };
+        return {
+            success: true,
+            data: {
+                posts: data.posts,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 

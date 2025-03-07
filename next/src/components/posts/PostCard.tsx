@@ -13,6 +13,8 @@ export default function PostCard({ post, searchSegments }: { post: BasePostDataT
     const { blockedUsers } = useBlockedUsersContext();
     const router = useRouter();
 
+    console.log(post)
+
     // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     const userInitialState: UserStateType = {
         relationship: {
