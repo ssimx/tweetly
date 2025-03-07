@@ -126,7 +126,6 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
             if (isZodError(error)) {
                 error.issues.forEach((detail) => {
                     if (detail.path && detail.message) {
-                        console.error(detail.message);
                         setError(detail.path[0] as keyof FormNewPostDataType, {
                             type: 'manual',
                             message: detail.message

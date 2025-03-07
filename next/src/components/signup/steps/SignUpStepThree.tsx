@@ -8,7 +8,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Loader2, X, AtSign, CircleCheck, CircleX } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from '@/components/ui/input';
@@ -16,14 +16,14 @@ import { checkIfUsernameIsAvailable, updateTemporaryUserUsername } from '@/actio
 import { z } from 'zod';
 import Image from 'next/image';
 import { useDisplayContext } from '@/context/DisplayContextProvider';
-import { AppError, FormTemporaryUserUsernameType, getErrorMessage, isZodError, SuccessResponse, temporaryUserUsernameSchema } from 'tweetly-shared';
+import { AppError, FormTemporaryUserUsernameType, getErrorMessage, isZodError, SuccessResponse, temporaryUserUsernameSchema, usernameSchema } from 'tweetly-shared';
 import { SignUpStepType } from '../SignUpProcess';
+import { debounce } from 'lodash';
 
 export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistrationStep, customError, setCustomError }: SignUpStepType) {
     const { savedTheme } = useDisplayContext();
-    const [isValidating, setIsValidating] = useState(false);
-    const [validatedUsername, setValidatedUsername] = useState<string | null>(null);
-    const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(null);
+    const [isChecking, setIsChecking] = useState(false);
+    const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
     const formId = useId();
 
     const {
@@ -37,68 +37,80 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
 
     const usernameWatch = useWatch({ control, name: 'username', defaultValue: '' });
 
-    // check for new username availability
+    // Create a debounced function for checking username availability
+    const checkUsernameAvailability = useCallback(
+        (username: string) => {
+            const debouncedCheck = debounce(async (usernameToCheck: string) => {
+                if (!usernameToCheck) {
+                    return;
+                }
+
+                setIsChecking(true);
+                setIsAvailable(null);
+                setCustomError(null);
+
+                try {
+                    usernameSchema.parse({ username: usernameToCheck.trim() });
+                    const encodedUsername = encodeURIComponent(usernameToCheck.trim());
+                    const response = await checkIfUsernameIsAvailable({ username: encodedUsername });
+
+                    if (!response.success) {
+                        if (response.error.details) throw new z.ZodError(response.error.details);
+                        else throw new Error(response.error.message);
+                    }
+
+                    const { data } = response as SuccessResponse<{ available: boolean }>;
+                    if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+                    else if (data.available === undefined) throw new AppError('Available property is missing in data response', 404, 'MISSING_PROPERTY');
+
+                    setIsAvailable(data.available);
+                } catch (error: unknown) {
+                    if (isZodError(error)) {
+                        error.issues.forEach((detail) => {
+                            if (detail.path && detail.message) {
+                                setError(detail.path[0] as keyof FormTemporaryUserUsernameType, {
+                                    type: 'manual',
+                                    message: detail.message
+                                });
+                            }
+                        });
+                    } else {
+                        const errorMessage = getErrorMessage(error);
+                        console.error('Error:', errorMessage);
+                        setCustomError(errorMessage ?? 'Something went wrong, refresh the page or remove cookies. If problem persists, contact the support');
+                    }
+                } finally {
+                    setIsChecking(false);
+                }
+            }, 500);
+
+            debouncedCheck(username);
+            return debouncedCheck;
+        },
+        [setCustomError, setError]
+    );
+
+    // Call the debounced function when username changes
     useEffect(() => {
-        if (isSubmitting || isValidating) return;
-        if (usernameWatch.length === 0) return;
-        if (usernameWatch === validatedUsername) return;
-        setIsUsernameAvailable(null);
-        setCustomError(null);
+        setIsAvailable(null);
 
-        const timeoutId = setTimeout(async () => {
-            try {
-                const validatedUsername = temporaryUserUsernameSchema.parse({ username: usernameWatch });
+        // For cancel method
+        let debouncedCheckFn: ReturnType<typeof debounce> | null = null;
 
-                // Encode query for API requests
-                const encodedSearch = encodeURIComponent(validatedUsername.username);
+        if (usernameWatch && !isSubmitting) {
+            debouncedCheckFn = checkUsernameAvailability(usernameWatch);
+        }
 
-                setIsValidating(true);
-                const response = await checkIfUsernameIsAvailable({ username: encodedSearch });
-                setValidatedUsername(usernameWatch);
-
-                if (!response.success) {
-                    if (response.error.details) throw new z.ZodError(response.error.details);
-                    else throw new Error(response.error.message);
-                }
-
-                const { data } = response as SuccessResponse<{ available: boolean }>;
-                if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
-                else if (data.available === undefined) throw new AppError('Available property is missing in data response', 404, 'MISSING_PROPERTY');
-
-                if (!data.available) {
-                    setIsUsernameAvailable(false);
-                } else {
-                    setIsUsernameAvailable(true);
-                }
-            } catch (error: unknown) {
-                if (isZodError(error)) {
-                    error.issues.forEach((detail) => {
-                        if (detail.path && detail.message) {
-                            setError(detail.path[0] as keyof FormTemporaryUserUsernameType, {
-                                type: 'manual',
-                                message: detail.message
-                            });
-                        }
-                    });
-                } else {
-                    const errorMessage = getErrorMessage(error);
-                    console.error('Registration error:', errorMessage);
-                    setCustomError(errorMessage ?? 'Something went wrong, refresh the page or remove cookies. If problem persists, contact the support');
-                    reset();
-                }
-            } finally {
-                setIsValidating(false);
+        // Cleanup debounced function on unmount or when dependencies change
+        return () => {
+            if (debouncedCheckFn) {
+                debouncedCheckFn.cancel();
             }
-        }, 500);
-
-        return (() => {
-            clearTimeout(timeoutId);
-            setIsValidating(false);
-        });
-    }, [isSubmitting, isValidating, usernameWatch, validatedUsername, reset, setCustomError, setError]);
+        };
+    }, [usernameWatch, isSubmitting, checkUsernameAvailability]);
 
     const onSubmit = async (formData: FormTemporaryUserUsernameType) => {
-        if (isSubmitting || isValidating) return;
+        if (isSubmitting || isChecking) return;
         setCustomError(null);
 
         try {
@@ -133,7 +145,6 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
                 const errorMessage = getErrorMessage(error);
                 console.error('Registration error:', errorMessage);
                 setCustomError(errorMessage ?? 'Something went wrong, refresh the page or remove cookies. If problem persists, contact the support');
-                reset();
             }
 
         }
@@ -179,7 +190,7 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
                                 className="pl-8 pr-3 py-2 text-md w-full rounded shadow-sm"
                             />
 
-                            {isUsernameAvailable === true
+                            {isAvailable === true
                                 && (
                                     <div title='Username is available'>
                                         <CircleCheck size={18} className="absolute right-0 mr-3 top-1/2 transform -translate-y-1/2 text-green-400 z-10" />
@@ -187,7 +198,7 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
                                 )
                             }
 
-                            {isUsernameAvailable === false
+                            {isAvailable === false
                                 && (
                                     <div title='Username is not available'>
                                         <CircleX size={18} className="absolute right-0 mr-3 top-1/2 transform -translate-y-1/2 text-red-600 z-10" />
@@ -217,7 +228,7 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
                     : (
                         <Button form={formId}
                             className='w-full h-[3rem] text-[1.1rem] bg-primary font-semibold text-white-1 mt-auto rounded-[25px]'
-                            disabled={!isUsernameAvailable}
+                            disabled={!isAvailable}
                         >
                             Next
                         </Button>

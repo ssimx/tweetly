@@ -39,6 +39,13 @@ export const uploadToCloudinary = async (req: Request, res: Response, next: Next
                     if (!result) {
                         return next(new AppError('Cloudinary upload result is undefined', 400, 'UPLOAD_UNDEFINED'));
                     }
+
+                    if (file.fieldname.startsWith('profile')) {
+                        req.body.profilePicture = result.secure_url;
+                    } else if (file.fieldname.startsWith('banner')) {
+                        req.body.bannerPicture = result.secure_url;
+                    }
+                    
                     cloudinaryUrls.push(result.secure_url);
 
                     if (cloudinaryUrls.length === files.length) {

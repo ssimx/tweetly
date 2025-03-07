@@ -3,23 +3,23 @@ import {
     Dialog,
     DialogContent,
     DialogFooter,
+    DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { updateProfileSchema } from "@/lib/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import TextareaAutosize from 'react-textarea-autosize';
-import { z } from "zod";
 import { Button } from "../ui/button";
 import { Loader2, ImagePlus, X, ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Croppie, { CropType } from "croppie";
 import "croppie/croppie.css";
-import { UserDataType } from 'tweetly-shared';
-
-type ProfileInfoData = z.infer<typeof updateProfileSchema>;
+import { getErrorMessage, isZodError, UserDataType, userUpdateProfileSchema, UserUpdateProfileType } from 'tweetly-shared';
+import { updateProfile } from '@/actions/actions';
+import { z } from 'zod';
+import { useUserContext } from '@/context/UserContextProvider';
 
 const croppieProfileOptions = {
     showZoomer: true,
@@ -53,40 +53,73 @@ const croppieBannerOptions = {
 
 type CroppieInstance = Croppie | null;
 
-type AppState = {
-    isFileUploaded: boolean;
-    croppedImage: string | null;
-};
-
 export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<UserDataType, 'profile'>['profile'] }) {
+    const { refetchUserData } = useUserContext();
     const [open, setOpen] = useState(false);
     const [name, setName] = useState(profileInfo.name);
     const [bio, setBio] = useState(profileInfo.bio);
     const [location, setLocation] = useState(profileInfo.location);
     const [website, setWebsite] = useState(profileInfo.websiteUrl);
-    const [newBannerPicture, setNewBannerPicture] = useState<File | string | null>(null);
-    const [newProfilePicture, setNewProfilePicture] = useState<File | null>(null);
-    const [bannerPicturePreview, setBannerPicturePreview] = useState<string>(profileInfo.bannerPicture);
+    const [customError, setCustomError] = useState<string | null>(null);
+
+    const defaultProfilePictureLink = 'https://res.cloudinary.com/ddj6z1ptr/image/upload/v1728503826/profilePictures/ynh7bq3eynvkv5xhivaf.png';
+
+    const [uploadedProfilePictureData, setUploadedProfilePictureData] = useState<File | null>(null);
+    // If picture is selected and applied, display it to the user
     const [profilePicturePreview, setProfilePicturePreview] = useState<string>(profileInfo.profilePicture);
-    const bannerInputRef = useRef<HTMLInputElement | null>(null);
-    const profileInputRef = useRef<HTMLInputElement | null>(null);
-    const [isFileUploaded, setIsFileUploaded] = useState<AppState["isFileUploaded"]>(false);
+    // If picture is selected and in edit mode, change state to true, when returned/applied change it back to false
+    const [uploadedBannerPictureData, setUploadedBannerPictureData] = useState<File | null>(null);
+    // If picture is selected and applied, display it to the user
+    const [bannerPicturePreview, setBannerPicturePreview] = useState<string>(profileInfo.bannerPicture);
+    // If picture is selected and in edit mode, change state to true, when returned/applied change it back to false
+    const [isFileUploaded, setIsFileUploaded] = useState(false);
+
+    const [pictureType, setPictureType] = useState<'profile' | 'banner' | undefined>(undefined);
+    const bannerPictureInputRef = useRef<HTMLInputElement | null>(null);
+    const profilePictureInputRef = useRef<HTMLInputElement | null>(null);
     const croppieContainerRef = useRef<HTMLDivElement | null>(null);
     const croppieRef = useRef<CroppieInstance>(null);
-    const [pictureType, setPictureType] = useState<'profile' | 'banner' | undefined>(undefined);
     const router = useRouter();
 
-    const maxBioChars = 160;
+    // LOGIC FOR ENABLING/DISABLING SAVE BUTTON -------------------------------------------------------------------------------------
+    
     const maxNameChars = 50;
+    const maxBioChars = 160;
     const maxLocationChars = 30;
     const maxWebsiteChars = 100;
+
+    const changedName = name !== profileInfo.name ? name.length < maxNameChars : false;
+    const changedBio = bio !== profileInfo.bio ? bio.length < maxBioChars : false;
+    const changedLocation = location !== profileInfo.location ? location.length < maxLocationChars : false;
+    const changedWebsite = website !== profileInfo.websiteUrl ? website.length < maxWebsiteChars : false;
+
+    const changedBannerPicture = uploadedBannerPictureData === null
+        ? bannerPicturePreview !== profileInfo.bannerPicture
+            ? true
+            : false
+        : true
+    
+    const changedProfilePicture = uploadedProfilePictureData === null
+        ? profilePicturePreview !== profileInfo.profilePicture
+            ? true
+            : false
+        : true
+    
+    const buttonEnabled =
+        changedName || changedBio || changedLocation || changedWebsite || changedBannerPicture || changedProfilePicture || false;
+    
+    // ------------------------------------------------------------------------------------------------------------------------------
 
     const {
         register,
         handleSubmit,
         formState: { errors, isSubmitting },
         setError,
-    } = useForm<ProfileInfoData>({ resolver: zodResolver(updateProfileSchema) });
+        setValue,
+    } = useForm<UserUpdateProfileType>({ resolver: zodResolver(userUpdateProfileSchema) });
+
+    const { ref: profilePictureRef, ...profilePictureRest } = register('profilePicture');
+    const { ref: bannerPictureRef, ...bannerPictureRest } = register('bannerPicture');
 
     useEffect(() => {
         // Cleanup Croppie instance when edit media is cancelled
@@ -106,96 +139,57 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
         };
     }, []);
 
-    const updateProfile = async (data: ProfileInfoData) => {
+    const onSubmit = async (formData: UserUpdateProfileType) => {
+        if (isSubmitting) return;
+        setCustomError(null);
+
         try {
-            let bannerPicturePublicId = '';
-            let profilePicturePublicId = '';
+            console.log(formData)
+            const response = await updateProfile(formData);
 
-            if (newBannerPicture !== null || newProfilePicture !== null) {
-                let bannerPictureData: FormData | undefined = undefined;
-                let profilePictureData: FormData | undefined = undefined;
-                let bannerPicturePromise: Promise<null> | Promise<Response> = Promise.resolve(null);
-                let profilePicturePromise: Promise<null> | Promise<Response> = Promise.resolve(null);
-
-                if (newBannerPicture !== null) {
-                    if (newBannerPicture === '') {
-                        data.bannerPicture = '';
-                    } else {
-                        bannerPictureData = new FormData();
-                        bannerPictureData.append('file', new File([newBannerPicture], 'bannerPicture'));
-                        bannerPictureData.append('upload_preset', 'bannerPicture');
-                        bannerPicturePromise = fetch('https://api.cloudinary.com/v1_1/ddj6z1ptr/image/upload', {
-                            method: 'POST',
-                            body: bannerPictureData,
-                        });
-                    }
-                }
-
-                if (newProfilePicture !== null) {
-                    profilePictureData = new FormData();
-                    profilePictureData.append('file', new File([newProfilePicture], 'profilePicture'));
-                    profilePictureData.append('upload_preset', 'profilePicture');
-                    profilePicturePromise = fetch('https://api.cloudinary.com/v1_1/ddj6z1ptr/image/upload', {
-                        method: 'POST',
-                        body: profilePictureData,
-                    });
-                }
-
-                const promises: Promise<Response | null>[] = [bannerPicturePromise, profilePicturePromise]
-                const responses = await Promise.allSettled(promises);
-                const [bannerUploadResult, profileUploadResult] = responses;
-
-                if (bannerPictureData !== undefined) {
-                    if (bannerUploadResult.status === 'fulfilled') {
-                        const bannerResponse = await bannerUploadResult.value!.json();
-                        if (!bannerResponse.secure_url) {
-                            console.error('Banner image upload failed:', bannerResponse);
-                            return;
-                        }
-                        data.bannerPicture = bannerResponse.secure_url;
-                        bannerPicturePublicId = bannerResponse.public_id;
-                    } else {
-                        console.error('Banner image upload failed:', bannerUploadResult.reason);
-                    }
-                }
-
-                if (profilePictureData !== undefined) {
-                    if (profileUploadResult.status === 'fulfilled') {
-                        const profileResponse = await profileUploadResult.value!.json();
-                        if (!profileResponse.secure_url) {
-                            console.error('Profile image upload failed:', profileResponse);
-                            return;
-                        }
-                        data.profilePicture = profileResponse.secure_url;
-                        profilePicturePublicId = profileResponse.public_id;
-                    } else {
-                        console.error('Profile image upload failed:', profileUploadResult.reason);
-                    }
-                }
+            if (!response.success) {
+                if (response.error.details) throw new z.ZodError(response.error.details);
+                else throw response.error;
             }
 
-            const response = await fetch(`/api/users/updateProfile/${user.username}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ data: { ...data }, bannerPicturePublicId: bannerPicturePublicId, profilePicturePublicId: profilePicturePublicId }),
-            })
-
-            if (!response.ok) {
-                throw new Error('Profile update failed');
-            }
-
+            // if success, redirect
             router.refresh();
             setOpen(false);
-        } catch (error) {
-            console.error(error);
+            refetchUserData();
+        } catch (error: unknown) {
+            console.log(error)
+            if (isZodError(error)) {
+                error.issues.forEach((detail) => {
+                    if (detail.path && detail.message) {
+                        setError(detail.path[0] as keyof UserUpdateProfileType, {
+                            type: 'manual',
+                            message: detail.message
+                        });
+                    }
+                });
+            } else {
+                const errorMessage = getErrorMessage(error);
+                console.error('Error:', errorMessage);
+                setCustomError(errorMessage ?? 'Something went wrong, refresh the page or remove cookies. If problem persists, contact the support');
+            }
+
+            setUploadedBannerPictureData(null);
+            setUploadedProfilePictureData(null);
+            setProfilePicturePreview(profileInfo.profilePicture);
+            setBannerPicturePreview(profileInfo.bannerPicture);
         }
     };
 
-    const handleRemoveBanner = async () => {
-        setNewBannerPicture('');
+    const handleRemoveBannerPicture = async () => {
         setBannerPicturePreview('');
+        setUploadedBannerPictureData(null);
+        setValue('removeBannerPicture', true);
+    };
+
+    const handleRemoveProfilePicture = async () => {
+        setProfilePicturePreview(defaultProfilePictureLink);
+        setUploadedProfilePictureData(null);
+        setValue('removeProfilePicture', true);
     };
 
     // CROPPIE
@@ -206,8 +200,30 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
         return croppieRef.current!;
     };
 
+    const onResult = (): void => {
+        const croppieInstance = croppieRef.current as Croppie;
+        croppieInstance.result({ type: "base64" }).then((base64: string) => {
+            croppieRef.current?.destroy();
+            croppieRef.current = null;
+            setCustomError(null);
+            setIsFileUploaded(() => false);
+
+            if (pictureType === 'profile') {
+                setProfilePicturePreview(base64);
+                setValue('profilePicture', new File([base64], 'profile picture', { type: uploadedProfilePictureData!.type }));
+                setUploadedProfilePictureData(new File([base64], 'profile picture', { type: uploadedProfilePictureData!.type }));
+                setValue('removeProfilePicture', false);
+            } else {
+                setBannerPicturePreview(base64);
+                setValue('bannerPicture', new File([base64], 'banner picture', { type: uploadedBannerPictureData!.type }));
+                setUploadedBannerPictureData(new File([base64], 'banner picture', { type: uploadedBannerPictureData!.type }));
+                setValue('removeBannerPicture', false);
+            }
+        });
+    };
+
     const onFileUpload = (type: 'profile' | 'banner') => {
-        const file = profileInputRef.current?.files?.[0] || bannerInputRef.current?.files?.[0];
+        const file = profilePictureInputRef.current?.files?.[0] || bannerPictureInputRef.current?.files?.[0];
         if (!file) return;
 
         setIsFileUploaded(true);
@@ -215,6 +231,9 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
 
         reader.readAsDataURL(file);
         reader.onload = () => {
+            type === 'profile'
+                ? setUploadedProfilePictureData(new File([reader.result as string], 'profile picture', { type: file.type }))
+                : setUploadedBannerPictureData(new File([reader.result as string], 'banner picture', { type: file.type }));
             const croppieInstance = initializeCroppie(type);
             croppieInstance.bind({ url: reader.result as string });
         };
@@ -223,25 +242,14 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
         };
     };
 
-    const onResult = (): void => {
-        const croppieInstance = croppieRef.current as Croppie;
-        croppieInstance.result({ type: "base64" }).then((base64: string) => {
-            croppieRef.current?.destroy();
-            croppieRef.current = null;
-            setIsFileUploaded(() => false);
-            pictureType === 'profile' ? setProfilePicturePreview(base64) : setBannerPicturePreview(base64);
-            pictureType === 'profile' ? setNewProfilePicture(new File([base64], 'profile picture')) : setNewBannerPicture(new File([base64], 'banner picture'));
-        });
-    };
-
     const handleSelectedImage = async (file: File, type: 'banner' | 'profile') => {
         const fileType = file.type;
-        const allowedFileTypes = ['image/jpg', 'image/jpeg', 'image/png'];
+        const allowedFileTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/webp'];
 
         if (!allowedFileTypes.includes(fileType)) {
             setError('bannerPicture', {
                 type: 'manual',
-                message: 'File types allowed: png, jpg, jpeg'
+                message: 'Only .jpg, .jpeg, .png and .webp formats are supported'
             });
             return;
         }
@@ -257,7 +265,7 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
             </DialogTrigger>
             {!isFileUploaded
                 ? <DialogContent className="edit-profile-dialog">
-                    <div className='h-[35px] text-20 font-bold'>Edit profile</div>
+                    <DialogTitle className='h-[35px] text-20 font-bold'>Edit profile</DialogTitle>
                     <div className='picture-banner-container h-[180px]'>
                         <div className='w-full h-full'>
                             <div className='relative w-full h-full flex-center gap-2'>
@@ -270,11 +278,11 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                                 height={180} width={600}
                                                 className='w-full h-full absolute' />
                                             <button className=' z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30'
-                                                onClick={() => bannerInputRef.current?.click()}>
+                                                onClick={() => bannerPictureInputRef.current?.click()}>
                                                 <ImagePlus size={20} className='text-primary-text' />
                                             </button>
                                             <button className=' z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30'
-                                                onClick={handleRemoveBanner}>
+                                                onClick={handleRemoveBannerPicture}>
                                                 <X size={20} className='text-primary-text' />
                                             </button>
                                         </>)
@@ -282,15 +290,20 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                         <>
                                             <div className='w-full h-full absolute bg-secondary-foreground' ></div>
                                             <button className=' z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30'
-                                                onClick={() => bannerInputRef.current?.click()}>
+                                                onClick={() => bannerPictureInputRef.current?.click()}>
                                                 <ImagePlus size={20} className='text-primary-text' />
                                             </button>
-                                        </>)
+                                        </>
+                                    )
                                 }
                                 <input
-                                    ref={bannerInputRef}
+                                    {...bannerPictureRest} name="bannerPicture" ref={(e) => {
+                                        bannerPictureRef(e);
+                                        setValue('bannerPicture', uploadedBannerPictureData ?? undefined);
+                                        bannerPictureInputRef.current = e;
+                                    }} 
                                     type="file"
-                                    accept=".png, .jpg, .jpeg"
+                                    accept=".png, .jpg, .jpeg .webp"
                                     className="hidden"
                                     style={{ minWidth: '1500px', minHeight: '500px' }}
                                     onChange={(e) => {
@@ -299,24 +312,52 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                         }
                                     }}
                                 />
-                                {errors.bannerPicture && <p>{errors.bannerPicture.message}</p>}
                             </div>
                         </div>
-                        <div className='w-[100px] h-[100px] absolute bottom-0 left-5 translate-y-[50%] rounded-full border-4 overflow-hidden border-[#ffffff]'>
+                        <div className='w-[125px] h-[125px] absolute bottom-0 left-5 translate-y-[50%] rounded-full border-4 overflow-hidden border-[#ffffff]'>
                             <div className='relative w-full h-full flex-center'>
-                                <Image
-                                    src={profilePicturePreview}
-                                    alt='User profile picture'
-                                    height={100} width={100}
-                                    className='absolute top-0 left-0 z-0' />
-                                <button className='z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30'
-                                    onClick={() => profileInputRef.current?.click()}>
-                                    <ImagePlus size={20} className='text-primary-text' />
-                                </button>
+                                {profilePicturePreview !== defaultProfilePictureLink
+                                    ? (
+                                        <>
+                                            <Image
+                                                src={profilePicturePreview}
+                                                alt='User profile picture'
+                                                height={125} width={125}
+                                                className='absolute top-0 left-0 z-0' />
+                                            <div className='flex gap-2'>
+                                                <button className='z-10 bg-black-1/30 p-3 rounded-full hover:bg-black-1/50'
+                                                    onClick={() => profilePictureInputRef.current?.click()}>
+                                                    <ImagePlus size={20} className='text-primary-text' />
+                                                </button>
+                                                <button className='z-10 bg-black-1/30 p-3 rounded-full hover:bg-black-1/50'
+                                                    onClick={handleRemoveProfilePicture}>
+                                                    <X size={20} className='text-primary-text' />
+                                                </button>
+                                            </div>
+                                        </>
+                                    )
+                                    : (
+                                        <>
+                                            <Image
+                                                src={profilePicturePreview}
+                                                alt='User profile picture'
+                                                height={125} width={125}
+                                                className='absolute top-0 left-0 z-0' />
+                                            <button className=' z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30'
+                                                onClick={() => profilePictureInputRef.current?.click()}>
+                                                <ImagePlus size={20} className='text-primary-text' />
+                                            </button>
+                                        </>
+                                    )
+                                }
                                 <input
-                                    ref={profileInputRef}
+                                    {...profilePictureRest} name="profilePicture" ref={(e) => {
+                                        profilePictureRef(e);
+                                        setValue('profilePicture', uploadedProfilePictureData ?? undefined);
+                                        profilePictureInputRef.current = e;
+                                    }} 
                                     type="file"
-                                    accept=".png, .jpg, .jpeg"
+                                    accept=".png, .jpg, .jpeg .webp"
                                     className="hidden"
                                     onChange={(e) => {
                                         if (e.target.files && e.target.files[0]) {
@@ -324,11 +365,15 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                         }
                                     }}
                                 />
-                                {errors.profilePicture && <p>{errors.profilePicture.message}</p>}
                             </div>
                         </div>
                     </div>
-                    <form onSubmit={handleSubmit(updateProfile)} id='editProfileForm' className='mt-[75px]'>
+
+                    <form onSubmit={handleSubmit(onSubmit)} id='editProfileForm' className='mt-[75px]'>
+                        <div className='flex flex-col'>
+                            {errors.bannerPicture && <p className='!mt-2 error-msg'>Banner picture: {errors.bannerPicture.message}</p>}
+                            {errors.profilePicture && <p className='!mt-2 error-msg'>Profile picture: {errors.profilePicture.message}</p>}
+                        </div>
                         <div className='profile-bio-input'>
                             <label className='flex justify-between text-14 text-secondary-text'>
                                 <p>Name</p>
@@ -390,6 +435,10 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                         </div>
                     </form>
                     <DialogFooter>
+                        {customError && (
+                            <p className='!my-auto error-msg'>{customError}</p>
+                        )}
+
                         {isSubmitting
                             ? (<Button disabled className='ml-auto font-bold w-fit rounded-3xl text-primary-text'>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -397,7 +446,7 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                             </Button>)
                             : (<Button type="submit"
                                 className='ml-auto font-bold w-fit rounded-3xl text-primary-text'
-                                disabled={bio.length > 280}
+                                disabled={!buttonEnabled}
                                 form='editProfileForm'
                             >
                                 Save

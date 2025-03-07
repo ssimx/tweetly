@@ -1,3 +1,4 @@
+import { temporaryUserProfilePictureSchema } from './../../../tweetly-shared/src/schemas/authSchemas';
 import { NextResponse } from 'next/server';
 import { createNotificationForNewFollow, removeNotificationForFollow } from './../services/notificationService';
 import { NextFunction, Request, Response } from 'express';
@@ -152,42 +153,46 @@ export const getUserFollowSuggestions = async (req: Request, res: Response, next
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const updateProfileInfo = async (req: Request, res: Response) => {
-    const user = req.user as UserProps;
-    const username = req.params.username;
-    if (user.username !== username) return res.status(401).json({ error: 'Unauthorized request' });
+export const updateProfileInfo = async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as LoggedInUserDataType;
 
-    const {
-        data,
-        bannerPicturePublicId,
-        profilePicturePublicId
-    }
-        = await req.body as {
-            data: ProfileInfo,
-            bannerPicturePublicId?: string,
-            profilePicturePublicId?: string,
-        };
+    const name = req.body.name as string;
+    const bio = req.body.bio ?? undefined;
+    const location = req.body.location ?? undefined;
+    const website = req.body.website ?? undefined;
+    const removeProfilePicture = req.body.removeProfilePicture === 'true' ? true : false;
+    const removeBannerPicture = req.body.removeBannerPicture === 'true' ? true : false;
+
+    const profilePicture =
+        req.body.profilePicture
+            ? req.body.profilePicture
+            : removeProfilePicture
+                ? process.env.DEFAULT_PROFILE_PICTURE_LINK
+                : undefined;
+
+    const bannerPicture =
+        req.body.bannerPicture
+            ? req.body.bannerPicture
+            : removeBannerPicture
+                ? ''
+                : undefined;
 
     try {
-        const response = await updateProfile(user.id, data);
-
-        if (!response) {
-            const bannerPicturePromise = bannerPicturePublicId && deleteImageFromCloudinary(bannerPicturePublicId);
-            const profilePicturePromise = profilePicturePublicId && deleteImageFromCloudinary(profilePicturePublicId);
-
-            const promises: Promise<Response>[] = [];
-            if (bannerPicturePromise) promises.push(bannerPicturePromise);
-            if (profilePicturePromise) promises.push(profilePicturePromise);
-
-            await Promise.allSettled(promises);
-
-            return res.status(404).json({ error: 'User not found' });
+        const updatedProfile = await updateProfile(user.id, { name, bio, location, website, profilePicture, bannerPicture });
+        if (!updatedProfile) {
+            throw new AppError('User not found', 404, 'USER_NOT_FOUND');
         }
 
-        return res.status(201).json('Success');
+        const successResponse: SuccessResponse<{ profile: Pick<LoggedInUserDataType, 'profile'>['profile'] }> = {
+            success: true,
+            data: {
+                profile: updatedProfile,
+            },
+        };
+
+        res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        next(error);
     }
 };
 

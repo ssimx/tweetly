@@ -106,31 +106,79 @@ export const userUpdateProfileSchema = z.object({
         .min(1, 'Please enter the name')
         .max(50, "Name can't exceed 50 characters"),
     bio: z
-        .string()
-        .max(160, "Bio can't exceed 60 characters")
-        .optional(),
+        .optional(z
+            .string()
+            .max(160, "Bio can't exceed 60 characters")),
     location: z
-        .string()
-        .max(30, "Location can't exceed 30 characters")
-        .optional(),
+        .optional(z
+            .string()
+            .max(30, "Location can't exceed 30 characters")),
     website: z
-        .string()
-        .max(100, "Website url can't exceed 30 characters")
-        .optional()
-        .refine((val) => val === '' || /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?$/.test(val as string), {
-            message: 'Invalid website URL',
-        }),
+        .optional(z
+            .string()
+            .max(100, "Website url can't exceed 30 characters")
+            .refine((val) => val === '' || /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?$/.test(val as string), {
+                message: 'Invalid website URL',
+            })),
     bannerPicture: z
-        .string()
-        .optional(),
+        .optional(z.instanceof(File)),
+    removeBannerPicture: z
+        .boolean().default(false),
     profilePicture: z
-        .string()
-        .optional(),
+        .optional(z.instanceof(File)),
+    removeProfilePicture: z
+        .boolean().default(false),
+}).superRefine((data, ctx) => {
+    if (data.bannerPicture) {
+        if (!(data.bannerPicture instanceof File)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Input is not a file',
+                path: ['image'],
+            });
+        } else if (data.bannerPicture.size >= 5000000) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Max image size is 5MB',
+                path: ['image'],
+            });
+        } else if (!(["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(data.bannerPicture.type))) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Only .jpg, .jpeg, .png and .webp formats are supported',
+                path: ['image'],
+            });
+        }
+    }
+
+    if (data.profilePicture) {
+        if (!(data.profilePicture instanceof File)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Input is not a file',
+                path: ['image'],
+            });
+        } else if (data.profilePicture.size >= 5000000) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Max image size is 5MB',
+                path: ['image'],
+            });
+        } else if (!(["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(data.profilePicture.type))) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Only .jpg, .jpeg, .png and .webp formats are supported',
+                path: ['image'],
+            });
+        }
+    }
 });
 
 export type UserUpdateProfileType = z.infer<typeof userUpdateProfileSchema>;
 
-// SEARCHING USERS
+
+
+
 
 // Email schema
 export const emailSchema = z.object({

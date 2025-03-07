@@ -11,7 +11,7 @@ type UserContextType = {
     followersCount: number,
     setFollowersCount: React.Dispatch<React.SetStateAction<number>>,
     newFollowing: boolean,
-    setNewFollowing: React.Dispatch<React.SetStateAction<boolean>>
+    setNewFollowing: React.Dispatch<React.SetStateAction<boolean>>,
     refetchUserData: () => Promise<void>;
 };
 

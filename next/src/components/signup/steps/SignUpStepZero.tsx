@@ -11,13 +11,14 @@ import { Loader2, X } from "lucide-react";
 import { useId, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FormTemporaryUserBasicDataType, getErrorMessage, isZodError, temporaryUserBasicDataSchema } from 'tweetly-shared';
+import { FormTemporaryUserBasicDataType, getErrorMessage, isZodError, SuccessResponse, temporaryUserBasicDataSchema } from 'tweetly-shared';
 import { Input } from '@/components/ui/input';
 import { DateOfBirthSelect } from '@/components/forms/DateOfBirthSelect';
 import Image from 'next/image';
 import { useDisplayContext } from '@/context/DisplayContextProvider';
 import { SignUpStepType } from '../SignUpProcess';
 import { checkIfEmailIsAvailable } from '@/actions/actions';
+import { z } from 'zod';
 
 type SignUpStepZeroProps = SignUpStepType & {
     setBasicUserInfo: NonNullable<SignUpStepType['setBasicUserInfo']>;
@@ -34,7 +35,6 @@ export default function SignUpStepZero({ dialogOpen, setDialogOpen, setRegistrat
         formState: { errors, isSubmitting },
         setError,
         setValue,
-        getValues
     } = useForm<FormTemporaryUserBasicDataType>({
         resolver: zodResolver(temporaryUserBasicDataSchema),
         defaultValues: { profileName: basicUserInfo?.profileName, email: basicUserInfo?.email }
@@ -48,8 +48,6 @@ export default function SignUpStepZero({ dialogOpen, setDialogOpen, setRegistrat
     const monthWatch = useWatch({ control, name: 'month' });
     const dayWatch = useWatch({ control, name: 'day' });
 
-    console.log(getValues('email'));
-
     const onSubmit = async (formData: FormTemporaryUserBasicDataType) => {
         if (isSubmitting) return;
         setCustomError(null);
@@ -57,9 +55,18 @@ export default function SignUpStepZero({ dialogOpen, setDialogOpen, setRegistrat
         try {
             const validatedData = temporaryUserBasicDataSchema.parse(formData);
 
-            const emailAvailable = await checkIfEmailIsAvailable({ email: validatedData.email });
-            console.log(emailAvailable)
-            if (!emailAvailable) {
+            const response = await checkIfEmailIsAvailable({ email: validatedData.email });
+
+            if (!response.success) {
+                if (response.error.details) throw new z.ZodError(response.error.details);
+                else throw new Error(response.error.message);
+            }
+
+            const { data } = response as SuccessResponse<{ available: boolean }>;
+            if (!data) throw new Error('Data is missing in response');
+            else if (data.available === undefined) throw new Error('Available property is missing in data response');
+
+            if (data.available === false) {
                 setError('email' as keyof FormTemporaryUserBasicDataType, {
                     type: 'manual',
                     message: 'Provided email address is not available'

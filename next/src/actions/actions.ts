@@ -36,6 +36,10 @@ import {
     usernameSchema,
     usernameOrEmailAvailibilitySchema,
     BasePostDataType,
+    UserUpdateProfileType,
+    LoggedInUserDataType,
+    emailSchema,
+    userUpdateProfileSchema,
 } from 'tweetly-shared';
 
 // ---------------------------------------------------------------------------------------------------------
@@ -629,8 +633,6 @@ export async function createPost(formData: FormNewPostDataType): Promise<ApiResp
             newFormData.append('replyToId', String(formData.replyToId));
         }
 
-        console.log()
-
         const response = await fetch(`http://localhost:3000/api/posts/create`, {
             method: 'POST',
             headers: {
@@ -1044,6 +1046,65 @@ export async function changeUsername(formData: UserUpdateUsernameType): Promise<
     }
 };
 
+export async function checkIfEmailIsAvailable(formData: { email: string }): Promise<ApiResponse<{ available: boolean }>> {
+    try {
+        const validatedData = emailSchema.parse(formData);
+
+        const response = await fetch(`http://localhost:3000/api/search/user?type=email&data=${validatedData.email}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+        }
+        
+        const { data } = await response.json() as SuccessResponse<{ available: boolean }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.available === undefined) throw new AppError('Available property is missing in data response', 404, 'MISSING_PROPERTY');
+
+        return {
+            success: true,
+            data: {
+                available: data.available
+            }
+        }
+    } catch (error: unknown) {
+        // Handle validation errors
+        if (isZodError(error)) {
+            return {
+                success: false,
+                error: {
+                    message: 'Validation failed',
+                    code: 'VALIDATION_FAILED',
+                    details: error.issues,
+                }
+            } as ErrorResponse;
+        } else if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
+    }
+};
+
 export async function changeEmail(formData: UserUpdateEmailType): Promise<ApiResponse<undefined>> {
     const sessionToken = await getCurrentUserToken();
     const settingsToken = await verifyCurrentUserSettingsToken();
@@ -1211,6 +1272,97 @@ export async function changePassword(formData: UserUpdatePasswordType): Promise<
 
         return {
             success: true,
+        }
+    } catch (error: unknown) {
+        // Handle validation errors
+        if (isZodError(error)) {
+            return {
+                success: false,
+                error: {
+                    message: 'Validation failed',
+                    code: 'VALIDATION_FAILED',
+                    details: error.issues,
+                }
+            } as ErrorResponse;
+        } else if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
+    }
+};
+
+export async function updateProfile(formData: UserUpdateProfileType): Promise<ApiResponse<{ profile: Pick<LoggedInUserDataType, 'profile'>['profile'] }>> {
+    try {
+        const token = await getCurrentUserToken();
+        userUpdateProfileSchema.parse(formData);
+        const newFormData = new FormData();
+
+        if (formData.name) {
+            newFormData.append('name', String(formData.name));
+        }
+
+        if (formData.bio) {
+            newFormData.append('bio', String(formData.bio));
+        }
+
+        if (formData.location) {
+            newFormData.append('location', String(formData.location));
+        }
+
+        if (formData.website) {
+            newFormData.append('website', String(formData.website));
+        }
+
+        if (formData.profilePicture) {
+            newFormData.append('profilePicture', formData.profilePicture);
+        }
+
+        if (formData.bannerPicture) {
+            newFormData.append('bannerPicture', formData.bannerPicture);
+        }
+
+        newFormData.append('removeProfilePicture', String(formData.removeProfilePicture));
+        newFormData.append('removeBannerPicture', String(formData.removeBannerPicture));
+
+        const response = await fetch(`http://localhost:3000/api/users/updateProfile`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+            body: newFormData
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+        }
+
+        const { data } = await response.json() as SuccessResponse<{ profile: Pick<LoggedInUserDataType, 'profile'>['profile'] }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.profile === undefined) throw new AppError('Profile property is missing in data response', 404, 'MISSING_PROPERTY');
+
+        revalidateTag('loggedInUser');
+
+        return {
+            success: true,
+            data: {
+                profile: data.profile
+            },
         }
     } catch (error: unknown) {
         // Handle validation errors

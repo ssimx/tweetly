@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import SettingsHeaderInfo from './SettingsHeaderInfo'
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,90 +10,110 @@ import { Loader2 } from 'lucide-react';
 import { useUserContext } from '@/context/UserContextProvider';
 import { changeUsername, checkIfUsernameIsAvailable } from '@/actions/actions';
 import { AppError, getErrorMessage, isZodError, SuccessResponse, usernameSchema, userUpdateUsernameSchema, UserUpdateUsernameType } from 'tweetly-shared';
+import { debounce } from 'lodash';
 
 export default function ChangeUsername() {
     const { loggedInUser, refetchUserData } = useUserContext();
-    const [isValidating, setIsValidating] = useState(false);
-    const [validatedUsername, setValidatedUsername] = useState<string | null>(null);
-    const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(null);
-    const [usernameChanged, setUsernameChanged] = useState(false);
-    const [customError, setCustomError] = useState<string | null>(null);
+    const [isChecking, setIsChecking] = useState(false);
+    const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
+    const [feedback, setFeedback] = useState<string | null>(null);
+    const [currentUsername, setCurrentUsername] = useState<string>(loggedInUser.username);
 
     const {
         register,
         handleSubmit,
-        reset,
         formState: { errors, isSubmitting },
         setError,
         watch,
     } = useForm<UserUpdateUsernameType>({
         resolver: zodResolver(userUpdateUsernameSchema),
-        defaultValues: { newUsername: loggedInUser.username }
+        defaultValues: { newUsername: currentUsername }
     });
 
     const usernameWatch = watch("newUsername");
 
-    // check for new username availability
+    // Create a debounced function for checking username availability
+    const checkUsernameAvailability = useCallback(
+        (username: string) => {
+            const debouncedCheck = debounce(async (usernameToCheck: string) => {
+                if (!usernameToCheck || usernameToCheck.trim() === currentUsername) {
+                    return;
+                }
+
+                setIsChecking(true);
+                setIsAvailable(null);
+                setFeedback(null);
+
+                try {
+                    usernameSchema.parse({ username: usernameToCheck.trim() });
+                    const encodedUsername = encodeURIComponent(usernameToCheck.trim());
+                    const response = await checkIfUsernameIsAvailable({ username: encodedUsername });
+
+                    if (!response.success) {
+                        if (response.error.details) throw new z.ZodError(response.error.details);
+                        else throw new Error(response.error.message);
+                    }
+
+                    const { data } = response as SuccessResponse<{ available: boolean }>;
+                    if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+                    else if (data.available === undefined) throw new AppError('Available property is missing in data response', 404, 'MISSING_PROPERTY');
+
+                    setIsAvailable(data.available);
+                } catch (error: unknown) {
+                    if (isZodError(error)) {
+                        error.issues.forEach((detail) => {
+                            if (detail.path && detail.message) {
+                                setError(detail.path[0] as keyof UserUpdateUsernameType, {
+                                    type: 'manual',
+                                    message: detail.message
+                                });
+                            }
+                        });
+                    } else {
+                        const errorMessage = getErrorMessage(error);
+                        console.error('Error:', errorMessage);
+                        setFeedback(errorMessage ?? 'Something went wrong, refresh the page or remove cookies. If problem persists, contact the support');
+                    }
+                } finally {
+                    setIsChecking(false);
+                }
+            }, 500);
+
+            debouncedCheck(username);
+            return debouncedCheck;
+        },
+        [currentUsername, setError]
+    );
+
+    // Call the debounced function when username changes
     useEffect(() => {
-        if (isSubmitting || isValidating) return;
+        setIsAvailable(null);
 
-        const trimmedUsername = usernameWatch.trim();
-        if (trimmedUsername === validatedUsername) return;
+        // For cancel method
+        let debouncedCheckFn: ReturnType<typeof debounce> | null = null;
 
-        setIsUsernameAvailable(null);
-        setUsernameChanged(false);
-        setCustomError(null);
+        if (usernameWatch && usernameWatch.trim() !== currentUsername && !isSubmitting) {
+            debouncedCheckFn = checkUsernameAvailability(usernameWatch);
+        }
 
-        const timeoutId = setTimeout(async () => {
-            try {
-                usernameSchema.parse({ username: trimmedUsername });
-                setValidatedUsername(trimmedUsername);
+        // If username is the same as current user's, reset states
+        if (usernameWatch && usernameWatch.trim() === currentUsername) {
+            setIsAvailable(null);
+            // Keep the feedback if username has updated
+            setFeedback((current) => current?.includes('success') ? current : null);
+        }
 
-                const encodedSearch = encodeURIComponent(trimmedUsername);
-
-                setIsValidating(true);
-                const response = await checkIfUsernameIsAvailable({ username: encodedSearch });
-                setValidatedUsername(usernameWatch);
-
-                if (!response.success) {
-                    if (response.error.details) throw new z.ZodError(response.error.details);
-                    else throw new Error(response.error.message);
-                }
-
-                const { data } = response as SuccessResponse<{ available: boolean }>;
-                if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
-                else if (data.available === undefined) throw new AppError('Available property is missing in data response', 404, 'MISSING_PROPERTY');
-
-                setIsUsernameAvailable(data.available);
-            } catch (error: unknown) {
-                if (isZodError(error)) {
-                    error.issues.forEach((detail) => {
-                        if (detail.path && detail.message) {
-                            setError(detail.path[0] as keyof UserUpdateUsernameType, {
-                                type: 'manual',
-                                message: detail.message
-                            });
-                        }
-                    });
-                } else {
-                    const errorMessage = getErrorMessage(error);
-                    console.error('Error:', errorMessage);
-                    setCustomError(errorMessage ?? 'Something went wrong, refresh the page or remove cookies. If problem persists, contact the support');
-                    reset();
-                }
-            } finally {
-                setIsValidating(false);
+        // Cleanup debounced function on unmount or when dependencies change
+        return () => {
+            if (debouncedCheckFn) {
+                debouncedCheckFn.cancel();
             }
-        }, 500);
-
-        return (() => {
-            clearTimeout(timeoutId);
-        });
-    }, [isSubmitting, isValidating, usernameWatch, validatedUsername, reset, setCustomError, setError]);
+        };
+    }, [usernameWatch, currentUsername, isSubmitting, checkUsernameAvailability]);
 
     const onSubmit = async (formData: UserUpdateUsernameType) => {
-        if (isSubmitting || isValidating) return;
-        setCustomError(null);
+        if (isSubmitting || isChecking) return;
+        setFeedback(null);
 
         try {
             const response = await changeUsername(formData);
@@ -101,14 +121,15 @@ export default function ChangeUsername() {
             if (!response.success) {
                 if (response.error.details) throw new z.ZodError(response.error.details);
                 else if (response.error.code === 'USERNAME_TAKEN') {
-                    setCustomError('Username is already taken');
+                    setFeedback('Username is already taken');
                     return;
                 }
                 else throw new Error(response.error.message);
             }
 
-            setIsUsernameAvailable(null);
-            setUsernameChanged(true);
+            setCurrentUsername(formData.newUsername);
+            setIsAvailable(null);
+            setFeedback('Username successfully changed');
             refetchUserData();
         } catch (error: unknown) {
             if (isZodError(error)) {
@@ -122,7 +143,7 @@ export default function ChangeUsername() {
                 });
             } else {
                 const errorMessage = getErrorMessage(error);
-                setCustomError(`${errorMessage ?? 'Something went wrong'}, refresh the page or remove cookies. If problem persists, contact the support`);
+                setFeedback(`${errorMessage ?? 'Something went wrong'}, refresh the page or remove cookies. If problem persists, contact the support`);
             }
         }
     };
@@ -143,20 +164,12 @@ export default function ChangeUsername() {
                         <p className="error-msg">{`${errors.newUsername.message}`}</p>
                     )}
 
-                    {customError !== null && (
-                        <div className='error-msg'>{customError}</div>
-                    )}
+                    {feedback && <p className={`error-msg ${feedback.includes('success') ? '!text-green-400' : '!text-red-500'}`}>{feedback}</p>}
 
-                    {customError === null && isUsernameAvailable && (
-                        <p className="error-msg !text-green-400">{`Username is available`}</p>
-                    )}
-
-                    {customError === null && isUsernameAvailable === false && loggedInUser.username !== usernameWatch && (
-                        <p className="error-msg !text-red-500">{`Username is not available`}</p>
-                    )}
-
-                    {customError === null && usernameChanged && (
-                        <div className='error-msg !text-green-400'>Username successfully changed</div>
+                    {isAvailable !== null && !feedback && (
+                        <p className={`error-msg ${isAvailable ? '!text-green-400' : '!text-red-500'}`}>
+                            {isAvailable ? 'Username is available' : 'Username is not available'}
+                        </p>
                     )}
 
                     {isSubmitting
@@ -164,7 +177,11 @@ export default function ChangeUsername() {
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Saving
                         </Button>
-                        : <Button disabled={!isUsernameAvailable || loggedInUser.username.toLowerCase() === usernameWatch.toLowerCase()} className='bg-primary font-bold'>Save</Button>
+                        : <Button
+                            disabled={!isAvailable || usernameWatch.toLowerCase() === loggedInUser.username.toLowerCase() || isSubmitting}
+                        >
+                            Save
+                        </Button>
                     }
                 </form>
             </div>

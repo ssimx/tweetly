@@ -4,7 +4,7 @@ import { AppError, ErrorResponse, isZodError } from 'tweetly-shared';
 
 // Middleware, will always be called if there's 4th argument passed (error)
 export const errorHandler = (err: Error | AppError | ZodError, req: Request, res: Response, next: NextFunction): void => {
-    console.error(err);
+    console.error(err, isZodError(err));
 
     // Check for Zod validation error
     if (isZodError(err)) {

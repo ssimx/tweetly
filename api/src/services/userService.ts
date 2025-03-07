@@ -1,6 +1,6 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { ProfileInfo } from '../lib/types';
-import { AppError, getErrorMessage } from 'tweetly-shared';
+import { AppError, getErrorMessage, UserUpdateProfileType } from 'tweetly-shared';
 const prisma = new PrismaClient();
 
 // ---------------------------------------------------------------------------------------------------------
@@ -253,7 +253,17 @@ export const getProfile = async (userId: number, username: string) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const updateProfile = async (id: number, data: ProfileInfo) => {
+export const updateProfile = async (
+    id: number,
+    data: {
+        name: string,
+        bio?: string,
+        location?: string,
+        website?: string,
+        profilePicture?: string,
+        bannerPicture?: string,
+    }) => {
+    
     return await prisma.profile.update({
         where: {
             userId: id,
@@ -265,6 +275,14 @@ export const updateProfile = async (id: number, data: ProfileInfo) => {
             websiteUrl: data.website,
             bannerPicture: data.bannerPicture,
             profilePicture: data.profilePicture
+        },
+        select: {
+            name: true,
+            bio: true,
+            location: true,
+            websiteUrl: true,
+            profilePicture: true,
+            bannerPicture: true,
         }
     });
 };

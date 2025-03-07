@@ -11,7 +11,6 @@ import { UserDataType } from 'tweetly-shared';
 export default function SuggestionCard({ user }: { user: UserDataType }) {
     const { blockedUsers } = useBlockedUsersContext();
     const router = useRouter();
-    if (user.username === 'childi') console.log(user)
 
     // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     const initialState: UserStateType = {

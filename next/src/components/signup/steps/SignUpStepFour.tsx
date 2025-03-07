@@ -41,8 +41,11 @@ type CroppieInstance = Croppie | null;
 export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrationStep, customError, setCustomError }: SignUpStepType) {
     const { savedTheme } = useDisplayContext();
     const [uploadedPictureData, setUploadedPictureData] = useState<File | null>(null);
+
+    const defaultProfilePictureLink = 'https://res.cloudinary.com/ddj6z1ptr/image/upload/v1728503826/profilePictures/ynh7bq3eynvkv5xhivaf.png';
+
     // If picture is selected and applied, display it to the user
-    const [profilePicturePreview, setProfilePicturePreview] = useState<string>('https://res.cloudinary.com/ddj6z1ptr/image/upload/v1728503826/profilePictures/ynh7bq3eynvkv5xhivaf.png');
+    const [profilePicturePreview, setProfilePicturePreview] = useState<string>(defaultProfilePictureLink);
     // If picture is selected and in edit mode, change state to true, when returned/applied change it back to false
     const [isFileUploaded, setIsFileUploaded] = useState(false);
     const imageInputRef = useRef<HTMLInputElement | null>(null);
@@ -70,7 +73,7 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
             if (!response.success) {
                 if (response.error.details) throw new z.ZodError(response.error.details);
                 else if (response.error.code === 'NOT_LOGGED_IN') {
-                    setProfilePicturePreview('https://res.cloudinary.com/ddj6z1ptr/image/upload/v1728503826/profilePictures/ynh7bq3eynvkv5xhivaf.png');
+                    setProfilePicturePreview(defaultProfilePictureLink);
                     setUploadedPictureData(null);
                     setCustomError('Not logged in, please log in with existing email or register a new account');
                     setRegistrationStep(() => 0);
@@ -82,10 +85,8 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
             // if success, redirect
             router.push('/');
         } catch (error: unknown) {
-
             if (isZodError(error)) {
                 error.issues.forEach((detail) => {
-                    console.log(detail.path)
                     if (detail.path && detail.message) {
                         setCustomError('Only .jpg, .jpeg, .png and .webp formats are supported');
                     }
@@ -97,7 +98,7 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
             }
 
             setUploadedPictureData(null);
-            setProfilePicturePreview('https://res.cloudinary.com/ddj6z1ptr/image/upload/v1728503826/profilePictures/ynh7bq3eynvkv5xhivaf.png');
+            setProfilePicturePreview(defaultProfilePictureLink);
         }
     };
 
@@ -210,13 +211,13 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
                                         className={`rounded-full w-full h-full`} />
 
                                     <input
-                                        {...rest} name="firstName" ref={(e) => {
+                                        {...rest} name="picture" ref={(e) => {
                                             ref(e);
                                             setValue('image', uploadedPictureData ?? undefined);
                                             imageInputRef.current = e;
                                         }} 
                                         type="file"
-                                        accept=".png, .jpg, .jpeg"
+                                        accept=".png, .jpg, .jpeg .webp"
                                         className="hidden"
                                         onChange={(e) => {
                                             if (e.target.files && e.target.files[0]) {
@@ -236,7 +237,7 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
                             {uploadedPictureData && (
                                 <button className='w-fit mb-auto text-primary font-semibold' onClick={() => {
                                     setUploadedPictureData(null);
-                                    setProfilePicturePreview(() => 'https://res.cloudinary.com/ddj6z1ptr/image/upload/v1728503826/profilePictures/ynh7bq3eynvkv5xhivaf.png');
+                                    setProfilePicturePreview(() => defaultProfilePictureLink);
                                 }}>
                                     Reset
                                 </button>

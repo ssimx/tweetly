@@ -2,11 +2,13 @@ import { blockUser, changeBirthday, changeEmail, changePassword, changeUsername,
 
 import express from 'express';
 import { authenticateSettingsJWT } from '../middleware/authenticateSettingsJWT';
+import { updateProfileCheckup } from '../middleware/multer';
+import { uploadToCloudinary } from '../middleware/cloudinary';
 
 const router = express.Router();
 
 router.get('/', getUserInfo);
-router.post('/updateProfile/:username', updateProfileInfo);
+router.patch('/updateProfile', updateProfileCheckup, uploadToCloudinary, updateProfileInfo);
 router.patch('/username', authenticateSettingsJWT, changeUsername);
 router.patch('/password', authenticateSettingsJWT, changePassword);
 router.patch('/birthday', authenticateSettingsJWT, changeBirthday);
