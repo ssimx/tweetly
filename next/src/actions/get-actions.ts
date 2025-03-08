@@ -4,7 +4,7 @@ import { getLoggedInUser } from "@/data-acess-layer/user-dto";
 import { decryptSession } from '@/lib/session';
 import { BasicPostType, BookmarkPostType, NotificationType, UserInfoType, } from "@/lib/types";
 import { cache } from 'react';
-import { ApiResponse, AppError, BasePostDataType, ErrorResponse, getErrorMessage, LoggedInUserJwtPayload, ProfilePostOrRepostDataType, SuccessResponse, UserDataType, VisitedPostDataType } from 'tweetly-shared';
+import { ApiResponse, AppError, BasePostDataType, ErrorResponse, getErrorMessage, LoggedInUserJwtPayload, ProfilePostOrRepostDataType, SearchQuerySegmentsType, SuccessResponse, UserDataType, VisitedPostDataType } from 'tweetly-shared';
 
 // GET actions for client/dynamic components
 
@@ -549,11 +549,65 @@ export async function getExplorePosts(): Promise<ApiResponse<{ posts: BasePostDa
     }
 };
 
-export async function getSearchUsersAndPosts(encodedSearch: string) {
-    const token = await getCurrentUserToken();
-
+export async function getUsersBySearch(searchQuery: string): Promise<ApiResponse<{ users: UserDataType[], queryParams: SearchQuerySegmentsType }>> {
     try {
-        const response = await fetch(`http://localhost:3000/api/search?q=${encodedSearch}`, {
+        const token = await getCurrentUserToken();
+
+        if (!searchQuery) throw new AppError('Search query is missing', 404, 'MISSING_QUERY');
+
+        const response = await fetch(`http://localhost:3000/api/search/users?q=${searchQuery}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+        }
+
+        const { data } = await response.json() as SuccessResponse<{ users: UserDataType[], queryParams: SearchQuerySegmentsType }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.users === undefined) throw new AppError('Users property is missing in data response', 404, 'MISSING_PROPERTY');
+        else if (data.queryParams === undefined) throw new AppError('Query params property is missing in data response', 404, 'MISSING_PROPERTY');
+
+        return {
+            success: true,
+            data: {
+                users: data.users,
+                queryParams: data.queryParams
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
+    }
+};
+
+export async function getUsersAndPostsBySearch(searchQuery: string): Promise<ApiResponse<{ users: UserDataType[], posts: BasePostDataType[], postsCursor: number, postsEnd: boolean, queryParams: SearchQuerySegmentsType }>> {
+    try {
+        const token = await getCurrentUserToken();
+
+        const response = await fetch(`http://localhost:3000/api/search?q=${searchQuery}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -562,29 +616,60 @@ export async function getSearchUsersAndPosts(encodedSearch: string) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const posts = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'users' in res && 'posts' in res && 'searchSegments' in res && 'end' in res) {
-                return { users: res.users as UserInfoType[], posts: res.posts as BasicPostType[], searchSegments: res.searchSegments as string[], end: res.end as boolean };
-            }
-            throw new Error('Invalid response format');
-        });
+        const { data } = await response.json() as SuccessResponse<{
+            users: UserDataType[],
+            posts: BasePostDataType[],
+            postsCursor: number,
+            postsEnd: boolean,
+            queryParams: SearchQuerySegmentsType
+        }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.users === undefined) throw new AppError('Users property is missing in data response', 404, 'MISSING_PROPERTY');
+        else if (data.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
+        else if (data.postsCursor === undefined) throw new AppError('Posts cursor property is missing in data response', 404, 'MISSING_PROPERTY');
+        else if (data.queryParams === undefined) throw new AppError('Query params property is missing in data response', 404, 'MISSING_PROPERTY');
 
-        return posts;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return { users: null, posts: null, searchSegments: null, end: true };
+        return {
+            success: true,
+            data: {
+                users: data.users,
+                posts: data.posts,
+                postsCursor: data.postsCursor,
+                postsEnd: data.postsEnd,
+                queryParams: data.queryParams
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function getMoreSearchPosts(encodedSearch: string, cursor: number) {
-    const token = await getCurrentUserToken();
-
+export async function getMorePostsBySearch(encodedSearch: string, cursor: number) {
     try {
+        const token = await getCurrentUserToken();
+
         const response = await fetch(`http://localhost:3000/api/search/posts?q=${encodedSearch}&cursor=${cursor}`, {
             method: 'GET',
             headers: {
@@ -594,31 +679,51 @@ export async function getMoreSearchPosts(encodedSearch: string, cursor: number) 
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const posts = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as BasicPostType[], end: res.end as boolean };
-            }
-            throw new Error('Invalid response format');
-        });
+        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], cursor: number, end: boolean }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
+        else if (data.cursor === undefined) throw new AppError('Cursor property is missing in data response', 404, 'MISSING_PROPERTY');
 
-        return posts;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return { posts: null, end: true };
+        return {
+            success: true,
+            data: {
+                posts: data.posts,
+                cursor: data.cursor,
+                end: data.end,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
 // MISC
 
 export const getTrendingHashtags = cache(async () => {
-    const token = await getCurrentUserToken();
-
     try {
+        const token = await getCurrentUserToken();
         const response = await fetch('http://localhost:3000/api/posts/trending', {
             method: 'GET',
             headers: {

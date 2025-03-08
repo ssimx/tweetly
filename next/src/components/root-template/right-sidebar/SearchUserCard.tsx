@@ -1,16 +1,9 @@
 'use client';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { UserDataType } from 'tweetly-shared';
 
-interface SearchUserType {
-    username: string;
-    profile: {
-        name: string;
-        profilePicture: string;
-    };
-}
-
-export default function SearchUserCard({ user }: { user: SearchUserType }) {
+export default function SearchUserCard({ user }: { user: UserDataType }) {
     const router = useRouter();
 
     const handleCardClick = () => {
@@ -21,7 +14,7 @@ export default function SearchUserCard({ user }: { user: SearchUserType }) {
         <div onClick={handleCardClick} className='profile-follower-followee-card'>
             <div>
                 <Image
-                    src={user.profile.profilePicture || 'https://res.cloudinary.com/ddj6z1ptr/image/upload/v1728503826/profilePictures/ynh7bq3eynvkv5xhivaf.png'}
+                    src={user.profile.profilePicture}
                     height={40} width={40}
                     alt='Follower profile pic'
                     className='rounded-full min-w-[40px]' />

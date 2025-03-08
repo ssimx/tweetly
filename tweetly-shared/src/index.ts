@@ -5,5 +5,6 @@ export * from './lib/userTypes';
 export * from './schemas/postSchemas';
 export * from './lib/postTypes';
 export * from './schemas/searchSchemas';
+export * from './lib/searchTypes';
 export * from './lib/responseHandler';
 export * from './lib/utils';

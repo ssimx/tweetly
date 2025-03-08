@@ -100,12 +100,13 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                             throw new Error(errorData.error.message);
                         }
 
-                        const { data } = response as SuccessResponse<{ replies: BasePostDataType[], end: boolean }>;
+                        const { data } = response as SuccessResponse<{ replies: BasePostDataType[], cursor: number, end: boolean }>;
                         if (data === undefined) throw new Error('Data is missing in response');
                         else if (data.replies === undefined) throw new Error('Replies property is missing in data response');
+                        else if (data.cursor === undefined) throw new Error('Cursor property is missing in data response');
 
-                        setRepliesCursor(data.replies.slice(-1)[0].id ?? null);
                         setReplies(current => [...current as BasePostDataType[], ...data.replies as BasePostDataType[]]);
+                        setRepliesCursor(data.cursor);
                         setRepliesEndReached(data.end);
                     } catch (error: unknown) {
                         const errorMessage = getErrorMessage(error);
@@ -124,12 +125,13 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                             throw new Error(errorData.error.message);
                         }
 
-                        const { data } = response as SuccessResponse<{ media: BasePostDataType[], end: boolean }>;
+                        const { data } = response as SuccessResponse<{ media: BasePostDataType[], cursor: number, end: boolean }>;
                         if (data === undefined) throw new Error('Data is missing in response');
                         else if (data.media === undefined) throw new Error('Media property is missing in data response');
+                        else if (data.cursor === undefined) throw new Error('Cursor property is missing in data response');
 
-                        setMediaCursor(data.media.slice(-1)[0].id ?? null);
                         setMedia(current => [...current as BasePostDataType[], ...data.media as BasePostDataType[]]);
+                        setMediaCursor(data.cursor);
                         setMediaEndReached(data.end);
                     } catch (error: unknown) {
                         const errorMessage = getErrorMessage(error);
@@ -148,12 +150,13 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                             throw new Error(errorData.error.message);
                         }
 
-                        const { data } = response as SuccessResponse<{ likes: BasePostDataType[], end: boolean }>;
+                        const { data } = response as SuccessResponse<{ likes: BasePostDataType[], cursor: number, end: boolean }>;
                         if (data === undefined) throw new Error('Data is missing in response');
                         else if (data.likes === undefined) throw new Error('Likes property is missing in data response');
+                        else if (data.cursor === undefined) throw new Error('Cursor property is missing in data response');
 
-                        setLikesCursor(data.likes.slice(-1)[0].id ?? null);
                         setLikedPosts(current => [...current as BasePostDataType[], ...data.likes as BasePostDataType[]]);
+                        setLikesCursor(data.cursor);
                         setLikesEndReached(data.end);
                     } catch (error: unknown) {
                         const errorMessage = getErrorMessage(error);
@@ -198,12 +201,13 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                         throw new Error(errorData.error.message);
                     }
 
-                    const { data } = response as SuccessResponse<{ replies: BasePostDataType[], end: boolean }>;
+                    const { data } = response as SuccessResponse<{ replies: BasePostDataType[], cursor: number, end: boolean }>;
                     if (data === undefined) throw new Error('Data is missing in response');
                     else if (data.replies === undefined) throw new Error('Replies property is missing in data response');
+                    else if (data.cursor === undefined) throw new Error('Cursor property is missing in data response');
 
                     setRepliesEndReached(data.end ?? true);
-                    setRepliesCursor(data.replies.length ? data.replies.slice(-1)[0].id : null);
+                    setRepliesCursor(data.cursor);
                     setReplies(data.replies);
                 } catch (error) {
                     console.error("Something went wrong:", error);
@@ -228,13 +232,14 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                         throw new Error(errorData.error.message);
                     }
 
-                    const { data } = response as SuccessResponse<{ media: BasePostDataType[], end: boolean }>;
+                    const { data } = response as SuccessResponse<{ media: BasePostDataType[], cursor: number, end: boolean }>;
                     console.log(data)
                     if (data === undefined) throw new Error('Data is missing in response');
                     else if (data.media === undefined) throw new Error('Media property is missing in data response');
+                    else if (data.cursor === undefined) throw new Error('Cursor property is missing in data response');
 
                     setMediaEndReached(data.end ?? true);
-                    setMediaCursor(data.media.length ? data.media.slice(-1)[0].id : null);
+                    setMediaCursor(data.cursor);
                     setMedia(data.media);
                 } catch (error) {
                     console.error("Something went wrong:", error);
@@ -259,12 +264,13 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                         throw new Error(errorData.error.message);
                     }
 
-                    const { data } = response as SuccessResponse<{ likes: BasePostDataType[], end: boolean }>;
+                    const { data } = response as SuccessResponse<{ likes: BasePostDataType[], cursor: number, end: boolean }>;
                     if (data === undefined) throw new Error('Data is missing in response');
                     else if (data.likes === undefined) throw new Error('Likes property is missing in data response');
+                    else if (data.cursor === undefined) throw new Error('Cursor property is missing in data response');
 
                     setLikesEndReached(data.end ?? true);
-                    setLikesCursor(data.likes.length ? data.likes.slice(-1)[0].id : null);
+                    setLikesCursor(data.cursor);
                     setLikedPosts(data.likes);
                 } catch (error) {
                     console.error("Something went wrong:", error);
@@ -403,7 +409,6 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                         : hasFetchError
                             ? <div>Something went wrong</div>
                             : replies && !replies.length && <ProfileNoContent type='REPLIES' authorized={authorized} />
-
             )}
 
             {activeTab === 2 && (

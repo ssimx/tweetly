@@ -263,7 +263,7 @@ export const updateProfile = async (
         profilePicture?: string,
         bannerPicture?: string,
     }) => {
-    
+
     return await prisma.profile.update({
         where: {
             userId: id,
@@ -928,14 +928,15 @@ export const getUsersBySearch = async (userId: number, searchTerms: string[]) =>
                 select: {
                     name: true,
                     bio: true,
+                    location: true,
+                    websiteUrl: true,
                     profilePicture: true,
+                    bannerPicture: true,
                 }
             },
             followers: {
                 where: {
-                    follower: {
-                        id: userId
-                    }
+                    followerId: userId
                 },
                 select: {
                     followerId: true
@@ -943,9 +944,7 @@ export const getUsersBySearch = async (userId: number, searchTerms: string[]) =>
             },
             following: {
                 where: {
-                    followee: {
-                        id: userId
-                    }
+                    followeeId: userId
                 },
                 select: {
                     followeeId: true
@@ -971,8 +970,8 @@ export const getUsersBySearch = async (userId: number, searchTerms: string[]) =>
                 select: {
                     followers: true,
                     following: true,
-                }
-            }
+                },
+            },
         },
     })
 };

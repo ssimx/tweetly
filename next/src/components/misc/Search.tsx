@@ -1,134 +1,167 @@
 'use client';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Search as SearchIcon } from 'lucide-react';
 import Link from 'next/link';
 import { z } from "zod";
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTrendingContext } from '@/context/TrendingContextProvider';
 import SearchUserCard from '../root-template/right-sidebar/SearchUserCard';
-import { searchSchema } from 'tweetly-shared';
+import { AppError, getErrorMessage, isZodError, SearchQuerySegmentsType, searchSchema, SearchType, SuccessResponse, UserDataType } from 'tweetly-shared';
+import { debounce } from 'lodash';
+import { getUsersBySearch } from '@/actions/get-actions';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 
-export interface SearchResponseType {
-    users: {
-        username: string;
-        profile: {
-            name: string;
-            profilePicture: string;
-        };
-    }[],
-    queryParams: {
-        raw: string,
-        segments: string[],
-        stringSegments: string[],
-        usernames: string[],
-        hashtags: string[],
-    }
-}
+interface SearchResponseType {
+    users: UserDataType[],
+    queryParams: SearchQuerySegmentsType,
+};
 
-export default function Search({ searchQuery }: { searchQuery?: string }) {
-    const [text, setText] = useState(searchQuery ? searchQuery : '');
-    const [searched, setSearched] = useState(false);
-    const [outputVisible, setOutputVisible] = useState(false);
-    const [searchResponse, setSearchResponse] = useState<SearchResponseType | undefined>(undefined);
-    const [loading, setLoading] = useState(false);
-    const searchContainer = useRef<HTMLDivElement | null>(null);
-    const router = useRouter();
+type SearchedQueriesMap = Map<string, SearchResponseType>;
+
+export default function Search() {
     const { hashtags } = useTrendingContext();
+    const router = useRouter();
+    const pathname = usePathname();
 
-    // Match trending hashtags based on the search text
-    const matchedHashtags = hashtags && hashtags.filter((hashtag) => {
-        const words = text.toLowerCase().replaceAll('#', '').split(' ');
-        return words.some((word) => hashtag.name.toLowerCase().includes(word));
-    }).map((hashtag) => hashtag.name);
+    const searchParams = useSearchParams();
+    const searchQuery = (pathname.startsWith('/search') || pathname.startsWith('/explore')) ? searchParams.get('q') : null;
 
-    useEffect(() => {
-        const timeout = setTimeout(async () => {
-            if (!text) {
-                setSearched(() => false);
-                return;
-            } else if (text.includes('#')) {
-                setLoading(() => false);
-                return;
-            };
+    const [searchedQueries, setSearchedQueries] = useState<SearchedQueriesMap>(new Map());
+    const [searched, setSearched] = useState(false);
+    const [isSearching, setIsSearching] = useState(false);
+    const [isOutputVisible, setIsOutputVisible] = useState(false);
+    const [searchResponse, setSearchResponse] = useState<SearchResponseType | undefined>(undefined);
+    const [matchedHashtags, setMatchedHashtags] = useState<string[]>([]);
+    const searchContainer = useRef<HTMLDivElement | null>(null);
 
-            // hide output on the first render on the search page
-            if (text === searchQuery && searched === false) return;
+    const {
+        register,
+        handleSubmit,
+        formState: { errors, isSubmitting },
+        setError,
+        watch,
+    } = useForm<SearchType>({
+        resolver: zodResolver(searchSchema),
+        defaultValues: { q: searchQuery || '' }
+    });
 
-            try {
-                // Decode query before validation
-                const decodedSearch = decodeURIComponent(text);
-                searchSchema.parse({ q: decodedSearch });
+    const queryWatch = watch('q');
 
-                // Encode query for API requests
-                const encodedSearch = encodeURIComponent(decodedSearch);
+    const executeSearch = useCallback(
+        (query: string) => {
+            const debouncedSearch = debounce(async (queryToSearch: string) => {
+                if (!queryToSearch) {
+                    return;
+                }
 
-                const searchResponse = await fetch(`/api/search/users?q=${encodedSearch}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
+                try {
+                    searchSchema.parse({ q: queryToSearch.trim() });
+                    const encodedSearch = encodeURIComponent(queryToSearch.trim());
+
+                    // Check if search query is already cached to avoid uneccessary fetching
+                    if (searchedQueries.has(queryToSearch.trim())) {
+                        setSearchResponse(searchedQueries.get(queryToSearch.trim()));
+                        return;
                     }
-                });
 
-                const searchOutput = await searchResponse.json() as SearchResponseType;
+                    const response = await getUsersBySearch(encodedSearch);
 
-                if (searchOutput.users.length !== 0) {
-                    // Prioritize user results by match specificity
-                    const prioritizedUsers = searchOutput.users.map((user) => {
-                        const { username, profile } = user;
-                        const name = profile?.name || "";
-                        let priority = 0;
+                    if (!response.success) {
+                        if (response.error.details) throw new z.ZodError(response.error.details);
+                        else throw new Error(response.error.message);
+                    }
 
-                        searchOutput.queryParams.usernames.forEach((term) => {
-                            if (username.toLowerCase() === term.toLowerCase()) {
-                                priority += 3; // Exact match to username
-                            } else if (username.toLowerCase().startsWith(term.toLowerCase())) {
-                                priority += 2; // Starts with username
-                            } else if (username.toLowerCase().includes(term.toLowerCase())) {
-                                priority += 1; // Partial match to username
-                            }
+                    const { data } = response as SuccessResponse<{ users: UserDataType[], queryParams: SearchQuerySegmentsType }>;
+                    if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+                    else if (data.users === undefined) throw new AppError('Users property is missing in data response', 404, 'MISSING_PROPERTY');
+                    else if (data.queryParams === undefined) throw new AppError('Query params property is missing in data response', 404, 'MISSING_PROPERTY');
 
-                            if (name.toLowerCase() === term.toLowerCase()) {
-                                priority += 3; // Exact match to name
-                            } else if (name.toLowerCase().startsWith(term.toLowerCase())) {
-                                priority += 2; // Starts with name
-                            } else if (name.toLowerCase().includes(term.toLowerCase())) {
-                                priority += 1; // Partial match to name
+                    if (searchedQueries.size === 1000) {
+                        // if map is full, clear it
+                        const newMap = new Map() as SearchedQueriesMap;
+                        newMap.set(queryToSearch.trim(), { users: data.users, queryParams: data.queryParams });
+                        setSearchedQueries(() => newMap);
+                        setSearchResponse(data);
+                        return;
+                    }
+
+                    setSearchedQueries((current) => current.set(queryToSearch.trim(), { users: data.users, queryParams: data.queryParams }));
+                    setSearchResponse(data);
+                } catch (error: unknown) {
+                    if (isZodError(error)) {
+                        error.issues.forEach((detail) => {
+                            if (detail.path && detail.message) {
+                                setError(detail.path[0] as keyof SearchType, {
+                                    type: 'manual',
+                                    message: detail.message
+                                });
                             }
                         });
-
-                        return { ...user, priority };
-                    });
-
-                    // Sort by priority in descending order
-                    searchOutput.users = prioritizedUsers.sort((a, b) => b.priority - a.priority);
+                    } else {
+                        const errorMessage = getErrorMessage(error);
+                        console.error('Error:', errorMessage);
+                    }
+                } finally {
+                    setIsSearching(false);
+                    setSearched(true);
                 }
+            }, 500);
 
-                setSearchResponse(searchOutput);
-                setSearched(true);
-                setOutputVisible(true);
-                setLoading(() => false);
-            } catch (error) {
-                if (error instanceof z.ZodError) {
-                    router.push('http://localhost:3000/');
-                }
+            debouncedSearch(query);
+            return debouncedSearch;
+        },
+        [searchedQueries, setError]
+    );
 
-                console.error("Fetch error:", error);
+    // Call the debounced function when search query changes
+    useEffect(() => {
+        // For cancel method
+        let debouncedCheckFn: ReturnType<typeof debounce> | null = null;
+        setSearched(false);
+        setIsSearching(true);
+
+        // Match trending hashtags based on the search text
+        const matchedHashtags = hashtags && hashtags.filter((hashtag) => {
+            const words = queryWatch.toLowerCase().replaceAll('#', '').split(' ');
+            return words.some((word) => hashtag.name.toLowerCase().includes(word));
+        }).map((hashtag) => hashtag.name);
+
+        setMatchedHashtags(matchedHashtags ?? []);
+
+        if (queryWatch && !isSubmitting) {
+            if (queryWatch === searchQuery) return;
+            setIsOutputVisible(true);
+            console.log(queryWatch)
+            debouncedCheckFn = executeSearch(queryWatch);
+        }
+
+        // Cleanup debounced function on unmount or when dependencies change
+        return () => {
+            if (debouncedCheckFn) {
+                debouncedCheckFn.cancel();
             }
-        }, 500);
+        };
+    }, [queryWatch, searchQuery, executeSearch, isSubmitting, hashtags]);
 
-        return (() => {
-            clearTimeout(timeout);
-        });
-    }, [text, router, searchQuery, searched]);
+    const onSubmit = async (formData: SearchType) => {
+        if (isSubmitting) return;
+        setIsOutputVisible(false);
+        const validatedSearch = searchSchema.parse(formData);
+        if (validatedSearch.q === searchQuery) return;
+
+        const encodedSearch = encodeURIComponent(validatedSearch.q);
+        router.push(`/search?q=${encodedSearch}`);
+    };
 
     const handleClickOutside = (event: MouseEvent) => {
         if (searchContainer.current && !searchContainer.current.contains(event.target as Node)) {
-            setOutputVisible(false);
+            setIsOutputVisible(false);
         }
     };
 
     useEffect(() => {
-        if (outputVisible) {
+        if (isOutputVisible) {
             window.addEventListener('click', handleClickOutside);
         } else {
             window.removeEventListener('click', handleClickOutside);
@@ -137,54 +170,55 @@ export default function Search({ searchQuery }: { searchQuery?: string }) {
         return () => {
             window.removeEventListener('click', handleClickOutside);
         };
-    }, [outputVisible]);
+    }, [isOutputVisible]);
 
     return (
         <div className='relative w-full'>
             <div ref={searchContainer} className='w-full'>
-                <form action='search' className='h-fit w-full'>
+                <form onSubmit={handleSubmit(onSubmit)} className='h-fit w-full'>
                     <label className="h-[50px] w-full flex items-center gap-4 text-gray-400 rounded-[25px] border px-4">
                         <SearchIcon size={18} />
                         <input
+                            {...register('q')}
                             type="search"
-                            name="q"
                             className='outline-none text-primary-text'
                             placeholder="Search"
                             autoComplete="off"
-                            value={text}
-                            onChange={(e) => {
-                                setLoading(() => true);
-                                setOutputVisible(() => true);
-                                setText(e.target.value);
-                            }}
-                            onClick={() => setOutputVisible(text.length === 0 ? false : text === searchQuery ? false : true)} />
+                            onClick={() => setIsOutputVisible(queryWatch.length === 0 ? false : true)} />
+                        {errors.q?.message && (
+                            <p className='error-msg'>{errors.q.message}</p>
+                        )}
                     </label>
                 </form>
             </div>
 
-            {outputVisible && text.length !== 0
-                && (
+            {isOutputVisible && queryWatch.length !== 0 && queryWatch !== searchQuery &&
+                (
                     <div className='search-output-container relative z-50'>
                         <div className='flex flex-col'>
-                            <Link href={`/search?q=${encodeURIComponent(`${text}`)}`} className='search-text-output'>
+                            <Link href={`/search?q=${encodeURIComponent(`${queryWatch}`)}`} className='search-text-output'>
                                 <SearchIcon size={26} strokeWidth={3} className='min-w-[26px] text-primary-text' />
-                                <p>{text}</p>
+                                <p>{queryWatch}</p>
                             </Link>
-                            {matchedHashtags && matchedHashtags.length > 0 && matchedHashtags.slice(0, 3).map((hashtag, index) => (
+
+                            {/* Display matched hashtags */}
+                            {matchedHashtags.map((hashtag, index) => (
                                 <Link key={index} href={`/search?q=${encodeURIComponent(`#${hashtag}`)}`} className='search-text-output'>
                                     <p>#{hashtag}</p>
                                 </Link>
                             ))}
                         </div>
 
-                        {!text.includes('#') && loading
-                            ?
+                        {/* If it's searching for a user, display loading state */}
+                        {!queryWatch.includes('#') && isSearching && (
                             <div>
                                 <div className='feed-hr-line'></div>
                                 <div className='p-3'>Loading...</div>
                             </div>
-                            : !loading && searched && !text.includes('#')
-                            &&
+                        )}
+
+                        {/* Otherwise display fetched users if any returned */}
+                        {!queryWatch.includes('#') && !isSearching && searched && (
                             <div>
                                 <div className='feed-hr-line'></div>
                                 <div className=''>
@@ -197,7 +231,7 @@ export default function Search({ searchQuery }: { searchQuery?: string }) {
                                     }
                                 </div>
                             </div>
-                        }
+                        )}
                     </div>
                 )}
         </div>

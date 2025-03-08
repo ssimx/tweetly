@@ -1,34 +1,46 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useReducer } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import UserHoverCard from '@/components/misc/UserHoverCard';
 import FollowButton from '@/components/misc/FollowButton';
-import { UserInfoType } from '@/lib/types';
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
+import { UserDataType } from 'tweetly-shared';
+import { userInfoReducer, UserStateType } from '@/lib/userReducer';
+import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import { useUserContext } from '@/context/UserContextProvider';
 
-export default function UserCard({ user }: { user: UserInfoType }) {
+export default function UserCard({ user }: { user: UserDataType }) {
+    const { suggestions: userFollowSuggestions } = useFollowSuggestionContext();
     const { blockedUsers } = useBlockedUsersContext();
     const { loggedInUser } = useUserContext();
     const router = useRouter();
 
     // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    const initialState: UserStateType = {
+        relationship: {
+            isFollowingViewer: user.relationship.isFollowingViewer,
+            hasBlockedViewer: user.relationship.hasBlockedViewer,
+            isFollowedByViewer: user.relationship.isFollowedByViewer,
+            isBlockedByViewer: user.relationship.isBlockedByViewer,
+            notificationsEnabled: user.relationship.notificationsEnabled,
+        },
+        stats: {
+            followersCount: user.stats.followersCount,
+            followingCount: user.stats.followingCount,
+            postsCount: user.stats.postsCount,
+        }
+    };
+    const [userState, dispatch] = useReducer(userInfoReducer, initialState);
+    const { isFollowingViewer } = user.relationship;
 
-    // if user is in suggestions, track it's isFollowed property instead
-    const [isFollowedByTheUser, setIsFollowedByTheUser] = useState(user.followers.length === 1);
-    // Is user following the logged in user
-    const [isFollowingTheUser, setIsFollowingTheUser] = useState<boolean>(user.following.length === 1);
-
-    // Post author following & followers count to update hover card information when they're (un)followed/blocked by logged in user
-    const [followingCount,] = useState(user._count.following);
-    const [followersCount, setFollowersCount] = useState(user._count.followers);
 
     useEffect(() => {
-        if (blockedUsers?.some((blockedUser) => blockedUser === user.username)) {
-            setIsFollowingTheUser(false);
+        const suggestedUser = userFollowSuggestions?.find((suggestedUser) => suggestedUser.username === user.username);
+        if (suggestedUser) {
+            dispatch({ type: suggestedUser.relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
         }
-    }, [blockedUsers, user.username]);
+    }, [userFollowSuggestions, dispatch, user.username]);
 
     // - FUNCTIONS --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -54,16 +66,13 @@ export default function UserCard({ user }: { user: UserInfoType }) {
                 <div className='flex gap-x-2 flex-wrap items-center text-secondary-text'>
                     <UserHoverCard
                         user={user}
-                        _followingCount={followingCount}
-                        _followersCount={followersCount}
-                        _setFollowersCount={setFollowersCount}
-                        isFollowedByTheUser={isFollowedByTheUser}
-                        setIsFollowedByTheUser={setIsFollowedByTheUser}
-                        isFollowingTheUser={isFollowingTheUser} />
+                        userState={userState}
+                        dispatch={dispatch}
+                    />
 
                     <div className='flex-center gap-2'>
                         <p className='text-16'>@{user.username}</p>
-                        {isFollowingTheUser && (
+                        {isFollowingViewer && (
                             <p className='bg-secondary-foreground text-12 px-1 rounded-sm h-fit mt-[2px] font-medium'>Follows you</p>
                         )}
                     </div>
@@ -77,10 +86,10 @@ export default function UserCard({ user }: { user: UserInfoType }) {
             {loggedInUser.username !== user.username && (
                 <div className='ml-auto [&_button]:py-1'>
                     <FollowButton
-                        username={user.username}
-                        setFollowersCount={setFollowersCount}
-                        isFollowedByTheUser={isFollowedByTheUser}
-                        setIsFollowedByTheUser={setIsFollowedByTheUser} />
+                        user={user.username}
+                        userState={userState}
+                        dispatch={dispatch}
+                    />
                 </div>
             )}
         </div>

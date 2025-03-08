@@ -14,9 +14,9 @@ export default function PostText({ content, searchSegments }: { content: string 
         // Regex to match URLs (http, https, www)
         const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|\b[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(\/[^\s]*)?)/gi;
 
-        const highlightWords = searchSegments?.map(segment => segment.toLowerCase()) || [];
-        const wordRegex = highlightWords.length
-            ? new RegExp(`\\b(${highlightWords.join("|")})\\b`, "gi")
+        const highlightSegments = searchSegments?.map(segment => segment.toLowerCase()) || [];
+        const wordRegex = highlightSegments.length
+            ? new RegExp(`(${highlightSegments.join("|")})`, "gi")
             : null;
 
         // Split text while keeping hashtags, tags, and URLs

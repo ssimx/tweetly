@@ -1,19 +1,19 @@
 import { NextFunction, Request, Response } from 'express';
-import { searchQueryCleanup } from '../utils/searchQueryCleanup';
 import { getUserByEmail, getUserByUsername, getUsersBySearch } from '../services/userService';
 import { UserProps } from '../lib/types';
 import { getLastPostBySearch, getPostsBySearch } from '../services/postService';
-import { AppError, SuccessResponse, usernameOrEmailAvailibilitySchema } from 'tweetly-shared';
+import { AppError, BasePostDataType, LoggedInUserDataType, searchQueryCleanup, SearchQuerySegmentsType, SuccessResponse, UserDataType, usernameOrEmailAvailibilitySchema } from 'tweetly-shared';
+import { remapPostInformation, remapUserInformation } from '../lib/helpers';
 
 // ---------------------------------------------------------------------------------------------------------
 
 export async function usernameOrEmailLookup(req: Request, res: Response, next: NextFunction) {
     const type = req.query.type as string | undefined;
     const data = req.query.data as string | undefined;
-    
+
     try {
         if (!type || !data) throw new AppError('Type/data search params are missing', 404, 'MISSING_PARAMS');
-        
+
         // Decode and validate type and data
         const decodedType = decodeURIComponent(type);
         const decodedData = decodeURIComponent(data);
@@ -37,14 +37,14 @@ export async function usernameOrEmailLookup(req: Request, res: Response, next: N
 
 // ---------------------------------------------------------------------------------------------------------
 
-export async function searchUsers(req: Request, res: Response) {
+export async function searchUsers(req: Request, res: Response, next: NextFunction) {
+    const user = req.user as LoggedInUserDataType;
     const query = req.query.q as string;
-    if (!query) return res.status(400).json({ error: "No search query provided" });
-    const queryParams = searchQueryCleanup(query);
-
-    const user = req.user as UserProps;
 
     try {
+        if (!query) throw new AppError('Search query is missing', 404, 'MISSING_QUERY');
+        const queryParams = searchQueryCleanup(query);
+
         // fetch users
         let users = [];
         if (queryParams.usernames && queryParams.usernames.length > 0) {
@@ -55,26 +55,68 @@ export async function searchUsers(req: Request, res: Response) {
             users.push(...fetchedUsers);
         }
 
-        return res.status(200).json({
-            users,
-            queryParams
-        })
+        let remappedUsers: UserDataType[] = [];
+        if (users.length !== 0) {
+            // Remap users
+            users.forEach((user) => {
+                remappedUsers.push(remapUserInformation(user));
+            });
+
+            // Prioritize user results by match specificity
+            const prioritizedUsers = remappedUsers.map((user) => {
+                const { username, profile } = user;
+                const name = profile.name;
+                let priority = 0;
+
+                queryParams.usernames.forEach((term) => {
+                    if (username.toLowerCase() === term.toLowerCase()) {
+                        priority += 3; // Exact match to username
+                    } else if (username.toLowerCase().startsWith(term.toLowerCase())) {
+                        priority += 2; // Starts with username
+                    } else if (username.toLowerCase().includes(term.toLowerCase())) {
+                        priority += 1; // Partial match to username
+                    }
+
+                    if (name.toLowerCase() === term.toLowerCase()) {
+                        priority += 3; // Exact match to name
+                    } else if (name.toLowerCase().startsWith(term.toLowerCase())) {
+                        priority += 2; // Starts with name
+                    } else if (name.toLowerCase().includes(term.toLowerCase())) {
+                        priority += 1; // Partial match to name
+                    }
+                });
+
+                return { ...user, priority };
+            });
+
+            // Sort by priority in descending order
+            remappedUsers = prioritizedUsers.sort((a, b) => b.priority - a.priority) as UserDataType[];
+        }
+
+        const successResponse: SuccessResponse<{ users: UserDataType[], queryParams: SearchQuerySegmentsType }> = {
+            success: true,
+            data: {
+                users: remappedUsers,
+                queryParams: queryParams
+            },
+        };
+
+        res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error fetching users: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        next(error);
     }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export async function searchUsersAndPosts(req: Request, res: Response) {
+export async function searchUsersAndPosts(req: Request, res: Response, next: NextFunction) {
     const query = req.query.q as string;
-    if (!query) return res.status(400).json({ error: "No search query provided" });
-    const queryParams = searchQueryCleanup(query);
-
     const user = req.user as UserProps;
 
     try {
+        if (!query) throw new AppError('Search query is missing', 404, 'MISSING_QUERY');
+        const queryParams = searchQueryCleanup(query);
+
         // fetch users
         let usersPromise;
         let userSearchParams: string[] = [];
@@ -92,66 +134,91 @@ export async function searchUsersAndPosts(req: Request, res: Response) {
         const lastSearchPostPromise = getLastPostBySearch(user.id, queryParams.segments);
         const postsPromise = getPostsBySearch(user.id, queryParams.segments);
 
-        const [users, lastSearchPost, posts] = await Promise.all([
+        const [users, lastSearchPost, postsData] = await Promise.all([
             usersPromise || Promise.resolve([]),
             lastSearchPostPromise || Promise.resolve([]),
             postsPromise || Promise.resolve([])
         ]);
 
-        // Prioritize users based on match specificity
-        const prioritizedUsers = users.map((user) => {
-            const { username, profile } = user;
-            const name = profile?.name || "";
-            let priority = 0;
-
-            userSearchParams.forEach((term) => {
-                const lowerTerm = term.toLowerCase();
-                const lowerUsername = username.toLowerCase();
-                const lowerName = name.toLowerCase();
-
-                // Username matches
-                if (lowerUsername === lowerTerm) {
-                    priority += 3; // Exact match
-                } else if (lowerUsername.startsWith(lowerTerm)) {
-                    priority += 2; // Starts with
-                } else if (lowerUsername.includes(lowerTerm)) {
-                    priority += 1; // Partial match
-                }
-
-                // Name matches
-                if (lowerName === lowerTerm) {
-                    priority += 3; // Exact match
-                } else if (lowerName.startsWith(lowerTerm)) {
-                    priority += 2; // Starts with
-                } else if (lowerName.includes(lowerTerm)) {
-                    priority += 1; // Partial match
-                }
+        let remappedUsers: UserDataType[] = [];
+        if (users.length !== 0) {
+            // Remap users
+            users.forEach((user) => {
+                remappedUsers.push(remapUserInformation(user));
             });
 
-            return { ...user, priority };
-        }).sort((a, b) => b.priority - a.priority);
+            // Prioritize user results by match specificity
+            const prioritizedUsers = remappedUsers.map((user) => {
+                const { username, profile } = user;
+                const name = profile.name;
+                let priority = 0;
 
-        return res.status(200).json({
-            users: prioritizedUsers,
-            posts: posts,
-            searchSegments: queryParams.stringSegments,
-            end: !lastSearchPost
+                queryParams.usernames.forEach((term) => {
+                    if (username.toLowerCase() === term.toLowerCase()) {
+                        priority += 3; // Exact match to username
+                    } else if (username.toLowerCase().startsWith(term.toLowerCase())) {
+                        priority += 2; // Starts with username
+                    } else if (username.toLowerCase().includes(term.toLowerCase())) {
+                        priority += 1; // Partial match to username
+                    }
+
+                    if (name.toLowerCase() === term.toLowerCase()) {
+                        priority += 3; // Exact match to name
+                    } else if (name.toLowerCase().startsWith(term.toLowerCase())) {
+                        priority += 2; // Starts with name
+                    } else if (name.toLowerCase().includes(term.toLowerCase())) {
+                        priority += 1; // Partial match to name
+                    }
+                });
+
+                return { ...user, priority };
+            });
+
+            // Sort by priority in descending order
+            remappedUsers = prioritizedUsers.sort((a, b) => b.priority - a.priority) as UserDataType[];
+        }
+
+        const posts = postsData.map((post) => {
+            // skip if there's no information
+            if (!post) return;
+            if (!post.author) return;
+            if (!post.author.profile) return;
+
+            return remapPostInformation(post);
+        }).filter((post): post is NonNullable<typeof post> => post !== undefined);
+
+        const postsEnd = posts.length === 0
+            ? true
+            : lastSearchPost?.id === posts.slice(-1)[0]?.id
                 ? true
-                : !posts.length
-                    ? true
-                    : lastSearchPost.id === posts.slice(-1)[0].id
-                        ? true
-                        : false
-        })
+                : false
+
+        const successResponse: SuccessResponse<{
+            users: UserDataType[],
+            posts: BasePostDataType[],
+            postsCursor: number,
+            postsEnd: boolean,
+            queryParams: SearchQuerySegmentsType
+        }> = {
+            success: true,
+            data: {
+                users: remappedUsers,
+                posts: posts,
+                postsCursor: posts.slice(-1)[0]?.id ?? null,
+                postsEnd: postsEnd,
+                queryParams: queryParams
+            },
+        };
+
+        res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error fetching users and posts: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        next(error);
     }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export async function searchPostsWithCursor(req: Request, res: Response) {
+export async function searchPostsWithCursor(req: Request, res: Response, next: NextFunction) {
     const query = req.query.q as string;
     if (!query) return res.status(400).json({ error: "No search query provided" });
     const cursor = Number(req.query.cursor);
@@ -161,6 +228,10 @@ export async function searchPostsWithCursor(req: Request, res: Response) {
     const user = req.user as UserProps;
 
     try {
+        if (!query) throw new AppError('Query not found in search params', 404, 'MISSING_PARAM');
+        if (!cursor) throw new AppError('Cursor not found in search params', 404, 'MISSING_PARAM');
+        const queryParams = searchQueryCleanup(query);
+
         const lastSearchPostId = await getLastPostBySearch(user.id, queryParams.segments).then(res => res?.id);
         if (lastSearchPostId) {
             // check if current cursor equals last post id
@@ -173,21 +244,38 @@ export async function searchPostsWithCursor(req: Request, res: Response) {
             }
         }
 
-        const posts = await getPostsBySearch(user.id, queryParams.segments, cursor);
+        const postsData = await getPostsBySearch(user.id, queryParams.segments, cursor);
 
-        return res.status(200).json({
-            posts: posts,
-            // check if older posts array is empty and if truthy set the end to true
-            // check if new cursor equals last post id
-            //  if truthy, return older posts and set the end to true
-            end: posts.length === 0
+        const posts = postsData.map((post) => {
+            // skip if there's no information
+            if (!post) return;
+            if (!post.author) return;
+            if (!post.author.profile) return;
+
+            return remapPostInformation(post);
+        }).filter((post): post is NonNullable<typeof post> => post !== undefined);
+
+        const end = posts.length === 0
+            ? true
+            : lastSearchPostId === posts.slice(-1)[0]?.id
                 ? true
-                : lastSearchPostId === posts.slice(-1)[0].id
-                    ? true
-                    : false,
-        });
+                : false
+
+        const successResponse: SuccessResponse<{
+            posts: BasePostDataType[],
+            cursor: number,
+            end: boolean,
+        }> = {
+            success: true,
+            data: {
+                posts: posts,
+                cursor: posts.slice(-1)[0]?.id ?? null,
+                end: end,
+            },
+        };
+
+        res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error fetching posts: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        next(error);
     }
 };

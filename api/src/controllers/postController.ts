@@ -736,7 +736,7 @@ export const getUserReplies = async (req: Request, res: Response, next: NextFunc
                 if (!reply.author.profile) return;
 
                 return remapPostInformation(reply);
-            }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
+            }).filter((reply): reply is NonNullable<typeof reply> => reply !== undefined);
 
             const repliesEnd = replies.length === 0
                 ? true
@@ -765,7 +765,7 @@ export const getUserReplies = async (req: Request, res: Response, next: NextFunc
                 if (!reply.author.profile) return;
 
                 return remapPostInformation(reply);
-            }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
+            }).filter((reply): reply is NonNullable<typeof reply> => reply !== undefined);
 
             const repliesEnd = replies.length === 0
                 ? true
@@ -823,7 +823,7 @@ export const getUserMedia = async (req: Request, res: Response, next: NextFuncti
                 if (!media.author.profile) return;
 
                 return remapPostInformation(media);
-            }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
+            }).filter((media): media is NonNullable<typeof media> => media !== undefined);
 
             const mediaEnd = media.length === 0
                 ? true
@@ -852,7 +852,7 @@ export const getUserMedia = async (req: Request, res: Response, next: NextFuncti
                 if (!media.author.profile) return;
 
                 return remapPostInformation(media);
-            }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
+            }).filter((media): media is NonNullable<typeof media> => media !== undefined);
 
             const mediaEnd = media.length === 0
                 ? true
@@ -905,7 +905,7 @@ export const getUserLikes = async (req: Request, res: Response, next: NextFuncti
                 if (!like.author.profile) return;
 
                 return remapPostInformation(like);
-            }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
+            }).filter((like): like is NonNullable<typeof like> => like !== undefined);
 
             const likesEnd = likes.length === 0
                 ? true
@@ -934,7 +934,7 @@ export const getUserLikes = async (req: Request, res: Response, next: NextFuncti
                 if (!like.author.profile) return;
 
                 return remapPostInformation(like);
-            }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
+            }).filter((like): like is NonNullable<typeof like> => like !== undefined);
 
             const likesEnd = likes.length === 0
                 ? true
@@ -987,7 +987,7 @@ export const getUserBookmarks = async (req: Request, res: Response, next: NextFu
                 if (!bookmark.author.profile) return;
 
                 return remapPostInformation(bookmark);
-            }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
+            }).filter((bookmark): bookmark is NonNullable<typeof bookmark> => bookmark !== undefined);
 
             const bookmarksEnd = bookmarks.length === 0
                 ? true
@@ -1016,7 +1016,7 @@ export const getUserBookmarks = async (req: Request, res: Response, next: NextFu
                 if (!bookmark.author.profile) return;
 
                 return remapPostInformation(bookmark);
-            }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
+            }).filter((bookmmark): bookmmark is NonNullable<typeof bookmmark> => bookmmark !== undefined);
 
             const bookmarksEnd = bookmarks.length === 0
                 ? true

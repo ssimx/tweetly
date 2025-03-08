@@ -1,13 +1,11 @@
 'use client';
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ArrowLeft } from 'lucide-react';
 import Search from '@/components/misc/Search';
 
 export default function TemplateHeader() {
     const path = usePathname();
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const query = searchParams.get('q');
 
     // don't include in messages, has it's own implementation
     if (/^\/messages\/.+/.test(path)) return <></>;
@@ -54,7 +52,7 @@ export default function TemplateHeader() {
             }
             {(pathName.startsWith('search') || pathName.startsWith('explore')) && (
                 <div className='w-full [&_label]:h-[40px]'>
-                    <Search searchQuery={query ? query : ''} />
+                    <Search />
                 </div>
             )}
         </div>

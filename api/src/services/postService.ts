@@ -1233,7 +1233,6 @@ export const getPostsBySearch = async (
             author: {
                 select: {
                     username: true,
-                    createdAt: true,
                     profile: {
                         select: {
                             name: true,
@@ -1246,19 +1245,19 @@ export const getPostsBySearch = async (
                     },
                     followers: {
                         where: {
-                            followerId: userId
+                            followerId: userId,
                         },
                         select: {
-                            followerId: true
-                        }
+                            followerId: true,
+                        },
                     },
                     following: {
                         where: {
-                            followeeId: userId
+                            followeeId: userId,
                         },
                         select: {
-                            followeeId: true
-                        }
+                            followeeId: true,
+                        },
                     },
                     blockedBy: {
                         where: {
@@ -1266,7 +1265,7 @@ export const getPostsBySearch = async (
                         },
                         select: {
                             blockerId: true,
-                        }
+                        },
                     },
                     blockedUsers: {
                         where: {
@@ -1286,16 +1285,15 @@ export const getPostsBySearch = async (
             },
             reposts: {
                 where: {
-                    userId: userId
+                    userId: userId,
                 },
                 select: {
                     userId: true,
-                    createdAt: true,
                 },
             },
             likes: {
                 where: {
-                    userId: userId
+                    userId: userId,
                 },
                 select: {
                     userId: true,

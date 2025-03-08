@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { searchSchema } from '../schemas/searchSchemas';
+import { SearchQuerySegmentsType } from './searchTypes';
 
 export function getAge(date: string) {
     const birthDate = new Date(date);
@@ -56,3 +58,30 @@ export function getErrorMessage(error: unknown): string {
     // anything else is unknown
     return 'Internal Server Error';
 };
+
+// Helper for cleaning up search query
+export function searchQueryCleanup(query: string): SearchQuerySegmentsType {
+    // Validate query against the schema
+    const { q: validatedQuery } = searchSchema.parse({ q: query});
+
+    // Split the query into words for advanced search capabilities
+    const segments = validatedQuery
+        .split(/\s+/) // Split by whitespace
+        .filter((segment) => segment.length > 0); // Remove empty segments
+
+    // Create a structure for the cleaned query
+    const searchParams = {
+        raw: validatedQuery, // The full, cleaned query string
+        segments: segments, // The query split into parts
+        stringSegments: segments
+            .filter((segment) => /^[a-zA-Z0-9]+$/.test(segment)),
+        usernames: segments
+            .filter((segment) => segment.startsWith('@'))
+            .map((hashtag) => hashtag.slice(1)),
+        hashtags: segments
+            .filter((segment) => segment.startsWith('#'))
+            .map((hashtag) => hashtag.slice(1)),
+    };
+
+    return searchParams;
+}
