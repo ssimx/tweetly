@@ -1,20 +1,44 @@
 'use client';
+import UserHoverCard from '../misc/UserHoverCard';
 import { useEffect, useReducer, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUserContext } from '@/context/UserContextProvider';
+import PostMenu from '../posts/post-parts/PostMenu';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
+import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
+import { Repeat2 } from 'lucide-react';
 import BasicPostTemplate from '../posts/templates/BasicPostTemplate';
-import { BasePostDataType } from 'tweetly-shared';
+import { BasePostDataType, UserDataType } from 'tweetly-shared';
 import { userInfoReducer, UserStateType } from '@/lib/userReducer';
 
-export default function NotificationPost({ post, isRead }: { post: BasePostDataType, isRead: boolean }) {
+export default function NotificationRepostedPost({ post, notifier, isRead }: { post: BasePostDataType, notifier: UserDataType, isRead: boolean }) {
     const { suggestions: userFollowSuggestions } = useFollowSuggestionContext();
+    const { blockedUsers } = useBlockedUsersContext();
+    const { loggedInUser } = useUserContext();
     const router = useRouter();
 
     const cardRef = useRef<HTMLDivElement>(null);
 
     // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    // NOTIFIER/FOLLOWER
-    const userInitialState: UserStateType = {
+    // NOTIFIER
+    const notifierInitialState: UserStateType = {
+        relationship: {
+            isFollowingViewer: notifier.relationship.isFollowingViewer,
+            hasBlockedViewer: notifier.relationship.hasBlockedViewer,
+            isFollowedByViewer: notifier.relationship.isFollowedByViewer,
+            isBlockedByViewer: notifier.relationship.isBlockedByViewer,
+            notificationsEnabled: notifier.relationship.notificationsEnabled,
+        },
+        stats: {
+            followersCount: notifier.stats.followersCount,
+            followingCount: notifier.stats.followingCount,
+            postsCount: notifier.stats.postsCount,
+        }
+    };
+    const [notifierState, notifierDispatch] = useReducer(userInfoReducer, notifierInitialState);
+
+    // POST
+    const authorInitialState: UserStateType = {
         relationship: {
             isFollowingViewer: post.author.relationship.isFollowingViewer,
             hasBlockedViewer: post.author.relationship.hasBlockedViewer,
@@ -28,14 +52,22 @@ export default function NotificationPost({ post, isRead }: { post: BasePostDataT
             postsCount: post.author.stats.postsCount,
         }
     };
-    const [userState, dispatch] = useReducer(userInfoReducer, userInitialState);
+    const [authorState, authorDispatch] = useReducer(userInfoReducer, authorInitialState);
 
     useEffect(() => {
-        const suggestedUser = userFollowSuggestions?.find((suggestedUser) => suggestedUser.username === post.author.username);
-        if (suggestedUser) {
-            dispatch({ type: suggestedUser.relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
+        const suggestedUsers = userFollowSuggestions?.filter((suggestedUser) => suggestedUser.username === post.author.username || suggestedUser.username === notifier.username);
+        if (suggestedUsers) {
+            suggestedUsers.forEach((user, index) => {
+                if (user.username === post.author.username) {
+                    notifierDispatch({ type: suggestedUsers[index].relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
+                } else if (user.username === notifier.username) {
+                    authorDispatch({ type: suggestedUsers[index].relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
+                }
+            });
+
         }
-    }, [userFollowSuggestions, dispatch, post.author.username]);
+    }, [userFollowSuggestions, post, notifier.username]);
+
 
     // - FUNCTIONS --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -71,6 +103,19 @@ export default function NotificationPost({ post, isRead }: { post: BasePostDataT
 
     // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+    if (blockedUsers.some((user) => user === post.author.username)) {
+        return (
+            <div className="w-full px-4 py-2 flex">
+                <p className="text-secondary-text">You&apos;ve blocked this user. <span>Unblock to see their posts.</span></p>
+                <PostMenu
+                    post={post}
+                    userState={authorState}
+                    dispatch={authorDispatch}
+                />
+            </div>
+        )
+    }
+
     return (
         <div
             ref={cardRef}
@@ -81,11 +126,22 @@ export default function NotificationPost({ post, isRead }: { post: BasePostDataT
             onMouseDown={(e) => handleCardClick(e, post.author.username, post.id)}
             onMouseLeave={changeCardColor}
         >
+            <div className='flex gap-1 text-14 font-bold text-secondary-text'>
+                <Repeat2 size={20} className='text-green-500/70 mr-1' />
+
+                <UserHoverCard
+                    user={notifier}
+                    userState={notifierState}
+                    dispatch={notifierDispatch}
+                />
+
+                <p className='font-semibold'>reposted {post.author.username === loggedInUser.username && 'your post'}</p>
+            </div>
 
             <BasicPostTemplate
                 post={post}
-                userState={userState}
-                dispatch={dispatch}
+                userState={authorState}
+                dispatch={authorDispatch}
                 openPhoto={openPhoto}
             />
 

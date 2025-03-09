@@ -1,19 +1,19 @@
 'use client';
 import { getMoreBookmarks } from '@/actions/get-actions';
-import { BasicPostType, BookmarkPostType, ReplyPostType } from '@/lib/types';
 import React, { useEffect, useRef, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import FeedPost from '../posts/PostCard';
 import BookmarkReply from './BookmarkReply';
+import { BasePostDataType, ErrorResponse, getErrorMessage } from 'tweetly-shared';
 
-export default function BookmarksContent({ initialBookmarks }: { initialBookmarks: { posts: BookmarkPostType[], end: boolean } | undefined }) {
-    const [bookmarks, setBookmarks] = useState<BookmarkPostType[] | undefined>(initialBookmarks ? initialBookmarks.posts : undefined);
+export default function BookmarksContent({ initialBookmarks, cursor, end }: { initialBookmarks: BasePostDataType[] | null, cursor: number | null, end: boolean }) {
+    const [bookmarks, setBookmarks] = useState<BasePostDataType[] | null>(initialBookmarks);
 
     // scroll and pagination
     const scrollPositionRef = useRef<number>(0);
     const [scrollPosition, setScrollPosition] = useState(0);
-    const [bookmarksCursor, setBookmarksCursor] = useState<number | null | undefined>(initialBookmarks ? initialBookmarks.posts.length !== 0 ? initialBookmarks.posts.slice(-1)[0].id : null : undefined);
-    const [bookmarksEndReached, setBookmarksEndReached] = useState<boolean>(initialBookmarks ? initialBookmarks.end : true);
+    const [bookmarksCursor, setBookmarksCursor] = useState<number | null>(cursor);
+    const [bookmarksEndReached, setBookmarksEndReached] = useState<boolean>(end);
     const { ref, inView } = useInView({
         threshold: 0,
         delay: 100,
@@ -23,15 +23,32 @@ export default function BookmarksContent({ initialBookmarks }: { initialBookmark
     useEffect(() => {
         if (inView && scrollPositionRef.current !== scrollPosition) {
             const fetchOldBookmarks = async () => {
-                if (!bookmarksEndReached && bookmarksCursor) {
-                    const { posts, end } = await getMoreBookmarks(bookmarksCursor);
-                    if (!posts) return;
+                if ((!bookmarksEndReached && bookmarksCursor)) {
+                    try {
+                        const response = await getMoreBookmarks(bookmarksCursor);
+                        
+                        if (!response.success) {
+                            const errorData = response as ErrorResponse;
+                            throw new Error(errorData.error.message);
+                        }
 
-                    setBookmarks(currentBookmarks => [...currentBookmarks as BookmarkPostType[], ...posts as BookmarkPostType[]]);
-                    setBookmarksCursor(posts?.length ? posts.slice(-1)[0].id : null);
-                    setScrollPosition(scrollPositionRef.current);
-                    setBookmarksEndReached(end);
-                }
+                        const { data } = response;
+                        if (!data) throw new Error('Data is missing in response');
+                        else if (data.bookmarks === undefined) throw new Error('Bookmarks property is missing in data response');
+                        else if (data.cursor === undefined) throw new Error('Cursor property is missing in data response');
+
+                        setBookmarks((current) => [...current as BasePostDataType[], ...data.bookmarks as BasePostDataType[]]);
+                        setBookmarksCursor(data.cursor);
+                        setBookmarksEndReached(data.end);
+                    } catch (error: unknown) {
+                        const errorMessage = getErrorMessage(error);
+                        console.error(errorMessage);
+                        setBookmarksCursor(null);
+                        setBookmarksEndReached(true);
+                    } finally {
+                        setScrollPosition(scrollPositionRef.current);
+                    }
+                };
             };
 
             fetchOldBookmarks();
@@ -66,13 +83,13 @@ export default function BookmarksContent({ initialBookmarks }: { initialBookmark
                                 {'replyTo' in post && post.replyTo
                                     ? (
                                         <>
-                                            <BookmarkReply post={post as ReplyPostType} />
+                                            <BookmarkReply post={post} />
                                             <div className='feed-hr-line'></div>
                                         </>
                                     )
                                     : (
                                         <>
-                                            <FeedPost post={post as BasicPostType} />
+                                            <FeedPost post={post} />
                                             <div className='feed-hr-line'></div>
                                         </>
                                     )

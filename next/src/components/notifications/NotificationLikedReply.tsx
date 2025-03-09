@@ -6,17 +6,17 @@ import { useUserContext } from '@/context/UserContextProvider';
 import PostMenu from '../posts/post-parts/PostMenu';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
+import { Heart } from 'lucide-react';
 import BasicPostTemplate from '../posts/templates/BasicPostTemplate';
-import { Reply } from 'lucide-react';
+import { BasePostDataType, UserDataType } from 'tweetly-shared';
+import { userInfoReducer, UserStateType } from '@/lib/userReducer';
 import Link from 'next/link';
 import Image from 'next/image';
 import PostDate from '../posts/post-parts/PostDate';
-import PostText from '../posts/post-parts/PostText';
 import PostImages from '../posts/post-parts/PostImages';
-import { BasePostDataType } from 'tweetly-shared';
-import { userInfoReducer, UserStateType } from '@/lib/userReducer';
+import PostText from '../posts/post-parts/PostText';
 
-export default function NotificationReply({ post, isRead }: { post: BasePostDataType, isRead: boolean }) {
+export default function NotificationLikedReply({ post, notifier, isRead }: { post: BasePostDataType, notifier: UserDataType, isRead: boolean }) {
     const { suggestions: userFollowSuggestions } = useFollowSuggestionContext();
     const { blockedUsers } = useBlockedUsersContext();
     const { loggedInUser } = useUserContext();
@@ -25,6 +25,23 @@ export default function NotificationReply({ post, isRead }: { post: BasePostData
     const cardRef = useRef<HTMLDivElement>(null);
 
     // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // NOTIFIER
+    const notifierInitialState: UserStateType = {
+        relationship: {
+            isFollowingViewer: notifier.relationship.isFollowingViewer,
+            hasBlockedViewer: notifier.relationship.hasBlockedViewer,
+            isFollowedByViewer: notifier.relationship.isFollowedByViewer,
+            isBlockedByViewer: notifier.relationship.isBlockedByViewer,
+            notificationsEnabled: notifier.relationship.notificationsEnabled,
+        },
+        stats: {
+            followersCount: notifier.stats.followersCount,
+            followingCount: notifier.stats.followingCount,
+            postsCount: notifier.stats.postsCount,
+        }
+    };
+    const [notifierState, notifierDispatch] = useReducer(userInfoReducer, notifierInitialState);
+
     // PARENT POST
     const parentInitialState: UserStateType = {
         relationship: {
@@ -60,17 +77,24 @@ export default function NotificationReply({ post, isRead }: { post: BasePostData
     const [replyUserState, replyDispatch] = useReducer(userInfoReducer, replyInitialState);
 
     useEffect(() => {
-        const suggestedUsers = userFollowSuggestions?.filter((suggestedUser) => suggestedUser.username === post.replyTo?.author.username || suggestedUser.username === post.author.username);
+        const suggestedUsers = userFollowSuggestions?.filter((suggestedUser) => {
+            suggestedUser.username === post.replyTo?.author.username
+                || suggestedUser.username === post.author.username
+                || suggestedUser.username === post.replyTo?.author.username
+        });
         if (suggestedUsers) {
             suggestedUsers.forEach((user, index) => {
                 if (user.username === post.replyTo?.author.username) {
                     parentDispatch({ type: suggestedUsers[index].relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
                 } else if (user.username === post.author.username) {
                     replyDispatch({ type: suggestedUsers[index].relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' })
+                } else if (user.username === notifier.username) {
+                    notifierDispatch({ type: suggestedUsers[index].relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' })
                 }
             });
         }
-    }, [userFollowSuggestions, post]);
+    }, [userFollowSuggestions, post, notifier.username]);
+
 
     // - FUNCTIONS --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -122,7 +146,7 @@ export default function NotificationReply({ post, isRead }: { post: BasePostData
     return (
         <div
             ref={cardRef}
-            className={`w-full flex flex-col gap-3 px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer ${isRead === false ? "bg-secondary-foreground" : ""}`}
+            className={`w-full flex flex-col gap-3 px-4 pt-3 pb-1 hover:bg-card-hover cursor-pointer ${isRead === false ? "bg-secondary-foreground" : ""}`}
             role="link"
             tabIndex={0}
             aria-label={`View post by ${post.author.username}`}
@@ -130,15 +154,15 @@ export default function NotificationReply({ post, isRead }: { post: BasePostData
             onMouseLeave={changeCardColor}
         >
             <div className='flex gap-1 text-14 font-bold text-secondary-text'>
-                <Reply size={20} className='text-blue-1/70 mr-1' />
+                <Heart size={20} className='text-green-500/70 mr-1' />
 
                 <UserHoverCard
-                    user={post.author}
-                    userState={replyUserState}
-                    dispatch={replyDispatch}
+                    user={notifier}
+                    userState={notifierState}
+                    dispatch={notifierDispatch}
                 />
 
-                <p className='font-semibold'>replied {post.author.username === loggedInUser.username && 'to your post'}</p>
+                <p className='font-semibold'>liked {post.author.username === loggedInUser.username && 'your reply'}</p>
             </div>
 
             <BasicPostTemplate
@@ -149,7 +173,7 @@ export default function NotificationReply({ post, isRead }: { post: BasePostData
             >
 
                 <div
-                    className='mt-2 w-full border rounded-xl p-2 flex flex-row items-center gap-2 hover:bg-secondary-foreground cursor-pointer'
+                    className={`w-full flex flex-col gap-3 px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer ${isRead === false ? "bg-secondary-foreground" : ""}`}
                     onClick={(e) => handleCardClick(e, post.replyTo!.author.username, post.replyTo!.id)}
                 >
                     <div className='w-full grid grid-cols-post-layout grid-rows-1 gap-2'>
@@ -192,6 +216,7 @@ export default function NotificationReply({ post, isRead }: { post: BasePostData
                 </div>
 
             </BasicPostTemplate>
-        </div >
+
+        </div>
     )
 }

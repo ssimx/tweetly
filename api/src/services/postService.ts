@@ -3235,9 +3235,7 @@ export const getBookmarks = async (
                             },
                             reposts: {
                                 where: {
-                                    user: {
-                                        username,
-                                    },
+                                    userId: userId
                                 },
                                 select: {
                                     userId: true,
@@ -3245,9 +3243,7 @@ export const getBookmarks = async (
                             },
                             likes: {
                                 where: {
-                                    user: {
-                                        username,
-                                    },
+                                    userId: userId
                                 },
                                 select: {
                                     userId: true,
@@ -3255,9 +3251,7 @@ export const getBookmarks = async (
                             },
                             bookmarks: {
                                 where: {
-                                    user: {
-                                        username,
-                                    },
+                                    userId: userId
                                 },
                                 select: {
                                     userId: true,
@@ -3274,9 +3268,7 @@ export const getBookmarks = async (
                     },
                     reposts: {
                         where: {
-                            user: {
-                                username,
-                            },
+                            userId: userId
                         },
                         select: {
                             userId: true,
@@ -3284,9 +3276,7 @@ export const getBookmarks = async (
                     },
                     likes: {
                         where: {
-                            user: {
-                                username,
-                            },
+                            userId: userId
                         },
                         select: {
                             userId: true,
@@ -3294,9 +3284,7 @@ export const getBookmarks = async (
                     },
                     bookmarks: {
                         where: {
-                            user: {
-                                username,
-                            },
+                            userId: userId
                         },
                         select: {
                             userId: true,

@@ -8,8 +8,8 @@ import { deleteImageFromCloudinary } from './uploadController';
 import { getNotifications, getOldestNotification, updateNotificationsToRead } from '../services/notificationService';
 import { generateUserSettingsToken, generateUserSessionToken } from '../utils/jwt';
 import bcrypt from 'bcrypt';
-import { AppError, LoggedInTemporaryUserDataType, LoggedInUserDataType, LoggedInUserJwtPayload, SuccessResponse, UserDataType, userUpdateBirthdaySchema, userUpdateEmailSchema, userUpdatePasswordSchema, userUpdateUsernameSchema } from 'tweetly-shared';
-import { remapUserInformation, remapUserProfileInformation } from '../lib/helpers';
+import { AppError, LoggedInTemporaryUserDataType, LoggedInUserDataType, LoggedInUserJwtPayload, NotificationType, SuccessResponse, UserDataType, userUpdateBirthdaySchema, userUpdateEmailSchema, userUpdatePasswordSchema, userUpdateUsernameSchema } from 'tweetly-shared';
+import { RawNotificationDataType, remapNotificationInformation, remapUserInformation, remapUserProfileInformation } from '../lib/helpers';
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -348,7 +348,7 @@ export const disablePushNotifications = async (req: Request, res: Response) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getUserNotifications = async (req: Request, res: Response) => {
+export const getUserNotifications = async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as UserProps;
     const params = req.query;
     const cursor = params.cursor;
@@ -360,43 +360,91 @@ export const getUserNotifications = async (req: Request, res: Response) => {
                 // check if current cursor equals last post id
                 // if truthy, return empty array and set the end to true
                 if (Number(cursor) === oldestNotificationId) {
-                    return res.status(200).json({
-                        notifications: [],
-                        end: true
-                    });
+                    const successResponse: SuccessResponse<{ notifications: NotificationType[], cursor: number | null, end: boolean }> = {
+                        success: true,
+                        data: {
+                            notifications: [],
+                            cursor: null,
+                            end: true,
+                        },
+                    };
+
+                    res.status(200).json(successResponse);
                 }
             }
 
-            const notifications = await getNotifications(user.id, Number(cursor));
+            const notificationsData = await getNotifications(user.id, Number(cursor));
             await updateNotificationsToRead(user.id);
 
-            return res.status(200).json({
-                notifications: notifications,
-                // check if older posts array is empty and if truthy set the end to true
-                // check if new cursor equals last post id
-                //  if truthy, return older posts and set the end to true
-                end: notifications.length === 0
+
+            const notifications = notificationsData.map((notification) => {
+                // skip if there's no information
+                if (!notification) return;
+                if (!notification.notifier) return;
+                if (!notification.type) return;
+
+                // Ensure notification.type.name is a valid type
+                if (!['POST', 'REPOST', 'LIKE', 'REPLY', 'FOLLOW'].includes(notification.type.name)) {
+                    return; // Skip invalid notifications
+                }
+
+                return remapNotificationInformation(notification as RawNotificationDataType);
+            }).filter((notification): notification is NonNullable<typeof notification> => notification !== undefined);
+
+            const notificationsEnd = notifications.length === 0
+                ? true
+                : oldestNotificationId === notifications.slice(-1)[0]?.id
                     ? true
-                    : oldestNotificationId === notifications.slice(-1)[0].id
-                        ? true
-                        : false,
-            });
+                    : false
+
+            const successResponse: SuccessResponse<{ notifications: NotificationType[], cursor: number | null, end: boolean }> = {
+                success: true,
+                data: {
+                    notifications: notifications ?? [],
+                    cursor: notifications.slice(-1)[0]?.id ?? null,
+                    end: notificationsEnd
+                },
+            };
+
+            res.status(200).json(successResponse);
         } else {
             const oldestNotificationId = await getOldestNotification(user.id).then(res => res?.id);
-            const notifications = await getNotifications(user.id, Number(cursor));
+            const notificationsData = await getNotifications(user.id);
             await updateNotificationsToRead(user.id);
 
-            return res.status(200).json({
-                notifications: notifications,
-                end: !oldestNotificationId
-                    ? true : oldestNotificationId === notifications.slice(-1)[0].id
-                        ? true
-                        : false
-            });
+            const notifications = notificationsData.map((notification) => {
+                // skip if there's no information
+                if (!notification) return;
+                if (!notification.notifier) return;
+                if (!notification.type) return;
+
+                // Ensure notification.type.name is a valid type
+                if (!['POST', 'REPOST', 'LIKE', 'REPLY', 'FOLLOW'].includes(notification.type.name)) {
+                    return; // Skip invalid notifications
+                }
+
+                return remapNotificationInformation(notification as RawNotificationDataType);
+            }).filter((notification): notification is NonNullable<typeof notification> => notification !== undefined);
+
+            const notificationsEnd = notifications.length === 0
+                ? true
+                : oldestNotificationId === notifications.slice(-1)[0]?.id
+                    ? true
+                    : false
+
+            const successResponse: SuccessResponse<{ notifications: NotificationType[], cursor: number | null, end: boolean }> = {
+                success: true,
+                data: {
+                    notifications: notifications ?? [],
+                    cursor: notifications.slice(-1)[0]?.id ?? null,
+                    end: notificationsEnd
+                },
+            };
+
+            res.status(200).json(successResponse);
         }
     } catch (error) {
-        console.error('Error fetching data: ', error);
-        return res.status(500).json({ error: 'Failed to fetch notifications' });
+        next(error);
     }
 };
 

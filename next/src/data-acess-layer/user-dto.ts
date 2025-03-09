@@ -1,9 +1,9 @@
 import 'server-only';
 import { getCurrentTemporaryUserToken, getCurrentUserToken } from './auth';
 import { redirect } from 'next/navigation';
-import { BookmarkPostType, ConversationsListType, ConversationType, NotificationType, ProfileInfo, UserInfo } from '@/lib/types';
+import { BookmarkPostType, ConversationsListType, ConversationType } from '@/lib/types';
 import { cache } from 'react';
-import { getErrorMessage, ApiResponse, AppError, ErrorResponse, LoggedInTemporaryUserDataType, LoggedInUserDataType, SuccessResponse, UserDataType, } from 'tweetly-shared';
+import { getErrorMessage, ApiResponse, AppError, ErrorResponse, LoggedInTemporaryUserDataType, LoggedInUserDataType, SuccessResponse, UserDataType, BasePostDataType, NotificationType, } from 'tweetly-shared';
 import { getUserSessionToken, verifySession } from '@/lib/session';
 
 export const getTemporaryUser = async (): Promise<ApiResponse<{ user: LoggedInTemporaryUserDataType | null }>> => {
@@ -123,11 +123,11 @@ export const getLoggedInUser = cache(async (): Promise<ApiResponse<{ user: Logge
 
 // ---------------------------------------------------------------------------------------------------------
 
-export async function getNotifications() {
-    const token = await getCurrentUserToken();
-
+export async function getNotifications(): Promise<ApiResponse<{ notifications: NotificationType[], cursor: number | null, end: boolean }>> {
     try {
-        const response = await fetch(`http://localhost:3000/api/users/notifications/`, {
+        const token = await getCurrentUserToken();
+
+        const response = await fetch('http://localhost:3000/api/users/notifications', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -136,30 +136,51 @@ export async function getNotifications() {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const notifications = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'notifications' in res && 'end' in res) {
-                return { notifications: res.notifications as NotificationType[], end: res.end as boolean }
-            }
-            return { notifications: [], end: true };
-        });
+        const { data } = await response.json() as SuccessResponse<{ notifications: NotificationType[], cursor: number | null, end: boolean }>;
+        if (data === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.notifications === undefined) throw new AppError('Replies property is missing in data response', 404, 'MISSING_PROPERTY');
+        else if (data.cursor === undefined) throw new AppError('Cursor property is missing in data response', 404, 'MISSING_PROPERTY');
 
-        return notifications;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return undefined;
+        return {
+            success: true,
+            data: {
+                notifications: data.notifications,
+                cursor: data.cursor ?? null,
+                end: data.end ?? true,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function getBookmarks() {
-    const token = await getCurrentUserToken();
-
+export async function getBookmarks(): Promise<ApiResponse<{ bookmarks: BasePostDataType[], cursor: number | null, end: boolean }>> {
     try {
-        const response = await fetch(`http://localhost:3000/api/posts/bookmarks/`, {
+        const token = await getCurrentUserToken();
+
+        const response = await fetch('http://localhost:3000/api/posts/bookmarks', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -168,22 +189,43 @@ export async function getBookmarks() {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const posts = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'posts' in res && 'end' in res) {
-                return { posts: res.posts as BookmarkPostType[], end: res.end as boolean }
-            }
-            return { posts: [], end: true };
-        });
+        const { data } = await response.json() as SuccessResponse<{ bookmarks: BasePostDataType[], cursor: number | null, end: boolean }>;
+        if (data === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.bookmarks === undefined) throw new AppError('Bookmarks property is missing in data response', 404, 'MISSING_PROPERTY');
+        else if (data.cursor === undefined) throw new AppError('Cursor property is missing in data response', 404, 'MISSING_PROPERTY');
 
-        return posts;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return undefined;
+        return {
+            success: true,
+            data: {
+                bookmarks: data.bookmarks,
+                cursor: data.cursor ?? null,
+                end: data.end ?? true,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 

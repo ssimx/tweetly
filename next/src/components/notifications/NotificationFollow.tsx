@@ -2,50 +2,43 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import UserHoverCard from '../misc/UserHoverCard';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useReducer, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserRoundPlus } from 'lucide-react';
-import { UserInfoType } from '@/lib/types';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
+import { UserDataType } from 'tweetly-shared';
+import { userInfoReducer, UserStateType } from '@/lib/userReducer';
 
-export default function NotificationFollow({ isRead, notifier }: { isRead: boolean, notifier: UserInfoType }) {
-    const { suggestions } = useFollowSuggestionContext();
+export default function NotificationFollow({ notifier, isRead }: { notifier: UserDataType, isRead: boolean }) {
+    const { suggestions: userFollowSuggestions } = useFollowSuggestionContext();
     const router = useRouter();
-
-    // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    // USER WHO FOLLOWED
-
-    // If notifier is in suggestions, track it's isFollowed property instead
-    const [isNotifierFollowedByTheUser, setNotifierIsFollowedByTheUser] = useState(
-        suggestions?.find((suggestedUser) => suggestedUser.username === notifier.username)?.isFollowed
-        ?? notifier.followers.length === 1
-        ?? false
-    );
-
-    // Is notifier following the logged in user, notifier can't be blocked in hoverCard so no need for setter function
-    const [isNotifierFollowingTheUser,] = useState<boolean>(notifier.following.length === 1);
-
-    // Notifier following & followers count to update hover card information when they're (un)followed/blocked by logged in user
-    const [notifierFollowingCount,] = useState(
-        suggestions?.find((suggestedUser) => suggestedUser.username === notifier.username)?._count.following
-        ?? notifier._count.following
-        ?? 0
-    );
-    const [notifierFollowersCount, setNotifierFollowersCount] = useState(
-        suggestions?.find((suggestedUser) => suggestedUser.username === notifier.username)?._count.followers
-        ?? notifier._count.followers
-        ?? 0
-    );
 
     const cardRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        const suggestedUser = suggestions?.find((suggestedUser) => suggestedUser.username === notifier.username);
-        if (suggestedUser) {
-            setNotifierIsFollowedByTheUser(suggestedUser.isFollowed);
-            setNotifierFollowersCount(suggestedUser._count.followers);
+    // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // NOTIFIER/FOLLOWER
+    const userInitialState: UserStateType = {
+        relationship: {
+            isFollowingViewer: notifier.relationship.isFollowingViewer,
+            hasBlockedViewer: notifier.relationship.hasBlockedViewer,
+            isFollowedByViewer: notifier.relationship.isFollowedByViewer,
+            isBlockedByViewer: notifier.relationship.isBlockedByViewer,
+            notificationsEnabled: notifier.relationship.notificationsEnabled,
+        },
+        stats: {
+            followersCount: notifier.stats.followersCount,
+            followingCount: notifier.stats.followingCount,
+            postsCount: notifier.stats.postsCount,
         }
-    }, [suggestions, notifier]);
+    };
+    const [userState, dispatch] = useReducer(userInfoReducer, userInitialState);
+
+    useEffect(() => {
+        const suggestedUser = userFollowSuggestions?.find((suggestedUser) => suggestedUser.username === notifier.username);
+        if (suggestedUser) {
+            dispatch({ type: suggestedUser.relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
+        }
+    }, [userFollowSuggestions, dispatch, notifier.username]);
 
     // - FUNCTIONS --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -82,12 +75,9 @@ export default function NotificationFollow({ isRead, notifier }: { isRead: boole
                 </Link>
                 <UserHoverCard
                     user={notifier}
-                    _followingCount={notifierFollowingCount}
-                    _followersCount={notifierFollowersCount}
-                    _setFollowersCount={setNotifierFollowersCount}
-                    isFollowedByTheUser={isNotifierFollowedByTheUser}
-                    setIsFollowedByTheUser={setNotifierIsFollowedByTheUser}
-                    isFollowingTheUser={isNotifierFollowingTheUser} />
+                    userState={userState}
+                    dispatch={dispatch}
+                     />
                 <p>followed you</p>
             </div>
         </div>

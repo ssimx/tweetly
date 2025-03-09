@@ -1,6 +1,6 @@
 // Helper fnction to remap user information (profile user / post author / follow suggestion...)
 
-import { BasePostDataType, UserDataType, VisitedPostDataType } from 'tweetly-shared'
+import { BasePostDataType, NotificationType, UserDataType, VisitedPostDataType } from 'tweetly-shared'
 
 type RawUserDataType = {
     username: string,
@@ -249,18 +249,18 @@ export function remapVisitedPostInformation(post: RawVisitedPostDataType) {
             images: post.replyTo.images,
             createdAt: post.replyTo.createdAt,
             updatedAt: post.replyTo.updatedAt,
-            author: remapUserInformation(post.author),
+            author: remapUserInformation(post.replyTo.author),
 
             stats: {
-                likesCount: post._count.likes,
-                repostsCount: post._count.reposts,
-                repliesCount: post._count.replies,
+                likesCount: post.replyTo._count.likes,
+                repostsCount: post.replyTo._count.reposts,
+                repliesCount: post.replyTo._count.replies,
             },
 
             relationship: {
-                viewerHasLiked: post.likes.length ? true : false,
-                viewerHasReposted: post.reposts.length ? true : false,
-                viewerHasBookmarked: post.bookmarks.length ? true : false,
+                viewerHasLiked: post.replyTo.likes.length ? true : false,
+                viewerHasReposted: post.replyTo.reposts.length ? true : false,
+                viewerHasBookmarked: post.replyTo.bookmarks.length ? true : false,
             }
         } : undefined,
 
@@ -290,4 +290,64 @@ export function remapVisitedPostInformation(post: RawVisitedPostDataType) {
             viewerHasBookmarked: post.bookmarks.length ? true : false,
         }
     } as VisitedPostDataType;
+};
+
+export type RawNotificationDataType = {
+    id: number,
+    type: {
+        name: 'POST' | 'REPOST' | 'LIKE' | 'REPLY' | 'FOLLOW',
+        description: string,
+    },
+    notifier: RawUserDataType,
+    post?: Omit<RawPostDataType, 'replyTo'> & {
+        // post relationship/stats are not present in nested (replied to) post
+        replyTo?: Omit<RawPostDataType, 'reposts' | 'likes' | 'bookmarks' | '_count'>,
+    },
+    isRead: boolean,
+};
+
+export function remapNotificationInformation(notification: RawNotificationDataType) {
+    if (!['POST', 'REPOST', 'LIKE', 'REPLY', 'FOLLOW'].includes(notification.type.name)) return;
+
+    return {
+        id: notification.id,
+        type: {
+            name: notification.type.name,
+            description: notification.type.description,
+        },
+
+        notifier: remapUserInformation(notification.notifier),
+
+        post: notification.post ? {
+            id: notification.post.id,
+            content: notification.post.content,
+            images: notification.post.images,
+            createdAt: notification.post.createdAt,
+            updatedAt: notification.post.updatedAt,
+            author: remapUserInformation(notification.post.author),
+
+            replyTo: notification.post.replyTo ? {
+                id: notification.post.replyTo.id,
+                content: notification.post.replyTo.content,
+                images: notification.post.replyTo.images,
+                createdAt: notification.post.replyTo.createdAt,
+                updatedAt: notification.post.replyTo.updatedAt,
+                author: remapUserInformation(notification.post.replyTo.author),
+            } : undefined,
+
+            stats: {
+                likesCount: notification.post._count.likes,
+                repostsCount: notification.post._count.reposts,
+                repliesCount: notification.post._count.replies,
+            },
+
+            relationship: {
+                viewerHasLiked: notification.post.likes.length ? true : false,
+                viewerHasReposted: notification.post.reposts.length ? true : false,
+                viewerHasBookmarked: notification.post.bookmarks.length ? true : false,
+            }
+        } : undefined,
+
+        isRead: notification.isRead,
+    } as NotificationType;
 };

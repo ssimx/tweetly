@@ -33,16 +33,19 @@ export const getNotifications = async (userId: number, cursor?: number) => {
                         select: {
                             name: true,
                             bio: true,
+                            location: true,
+                            websiteUrl: true,
                             profilePicture: true,
+                            bannerPicture: true,
                         }
                     },
                     followers: {
                         where: {
-                            followerId: userId
+                            followerId: userId,
                         },
                         select: {
-                            followerId: true
-                        }
+                            followerId: true,
+                        },
                     },
                     following: {
                         where: {
@@ -50,15 +53,31 @@ export const getNotifications = async (userId: number, cursor?: number) => {
                         },
                         select: {
                             followeeId: true,
+                        },
+                    },
+                    blockedBy: {
+                        where: {
+                            blockerId: userId,
+                        },
+                        select: {
+                            blockerId: true,
+                        },
+                    },
+                    blockedUsers: {
+                        where: {
+                            blockedId: userId,
+                        },
+                        select: {
+                            blockedId: true,
                         }
                     },
                     _count: {
                         select: {
                             followers: true,
                             following: true,
-                        }
-                    }
-                }
+                        },
+                    },
+                },
             },
             post: {
                 select: {
@@ -74,16 +93,19 @@ export const getNotifications = async (userId: number, cursor?: number) => {
                                 select: {
                                     name: true,
                                     bio: true,
+                                    location: true,
+                                    websiteUrl: true,
                                     profilePicture: true,
+                                    bannerPicture: true,
                                 }
                             },
                             followers: {
                                 where: {
-                                    followerId: userId
+                                    followerId: userId,
                                 },
                                 select: {
-                                    followerId: true
-                                }
+                                    followerId: true,
+                                },
                             },
                             following: {
                                 where: {
@@ -91,15 +113,31 @@ export const getNotifications = async (userId: number, cursor?: number) => {
                                 },
                                 select: {
                                     followeeId: true,
+                                },
+                            },
+                            blockedBy: {
+                                where: {
+                                    blockerId: userId,
+                                },
+                                select: {
+                                    blockerId: true,
+                                },
+                            },
+                            blockedUsers: {
+                                where: {
+                                    blockedId: userId,
+                                },
+                                select: {
+                                    blockedId: true,
                                 }
                             },
                             _count: {
                                 select: {
                                     followers: true,
                                     following: true,
-                                }
-                            }
-                        }
+                                },
+                            },
+                        },
                     },
                     replyTo: {
                         select: {
@@ -115,16 +153,19 @@ export const getNotifications = async (userId: number, cursor?: number) => {
                                         select: {
                                             name: true,
                                             bio: true,
+                                            location: true,
+                                            websiteUrl: true,
                                             profilePicture: true,
+                                            bannerPicture: true,
                                         }
                                     },
                                     followers: {
                                         where: {
-                                            followerId: userId
+                                            followerId: userId,
                                         },
                                         select: {
-                                            followerId: true
-                                        }
+                                            followerId: true,
+                                        },
                                     },
                                     following: {
                                         where: {
@@ -132,15 +173,31 @@ export const getNotifications = async (userId: number, cursor?: number) => {
                                         },
                                         select: {
                                             followeeId: true,
+                                        },
+                                    },
+                                    blockedBy: {
+                                        where: {
+                                            blockerId: userId,
+                                        },
+                                        select: {
+                                            blockerId: true,
+                                        },
+                                    },
+                                    blockedUsers: {
+                                        where: {
+                                            blockedId: userId,
+                                        },
+                                        select: {
+                                            blockedId: true,
                                         }
                                     },
                                     _count: {
                                         select: {
                                             followers: true,
                                             following: true,
-                                        }
-                                    }
-                                }
+                                        },
+                                    },
+                                },
                             },
                         }
                     },

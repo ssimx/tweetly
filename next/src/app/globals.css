@@ -711,8 +711,8 @@ input[type="search"]::-webkit-search-results-decoration {
         --button-text-color: 210, 25%, 8%;
         /* Button background color #eff3f4 */
         --button-bg-color: 192, 19%, 95%;
-        /* Post hover background #ffffff08 */
-        --post-hover: 0, 0%, 100%, 0.031;
+        /* Post hover background #ffffff14 */
+        --post-hover: 0, 0%, 100%, 0.08;
         /* Card hover background #181818 */
         --card-hover: 0, 0%, 7%;
         /* Border #2f3336 */

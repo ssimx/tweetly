@@ -36,7 +36,7 @@ import {
 } from '../services/postService';
 import { createNotificationsForNewLike, createNotificationsForNewPost, createNotificationsForNewReply, createNotificationsForNewRepost, removeNotificationsForLike, removeNotificationsForRepost } from '../services/notificationService';
 import { deleteImageFromCloudinary } from './uploadController';
-import { AppError, BasePostDataType, SuccessResponse, VisitedPostDataType } from 'tweetly-shared';
+import { AppError, BasePostDataType, LoggedInUserDataType, SuccessResponse, VisitedPostDataType } from 'tweetly-shared';
 import { remapPostInformation, remapUserInformation, remapVisitedPostInformation } from '../lib/helpers';
 import { getProfile } from '../services/userService';
 
@@ -119,11 +119,16 @@ export const global30DayPosts = async (req: Request, res: Response, next: NextFu
                     // check if current cursor equals last post id
                     // if truthy, return empty array and set the end to true
                     if (Number(cursor) === oldestGlobalPostId) {
-                        return res.status(200).json({
-                            posts: [],
-                            cursor: null,
-                            end: true
-                        });
+                        const successResponse: SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }> = {
+                            success: true,
+                            data: {
+                                posts: [],
+                                cursor: null,
+                                end: true,
+                            },
+                        };
+
+                        res.status(200).json(successResponse);
                     }
                 }
 
@@ -162,10 +167,16 @@ export const global30DayPosts = async (req: Request, res: Response, next: NextFu
                         // check if current cursor equals last post id
                         // if truthy, return empty array and set the end to true
                         if (Number(cursor) === oldestGlobalPostId) {
-                            return res.status(200).json({
-                                posts: [],
-                                end: true
-                            });
+                            const successResponse: SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }> = {
+                                success: true,
+                                data: {
+                                    posts: [],
+                                    cursor: null,
+                                    end: true,
+                                },
+                            };
+
+                            res.status(200).json(successResponse);
                         }
                     }
 
@@ -270,10 +281,16 @@ export const following30DayPosts = async (req: Request, res: Response, next: Nex
                     // check if current cursor equals last post id
                     // if truthy, return empty array and set the end to true
                     if (Number(cursor) === oldestFollowingPostId) {
-                        return res.status(200).json({
-                            posts: [],
-                            end: true
-                        });
+                        const successResponse: SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }> = {
+                            success: true,
+                            data: {
+                                posts: [],
+                                cursor: null,
+                                end: true,
+                            },
+                        };
+
+                        res.status(200).json(successResponse);
                     }
                 }
 
@@ -304,6 +321,54 @@ export const following30DayPosts = async (req: Request, res: Response, next: Nex
 
                 res.status(200).json(successResponse);
             } else if (type === 'NEW') {
+                if (cursor === 'null') {
+                    const oldestFollowingPostId = await getOldestFollowing30DayPost(user.id).then(res => res?.id);
+                    if (oldestFollowingPostId) {
+                        // check if current cursor equals last post id
+                        // if truthy, return empty array and set the end to true
+                        if (Number(cursor) === oldestFollowingPostId) {
+                            const successResponse: SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }> = {
+                                success: true,
+                                data: {
+                                    posts: [],
+                                    cursor: null,
+                                    end: true,
+                                },
+                            };
+
+                            res.status(200).json(successResponse);
+                        }
+                    }
+
+                    const postsData = await getFollowing30DayPosts(user.id, Number(cursor));
+
+                    const posts = postsData.map((post) => {
+                        // skip if there's no information
+                        if (!post) return;
+                        if (!post.author) return;
+                        if (!post.author.profile) return;
+
+                        return remapPostInformation({ ...post, content: post.content ?? undefined });
+                    }).filter((post): post is NonNullable<typeof post> => post !== undefined);
+
+                    const postsEnd = posts.length === 0
+                        ? true
+                        : oldestFollowingPostId === posts.slice(-1)[0]?.id
+                            ? true
+                            : false
+
+                    const successResponse: SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }> = {
+                        success: true,
+                        data: {
+                            posts: posts ?? [],
+                            cursor: posts.slice(-1)[0]?.id ?? null,
+                            end: postsEnd ?? true,
+                        },
+                    };
+
+                    res.status(200).json(successResponse);
+                }
+
                 const postsData = await getFollowing30DayNewPosts(user.id, Number(cursor));
 
                 const posts = postsData.map((post) => {
@@ -461,10 +526,16 @@ export const postReplies = async (req: Request, res: Response, next: NextFunctio
                 // check if current cursor equals last reply id
                 // if truthy, return empty array and set the end to true
                 if (cursor === oldestReplyLeastEnegagementId) {
-                    return res.status(200).json({
-                        replies: [],
-                        end: true
-                    });
+                    const successResponse: SuccessResponse<{ replies: BasePostDataType[], cursor: number | null, end: boolean }> = {
+                        success: true,
+                        data: {
+                            posts: [],
+                            cursor: null,
+                            end: true,
+                        },
+                    };
+
+                    res.status(200).json(successResponse);
                 }
             }
 
@@ -546,10 +617,16 @@ export const getUserPosts = async (req: Request, res: Response, next: NextFuncti
                 // check if current cursor equals last post id
                 // if truthy, return empty array and set the end to true
                 if (cursor === userOldestPostId) {
-                    return res.status(200).json({
-                        posts: [],
-                        end: true
-                    });
+                    const successResponse: SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }> = {
+                        success: true,
+                        data: {
+                            posts: [],
+                            cursor: null,
+                            end: true,
+                        },
+                    };
+
+                    res.status(200).json(successResponse);
                 }
             }
 
@@ -570,7 +647,7 @@ export const getUserPosts = async (req: Request, res: Response, next: NextFuncti
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ posts: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
+            const successResponse: SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     posts: posts ?? [],
@@ -599,7 +676,7 @@ export const getUserPosts = async (req: Request, res: Response, next: NextFuncti
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ posts: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
+            const successResponse: SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     posts: posts ?? [],
@@ -633,10 +710,16 @@ export const getUserReposts = async (req: Request, res: Response, next: NextFunc
                 // check if current cursor equals last post id
                 // if truthy, return empty array and set the end to true
                 if (cursor === userOldestRepostId) {
-                    return res.status(200).json({
-                        posts: [],
-                        end: true
-                    });
+                    const successResponse: SuccessResponse<{ reposts: BasePostDataType[], cursor: number | null, end: boolean }> = {
+                        success: true,
+                        data: {
+                            posts: [],
+                            cursor: null,
+                            end: true,
+                        },
+                    };
+
+                    res.status(200).json(successResponse);
                 }
             }
 
@@ -657,7 +740,7 @@ export const getUserReposts = async (req: Request, res: Response, next: NextFunc
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ reposts: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
+            const successResponse: SuccessResponse<{ reposts: BasePostDataType[], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     reposts: reposts ?? [],
@@ -686,7 +769,7 @@ export const getUserReposts = async (req: Request, res: Response, next: NextFunc
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ reposts: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
+            const successResponse: SuccessResponse<{ reposts: BasePostDataType[], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     reposts: reposts ?? [],
@@ -720,10 +803,16 @@ export const getUserReplies = async (req: Request, res: Response, next: NextFunc
                 // check if current cursor equals last post id
                 // if truthy, return empty array and set the end to true
                 if (cursor === userOldestReplyId) {
-                    return res.status(200).json({
-                        posts: [],
-                        end: true
-                    });
+                    const successResponse: SuccessResponse<{ replies: BasePostDataType[], cursor: number | null, end: boolean }> = {
+                        success: true,
+                        data: {
+                            posts: [],
+                            cursor: null,
+                            end: true,
+                        },
+                    };
+
+                    res.status(200).json(successResponse);
                 }
             }
 
@@ -744,7 +833,7 @@ export const getUserReplies = async (req: Request, res: Response, next: NextFunc
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ replies: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
+            const successResponse: SuccessResponse<{ replies: BasePostDataType[], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     replies: replies ?? [],
@@ -773,7 +862,7 @@ export const getUserReplies = async (req: Request, res: Response, next: NextFunc
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ replies: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
+            const successResponse: SuccessResponse<{ replies: BasePostDataType[], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     replies: replies ?? [],
@@ -807,10 +896,16 @@ export const getUserMedia = async (req: Request, res: Response, next: NextFuncti
                 // check if current cursor equals last post id
                 // if truthy, return empty array and set the end to true
                 if (cursor === userOldestMediaId) {
-                    return res.status(200).json({
-                        posts: [],
-                        end: true
-                    });
+                    const successResponse: SuccessResponse<{ media: BasePostDataType[], cursor: number | null, end: boolean }> = {
+                        success: true,
+                        data: {
+                            posts: [],
+                            cursor: null,
+                            end: true,
+                        },
+                    };
+
+                    res.status(200).json(successResponse);
                 }
             }
 
@@ -831,7 +926,7 @@ export const getUserMedia = async (req: Request, res: Response, next: NextFuncti
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ media: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
+            const successResponse: SuccessResponse<{ media: BasePostDataType[], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     media: media ?? [],
@@ -860,7 +955,7 @@ export const getUserMedia = async (req: Request, res: Response, next: NextFuncti
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ media: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
+            const successResponse: SuccessResponse<{ media: BasePostDataType[], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     media: media ?? [],
@@ -889,10 +984,16 @@ export const getUserLikes = async (req: Request, res: Response, next: NextFuncti
                 // check if current cursor equals last post id
                 // if truthy, return empty array and set the end to true
                 if (cursor === userOldestLikeId) {
-                    return res.status(200).json({
-                        posts: [],
-                        end: true
-                    });
+                    const successResponse: SuccessResponse<{ likes: BasePostDataType[], cursor: number | null, end: boolean }> = {
+                        success: true,
+                        data: {
+                            likes: [],
+                            cursor: null,
+                            end: true,
+                        },
+                    };
+
+                    res.status(200).json(successResponse);
                 }
             }
 
@@ -913,7 +1014,7 @@ export const getUserLikes = async (req: Request, res: Response, next: NextFuncti
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ likes: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
+            const successResponse: SuccessResponse<{ likes: BasePostDataType[], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     likes: likes ?? [],
@@ -942,7 +1043,7 @@ export const getUserLikes = async (req: Request, res: Response, next: NextFuncti
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ likes: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
+            const successResponse: SuccessResponse<{ likes: BasePostDataType[], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     likes: likes ?? [],
@@ -961,7 +1062,7 @@ export const getUserLikes = async (req: Request, res: Response, next: NextFuncti
 // ---------------------------------------------------------------------------------------------------------
 
 export const getUserBookmarks = async (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
     const cursor = Number(req.query.cursor);
 
     try {
@@ -971,10 +1072,16 @@ export const getUserBookmarks = async (req: Request, res: Response, next: NextFu
                 // check if current cursor equals last post id
                 // if truthy, return empty array and set the end to true
                 if (cursor === userOldestBookmarkId) {
-                    return res.status(200).json({
-                        posts: [],
-                        end: true
-                    });
+                    const successResponse: SuccessResponse<{ bookmarks: BasePostDataType[], cursor: number | null, end: boolean }> = {
+                        success: true,
+                        data: {
+                            posts: [],
+                            cursor: null,
+                            end: true,
+                        },
+                    };
+
+                    res.status(200).json(successResponse);
                 }
             }
 
@@ -995,7 +1102,7 @@ export const getUserBookmarks = async (req: Request, res: Response, next: NextFu
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ bookmarks: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
+            const successResponse: SuccessResponse<{ bookmarks: BasePostDataType[], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     bookmarks: bookmarks ?? [],
@@ -1006,7 +1113,7 @@ export const getUserBookmarks = async (req: Request, res: Response, next: NextFu
 
             res.status(200).json(successResponse);
         } else {
-            const userOldestBookmarkId = await getOldestLike(user.id).then(res => res?.post.id);
+            const userOldestBookmarkId = await getOldestBookmark(user.id).then(res => res?.post.id);
             const bookmarksData = await getBookmarks(user.id).then(res => res.map(bookmark => bookmark.post));
 
             const bookmarks = bookmarksData.map((bookmark) => {
@@ -1024,7 +1131,7 @@ export const getUserBookmarks = async (req: Request, res: Response, next: NextFu
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ bookmarks: BasePostDataType[] | [], cursor: number | null, end: boolean }> = {
+            const successResponse: SuccessResponse<{ bookmarks: BasePostDataType[], cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     bookmarks: bookmarks ?? [],
