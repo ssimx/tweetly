@@ -5,6 +5,7 @@ import { useInView } from 'react-intersection-observer';
 import FeedPost from '../posts/PostCard';
 import BookmarkReply from './BookmarkReply';
 import { BasePostDataType, ErrorResponse, getErrorMessage } from 'tweetly-shared';
+import BookmarksNoContent from './BookmarksNoContent';
 
 export default function BookmarksContent({ initialBookmarks, cursor, end }: { initialBookmarks: BasePostDataType[] | null, cursor: number | null, end: boolean }) {
     const [bookmarks, setBookmarks] = useState<BasePostDataType[] | null>(initialBookmarks);
@@ -26,7 +27,7 @@ export default function BookmarksContent({ initialBookmarks, cursor, end }: { in
                 if ((!bookmarksEndReached && bookmarksCursor)) {
                     try {
                         const response = await getMoreBookmarks(bookmarksCursor);
-                        
+
                         if (!response.success) {
                             const errorData = response as ErrorResponse;
                             throw new Error(errorData.error.message);
@@ -72,12 +73,10 @@ export default function BookmarksContent({ initialBookmarks, cursor, end }: { in
         <section className='w-full h-fit'>
             <div className='feed-hr-line'></div>
             {bookmarks === undefined
-                ? <div>Something went wrong</div>
-                : bookmarks === null
-                    ? <div>loading...</div>
-                    : bookmarks.length === 0
-                        ? <div>No bookmarks</div>
-                        : bookmarks.map((post) => (
+                ? <div>loading...</div>
+                : bookmarks && bookmarks.length
+                    ? (
+                        bookmarks.map((post) => (
                             <div key={post.id}>
 
                                 {'replyTo' in post && post.replyTo
@@ -97,6 +96,10 @@ export default function BookmarksContent({ initialBookmarks, cursor, end }: { in
 
                             </div>
                         ))
+                    )
+                    : bookmarks === null
+                        ? <div>Something went wrong</div>
+                        : bookmarks && !bookmarks.length && <BookmarksNoContent />
             }
 
             {!bookmarksEndReached && (
