@@ -36,7 +36,10 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
         setError,
         clearErrors,
         setValue,
-    } = useForm<FormNewPostDataType>({ resolver: zodResolver(newPostDataSchema) });
+    } = useForm<FormNewPostDataType>({
+        resolver: zodResolver(newPostDataSchema),
+        defaultValues: { replyToId: reply ? String(reply) : undefined }
+    });
 
     const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setText(e.target.value);
@@ -95,8 +98,6 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
         if (isSubmitting) return;
 
         try {
-            formData['replyToId'] = String(reply);
-
             const response = await createPost(formData);
 
             if (!response.success) {
