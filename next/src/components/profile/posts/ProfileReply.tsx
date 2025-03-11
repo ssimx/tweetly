@@ -7,15 +7,16 @@ import { BasePostDataType, UserAndViewerRelationshipType, UserStatsType } from '
 import { UserActionType, userInfoReducer, UserStateType } from '@/lib/userReducer';
 
 type ProfileReplyProps = {
+    profileUsername: string,
     post: BasePostDataType,
-    replyUserState: {
+    userState: {
         relationship: UserAndViewerRelationshipType,
         stats: UserStatsType,
     },
-    replyDispatch: React.Dispatch<UserActionType>,
+    dispatch: React.Dispatch<UserActionType>,
 };
 
-export default function ProfileReply({ post, replyUserState, replyDispatch }: ProfileReplyProps) {
+export default function ProfileReply({ profileUsername, post, userState, dispatch }: ProfileReplyProps) {
     const { suggestions: userFollowSuggestions } = useFollowSuggestionContext();
     const router = useRouter();
 
@@ -35,7 +36,9 @@ export default function ProfileReply({ post, replyUserState, replyDispatch }: Pr
             postsCount: post.replyTo!.author.stats.postsCount,
         }
     };
-    const [parentUserState, parentDispatch] = useReducer(userInfoReducer, parentInitialState);
+    const [_parentUserState, _parentDispatch] = useReducer(userInfoReducer, parentInitialState);
+
+    const parentPostAuthorIsProfileUser = post.replyTo!.author.username === profileUsername;
 
     // ORIGINAL POST (REPLY) SHARES STATE WITH PROFILE USER
 
@@ -44,14 +47,16 @@ export default function ProfileReply({ post, replyUserState, replyDispatch }: Pr
         if (suggestedUsers) {
             suggestedUsers.forEach((user, index) => {
                 if (user.username === post.replyTo?.author.username) {
-                    parentDispatch({ type: suggestedUsers[index].relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
+                    parentPostAuthorIsProfileUser
+                        ? dispatch({ type: suggestedUsers[index].relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' })
+                        : _parentDispatch({ type: suggestedUsers[index].relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
                 } else if (user.username === post.author.username) {
-                    replyDispatch({ type: suggestedUsers[index].relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
+                    dispatch({ type: suggestedUsers[index].relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
                 }
             });
 
         }
-    }, [userFollowSuggestions, replyDispatch, post]);
+    }, [userFollowSuggestions, dispatch, post, parentPostAuthorIsProfileUser]);
 
     // - FUNCTIONS -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -94,8 +99,8 @@ export default function ProfileReply({ post, replyUserState, replyDispatch }: Pr
 
                 <BasicPostTemplate
                     post={post.replyTo!}
-                    userState={post.replyTo!.author.username === post.author.username ? replyUserState : parentUserState}
-                    dispatch={post.replyTo!.author.username === post.author.username ? replyDispatch : parentDispatch}
+                    userState={parentPostAuthorIsProfileUser ? userState : _parentUserState}
+                    dispatch={parentPostAuthorIsProfileUser ? dispatch : _parentDispatch}
                     openPhoto={openPhoto}
                     type={'parent'}
                 />
@@ -111,8 +116,8 @@ export default function ProfileReply({ post, replyUserState, replyDispatch }: Pr
 
                 <BasicPostTemplate
                     post={post}
-                    userState={replyUserState}
-                    dispatch={replyDispatch}
+                    userState={userState}
+                    dispatch={dispatch}
                     openPhoto={openPhoto}
                 />
 

@@ -143,3 +143,49 @@ export const updateProfileCheckup = (req: Request, res: Response, next: NextFunc
         next(); // Proceed to the next middleware/handler
     });
 };
+
+
+const newMessageUpload = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024, files: 4 }, // 5MB file size limit
+    fileFilter: (req: Request, file, cb) => {
+        const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true); // accept file
+        } else {
+            cb(new Error('File format is not supported'));
+        }
+    },
+});
+
+export const newMessageCheckup = (req: Request, res: Response, next: NextFunction) => {
+    if (!req.headers["content-type"]?.startsWith("multipart/form-data")) {
+        return next(); // Skip multer if no file is being uploaded
+    }
+
+    newMessageUpload.fields([
+        { name: "images", maxCount: 4 },
+    ])(req, res, (err: any) => {
+        if (err) {
+            return next(err); // Pass any errors to the next middleware (e.g. multer errors)
+        }
+
+        // Explicitly type req.files to allow indexing with 'images'
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] | undefined }; // Cast files to the expected type
+
+        const text: string | undefined = req.body.text ?? undefined;
+        const conversationId: string | undefined = req.body.conversationId ?? undefined;
+        const images: Express.Multer.File[] | undefined = files["images"] ?? undefined;
+
+        if ((text === undefined || text.trim().length === 0) && (images === undefined || images.length === 0)) {
+            return next(new AppError('Post content is missing', 404, 'MISSING_CONTENT'));
+        }
+
+        // Attach parsed fields to req for use in your route handler
+        req.body.text = text;
+        req.body.conversationId = conversationId;
+        req.body.files = images;
+
+        next(); // Proceed to the next middleware/handler
+    });
+};

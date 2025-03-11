@@ -376,7 +376,6 @@ export const getUserNotifications = async (req: Request, res: Response, next: Ne
             const notificationsData = await getNotifications(user.id, Number(cursor));
             await updateNotificationsToRead(user.id);
 
-
             const notifications = notificationsData.map((notification) => {
                 // skip if there's no information
                 if (!notification) return;

@@ -1,10 +1,9 @@
 import 'server-only';
 import { getCurrentTemporaryUserToken, getCurrentUserToken } from './auth';
 import { redirect } from 'next/navigation';
-import { BookmarkPostType, ConversationsListType, ConversationType } from '@/lib/types';
 import { cache } from 'react';
-import { getErrorMessage, ApiResponse, AppError, ErrorResponse, LoggedInTemporaryUserDataType, LoggedInUserDataType, SuccessResponse, UserDataType, BasePostDataType, NotificationType, } from 'tweetly-shared';
-import { getUserSessionToken, verifySession } from '@/lib/session';
+import { getErrorMessage, ApiResponse, AppError, ErrorResponse, LoggedInTemporaryUserDataType, LoggedInUserDataType, SuccessResponse, UserDataType, BasePostDataType, NotificationType, ConversationCardType, ConversationType, LoggedInUserJwtPayload, } from 'tweetly-shared';
+import { decryptSession, getUserSessionToken, verifySession } from '@/lib/session';
 
 export const getTemporaryUser = async (): Promise<ApiResponse<{ user: LoggedInTemporaryUserDataType | null }>> => {
     const sessionToken = await getUserSessionToken();
@@ -229,10 +228,10 @@ export async function getBookmarks(): Promise<ApiResponse<{ bookmarks: BasePostD
     }
 };
 
-export async function getConversations() {
-    const token = await getCurrentUserToken();
-
+export async function getConversations(): Promise<ApiResponse<{ conversations: ConversationCardType[], cursor: string | null, end: boolean }>> {
     try {
+        const token = await getCurrentUserToken();
+
         const response = await fetch('http://localhost:3000/api/conversations', {
             method: 'GET',
             headers: {
@@ -242,31 +241,56 @@ export async function getConversations() {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const conversations = await response.json() as ConversationsListType;
-        return conversations;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
+        const { data } = await response.json() as SuccessResponse<{ conversations: ConversationCardType[], cursor: string | null, end: boolean }>;
+        if (data === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.conversations === undefined) throw new AppError('Conversations property is missing in data response', 404, 'MISSING_PROPERTY');
+        else if (data.cursor === undefined) throw new AppError('Cursor property is missing in data response', 404, 'MISSING_PROPERTY');
+
         return {
-            conversations: [],
-            end: true,
+            success: true,
+            data: {
+                conversations: data.conversations,
+                cursor: data.cursor ?? null,
+                end: data.end ?? true,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
         };
     }
 };
 
 async function authorizedToViewConversation(username: string) {
-    const loggedInUser = await getLoggedInUser();
-    return loggedInUser.username === username;
+    const response = await getLoggedInUser();
+    if (!response.success) return false;
+    return response.data?.user.username === username;
 };
 
 export async function getConversationById(id: string) {
-    const token = await getCurrentUserToken();
-
     try {
+        const token = await getCurrentUserToken();
+
         const response = await fetch(`http://localhost:3000/api/conversations/${id}`, {
             method: 'GET',
             headers: {
@@ -276,17 +300,45 @@ export async function getConversationById(id: string) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const convo = await response.json() as ConversationType;
-        if (!convo.conversation.participants.some(async (participant) => await authorizedToViewConversation(participant.user.username))) return redirect('/');
-        return convo;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return redirect('/');
+        const { data } = await response.json() as SuccessResponse<{ conversation: ConversationType }>;
+        if (data === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.conversation === undefined) throw new AppError('Conversation property is missing in data response', 404, 'MISSING_PROPERTY');
+
+        const payload = await decryptSession(token) as LoggedInUserJwtPayload;
+        if (!data.conversation.participants.some(participant => participant.username === payload.username)) {
+            throw new AppError('User unauthorized to view the conversation', 403, 'UNAUTHORIZED')
+        };
+
+        return {
+            success: true,
+            data: {
+                conversation: data.conversation,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 

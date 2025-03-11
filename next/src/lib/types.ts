@@ -553,7 +553,7 @@ export interface ConversationsListType {
     end: boolean,
 };
 
-export interface ConversationType {
+export interface ConversationCardType {
     conversation: {
         id: string,
         participants: {

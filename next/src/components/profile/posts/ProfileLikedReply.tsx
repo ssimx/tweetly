@@ -9,16 +9,16 @@ import { UserActionType, userInfoReducer, UserStateType } from '@/lib/userReduce
 import { BasePostDataType, UserAndViewerRelationshipType, UserStatsType } from 'tweetly-shared';
 
 type ProfileLikedReplyProps = {
+    profileUsername: string,
     post: BasePostDataType,
-    authorized: boolean,
-    replyUserState: {
+    userState: {
         relationship: UserAndViewerRelationshipType,
         stats: UserStatsType,
     },
-    replyDispatch: React.Dispatch<UserActionType>,
+    dispatch: React.Dispatch<UserActionType>,
 };
 
-export default function ProfileLikedReply({ post, authorized, replyUserState, replyDispatch }: ProfileLikedReplyProps) {
+export default function ProfileLikedReply({ profileUsername, post, userState, dispatch }: ProfileLikedReplyProps) {
     const { suggestions: userFollowSuggestions } = useFollowSuggestionContext();
     const router = useRouter();
 
@@ -38,7 +38,9 @@ export default function ProfileLikedReply({ post, authorized, replyUserState, re
             postsCount: post.replyTo!.author.stats.postsCount,
         }
     };
-    const [parentUserState, parentDispatch] = useReducer(userInfoReducer, parentInitialState);
+    const [_parentUserState, _parentDispatch] = useReducer(userInfoReducer, parentInitialState);
+
+    const parentPostAuthorIsProfileUser = post.replyTo!.author.username === profileUsername;
 
     // LIKED POST IS NOT NECESSARILY PROFILE USER'S OWN POST SO IT NEEDS NEW STATE IF THAT'S THE CASE
     const replyInitialState: UserStateType = {
@@ -57,21 +59,25 @@ export default function ProfileLikedReply({ post, authorized, replyUserState, re
     };
     const [_replyUserState, _replyDispatch] = useReducer(userInfoReducer, replyInitialState);
 
+    const replyPostAuthorIsProfileUser = post.author.username === profileUsername;
+
     useEffect(() => {
         const suggestedUsers = userFollowSuggestions?.filter((suggestedUser) => suggestedUser.username === post.replyTo?.author.username || suggestedUser.username === post.author.username);
         if (suggestedUsers) {
             suggestedUsers.forEach((user, index) => {
                 if (user.username === post.replyTo?.author.username) {
-                    parentDispatch({ type: suggestedUsers[index].relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
+                    parentPostAuthorIsProfileUser
+                        ? dispatch({ type: suggestedUsers[index].relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' })
+                        : _parentDispatch({ type: suggestedUsers[index].relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
                 } else if (user.username === post.author.username) {
-                    authorized
-                        ? replyDispatch({ type: suggestedUsers[index].relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' })
+                    replyPostAuthorIsProfileUser
+                        ? dispatch({ type: suggestedUsers[index].relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' })
                         : _replyDispatch({ type: suggestedUsers[index].relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
                 }
             });
 
         }
-    }, [userFollowSuggestions, authorized, post, replyDispatch]);
+    }, [userFollowSuggestions, post, dispatch, parentPostAuthorIsProfileUser, replyPostAuthorIsProfileUser]);
 
     // - FUNCTIONS -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -120,16 +126,16 @@ export default function ProfileLikedReply({ post, authorized, replyUserState, re
                     <p className='flex items-center gap-1'>Reply to </p>
                     <UserHoverCard
                         user={post.replyTo!.author}
-                        userState={post.replyTo!.author.username === post.author.username ? replyUserState : parentUserState}
-                        dispatch={post.replyTo!.author.username === post.author.username ? replyDispatch : parentDispatch}
+                        userState={replyPostAuthorIsProfileUser ? userState : _parentUserState}
+                        dispatch={replyPostAuthorIsProfileUser ? dispatch : _parentDispatch}
                     />
                 </div>
             </div>
 
             <BasicPostTemplate
                 post={post}
-                userState={authorized ? replyUserState : _replyUserState}
-                dispatch={authorized ? replyDispatch : _replyDispatch}
+                userState={replyPostAuthorIsProfileUser ? userState : _replyUserState}
+                dispatch={replyPostAuthorIsProfileUser ? dispatch : _replyDispatch}
                 openPhoto={openPhoto}
             />
 

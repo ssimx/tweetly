@@ -18,7 +18,7 @@ export default function ProfileMediaPost({ post }: { post: BasePostDataType }) {
         <Image
             src={post.images[0]}
             alt="Post image preview"
-            className="h-[250px] w-[250px] object-cover rounded-md hover:cursor-pointer"
+            className="h-full w-full object-cover rounded-md hover:cursor-pointer"
             width={400} height={400}
             onClick={openPhoto} />
     )

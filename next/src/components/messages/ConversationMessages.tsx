@@ -1,5 +1,4 @@
 'use client';
-import { AllMessagesType } from "./ConversationContent";
 import { formatPostDate } from "@/lib/utils";
 import { CircleAlert } from 'lucide-react';
 import { useEffect, useRef, useState } from "react";
@@ -8,11 +7,12 @@ import Link from "next/link";
 import MessageBubble from "./ConversationMessageBubble";
 import MessageStatus from "./ConversationMessageStatus";
 import TypingIndicator from "./ConversationTypingIndicator";
-import { ReceiverType } from "@/app/(root)/messages/[conversationId]/page";
+import { ConversationMessageType, ConversationType } from 'tweetly-shared';
+import { useUserContext } from '@/context/UserContextProvider';
 
-interface ConversationMessagesProps {
-    allMessagesOrdered: AllMessagesType[];
-    receiverInfo: ReceiverType;
+type ConversationMessagesProps = {
+    messages: ConversationMessageType[];
+    receiverInfo: Pick<ConversationType, 'participants'>['participants'][0];
     loadingRef: (node?: Element | null) => void;
     scrollPositionRef: React.RefObject<number>;
     scrollPosition: number,
@@ -21,7 +21,7 @@ interface ConversationMessagesProps {
 }
 
 export default function ConversationMessages({
-    allMessagesOrdered,
+    messages,
     receiverInfo,
     loadingRef,
     scrollPositionRef,
@@ -29,12 +29,12 @@ export default function ConversationMessages({
     endReached,
     receiverIsTyping,
 }: ConversationMessagesProps) {
-
+    const { loggedInUser } = useUserContext();
     const [, setLastMessageTimeRefreshTrigger] = useState(false);
     const hasMountedRef = useRef(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const unreadMessageRef = useRef<HTMLDivElement>(null);
-    const previousMessageCountRef = useRef(allMessagesOrdered.length);
+    const previousMessageCountRef = useRef(messages.length);
 
     useEffect(() => {
         if (scrollContainerRef.current) {
@@ -44,7 +44,7 @@ export default function ConversationMessages({
                 // Initial load: scroll to the unread message
                 container.scrollTop = unreadMessageRef.current.offsetTop - 75;
                 hasMountedRef.current = true;
-            } else if (allMessagesOrdered.length > previousMessageCountRef.current) {
+            } else if (messages.length > previousMessageCountRef.current) {
                 // Restore scroll position only when older messages are loaded
                 const previousScrollHeight = container.scrollHeight;
                 container.scrollTop = container.scrollHeight - previousScrollHeight + scrollPosition;
@@ -54,9 +54,9 @@ export default function ConversationMessages({
             }
 
             // Update the previous message count reference
-            previousMessageCountRef.current = allMessagesOrdered.length;
+            previousMessageCountRef.current = messages.length;
         }
-    }, [allMessagesOrdered, scrollPosition]);
+    }, [messages, scrollPosition]);
 
     // Track scroll position on user scroll
     function handleScroll(event: React.UIEvent<HTMLDivElement, UIEvent>) {
@@ -65,8 +65,8 @@ export default function ConversationMessages({
     }
 
     // Get the last message and check whether sender is logged in user, check for read status, save message index for rendering
-    const lastMessage = allMessagesOrdered.slice(-1)[0];
-    const lastMessageIndex = lastMessage ? allMessagesOrdered.length - 1 : 0;
+    const lastMessage = messages.slice(-1)[0];
+    const lastMessageIndex = lastMessage ? messages.length - 1 : 0;
 
     // Refresh last message sent time every minute for the first hour
     useEffect(() => {
@@ -89,10 +89,9 @@ export default function ConversationMessages({
     }, [lastMessage]);
 
     // Get the last read message from receiver, to set the scroll to that message when logged in users opens the DMs
-    const firstUnreadMessage = allMessagesOrdered
-        .filter((msg) => msg.sender === false)
+    const firstUnreadMessage = messages
+        .filter((msg) => msg.sentBy === loggedInUser.username)
         .find((msg) => msg.readStatus === false);
-
 
     return (
         <div
@@ -116,17 +115,17 @@ export default function ConversationMessages({
                         </div>
                     )}
 
-                    {allMessagesOrdered.map((msg, index) => (
+                    {messages.map((msg, index) => (
                         <div key={msg.id}
-                            className={`message-content ${msg.sender ? 'self-end' : 'self-start'} ${firstUnreadMessage && firstUnreadMessage.id === msg.id ? 'w-full !max-w-[100%] mt-4' : ''}`}
+                            className={`message-content ${msg.sentBy === loggedInUser.username ? 'self-end' : 'self-start'} ${firstUnreadMessage && firstUnreadMessage.id === msg.id ? 'w-full !max-w-[100%] mt-4' : ''}`}
                             ref={firstUnreadMessage && firstUnreadMessage.id === msg.id ? unreadMessageRef : null}>
                             <div></div>
-                            {msg.sender
+                            {msg.sentBy === loggedInUser.username
                                 ? (
                                     <div className='flex flex-col'>
                                         <div className='flex items-center gap-2'>
                                             {msg.status === 'failed' && <CircleAlert size={20} className='text-red-400' />}
-                                            <MessageBubble msg={msg} index={index} allMessagesOrdered={allMessagesOrdered} sender />
+                                            <MessageBubble msg={msg} index={index} messages={messages} />
                                         </div>
                                         <div>
                                             {msg.status === 'sending' && <MessageStatus status="sending" />}
@@ -147,11 +146,11 @@ export default function ConversationMessages({
                                 : (
                                     <>
                                         {firstUnreadMessage && firstUnreadMessage.id === msg.id
-                                            && <div className={`unread-message w-full ${allMessagesOrdered[index === 0 ? 0 : index - 1].sender === msg.sender ? 'mb-4' : ''}`}><span>Unread messages</span></div>}
+                                            && <div className={`unread-message w-full ${messages[index === 0 ? 0 : index - 1].sentBy === loggedInUser.username ? 'mb-4' : ''}`}><span>Unread messages</span></div>}
                                         <div className='flex flex-col'>
                                             <div className='flex items-center gap-2'>
                                                 {msg.status === 'failed' && <CircleAlert size={20} className='text-red-400' />}
-                                                <MessageBubble msg={msg} index={index} allMessagesOrdered={allMessagesOrdered} />
+                                                <MessageBubble msg={msg} index={index} messages={messages} />
                                             </div>
                                             <div>
                                                 {

@@ -4,8 +4,6 @@ import { getBookmarks } from "@/data-acess-layer/user-dto";
 export default async function Bookmarks() {
     const response = await getBookmarks();
 
-    console.log(response)
-
     if (!response.success || !response.data) {
         return (
             <section className='feed-desktop'>

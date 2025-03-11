@@ -351,3 +351,4 @@ export function remapNotificationInformation(notification: RawNotificationDataTy
         isRead: notification.isRead,
     } as NotificationType;
 };
+

@@ -1,36 +1,34 @@
 'use client';
-import { ConversationLastMessageType } from '@/app/(root)/conversations/page';
 import { useUserContext } from '@/context/UserContextProvider';
 import Image from 'next/image';
 import Link from 'next/link';
 import React from 'react'
 import PostDate from '../posts/post-parts/PostDate';
+import { ConversationCardType } from 'tweetly-shared';
 
-interface MessageUserPreviewType {
-    username: string;
-    profile: {
-        name: string;
-        profilePicture: string;
-    } | null;
-};
-
-export default function ConversationCard({ convo }: { convo: ConversationLastMessageType }) {
+export default function ConversationCard({ conversation }: { conversation: ConversationCardType }) {
     const { loggedInUser } = useUserContext();
 
-    const messageUserPreviewInfo: MessageUserPreviewType = convo.lastMessage.receiver.username === convo.lastMessage.sender.username
-        ? convo.lastMessage.receiver   // logged in user self-convo, show their info
-        : convo.lastMessage.receiver.username === loggedInUser.username
-            ? convo.lastMessage.sender // receiver is logged in user, show sender info
-            : convo.lastMessage.receiver // sender is logged in user, show receiver info
+    if (conversation.lastMessage === null) {
+        return (
+            <></>
+        )
+    }
+
+    const messageUserPreviewInfo = conversation.lastMessage.receiver.username === conversation.lastMessage.sender.username
+        ? conversation.lastMessage.receiver   // logged in user self-conversation, show their info
+        : conversation.lastMessage.receiver.username === loggedInUser.username
+            ? conversation.lastMessage.sender // receiver is logged in user, show sender info
+            : conversation.lastMessage.receiver; // sender is logged in user, show receiver info
 
     return (
-        <Link href={`/messages/${convo.id}`}>
+        <Link href={`/messages/${conversation.id}`}>
             <div
-                className={`w-full min-w-0 h-full px-4 py-4 flex gap-2 hover:bg-post-hover hover:cursor-pointer ${convo.lastMessage.sender.username !== loggedInUser.username && convo.lastMessage.readStatus === false ? 'bg-post-hover group' : null}`}
+                className={`w-full min-w-0 h-full px-4 py-4 flex gap-2 hover:bg-card-hover hover:cursor-pointer ${conversation.lastMessage.sender.username !== loggedInUser.username && conversation.lastMessage.readStatus === false ? 'bg-post-hover group' : null}`}
             >
                 <div className='min-w-[40px]'>
                     <Image
-                        src={`${messageUserPreviewInfo.profile?.profilePicture}`}
+                        src={`${messageUserPreviewInfo.profile.profilePicture}`}
                         alt='Conversation user profile picture'
                         height={40} width={40}
                         className='w-[40px] h-[40px] rounded-full' />
@@ -40,16 +38,30 @@ export default function ConversationCard({ convo }: { convo: ConversationLastMes
                         <p className='font-bold text-primary-text whitespace-nowrap overflow-hidden'>{messageUserPreviewInfo.profile?.name}</p>
                         <p className=''>@{messageUserPreviewInfo.username}</p>
                         <p>·</p>
-                        <PostDate createdAt={convo.updatedAt} />
-                        {convo.lastMessage.sender.username !== loggedInUser.username && convo.lastMessage.readStatus === false && (
+                        <PostDate createdAt={conversation.updatedAt} />
+                        {conversation.lastMessage.sender.username !== loggedInUser.username && conversation.lastMessage.readStatus === false && (
                             <div className='ml-auto self-center bg-primary rounded-full w-[8px] h-[8px] group-hover:scale-110'></div>
                         )}
                     </div>
                     <div className='message-content-overflow'>
-                        <p className='break-all'>{convo.lastMessage.content}</p>
+                        {conversation.lastMessage.images && conversation.lastMessage.images.length
+                            ? (
+                                <p className='text-secondary-text italic'>Sent an image</p>
+
+                            )
+                            : (
+                                <p className='break-all'>
+                                    {conversation.lastMessage.sender.username !== loggedInUser.username
+                                        && (
+                                        <span className='text-secondary-text'>{conversation.lastMessage.sender.username}: </span>
+                                        )
+                                    }
+                                    {conversation.lastMessage.content}</p>
+                            )}
                     </div>
                 </div>
-            </div>
-        </Link>
+            </div >
+        </Link >
     )
 }
+

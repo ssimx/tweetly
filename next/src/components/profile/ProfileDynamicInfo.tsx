@@ -1,6 +1,6 @@
 'use client';
 import { CalendarDays } from "lucide-react";
-import { useEffect, useReducer, useState } from "react";
+import { useReducer, useState } from "react";
 import FollowButton from "../misc/FollowButton";
 import ProfileEditBtn from "./ProfileEditBtn";
 import ProfileNotificationBtn from "./ProfileNotificationButton";
@@ -47,13 +47,6 @@ export default function ProfileDynamicInfo({ user, authorized }: { user: UserDat
     // Format dates
     const createdAt = new Date(user.createdAt);
     const joined = `${createdAt.toLocaleDateString('default', { month: 'long' })} ${createdAt.getFullYear()}`;
-
-    // Action handlers are defined inside related components
-    // Menu button has toggle block/unblock
-
-    useEffect(() => {
-
-    }, [user.username]);
 
     return (
         <div className='h-full grid grid-rows-[auto,auto,1fr]'>

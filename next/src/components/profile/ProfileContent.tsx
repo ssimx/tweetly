@@ -11,6 +11,7 @@ import { getLikesForProfile, getMediaForProfile, getRepliesForProfile, getPostsA
 import { BasePostDataType, ErrorResponse, getErrorMessage, ProfilePostOrRepostDataType, SuccessResponse, UserAndViewerRelationshipType, UserDataType, UserStatsType } from 'tweetly-shared';
 import ProfileNoContent from './ProfileNoContent';
 import { UserActionType } from '@/lib/userReducer';
+import ProfileRepost from './posts/ProfileRepost';
 
 type ProfileContentProps = {
     user: UserDataType,
@@ -233,7 +234,6 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                     }
 
                     const { data } = response as SuccessResponse<{ media: BasePostDataType[], cursor: number, end: boolean }>;
-                    console.log(data)
                     if (data === undefined) throw new Error('Data is missing in response');
                     else if (data.media === undefined) throw new Error('Media property is missing in data response');
                     else if (data.cursor === undefined) throw new Error('Cursor property is missing in data response');
@@ -357,11 +357,23 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                                 {postsReposts.map((post, index) => {
                                     return (
                                         <div key={post.id}>
-                                            <ProfilePost
-                                                post={post}
-                                                userState={userState}
-                                                dispatch={dispatch}
-                                            />
+                                            {post.type === 'REPOST' && (
+                                                <ProfileRepost
+                                                    profileUsername={user.username}
+                                                    post={post}
+                                                    authorized={authorized}
+                                                    userState={userState}
+                                                    dispatch={dispatch}
+                                                />
+                                            )}
+
+                                            {post.type === 'POST' && (
+                                                <ProfilePost
+                                                    post={post}
+                                                    userState={userState}
+                                                    dispatch={dispatch}
+                                                />
+                                            )}
                                             {(index + 1) !== postsReposts.length && <div className='feed-hr-line'></div>}
                                         </div>
                                     )
@@ -390,9 +402,10 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                                     return (
                                         <div key={post.id}>
                                             <ProfileReply
+                                                profileUsername={user.username}
                                                 post={post}
-                                                replyUserState={userState}
-                                                replyDispatch={dispatch}
+                                                userState={userState}
+                                                dispatch={dispatch}
                                             />
                                             {(index + 1) !== replies.length && <div className='feed-hr-line'></div>}
                                         </div>
@@ -416,14 +429,13 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                     ? <div>loading...</div>
                     : media && media.length
                         ? (
-                            <section className='w-full flex flex-col h-fit p-2'>
-                                {media.map((post, index) => {
+                            <section className='w-full h-fit p-2 grid grid-cols-[repeat(4,minmax(100px,1fr))] grid-rows-[200px] auto-rows-[200px] gap-2'>
+                                {media.map((post) => {
                                     return (
                                         <div key={post.id}>
                                             <ProfileMediaPost
                                                 post={post}
                                             />
-                                            {(index + 1) !== media.length && <div className='feed-hr-line'></div>}
                                         </div>
                                     )
                                 })}
@@ -452,14 +464,14 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                                         <div key={post.id}>
                                             {post.replyTo
                                                 ? <ProfileLikedPostReply
+                                                    profileUsername={user.username}
                                                     post={post}
-                                                    authorized={authorized}
-                                                    replyUserState={userState}
-                                                    replyDispatch={dispatch}
+                                                    userState={userState}
+                                                    dispatch={dispatch}
                                                 />
                                                 : <ProfileLikedPost
+                                                    profileUsername={user.username}
                                                     post={post}
-                                                    authorized={authorized}
                                                     userState={userState}
                                                     dispatch={dispatch}
                                                 />

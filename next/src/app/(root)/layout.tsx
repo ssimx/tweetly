@@ -37,8 +37,8 @@ export default async function AuthorizedLayout({ children, modals }: Readonly<{ 
                                         <LeftSidebar />
                                     </div>
 
-                                    <div className='main-content'>
-                                        <div className='border-x grid grid-cols-1 grid-rows-main-content border-b border-primary-border'>
+                                    <div className='h-fit min-h-screen lg:grid lg:grid-cols-main-content-layout mb-[20px]'>
+                                        <div className='h-fit min-h-screen border-x grid grid-cols-1 grid-rows-main-content border-b border-primary-border'>
                                             <TemplateHeader />
                                             {children}
                                             {modals}

@@ -2,10 +2,9 @@
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from 'lucide-react';
 import Image from "next/image";
-import { CircleEllipsis } from 'lucide-react';
-import { ReceiverType } from "@/app/(root)/messages/[conversationId]/page";
+import { ConversationType } from 'tweetly-shared';
 
-export default function ConversationHeader({ receiverInfo }: { receiverInfo: ReceiverType }) {
+export default function ConversationHeader({ receiverInfo }: { receiverInfo: Pick<ConversationType, 'participants'>['participants'][0] }) {
     const router = useRouter();
 
     const handleBackClick = () => {
@@ -28,7 +27,6 @@ export default function ConversationHeader({ receiverInfo }: { receiverInfo: Rec
                     height={35} width={35}
                     className='h-[35px] w-[35px] rounded-full' />
                 <h1 className='text-20 font-bold'>{receiverInfo.username}</h1>
-                <CircleEllipsis size={20} className='text-dark-600 ml-auto' />
             </div>
         </div>
     )

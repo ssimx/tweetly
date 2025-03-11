@@ -4,7 +4,7 @@ import { getLoggedInUser } from "@/data-acess-layer/user-dto";
 import { decryptSession } from '@/lib/session';
 import { BookmarkPostType, } from "@/lib/types";
 import { cache } from 'react';
-import { ApiResponse, AppError, BasePostDataType, ErrorResponse, getErrorMessage, LoggedInUserJwtPayload, NotificationType, ProfilePostOrRepostDataType, SearchQuerySegmentsType, SuccessResponse, UserDataType, VisitedPostDataType } from 'tweetly-shared';
+import { ApiResponse, AppError, BasePostDataType, ConversationCardType, ConversationMessageType, ErrorResponse, getErrorMessage, LoggedInUserJwtPayload, NotificationType, ProfilePostOrRepostDataType, SearchQuerySegmentsType, SuccessResponse, UserDataType, VisitedPostDataType } from 'tweetly-shared';
 
 // GET actions for client/dynamic components
 
@@ -541,6 +541,112 @@ export async function getMoreBookmarks(cursor: number): Promise<ApiResponse<{ bo
     }
 };
 
+export async function getMoreConversations(cursor: string): Promise<ApiResponse<{ conversations: ConversationCardType[], cursor: string | null, end: boolean }>> {
+    try {
+        const token = await getCurrentUserToken();
+
+        const response = await fetch(`http://localhost:3000/api/conversations?cursor=${cursor}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+        }
+
+        const { data } = await response.json() as SuccessResponse<{ conversations: ConversationCardType[], cursor: string, end: boolean }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.conversations === undefined) throw new AppError('Conversations property is missing in data response', 404, 'MISSING_PROPERTY');
+        else if (data.cursor === undefined) throw new AppError('Cursor property is missing in data response', 404, 'MISSING_PROPERTY');
+
+        return {
+            success: true,
+            data: {
+                conversations: data.conversations,
+                cursor: data.cursor,
+                end: data.end,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
+    }
+};
+
+export async function getMoreConversationMessages(id: string, cursor: string): Promise<ApiResponse<{ messages: ConversationMessageType[], cursor: string | null, end: boolean }>> {
+    try {
+        const token = await getCurrentUserToken();
+
+        const response = await fetch(`http://localhost:3000/api/conversations/${id}?cursor=${cursor}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+        }
+
+        const { data } = await response.json() as SuccessResponse<{ messages: ConversationMessageType[], cursor: string | null, end: boolean }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.messages === undefined) throw new AppError('Messages property is missing in data response', 404, 'MISSING_PROPERTY');
+        else if (data.cursor === undefined) throw new AppError('Cursor property is missing in data response', 404, 'MISSING_PROPERTY');
+
+        return {
+            success: true,
+            data: {
+                messages: data.messages,
+                cursor: data.cursor,
+                end: data.end,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
+    }
+};
+
 export async function getExplorePosts(): Promise<ApiResponse<{ posts: BasePostDataType[] }>> {
     try {
         const token = await getCurrentUserToken();
@@ -972,8 +1078,6 @@ export async function getPostsAndRepostsForProfile(
         const repostsPromise = getRepostsForProfile(profileUsername);
 
         const [postsResponse, repostsResponse] = await Promise.all([postsPromise, repostsPromise]);
-
-        console.log(postsResponse)
 
         if (!postsResponse.success) {
             const errorData = postsResponse as ErrorResponse;

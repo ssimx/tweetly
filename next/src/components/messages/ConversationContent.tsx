@@ -5,8 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import { socket } from "@/lib/socket";
 import { useUserContext } from "@/context/UserContextProvider";
 import { useInView } from 'react-intersection-observer';
-import { ReceiverType } from "@/app/(root)/messages/[conversationId]/page";
-import { ConversationType } from "@/lib/types";
+import { ConversationMessageType, ConversationType, ErrorResponse, getErrorMessage } from 'tweetly-shared';
+import { getMoreConversationMessages } from '@/actions/get-actions';
+import ConversationHeader from './ConversationHeader';
 
 export interface NewMessageType {
     id: number,
@@ -15,34 +16,20 @@ export interface NewMessageType {
     status: 'sending' | 'sent' | 'failed',
 };
 
-export interface AllMessagesType {
-    id: string,
-    content: string,
-    createdAt: number,
-    sender: boolean,
-    readStatus: boolean,
-    status: 'sending' | 'sent' | 'failed',
-};
-
-interface ConversationContentType {
-    receiverInfo: ReceiverType,
-    convo: ConversationType,
-};
-
-interface ConversationContentMoreMessagesType {
-    messages: Pick<ConversationType['conversation'], 'messages'>['messages'];
-    end: boolean,
-};
-
-export default function ConversationContent({ receiverInfo, convo }: ConversationContentType) {
+export default function ConversationContent({ conversation }: { conversation: ConversationType }) {
     const { loggedInUser } = useUserContext();
+    const [messages, setMessages] = useState<ConversationMessageType[]>(conversation.messages);
+
+    // receiver information
+    // if both participants share username with logged in user, it's self-conversation, otherwise it's normal conversation
+    const receiver = conversation.participants.filter((participant) => participant.username !== loggedInUser.username);
+    const receiverInfo = receiver.length === 1 ? receiver[0] : conversation.participants[0];
+    const [receiverIsTyping, setReceiverIsTyping] = useState(false);
+
+    const [messagesCursor, setMessagesCursor] = useState<string | null>(conversation.cursor);
+    const [messagesEndReached, setMessagesEndReached] = useState(conversation.end);
     const scrollPositionRef = useRef<number>(0);
     const [scrollPosition, setScrollPosition] = useState(0);
-
-    const [allMessagesOrdered, setAllMessagesOrdered] = useState<AllMessagesType[]>([]);
-    const [cursor, setCursor] = useState<string>('');
-    const [endReached, setEndReached] = useState(convo.end);
-    const [receiverIsTyping, setReceiverIsTyping] = useState(false);
     const { ref, inView } = useInView({
         threshold: 0,
         delay: 100,
@@ -50,60 +37,50 @@ export default function ConversationContent({ receiverInfo, convo }: Conversatio
 
     // Infinite scroll - fetch older messages when inView is true
     useEffect(() => {
-        if (inView && !endReached && scrollPositionRef.current !== scrollPosition) {
+        if (inView && scrollPositionRef.current !== scrollPosition) {
             const fetchOldMsgs = async () => {
-                const response = await fetch(`/api/conversations/${convo.conversation.id}?cursor=${cursor}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    cache: 'no-cache',
-                });
-                const { messages, end } = await response.json() as ConversationContentMoreMessagesType;
+                if ((!messagesEndReached && messagesCursor)) {
+                    try {
+                        const response = await getMoreConversationMessages(conversation.id, messagesCursor);
 
-                if (messages.length === 0 && end === true) {
-                    setEndReached(true);
-                    return;
-                }
-
-                const allMsgsOrdered = messages
-                    .map((msg) => {
-                        const loggedInUserIsSender: boolean = msg.sender.username === loggedInUser.username;
-                        return {
-                            id: msg.id,
-                            content: msg.content,
-                            createdAt: new Date(msg.createdAt).getTime(),
-                            sender: loggedInUserIsSender,
-                            readStatus: msg.readStatus,
-                            status: 'sent'
+                        if (!response.success) {
+                            const errorData = response as ErrorResponse;
+                            throw new Error(errorData.error.message);
                         }
-                    })
-                    .sort((a, b) => a.createdAt - b.createdAt);
 
-                setAllMessagesOrdered((currentMessages) => [...allMsgsOrdered as AllMessagesType[], ...currentMessages]);
-                setCursor(allMsgsOrdered[0].id);
-                setScrollPosition(scrollPositionRef.current);
+                        const { data } = response;
+                        if (!data) throw new Error('Data is missing in response');
+                        else if (data.messages === undefined) throw new Error('Messages property is missing in data response');
+                        else if (data.cursor === undefined) throw new Error('Cursor property is missing in data response');
+                        console.log(data.messages)
+
+                        setMessages((current) => [...data.messages as ConversationMessageType[], ...current]);
+                        setMessagesCursor(data.cursor);
+                        setMessagesEndReached(data.end);
+                    } catch (error: unknown) {
+                        const errorMessage = getErrorMessage(error);
+                        console.error(errorMessage);
+                        setMessagesCursor(null);
+                        setMessagesEndReached(true);
+                    } finally {
+                        setScrollPosition(scrollPositionRef.current);
+                    }
+                };
             };
 
             fetchOldMsgs();
         }
-    }, [inView, convo, cursor, loggedInUser, endReached, scrollPosition]);
+    }, [inView, loggedInUser, conversation, messages, messagesCursor, messagesEndReached, scrollPosition]);
 
     // Handle new messages via sockets
     useEffect(() => {
-        socket.on('message_received', (message: {
-            id: string,
-            content: string,
-            createdAt: string,
-            senderId: number,
-            receiverId: number,
-        }) => {
-            setAllMessagesOrdered((prevMessages) => [
+        socket.on('message_received', (message: ConversationMessageType) => {
+            setMessages((prevMessages) => [
                 ...prevMessages,
-                { ...message, createdAt: new Date(message.createdAt).getTime(), sender: message.senderId === loggedInUser.id ? true : false, readStatus: message.senderId === loggedInUser.id ? false : true, status: 'sent' }
+                message,
             ]);
 
-            message.senderId !== loggedInUser.id && socket.emit('conversation_seen_status', convo.conversation.id, message.id);
+            message.sentBy !== loggedInUser.username && socket.emit('conversation_seen_status', conversation.id, message.id);
         });
 
         socket.on('message_typing_status', (typingUser: null | string) => {
@@ -111,7 +88,7 @@ export default function ConversationContent({ receiverInfo, convo }: Conversatio
         });
 
         socket.on('message_seen', (messageId) => {
-            setAllMessagesOrdered((prevMessages) =>
+            setMessages((prevMessages) =>
                 prevMessages.map((msg) =>
                     (msg.id === messageId || (messageId === null && msg === prevMessages[prevMessages.length - 1]))
                         ? { ...msg, readStatus: true }
@@ -125,29 +102,12 @@ export default function ConversationContent({ receiverInfo, convo }: Conversatio
             socket.off('message_typing_status');
             socket.off('message_seen');
         };
-    }, [convo, loggedInUser]);
+    }, [conversation, loggedInUser]);
 
     // Connect to conversation room
     useEffect(() => {
         socket.connect();
-        socket.emit('join_conversation_room', convo.conversation.id, loggedInUser.username);
-
-        // Initial message mapping and setting cursor
-        if (convo.conversation.messages.length !== 0) {
-            const allMsgsOrdered = convo.conversation.messages
-                .map((msg) => ({
-                    id: msg.id,
-                    content: msg.content,
-                    createdAt: new Date(msg.createdAt).getTime(),
-                    sender: msg.sender.username === loggedInUser.username,
-                    readStatus: msg.readStatus,
-                    status: 'sent'
-                }))
-                .sort((a, b) => a.createdAt - b.createdAt) as AllMessagesType[];
-
-            setAllMessagesOrdered(allMsgsOrdered);
-            setCursor(allMsgsOrdered[0].id);
-        }
+        socket.emit('join_conversation_room', conversation.id, loggedInUser.username);
 
         socket.on('conversation_seen', (joinedUser) => {
             if (loggedInUser.username === joinedUser) return;
@@ -165,25 +125,32 @@ export default function ConversationContent({ receiverInfo, convo }: Conversatio
             socket.disconnect();
             socket.off('conversation_seen');
         };
-    }, [convo, loggedInUser]);
+    }, [conversation, loggedInUser]);
+
+    console.log(messages, messagesCursor)
 
     return (
-        <div className="h-full grid grid-cols-1 grid-rows-conversation-content">
-            <ConversationMessages
-                allMessagesOrdered={allMessagesOrdered}
-                receiverInfo={receiverInfo}
-                loadingRef={ref}
-                scrollPositionRef={scrollPositionRef}
-                scrollPosition={scrollPosition}
-                endReached={endReached}
-                receiverIsTyping={receiverIsTyping}
-            />
-            <div className='feed-hr-line mt-auto'></div>
-            <ConversationInput
-                conversationId={convo.conversation.id}
-                setAllMessagesOrdered={setAllMessagesOrdered}
-                setScrollPosition={setScrollPosition}
-            />
+        <div className='' style={{ height: 'calc(100vh - var(--header-size))' }}>
+            <ConversationHeader receiverInfo={receiverInfo} />
+            <div className="h-full grid grid-cols-1 grid-rows-[1fr,1px,auto]">
+                <ConversationMessages
+                    messages={messages}
+                    receiverInfo={receiverInfo}
+                    loadingRef={ref}
+                    scrollPositionRef={scrollPositionRef}
+                    scrollPosition={scrollPosition}
+                    endReached={messagesEndReached}
+                    receiverIsTyping={receiverIsTyping}
+                />
+
+                <div className='feed-hr-line mt-auto'></div>
+
+                <ConversationInput
+                    conversationId={conversation.id}
+                    setMessages={setMessages}
+                    setScrollPosition={setScrollPosition}
+                />
+            </div>
         </div>
     )
 }

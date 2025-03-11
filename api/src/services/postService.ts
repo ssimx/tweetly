@@ -2236,7 +2236,6 @@ export const getOldestRepost = async (username: string, userId: number) => {
                 },
             },
             author: {
-                username,
                 blockedUsers: {
                     none: {
                         blockedId: userId,
@@ -2530,7 +2529,6 @@ export const getOldestReply = async (username: string, userId: number) => {
                     },
                     replyTo: {
                         author: {
-                            username,
                             blockedUsers: {
                                 none: {
                                     blockedId: userId,

@@ -40,6 +40,9 @@ import {
     LoggedInUserDataType,
     emailSchema,
     userUpdateProfileSchema,
+    FormNewConversationMessageDataType,
+    ConversationMessageType,
+    newMessageDataSchema,
 } from 'tweetly-shared';
 
 // ---------------------------------------------------------------------------------------------------------
@@ -838,6 +841,83 @@ export async function removeBookmarkPost(postId: number) {
         return false;
     }
 };
+
+export async function createNewConversationMessage(formData: FormNewConversationMessageDataType): Promise<ApiResponse<{ message: ConversationMessageType }>> {
+    try {
+        const token = await getCurrentUserToken();
+        newMessageDataSchema.parse(formData);
+
+        const newFormData = new FormData();
+
+        if (formData.text) {
+            newFormData.append('text', String(formData.text));
+        }
+
+        if (Array.isArray(formData.images)) {
+            formData.images.forEach((file) => {
+                newFormData.append(`images`, file);
+            });
+        } else if (formData.images) {
+            newFormData.append('image', formData.images); // Single file case
+        }
+
+        newFormData.append('conversationId', String(formData.conversationId));
+
+        const response = await fetch(`http://localhost:3000/api/conversations/messages/create`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+            body: newFormData
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+        }
+
+        const { data } = await response.json() as SuccessResponse<{ message: ConversationMessageType }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (!data.message) throw new AppError('Message is missing in data response', 404, 'MISSING_MESSAGE');
+
+        return {
+            success: true,
+            data: {
+                message: data.message,
+            }
+        }
+    } catch (error: unknown) {
+        // Handle validation errors
+        if (isZodError(error)) {
+            return {
+                success: false,
+                error: {
+                    message: 'Validation failed',
+                    code: 'VALIDATION_FAILED',
+                    details: error.issues,
+                }
+            } as ErrorResponse;
+        } else if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
+    }
+}; 
 
 export async function hardRedirect(uri: string) {
     console.log('redirecting');

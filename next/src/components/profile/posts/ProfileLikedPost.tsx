@@ -7,8 +7,8 @@ import { BasePostDataType, UserAndViewerRelationshipType, UserStatsType } from '
 import { UserActionType, userInfoReducer, UserStateType } from '@/lib/userReducer';
 
 type ProfileLikedPostProps = {
+    profileUsername: string,
     post: BasePostDataType,
-    authorized: boolean,
     userState: {
         relationship: UserAndViewerRelationshipType,
         stats: UserStatsType,
@@ -16,7 +16,7 @@ type ProfileLikedPostProps = {
     dispatch: React.Dispatch<UserActionType>,
 };
 
-export default function ProfileLikedPost({ post, authorized, userState, dispatch }: ProfileLikedPostProps) {
+export default function ProfileLikedPost({ profileUsername, post, userState, dispatch }: ProfileLikedPostProps) {
     const { suggestions: userFollowSuggestions } = useFollowSuggestionContext();
     const router = useRouter();
 
@@ -38,14 +38,16 @@ export default function ProfileLikedPost({ post, authorized, userState, dispatch
     };
     const [_userState, _dispatch] = useReducer(userInfoReducer, userInitialState);
 
+    const postAuthorIsProfileUser = post.author.username === profileUsername;
+
     useEffect(() => {
         const suggestedUser = userFollowSuggestions?.find((suggestedUser) => suggestedUser.username === post.author.username);
         if (suggestedUser) {
-            authorized
+            postAuthorIsProfileUser
                 ? dispatch({ type: suggestedUser.relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' })
                 : _dispatch({ type: suggestedUser.relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
         }
-    }, [userFollowSuggestions, post, authorized, dispatch]);
+    }, [userFollowSuggestions, post, postAuthorIsProfileUser, dispatch]);
 
     // - FUNCTIONS -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -87,8 +89,8 @@ export default function ProfileLikedPost({ post, authorized, userState, dispatch
 
             <BasicPostTemplate
                 post={post}
-                userState={authorized ? userState : _userState}
-                dispatch={authorized ? dispatch : _dispatch}
+                userState={postAuthorIsProfileUser ? userState : _userState}
+                dispatch={postAuthorIsProfileUser ? dispatch : _dispatch}
                 openPhoto={openPhoto}
             />
 

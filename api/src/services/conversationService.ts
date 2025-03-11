@@ -19,7 +19,7 @@ export const getAllConversations = async (userId: number, cursor?: string) => {
         orderBy: {
             updatedAt: 'desc'
         },
-        take: 20,
+        take: 10,
         skip: cursor ? 1 : 0,
         cursor: cursor ? { id: cursor }: undefined,
         select: {
@@ -42,6 +42,7 @@ export const getAllConversations = async (userId: number, cursor?: string) => {
                 select: {
                     id: true,
                     content: true,
+                    images: true,
                     readStatus: true,
                     sender: {
                         select: {
@@ -154,6 +155,7 @@ export const getConversation = async (id: string) => {
                 select: {
                     id: true,
                     content: true,
+                    images: true,
                     readStatus: true,
                     createdAt: true,
                     updatedAt: true,
@@ -191,6 +193,7 @@ export const getMessages = async (id: string, cursorId: string) => {
                 select: {
                     id: true,
                     content: true,
+                    images: true,
                     readStatus: true,
                     createdAt: true,
                     updatedAt: true,
@@ -246,17 +249,19 @@ export const getConversationParticipans = async (conversationId: string) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const createMessage = async (senderId: number, receiverId: number, content: string, conversationId: string) => {
+export const createMessage = async (senderId: number, receiverId: number, content: string, images: string[], conversationId: string) => {
     return await prisma.message.create({
         data: {
             senderId,
             receiverId,
             content,
+            images,
             conversationId
         },
         select: {
             id: true,
             content: true,
+            images: true,
             createdAt: true,
             senderId: true,
             receiverId: true

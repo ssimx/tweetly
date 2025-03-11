@@ -151,7 +151,10 @@ export default function VisitedPostInfoModal({ post, photoId }: { post: VisitedP
                     <div className={`fixed inset-0 z-50 bg-black-1/50 grid ${!isPostInfoVisible ? 'grid-cols-[100%]' : 'grid-cols-[80%,20%]'}`} >
                         <div className='relative h-[100vh] flex-center' onClick={closePhoto}>
                             <button className='absolute z-[100] inset-0 m-3 p-2 h-fit w-fit rounded-full bg-gray-800 hover:bg-gray-700 hover:cursor-pointer'
-                                onClick={closePhoto}>
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    closePhoto();
+                                }}>
                                 <X size={24} className='color-white-1 ' />
                             </button>
                             <button className='absolute z-[100] right-0 top-0 m-3 p-2 h-fit w-fit rounded-full bg-gray-800 hover:bg-gray-700 hover:cursor-pointer'
@@ -237,7 +240,7 @@ export default function VisitedPostInfoModal({ post, photoId }: { post: VisitedP
                                 openPhoto={openPhoto}
                                 type='overlay'
                             />
-                            
+
                         </div>
                     </div>,
                     document.body // Append to <body>

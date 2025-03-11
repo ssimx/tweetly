@@ -23,7 +23,6 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
     const [selectedImagesFiles, setSelectedImagesFiles] = useState<File[]>([]);
     const [newPostError, setNewPostError] = useState('');
     
-    const formRef = useRef<HTMLFormElement | null>(null);
     const imageInputRef = useRef<HTMLInputElement | null>(null);
     const maxChars = 280;
     const charsPercentage = Math.min((text.length / maxChars) * 100, 100);
@@ -37,7 +36,6 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
         setError,
         clearErrors,
         setValue,
-
     } = useForm<FormNewPostDataType>({ resolver: zodResolver(newPostDataSchema) });
 
     const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -148,7 +146,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
                     alt='User profile'
                     width={54} height={54}
                     className="w-[54px] h-[54px] rounded-full" />
-                <form onSubmit={handleSubmit(onSubmitPost)} id={formId} className='min-h-full pr-4 flex flex-col' ref={formRef}>
+                <form onSubmit={handleSubmit(onSubmitPost)} id={formId} className='min-h-full pr-4 flex flex-col'>
                     <TextareaAutosize maxLength={maxChars}
                         className='h-[28px] mt-3 mb-auto w-full focus:outline-none text-xl resize-none bg-transparent'
                         placeholder={placeholder ? placeholder : 'What is happening?!'}
