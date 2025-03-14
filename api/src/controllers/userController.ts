@@ -2,7 +2,7 @@ import { temporaryUserProfilePictureSchema } from './../../../tweetly-shared/src
 import { NextResponse } from 'next/server';
 import { createNotificationForNewFollow, removeNotificationForFollow } from './../services/notificationService';
 import { NextFunction, Request, Response } from 'express';
-import { addBlock, addFollow, addPushNotifications, deactivateUser, getFollowers, getFollowing, getFollowSuggestions, getProfile, getTemporaryUser, getUser, getUserByEmail, getUserByUsername, getUserPassword, isUserDeactivated, removeBlock, removeFollow, removePushNotfications, updateProfile, updateUserBirthday, updateUserEmail, updateUserPassword, updateUserUsername } from '../services/userService';
+import { addBlock, addFollow, addPushNotifications, deactivateUser, getFollowers, getFollowing, getFollowSuggestions, getOldestFollower, getOldestFollowing, getProfile, getTemporaryUser, getUser, getUserByEmail, getUserByUsername, getUserPassword, isUserDeactivated, removeBlock, removeFollow, removePushNotfications, updateProfile, updateUserBirthday, updateUserEmail, updateUserPassword, updateUserUsername } from '../services/userService';
 import { ProfileInfo, UserProps } from '../lib/types';
 import { deleteImageFromCloudinary } from './uploadController';
 import { getNotifications, getOldestNotification, updateNotificationsToRead } from '../services/notificationService';
@@ -95,8 +95,9 @@ export const getTemporaryUserInfo = async (req: Request, res: Response, next: Ne
 
 export const getProfileInfo = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const username = req.params.username;
         const user = req.user as UserProps;
+        const username = req.params.username;
+        if (!username) throw new AppError('Username parameter missing', 404, 'MISSING_PARAM');
 
         const userData = await getProfile(user.id, username);
         if (!userData) throw new AppError('User not found', 404, 'USER_NOT_FOUND');
@@ -198,37 +199,185 @@ export const updateProfileInfo = async (req: Request, res: Response, next: NextF
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getProfileFollowers = async (req: Request, res: Response) => {
-    const username = req.params.username;
-    const user = req.user as UserProps;
-
+export const getProfileFollowers = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const profileData = await getFollowers(user.id, username);
+        const user = req.user as UserProps;
+        const username = req.params.username;
+        const cursor = req.query.cursor;
+        if (!username) throw new AppError('Username parameter missing', 404, 'MISSING_PARAM');
 
-        if (!profileData) return res.status(404).json({ error: 'Profile does not exist' });
+        const userData = await getProfile(user.id, username);
+        if (!userData) throw new AppError('User not found', 404, 'USER_NOT_FOUND');
 
-        return res.status(201).json({ profileData });
+        if (cursor) {
+            const userOldestFollowerUsername = await getOldestFollower(username).then(res => res?.follower.username);
+            if (userOldestFollowerUsername) {
+                // check if current cursor equals last post id
+                // if truthy, return empty array and set the end to true
+                if (cursor === userOldestFollowerUsername) {
+                    const successResponse: SuccessResponse<{ followers: UserDataType[], cursor: number | null, end: boolean }> = {
+                        success: true,
+                        data: {
+                            followers: [],
+                            cursor: null,
+                            end: true,
+                        },
+                    };
+
+                    return res.status(200).json(successResponse);
+                }
+            }
+
+            const followersData = await getFollowers(user.id, username, String(cursor));
+
+            const followers = followersData.map((follower) => {
+                // skip if there's no information
+                if (!follower.follower) return;
+                if (!follower.follower.profile) return;
+
+                return remapUserInformation(follower.follower);
+            }).filter((follower): follower is NonNullable<typeof follower> => follower !== undefined);
+
+            const followersEnd = followers.length === 0
+                ? true
+                : userOldestFollowerUsername === followers.slice(-1)[0]?.username
+                    ? true
+                    : false
+
+            const successResponse: SuccessResponse<{ followers: UserDataType[], cursor: string | null, end: boolean }> = {
+                success: true,
+                data: {
+                    followers: followers ?? [],
+                    cursor: followers.slice(-1)[0]?.username ?? null,
+                    end: followersEnd
+                },
+            };
+
+            return res.status(200).json(successResponse);
+        } else {
+            const userOldestFollowerUsername = await getOldestFollower(username).then(res => res?.follower.username);
+            const followersData = await getFollowers(user.id, username, cursor);
+
+            const followers = followersData.map((follower) => {
+                // skip if there's no information
+                if (!follower.follower) return;
+                if (!follower.follower.profile) return;
+
+                return remapUserInformation(follower.follower);
+            }).filter((follower): follower is NonNullable<typeof follower> => follower !== undefined);
+
+            const followersEnd = followers.length === 0
+                ? true
+                : userOldestFollowerUsername === followers.slice(-1)[0]?.username
+                    ? true
+                    : false
+
+            const successResponse: SuccessResponse<{ followers: UserDataType[], cursor: string | null, end: boolean }> = {
+                success: true,
+                data: {
+                    followers: followers ?? [],
+                    cursor: followers.slice(-1)[0]?.username ?? null,
+                    end: followersEnd
+                },
+            };
+
+            return res.status(200).json(successResponse);
+        }
     } catch (error) {
-        console.error('Error getting profile: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        next(error);
     }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getProfileFollowing = async (req: Request, res: Response) => {
-    const username = req.params.username;
-    const user = req.user as UserProps;
-
+export const getProfileFollowing = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const profileData = await getFollowing(user.id, username);
+        const user = req.user as UserProps;
+        const username = req.params.username;
+        const cursor = req.query.cursor;
+        if (!username) throw new AppError('Username parameter missing', 404, 'MISSING_PARAM');
 
-        if (!profileData) return res.status(404).json({ error: 'Profile does not exist' });
+        const userData = await getProfile(user.id, username);
+        if (!userData) throw new AppError('User not found', 404, 'USER_NOT_FOUND');
 
-        return res.status(201).json({ profileData });
+        if (cursor) {
+            const userOldestFollowingUsername = await getOldestFollowing(username).then(res => res?.followee.username);
+            if (userOldestFollowingUsername) {
+                // check if current cursor equals last post id
+                // if truthy, return empty array and set the end to true
+                if (cursor === userOldestFollowingUsername) {
+                    const successResponse: SuccessResponse<{ followings: UserDataType[], cursor: number | null, end: boolean }> = {
+                        success: true,
+                        data: {
+                            followings: [],
+                            cursor: null,
+                            end: true,
+                        },
+                    };
+
+                    return res.status(200).json(successResponse);
+                }
+            }
+
+            const followingsData = await getFollowing(user.id, username, String(cursor));
+
+            const followings = followingsData.map((followee) => {
+                // skip if there's no information
+                if (!followee.followee) return;
+                if (!followee.followee.profile) return;
+
+                return remapUserInformation(followee.followee);
+            }).filter((followee): followee is NonNullable<typeof followee> => followee !== undefined);
+
+            const followingsEnd = followings.length === 0
+                ? true
+                : userOldestFollowingUsername === followings.slice(-1)[0]?.username
+                    ? true
+                    : false
+
+            const successResponse: SuccessResponse<{ followings: UserDataType[], cursor: string | null, end: boolean }> = {
+                success: true,
+                data: {
+                    followings: followings ?? [],
+                    cursor: followings.slice(-1)[0]?.username ?? null,
+                    end: followingsEnd
+                },
+            };
+
+            return res.status(200).json(successResponse);
+        } else {
+            const userOldestFollowingUsername = await getOldestFollowing(username).then(res => res?.followee.username);
+            const followingData = await getFollowing(user.id, username);
+
+            const followings = followingData.map((followee) => {
+                // skip if there's no information
+                if (!followee.followee) return;
+                if (!followee.followee.profile) return;
+
+                return remapUserInformation(followee.followee);
+            }).filter((followee): followee is NonNullable<typeof followee> => followee !== undefined);
+
+            const followingsEnd = followings.length === 0
+                ? true
+                : userOldestFollowingUsername === followings.slice(-1)[0]?.username
+                    ? true
+                    : false
+
+            const successResponse: SuccessResponse<{ followings: UserDataType[], cursor: string | null, end: boolean }> = {
+                success: true,
+                data: {
+                    followings: followings ?? [],
+                    cursor: followings.slice(-1)[0]?.username ?? null,
+                    end: followingsEnd
+                },
+            };
+
+            console.log(successResponse)
+
+            return res.status(200).json(successResponse);
+        }
     } catch (error) {
-        console.error('Error getting profile: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        next(error);
     }
 };
 

@@ -14,6 +14,7 @@ import { getMorePostsBySearch, getUsersAndPostsBySearch } from '@/actions/get-ac
 import PostCard from '@/components/posts/PostCard';
 import UserCard from '@/components/misc/UserCard';
 import { AppError, BasePostDataType, ErrorResponse, getErrorMessage, UserDataType } from 'tweetly-shared';
+import ClipLoader from 'react-spinners/ClipLoader';
 
 export default function Search() {
     const router = useRouter();
@@ -203,8 +204,14 @@ export default function Search() {
                 }
 
                 {!postsEndReached && (
-                    <div ref={ref}>
-                        <p>Loading...</p>
+                    <div ref={ref} className='w-full flex justify-center mt-6'>
+                        <ClipLoader
+                            className='loading-spinner'
+                            loading={true}
+                            size={25}
+                            aria-label="Loading Spinner"
+                            data-testid="loader"
+                        />
                     </div>
                 )}
             </div>

@@ -13,6 +13,7 @@ import { useInView } from "react-intersection-observer";
 import { ConversationCardType, ErrorResponse, getErrorMessage } from 'tweetly-shared';
 import ConversationsNoContent from './ConversationsNoContent';
 import { getMoreConversations } from '@/actions/get-actions';
+import ClipLoader from 'react-spinners/ClipLoader';
 
 export default function ConversationsList({ initialConversations, cursor, end }: { initialConversations: ConversationCardType[] | null, cursor: string | null, end: boolean }) {
     const [conversations, setConversations] = useState(initialConversations);
@@ -92,7 +93,17 @@ export default function ConversationsList({ initialConversations, cursor, end }:
                 <CommandGroup className=''>
 
                     {conversations === undefined
-                        ? <div>loading...</div>
+                        ? (
+                            <div className='w-full flex justify-center mt-6'>
+                                <ClipLoader
+                                    className='loading-spinner'
+                                    loading={true}
+                                    size={25}
+                                    aria-label="Loading Spinner"
+                                    data-testid="loader"
+                                />
+                            </div>
+                        )
                         : conversations && conversations.length
                             ? (
                                 conversations.map((conversation, index) => (
@@ -115,8 +126,14 @@ export default function ConversationsList({ initialConversations, cursor, end }:
                     }
 
                     {!conversationsEndReached && (
-                        <div ref={ref}>
-                            <p>Loading...</p>
+                        <div ref={ref} className='w-full flex justify-center mt-6'>
+                            <ClipLoader
+                                className='loading-spinner'
+                                loading={true}
+                                size={25}
+                                aria-label="Loading Spinner"
+                                data-testid="loader"
+                            />
                         </div>
                     )}
                 </CommandGroup>

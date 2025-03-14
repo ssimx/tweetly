@@ -6,6 +6,7 @@ import FeedPost from '../posts/PostCard';
 import BookmarkReply from './BookmarkReply';
 import { BasePostDataType, ErrorResponse, getErrorMessage } from 'tweetly-shared';
 import BookmarksNoContent from './BookmarksNoContent';
+import ClipLoader from 'react-spinners/ClipLoader';
 
 export default function BookmarksContent({ initialBookmarks, cursor, end }: { initialBookmarks: BasePostDataType[] | null, cursor: number | null, end: boolean }) {
     const [bookmarks, setBookmarks] = useState<BasePostDataType[] | null>(initialBookmarks);
@@ -73,7 +74,17 @@ export default function BookmarksContent({ initialBookmarks, cursor, end }: { in
         <section className='w-full h-fit'>
             <div className='feed-hr-line'></div>
             {bookmarks === undefined
-                ? <div>loading...</div>
+                ? (
+                    <div className='w-full flex justify-center mt-6'>
+                        <ClipLoader
+                            className='loading-spinner'
+                            loading={true}
+                            size={25}
+                            aria-label="Loading Spinner"
+                            data-testid="loader"
+                        />
+                    </div>
+                )
                 : bookmarks && bookmarks.length
                     ? (
                         bookmarks.map((post) => (
@@ -103,8 +114,14 @@ export default function BookmarksContent({ initialBookmarks, cursor, end }: { in
             }
 
             {!bookmarksEndReached && (
-                <div ref={ref}>
-                    <p>Loading...</p>
+                <div ref={ref} className='w-full flex justify-center mt-6'>
+                    <ClipLoader
+                        className='loading-spinner'
+                        loading={true}
+                        size={25}
+                        aria-label="Loading Spinner"
+                        data-testid="loader"
+                    />
                 </div>
             )}
         </section>

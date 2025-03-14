@@ -61,6 +61,14 @@ input, textarea {
     background: #8f8f8f;
 }
 
+.loading-spinner {
+    border-color: hsl(var(--primary)) hsl(var(--primary)) transparent !important;
+}
+
+.loading-bar {
+    background-color: hsl(var(--primary)) !important;
+}
+
 .unread-message {
     display: flex;
     align-items: center;

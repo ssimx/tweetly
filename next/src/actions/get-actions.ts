@@ -1034,6 +1034,8 @@ export async function getPostsForProfile(profileUsername: string, postsCursor?: 
         if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
         else if (data.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
 
+        console.log(data.posts[0])
+
         return {
             success: true,
             data: {
@@ -1421,6 +1423,110 @@ export async function getLikesForProfile(profileUsername: string, likesCursor?: 
             success: true,
             data: {
                 likes: data.likes,
+                cursor: data.cursor ?? null,
+                end: data.end ?? true,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
+    }
+};
+
+export async function getFollowersForProfile(profileUsername: string, followersCursor?: string): Promise<ApiResponse<{ followers: UserDataType[], cursor: string | null, end: boolean }>> {
+    try {
+        const token = await getCurrentUserToken();
+
+        const response = await fetch(`http://localhost:3000/api/users/followers/${profileUsername}${followersCursor ? `?cursor=${followersCursor}` : ''}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+        }
+
+        const { data } = await response.json() as SuccessResponse<{ followers: UserDataType[], cursor: string | null, end: boolean }>;
+        if (data === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.followers === undefined) throw new AppError('Followers property is missing in data response', 404, 'MISSING_PROPERTY');
+
+        return {
+            success: true,
+            data: {
+                followers: data.followers,
+                cursor: data.cursor ?? null,
+                end: data.end ?? true,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
+    }
+};
+
+export async function getFollowingForProfile(profileUsername: string, followingCursor?: string): Promise<ApiResponse<{ followings: UserDataType[], cursor: string | null, end: boolean }>> {
+    try {
+        const token = await getCurrentUserToken();
+
+        const response = await fetch(`http://localhost:3000/api/users/following/${profileUsername}${followingCursor ? `?cursor=${followingCursor}` : ''}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+        }
+
+        const { data } = await response.json() as SuccessResponse<{ followings: UserDataType[], cursor: string | null, end: boolean }>;
+        if (data === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.followings === undefined) throw new AppError('Followings property is missing in data response', 404, 'MISSING_PROPERTY');
+
+        return {
+            success: true,
+            data: {
+                followings: data.followings,
                 cursor: data.cursor ?? null,
                 end: data.end ?? true,
             },

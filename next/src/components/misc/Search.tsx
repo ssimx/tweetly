@@ -11,6 +11,7 @@ import { debounce } from 'lodash';
 import { getUsersBySearch } from '@/actions/get-actions';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import ClipLoader from 'react-spinners/ClipLoader';
 
 interface SearchResponseType {
     users: UserDataType[],
@@ -213,7 +214,15 @@ export default function Search() {
                         {!queryWatch.includes('#') && isSearching && (
                             <div>
                                 <div className='feed-hr-line'></div>
-                                <div className='p-3'>Loading...</div>
+                                <div className='w-full flex justify-center p-3'>
+                                    <ClipLoader
+                                        className='loading-spinner'
+                                        loading={true}
+                                        size={25}
+                                        aria-label="Loading Spinner"
+                                        data-testid="loader"
+                                    />
+                                </div>
                             </div>
                         )}
 

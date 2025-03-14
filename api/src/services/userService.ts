@@ -290,98 +290,205 @@ export const updateProfile = async (
 // ---------------------------------------------------------------------------------------------------------
 
 export const getFollowers = async (userId: number, username: string, cursor?: string) => {
-    let followerId: number | null | undefined;
-    let followeeId: number | null | undefined;
-
-    if (cursor) {
-        followerId = await prisma.user.findUnique({
-            where: { username },
-            select: { id: true }
+    if (!cursor) {
+        return await prisma.follow.findMany({
+            where: {
+                followee: {
+                    username: username
+                }
+            },
+            orderBy: [
+                {
+                    createdAt: 'desc'
+                },
+                {
+                    followerId: 'desc',
+                },
+                {
+                    followeeId: 'desc'
+                }
+            ],
+            take: 25,
+            select: {
+                follower: {
+                    select: {
+                        username: true,
+                        profile: {
+                            select: {
+                                name: true,
+                                bio: true,
+                                location: true,
+                                websiteUrl: true,
+                                profilePicture: true,
+                                bannerPicture: true,
+                            }
+                        },
+                        followers: {
+                            where: {
+                                followerId: userId,
+                            },
+                            select: {
+                                followerId: true,
+                            },
+                        },
+                        following: {
+                            where: {
+                                followeeId: userId,
+                            },
+                            select: {
+                                followeeId: true,
+                            },
+                        },
+                        blockedBy: {
+                            where: {
+                                blockerId: userId,
+                            },
+                            select: {
+                                blockerId: true,
+                            },
+                        },
+                        blockedUsers: {
+                            where: {
+                                blockedId: userId,
+                            },
+                            select: {
+                                blockedId: true,
+                            }
+                        },
+                        _count: {
+                            select: {
+                                followers: true,
+                                following: true,
+                            },
+                        },
+                    },
+                }
+            }
+        });
+    } else {
+        const followeeId = await prisma.user.findFirst({
+            where: {
+                username: username,
+            },
+            select: {
+                id: true,
+            }
         }).then(res => res?.id);
+        if (!followeeId) throw new AppError("User doesn't exist", 404, 'INVALID_USER');
 
-        if (!followerId) return;
-
-        followeeId = await prisma.user.findUnique({
-            where: { username: cursor },
-            select: { id: true }
+        const followerId = await prisma.user.findFirst({
+            where: {
+                username: cursor,
+            },
+            select: {
+                id: true,
+            }
         }).then(res => res?.id);
+        if (!followerId) throw new AppError("Follower cursor doesn't exist", 404, 'INVALID_CURSOR');
 
-        if (!followeeId) return;
+        return await prisma.follow.findMany({
+            where: {
+                followee: {
+                    username: username
+                }
+            },
+            orderBy: [
+                {
+                    createdAt: 'desc'
+                },
+                {
+                    followeeId: 'desc',
+                },
+                {
+                    followerId: 'desc'
+                }
+            ],
+            take: 25,
+            skip: 1,
+            cursor: { followId: { followerId: followerId, followeeId: followeeId! } },
+            select: {
+                follower: {
+                    select: {
+                        username: true,
+                        profile: {
+                            select: {
+                                name: true,
+                                bio: true,
+                                location: true,
+                                websiteUrl: true,
+                                profilePicture: true,
+                                bannerPicture: true,
+                            }
+                        },
+                        followers: {
+                            where: {
+                                followerId: userId,
+                            },
+                            select: {
+                                followerId: true,
+                            },
+                        },
+                        following: {
+                            where: {
+                                followeeId: userId,
+                            },
+                            select: {
+                                followeeId: true,
+                            },
+                        },
+                        blockedBy: {
+                            where: {
+                                blockerId: userId,
+                            },
+                            select: {
+                                blockerId: true,
+                            },
+                        },
+                        blockedUsers: {
+                            where: {
+                                blockedId: userId,
+                            },
+                            select: {
+                                blockedId: true,
+                            }
+                        },
+                        _count: {
+                            select: {
+                                followers: true,
+                                following: true,
+                            },
+                        },
+                    },
+                }
+            }
+        });
     }
+};
 
-    return await prisma.follow.findMany({
+// ---------------------------------------------------------------------------------------------------------
+
+export const getOldestFollower = async (username: string) => {
+    return await prisma.follow.findFirst({
         where: {
             followee: {
                 username: username
             }
         },
-        orderBy: {
-            createdAt: 'desc'
-        },
-        take: 25,
-        skip: followeeId ? 1 : 0,
-        cursor: followerId && followeeId ? { followId: { followerId, followeeId } } : undefined,
+        orderBy: [
+            {
+                createdAt: 'asc'
+            },
+            {
+                followerId: 'asc',
+            },
+            {
+                followeeId: 'asc'
+            }
+        ],
         select: {
             follower: {
                 select: {
                     username: true,
-                    profile: {
-                        select: {
-                            name: true,
-                            bio: true,
-                            profilePicture: true,
-                        }
-                    },
-                    followers: {
-                        where: {
-                            follower: {
-                                username: username
-                            }
-                        },
-                        select: {
-                            followerId: true
-                        }
-                    },
-                    following: {
-                        where: {
-                            followee: {
-                                username: username
-                            }
-                        },
-                        select: {
-                            followeeId: true
-                        }
-                    },
-                    blockedBy: {
-                        where: {
-                            blockerId: userId,
-                        },
-                        select: {
-                            blockerId: true,
-                        }
-                    },
-                    blockedUsers: {
-                        where: {
-                            blockedId: userId,
-                        },
-                        select: {
-                            blockedId: true,
-                        }
-                    },
-                    notifying: {
-                        where: {
-                            receiverId: userId,
-                        },
-                        select: {
-                            receiverId: true,
-                        }
-                    },
-                    _count: {
-                        select: {
-                            followers: true,
-                            following: true,
-                        }
-                    }
                 }
             }
         }
@@ -391,98 +498,205 @@ export const getFollowers = async (userId: number, username: string, cursor?: st
 // ---------------------------------------------------------------------------------------------------------
 
 export const getFollowing = async (userId: number, username: string, cursor?: string) => {
-    let followerId: number | null | undefined;
-    let followeeId: number | null | undefined;
-
-    if (cursor) {
-        followerId = await prisma.user.findUnique({
-            where: { username },
-            select: { id: true }
+    if (!cursor) {
+        return await prisma.follow.findMany({
+            where: {
+                follower: {
+                    username: username
+                }
+            },
+            orderBy: [
+                {
+                    createdAt: 'desc'
+                },
+                {
+                    followerId: 'desc',
+                },
+                {
+                    followeeId: 'desc'
+                }
+            ],
+            take: 25,
+            select: {
+                followee: {
+                    select: {
+                        username: true,
+                        profile: {
+                            select: {
+                                name: true,
+                                bio: true,
+                                location: true,
+                                websiteUrl: true,
+                                profilePicture: true,
+                                bannerPicture: true,
+                            }
+                        },
+                        followers: {
+                            where: {
+                                followerId: userId,
+                            },
+                            select: {
+                                followerId: true,
+                            },
+                        },
+                        following: {
+                            where: {
+                                followeeId: userId,
+                            },
+                            select: {
+                                followeeId: true,
+                            },
+                        },
+                        blockedBy: {
+                            where: {
+                                blockerId: userId,
+                            },
+                            select: {
+                                blockerId: true,
+                            },
+                        },
+                        blockedUsers: {
+                            where: {
+                                blockedId: userId,
+                            },
+                            select: {
+                                blockedId: true,
+                            }
+                        },
+                        _count: {
+                            select: {
+                                followers: true,
+                                following: true,
+                            },
+                        },
+                    },
+                }
+            }
+        });
+    } else {
+        const followerId = await prisma.user.findFirst({
+            where: {
+                username: username,
+            },
+            select: {
+                id: true,
+            }
         }).then(res => res?.id);
+        if (!followerId) throw new AppError("User doesn't exist", 404, 'INVALID_USER');
 
-        if (!followerId) return;
-
-        followeeId = await prisma.user.findUnique({
-            where: { username: cursor },
-            select: { id: true }
+        const followeeId = await prisma.user.findFirst({
+            where: {
+                username: cursor,
+            },
+            select: {
+                id: true,
+            }
         }).then(res => res?.id);
+        if (!followeeId) throw new AppError("Followee cursor doesn't exist", 404, 'INVALID_CURSOR');
 
-        if (!followeeId) return;
+        return await prisma.follow.findMany({
+            where: {
+                follower: {
+                    username: username
+                }
+            },
+            orderBy: [
+                {
+                    createdAt: 'desc'
+                },
+                {
+                    followeeId: 'desc',
+                },
+                {
+                    followerId: 'desc'
+                }
+            ],
+            take: 25,
+            skip: 1,
+            cursor: { followId: { followerId: followerId, followeeId: followeeId! } },
+            select: {
+                followee: {
+                    select: {
+                        username: true,
+                        profile: {
+                            select: {
+                                name: true,
+                                bio: true,
+                                location: true,
+                                websiteUrl: true,
+                                profilePicture: true,
+                                bannerPicture: true,
+                            }
+                        },
+                        followers: {
+                            where: {
+                                followerId: userId,
+                            },
+                            select: {
+                                followerId: true,
+                            },
+                        },
+                        following: {
+                            where: {
+                                followeeId: userId,
+                            },
+                            select: {
+                                followeeId: true,
+                            },
+                        },
+                        blockedBy: {
+                            where: {
+                                blockerId: userId,
+                            },
+                            select: {
+                                blockerId: true,
+                            },
+                        },
+                        blockedUsers: {
+                            where: {
+                                blockedId: userId,
+                            },
+                            select: {
+                                blockedId: true,
+                            }
+                        },
+                        _count: {
+                            select: {
+                                followers: true,
+                                following: true,
+                            },
+                        },
+                    },
+                }
+            }
+        });
     }
+};
 
-    return await prisma.follow.findMany({
+// ---------------------------------------------------------------------------------------------------------
+
+export const getOldestFollowing = async (username: string) => {
+    return await prisma.follow.findFirst({
         where: {
             follower: {
                 username: username
             }
         },
-        orderBy: {
-            createdAt: 'desc'
-        },
-        take: 25,
-        skip: followeeId ? 1 : 0,
-        cursor: followerId && followeeId ? { followId: { followerId, followeeId } } : undefined,
+        orderBy: [
+            {
+                createdAt: 'asc'
+            },
+            {
+                followerId: 'asc',
+            },
+            {
+                followeeId: 'asc'
+            }
+        ],
         select: {
             followee: {
                 select: {
                     username: true,
-                    profile: {
-                        select: {
-                            name: true,
-                            bio: true,
-                            profilePicture: true,
-                        }
-                    },
-                    followers: {
-                        where: {
-                            follower: {
-                                username: username
-                            }
-                        },
-                        select: {
-                            followerId: true
-                        }
-                    },
-                    following: {
-                        where: {
-                            followee: {
-                                username: username
-                            }
-                        },
-                        select: {
-                            followeeId: true
-                        }
-                    },
-                    blockedBy: {
-                        where: {
-                            blockerId: userId,
-                        },
-                        select: {
-                            blockerId: true,
-                        }
-                    },
-                    blockedUsers: {
-                        where: {
-                            blockedId: userId,
-                        },
-                        select: {
-                            blockedId: true,
-                        }
-                    },
-                    notifying: {
-                        where: {
-                            receiverId: userId,
-                        },
-                        select: {
-                            receiverId: true,
-                        }
-                    },
-                    _count: {
-                        select: {
-                            followers: true,
-                            following: true,
-                        }
-                    }
                 }
             }
         }

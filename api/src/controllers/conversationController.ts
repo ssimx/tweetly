@@ -284,8 +284,10 @@ export const getSpecificConversation = async (req: Request, res: Response, next:
                             }),
 
                             messages: [],
-                            cursor: null,
-                            end: true,
+                            topCursor: null,
+                            topReached: true,
+                            bottomCursor: null,
+                            bottomReached: true,
                         }
                     },
                 };
@@ -341,8 +343,10 @@ export const getSpecificConversation = async (req: Request, res: Response, next:
                             }),
 
                             messages: allMsgsOrdered,
-                            cursor: allMsgsOrdered[0]?.id ?? null,
-                            end: true,
+                            topCursor: allMsgsOrdered[0]?.id ?? null,
+                            topReached: true,
+                            bottomCursor: allMsgsOrdered.slice(-1)[0]?.id ?? null,
+                            bottomReached: true,
                         }
                     },
                 };

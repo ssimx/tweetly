@@ -10,6 +10,7 @@ import { useUserContext } from '@/context/UserContextProvider';
 import { ConversationMessageType, ErrorResponse, FormNewConversationMessageDataType, newMessageDataSchema } from 'tweetly-shared';
 import Image from 'next/image';
 import { createNewConversationMessage } from '@/actions/actions';
+import BarLoader from 'react-spinners/BarLoader';
 
 type ConversationInputType = {
     conversationId: string,
@@ -225,10 +226,19 @@ export default function ConversationInput({ conversationId, setMessages, message
 
     return (
         <div className='min-h-[65px] h-auto px-3 py-2 flex flex-col'>
+            <div className='w-full'>
+                <BarLoader
+                    className={`loading-bar !w-full ${isSendingImage === false ? 'invisible' : ''}`}
+                    height={2}
+                    loading={true}
+                    aria-label="Bar loader"
+                    data-testid="loader"
+                />
+            </div>
             { // selected images preview
                 (selectedImagesPreview.length > 0 && selectedImagesPreview.length < 5)
                     ? (
-                        <div className={`w-full h-[150px] mb-2 grid gap-1 grid-cols-4 grid-rows-1`}>
+                        <div className={`w-full h-[150px] mb-4 mt-2 grid gap-1 grid-cols-4 grid-rows-1`}>
                             {selectedImagesPreview.map((image, index) => (
                                 <div key={index} className='h-full relative'>
                                     <Image

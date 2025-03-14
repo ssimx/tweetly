@@ -11,6 +11,7 @@ import NotificationRepostedReply from './NotificationRepostedReply';
 import NotificationRepostedPost from './NotificationRepostedPost';
 import NotificationLikedReply from './NotificationLikedReply';
 import NotificationLikedPost from './NotificationLikedPost';
+import ClipLoader from 'react-spinners/ClipLoader';
 
 export default function NotificationsContent({ initialNotifications, cursor, end }: { initialNotifications: NotificationType[] | null, cursor: number | null, end: boolean }) {
     const [notifications, setNotifications] = useState<NotificationType[] | null>(initialNotifications);
@@ -78,7 +79,17 @@ export default function NotificationsContent({ initialNotifications, cursor, end
         <section className='w-full h-fit'>
             <div className='feed-hr-line'></div>
             {notifications === undefined
-                ? <div>loading...</div>
+                ? (
+                    <div className='w-full flex justify-center mt-6'>
+                        <ClipLoader
+                            className='loading-spinner'
+                            loading={true}
+                            size={25}
+                            aria-label="Loading Spinner"
+                            data-testid="loader"
+                        />
+                    </div>
+                )
                 : notifications && notifications.length
                     ? notifications.map((notification) => (
                         <div key={notification.id}>
@@ -140,8 +151,14 @@ export default function NotificationsContent({ initialNotifications, cursor, end
             }
 
             {!notificationsEndReached && (
-                <div ref={ref}>
-                    <p>Loading...</p>
+                <div ref={ref} className='w-full flex justify-center mt-6'>
+                    <ClipLoader
+                        className='loading-spinner'
+                        loading={true}
+                        size={25}
+                        aria-label="Loading Spinner"
+                        data-testid="loader"
+                    />
                 </div>
             )}
         </section>

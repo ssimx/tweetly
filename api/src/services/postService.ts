@@ -43,9 +43,14 @@ export const getGlobal30DayPosts = async (userId: number, cursor?: number) => {
                 },
             ],
         },
-        orderBy: {
-            createdAt: 'desc',
-        },
+        orderBy: [
+            {
+                createdAt: 'desc'
+            },
+            {
+                id: 'desc',
+            }
+        ],
         cursor: cursor ? { id: cursor } : undefined,
         skip: cursor ? 1 : 0,
         take: 25,
@@ -178,9 +183,14 @@ export const getOldestGlobal30DayPost = async (userId: number) => {
                 },
             ],
         },
-        orderBy: {
-            createdAt: 'asc',
-        },
+        orderBy: [
+            {
+                createdAt: 'asc'
+            },
+            {
+                id: 'asc',
+            }
+        ],
         select: {
             id: true,
         },
@@ -232,9 +242,14 @@ export const getGlobal30DayNewPosts = async (
                 },
             ],
         },
-        orderBy: {
-            createdAt: 'desc',
-        },
+        orderBy: [
+            {
+                createdAt: 'desc'
+            },
+            {
+                id: 'desc',
+            }
+        ],
         take: 25,
         select: {
             id: true,
@@ -371,9 +386,14 @@ export const getFollowing30DayPosts = async (
                 },
             ],
         },
-        orderBy: {
-            createdAt: 'desc',
-        },
+        orderBy: [
+            {
+                createdAt: 'desc'
+            },
+            {
+                id: 'desc',
+            }
+        ],
         cursor: cursor ? { id: cursor } : undefined,
         skip: cursor ? 1 : 0,
         take: 25,
@@ -509,9 +529,14 @@ export const getOldestFollowing30DayPost = async (userId: number) => {
                 },
             ],
         },
-        orderBy: {
-            createdAt: 'asc',
-        },
+        orderBy: [
+            {
+                createdAt: 'asc'
+            },
+            {
+                id: 'asc',
+            }
+        ],
         select: {
             id: true,
         },
@@ -566,9 +591,14 @@ export const getFollowing30DayNewPosts = async (
                 },
             ],
         },
-        orderBy: {
-            createdAt: 'desc',
-        },
+        orderBy: [
+            {
+                createdAt: 'desc'
+            },
+            {
+                id: 'desc',
+            }
+        ],
         take: 25,
         select: {
             id: true,
@@ -848,6 +878,9 @@ export const getPostInfo = async (userId: number, postId: number) => {
                     {
                         createdAt: 'asc',
                     },
+                    {
+                        id: 'asc'
+                    }
                 ],
                 select: {
                     id: true,
@@ -1018,6 +1051,9 @@ export const getPostReplies = async (
             {
                 createdAt: 'desc',
             },
+            {
+                id: 'desc'
+            }
         ],
         cursor: cursor ? { id: cursor } : undefined,
         skip: cursor ? 1 : 0,
@@ -1163,6 +1199,9 @@ export const getOldestReplyLeastEnegagement = async (
             {
                 createdAt: 'asc',
             },
+            {
+                id: 'asc'
+            }
         ],
         select: {
             id: true,
@@ -1220,6 +1259,9 @@ export const getPostsBySearch = async (
             {
                 createdAt: 'asc',
             },
+            {
+                id: 'asc'
+            }
         ],
         cursor: cursor ? { id: cursor } : undefined,
         take: 15,
@@ -1369,6 +1411,9 @@ export const getLastPostBySearch = async (
             {
                 createdAt: 'desc',
             },
+            {
+                id: 'desc'
+            }
         ],
         select: {
             id: true,
@@ -1427,6 +1472,9 @@ export const getMorePostsBySearch = async (
             {
                 createdAt: 'asc',
             },
+            {
+                id: 'asc'
+            }
         ],
         skip: 1,
         cursor: { id: cursor },
@@ -1555,7 +1603,7 @@ export const getTopPosts = async (userId: number) => {
                     },
                     followers: {
                         where: {
-                            followerId: userId
+                            followerId: number,
                         },
                         select: {
                             followerId: true
@@ -1563,7 +1611,7 @@ export const getTopPosts = async (userId: number) => {
                     },
                     following: {
                         where: {
-                            followeeId: userId
+                            followeeId: number,
                         },
                         select: {
                             followeeId: true
@@ -1571,7 +1619,7 @@ export const getTopPosts = async (userId: number) => {
                     },
                     blockedBy: {
                         where: {
-                            blockerId: userId,
+                            blockerId: number,
                         },
                         select: {
                             blockerId: true,
@@ -1579,7 +1627,7 @@ export const getTopPosts = async (userId: number) => {
                     },
                     blockedUsers: {
                         where: {
-                            blockedId: userId,
+                            blockedId: number,
                         },
                         select: {
                             blockedId: true,
@@ -1595,7 +1643,7 @@ export const getTopPosts = async (userId: number) => {
             },
             reposts: {
                 where: {
-                    userId: userId
+                    userId: number
                 },
                 select: {
                     userId: true,
@@ -1603,7 +1651,7 @@ export const getTopPosts = async (userId: number) => {
             },
             likes: {
                 where: {
-                    userId: userId
+                    userId: number
                 },
                 select: {
                     userId: true,
@@ -1611,7 +1659,7 @@ export const getTopPosts = async (userId: number) => {
             },
             bookmarks: {
                 where: {
-                    userId: userId
+                    userId: number
                 },
                 select: {
                     userId: true,
@@ -1678,6 +1726,9 @@ export const getTopPosts = async (userId: number) => {
                 {
                     createdAt: 'desc',
                 },
+                {
+                    id: 'desc'
+                }
             ],
             take: 30 - posts.length,
             select: {
@@ -1845,9 +1896,14 @@ export const getPosts = async (
                 },
             ],
         },
-        orderBy: {
-            createdAt: 'desc',
-        },
+        orderBy: [
+            {
+                createdAt: 'desc'
+            },
+            {
+                id: 'desc',
+            }
+        ],
         cursor: cursor ? { id: cursor } : undefined,
         skip: cursor ? 1 : 0,
         take: 10,
@@ -1982,9 +2038,14 @@ export const getOldestPost = async (username: string, userId: number) => {
                 },
             ],
         },
-        orderBy: {
-            createdAt: 'asc',
-        },
+        orderBy: [
+            {
+                createdAt: 'asc'
+            },
+            {
+                id: 'asc',
+            }
+        ],
         select: {
             id: true,
         },
@@ -2030,9 +2091,14 @@ export const getReposts = async (
                 },
             },
         },
-        orderBy: {
-            createdAt: 'desc',
-        },
+        orderBy: [
+            {
+                createdAt: 'desc'
+            },
+            {
+                id: 'desc',
+            }
+        ],
         cursor: cursor ? { id: cursor } : undefined,
         skip: cursor ? 1 : 0,
         take: 10,
@@ -2248,9 +2314,14 @@ export const getOldestRepost = async (username: string, userId: number) => {
                 },
             },
         },
-        orderBy: {
-            createdAt: 'asc',
-        },
+        orderBy: [
+            {
+                createdAt: 'asc'
+            },
+            {
+                id: 'asc',
+            }
+        ],
         select: {
             id: true,
         },
@@ -2309,9 +2380,14 @@ export const getReplies = async (
                 },
             ],
         },
-        orderBy: {
-            createdAt: 'desc',
-        },
+        orderBy: [
+            {
+                createdAt: 'desc'
+            },
+            {
+                id: 'desc',
+            }
+        ],
         cursor: cursor ? { id: cursor } : undefined,
         skip: cursor ? 1 : 0,
         take: 10,
@@ -2544,9 +2620,14 @@ export const getOldestReply = async (username: string, userId: number) => {
                 },
             ],
         },
-        orderBy: {
-            createdAt: 'asc',
-        },
+        orderBy: [
+            {
+                createdAt: 'asc'
+            },
+            {
+                id: 'asc',
+            }
+        ],
         select: {
             id: true,
         },
@@ -2585,9 +2666,14 @@ export const getMedia = async (
                 },
             ],
         },
-        orderBy: {
-            createdAt: 'desc',
-        },
+        orderBy: [
+            {
+                createdAt: 'desc'
+            },
+            {
+                id: 'desc',
+            }
+        ],
         cursor: cursor ? { id: cursor } : undefined,
         skip: cursor ? 1 : 0,
         take: 10,
@@ -2812,9 +2898,14 @@ export const getOldestMedia = async (username: string, userId: number) => {
                 },
             ],
         },
-        orderBy: {
-            createdAt: 'asc',
-        },
+        orderBy: [
+            {
+                createdAt: 'asc'
+            },
+            {
+                id: 'asc',
+            }
+        ],
         select: {
             id: true,
         },
@@ -2845,9 +2936,17 @@ export const getLikes = async (
                 },
             }
         },
-        orderBy: {
-            createdAt: 'desc',
-        },
+        orderBy: [
+            {
+                createdAt: 'desc'
+            },
+            {
+                postId: 'desc',
+            },
+            {
+                userId: 'desc'
+            }
+        ],
         cursor: cursor
             ? { postLikeId: { postId: cursor, userId: userId } }
             : undefined,
@@ -3065,9 +3164,17 @@ export const getOldestLike = async (userId: number,) => {
                 },
             }
         },
-        orderBy: {
-            createdAt: 'asc',
-        },
+        orderBy: [
+            {
+                createdAt: 'asc'
+            },
+            {
+                postId: 'asc',
+            },
+            {
+                userId: 'asc',
+            }
+        ],
         select: {
             post: {
                 select: {
@@ -3102,9 +3209,17 @@ export const getBookmarks = async (
                 },
             }
         },
-        orderBy: {
-            createdAt: 'desc',
-        },
+        orderBy: [
+            {
+                createdAt: 'desc'
+            },
+            {
+                postId: 'desc',
+            },
+            {
+                userId: 'desc'
+            }
+        ],
         cursor: cursor
             ? { postBookmarkId: { postId: cursor, userId: userId } }
             : undefined,
@@ -3322,9 +3437,17 @@ export const getOldestBookmark = async (userId: number) => {
                 },
             }
         },
-        orderBy: {
-            createdAt: 'asc',
-        },
+        orderBy: [
+            {
+                createdAt: 'asc'
+            },
+            {
+                postId: 'asc',
+            },
+            {
+                userId: 'asc'
+            }
+        ],
         select: {
             post: {
                 select: {

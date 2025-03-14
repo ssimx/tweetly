@@ -20,6 +20,7 @@ import { socket } from "@/lib/socket";
 import { createPost } from '@/actions/actions';
 import { newPostDataSchema, FormNewPostDataType, SuccessResponse, BasePostDataType, isZodError, getErrorMessage } from 'tweetly-shared';
 import { z } from 'zod';
+import BarLoader from 'react-spinners/BarLoader';
 
 export default function NewPostModal() {
     const [text, setText] = useState('');
@@ -203,6 +204,17 @@ export default function NewPostModal() {
                         }
                     </form>
                 </div>
+
+                <div className='w-full'>
+                    <BarLoader
+                        className={`loading-bar !w-full ${isSubmitting === false ? 'invisible' : ''}`}
+                        height={2}
+                        loading={true}
+                        aria-label="Bar loader"
+                        data-testid="loader"
+                    />
+                </div>
+
                 <DialogFooter>
                     <button className='group'
                         disabled={selectedImagesFiles.length >= 4}
@@ -231,6 +243,7 @@ export default function NewPostModal() {
                     {newPostError && (
                         <p className="text-center text-red-600 font-bold text-xs ml-4">{`${newPostError}`}</p>
                     )}
+                    
                     {isSubmitting
                         ? (<Button disabled className='ml-auto font-bold w-fit rounded-3xl text-white-1'>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

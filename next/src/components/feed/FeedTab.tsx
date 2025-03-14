@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import FeedPost from '../posts/PostCard';
 import { BasePostDataType } from 'tweetly-shared';
+import ClipLoader from 'react-spinners/ClipLoader';
 
 interface FeedTabType {
     posts: BasePostDataType[],
@@ -37,8 +38,14 @@ export default function FeedTab({ posts, loadingRef, scrollPositionRef, endReach
             }
 
             {!endReached && (
-                <div ref={loadingRef}>
-                    <p>Loading...</p>
+                <div ref={loadingRef} className='w-full flex justify-center mt-6'>
+                    <ClipLoader
+                        className='loading-spinner'
+                        loading={true}
+                        size={25}
+                        aria-label="Loading Spinner"
+                        data-testid="loader"
+                    />
                 </div>
             )}
         </div>

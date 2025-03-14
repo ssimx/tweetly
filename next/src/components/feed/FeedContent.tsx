@@ -6,13 +6,16 @@ import { socket } from '@/lib/socket';
 import { useUserContext } from "@/context/UserContextProvider";
 import FeedTab from "./FeedTab";
 import { useInView } from "react-intersection-observer";
-import { getHomeFollowingFeed, getMorePostsForHomeFollowingFeed, getMorePostsForHomeGlobalFeed, getNewPostsForHomeFollowingFeed, getNewPostsForHomeGlobalFeed } from "@/actions/get-actions";
+import { getHomeFollowingFeed, getMorePostsForHomeFollowingFeed, getMorePostsForHomeGlobalFeed } from "@/actions/get-actions";
 import { BasePostDataType, ErrorResponse, SuccessResponse } from 'tweetly-shared';
+import ClipLoader from 'react-spinners/ClipLoader';
 
 export default function FeedContent({ initialPosts }: { initialPosts: { posts: BasePostDataType[], end: boolean } | undefined }) {
     const [activeTab, setActiveTab] = useState(0);
     const [globalPosts, setGlobalPosts] = useState<BasePostDataType[] | undefined>(initialPosts ? initialPosts.posts : undefined);
+    const [newGlobalPosts, setNewGlobalPosts] = useState<BasePostDataType[]>([]);
     const [followingPosts, setFollowingPosts] = useState<BasePostDataType[] | undefined | null>(null);
+    const [newFollowingPosts, setNewFollowingPosts] = useState<BasePostDataType[]>([]);
     const [newGlobalPostCount, setNewGlobalPostCount] = useState(0);
     const [newFollowingPostCount, setNewFollowingPostCount] = useState(0);
     const { loggedInUser, newFollowing, setNewFollowing } = useUserContext();
@@ -28,56 +31,6 @@ export default function FeedContent({ initialPosts }: { initialPosts: { posts: B
         threshold: 0,
         delay: 100,
     });
-
-    // For fetching new posts after websocket signal
-    const fetchNewPosts = async () => {
-        if (activeTab === 0) {
-            setNewGlobalPostCount(0);
-            try {
-                const response = await getNewPostsForHomeGlobalFeed(globalPosts?.[0].id ?? null);
-
-                if (!response.success) {
-                    const errorData = response as ErrorResponse;
-                    throw new Error(errorData.error.message);
-                }
-
-                const { data } = response as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
-                if (data === undefined) throw new Error('Data is missing in response');
-                else if (data.posts === undefined) throw new Error('Posts property is missing in data response');
-                console.log(data)
-
-                if (data.end) setGlobalFeedEndReached(data.end);
-                setGlobalFeedCursor(data.posts.length ? data.posts.slice(-1)[0].id : null);
-                setGlobalPosts(currentPosts => [ ...data.posts as BasePostDataType[], ...currentPosts as BasePostDataType[] ]);
-            } catch (error) {
-                console.error("Something went wrong:", error);
-            } finally {
-                setScrollPosition(scrollPositionRef.current);
-            }
-        } else {
-            setNewFollowingPostCount(0);
-            try {
-                const response = await getNewPostsForHomeFollowingFeed(followingPosts?.[0].id ?? null);
-
-                if (!response.success) {
-                    const errorData = response as ErrorResponse;
-                    throw new Error(errorData.error.message);
-                }
-
-                const { data } = response as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
-                if (data === undefined) throw new Error('Data is missing in response');
-                else if (data.posts === undefined) throw new Error('Posts property is missing in data response');
-
-                if (data.end) setFollowingFeedEndReached(data.end);
-                setFollowingFeedCursor(data.posts.length ? data.posts.slice(-1)[0].id : null);
-                setFollowingPosts(currentPosts => [...data.posts as BasePostDataType[], ...currentPosts as BasePostDataType[] ]);
-            } catch (error) {
-                console.error("Something went wrong:", error);
-            } finally {
-                setScrollPosition(scrollPositionRef.current);
-            }
-        }
-    };
 
     // Reset scroll position when switching tabs
     useEffect(() => {
@@ -179,26 +132,44 @@ export default function FeedContent({ initialPosts }: { initialPosts: { posts: B
         }
     }, [activeTab, followingPosts, newFollowing, setNewFollowing]);
 
+    // Add posts received from websockets if user has chosen to show new posts
+    const showNewPosts = (type: 'GLOBAL' | 'FOLLOWING') => {
+        if (type === 'GLOBAL') {
+            setNewGlobalPostCount(0);
+            setGlobalPosts((currentPosts) => [...newGlobalPosts, ...currentPosts ?? []]);
+            setNewGlobalPosts([]);
+        } else if (type === 'FOLLOWING') {
+            setNewFollowingPostCount(0);
+            setFollowingPosts((currentPosts) => [...newFollowingPosts, ...currentPosts!]);
+            setNewFollowingPosts([]);
+        } else return;
+    };
+
     useEffect(() => {
         socket.connect();
         // After connecting, tell the server which users this user is following
         socket.emit('get_following', loggedInUser.id);
 
         // Listen for new posts
-        const onNewGlobalPostEvent = () => {
-            setNewGlobalPostCount(currentPostCount => currentPostCount <= 25 ? currentPostCount + 1 : currentPostCount);
-        };
+        socket.on('new_following_post', (newPost: BasePostDataType) => {
+            // Following posts have to already be fetched and saved in order to add new ones to the array
+            // If following posts are undefined aka user never clicked on the Following tab, there's no point in saving these posts
+            //      as they'll be included in the fetch
+            if (followingPosts !== null) {
+                setNewFollowingPostCount(currentPostCount => currentPostCount + 1);
+                setNewFollowingPosts((currentPosts) => [newPost, ...currentPosts!]);
+            }
+        });
 
-        const onNewFollowingPostEvent = () => {
-            setNewFollowingPostCount(currentPostCount => currentPostCount <= 25 ? currentPostCount + 1 : currentPostCount);
-        };
-
-        socket.on('new_global_post', onNewGlobalPostEvent);
-        socket.on('new_following_post', onNewFollowingPostEvent);
+        socket.on('new_global_post', (newPost: BasePostDataType) => {
+            // Unlike following tab, global tab is always preloaded and should always keep track of new posts
+            setNewGlobalPostCount(currentPostCount => currentPostCount + 1);
+            setNewGlobalPosts((currentPosts) => [newPost, ...currentPosts ?? []]);
+        });
 
         return () => {
-            socket.off('new_global_post', onNewGlobalPostEvent);
-            socket.off('new_following_post', onNewGlobalPostEvent);
+            socket.off('new_global_post');
+            socket.off('new_following_post');
             socket.disconnect();
         };
     }, [loggedInUser, globalPosts, followingPosts]);
@@ -211,7 +182,7 @@ export default function FeedContent({ initialPosts }: { initialPosts: { posts: B
                 {activeTab === 0
                     ? newGlobalPostCount !== 0 && (
                         <>
-                            <button onClick={fetchNewPosts} className='text-primary py-3 hover:bg-post-hover'>
+                            <button onClick={() => showNewPosts('GLOBAL')} className='text-primary py-3 hover:bg-post-hover'>
                                 {newGlobalPostCount > 1 ? `Show ${newGlobalPostCount} posts` : 'Show new post'}
                             </button>
                             <div className='feed-hr-line'></div>
@@ -219,8 +190,8 @@ export default function FeedContent({ initialPosts }: { initialPosts: { posts: B
                     )
                     : newFollowingPostCount !== 0 && (
                         <>
-                            <button onClick={fetchNewPosts} className='text-primary py-3 hover:bg-post-hover'>
-                                {newGlobalPostCount > 1 ? `Show ${newGlobalPostCount} posts` : 'Show new post'}
+                            <button onClick={() => showNewPosts('FOLLOWING')} className='text-primary py-3 hover:bg-post-hover'>
+                                {newFollowingPostCount > 1 ? `Show ${newFollowingPostCount} posts` : 'Show new post'}
                             </button>
                             <div className='feed-hr-line'></div>
                         </>
@@ -233,7 +204,17 @@ export default function FeedContent({ initialPosts }: { initialPosts: { posts: B
                     ? globalPosts === undefined
                         ? <div>Something went wrong</div>
                         : globalPosts === null
-                            ? <div>loading...</div>
+                            ? (
+                                <div className='w-full flex justify-center mt-6'>
+                                    <ClipLoader
+                                        className='loading-spinner'
+                                        loading={true}
+                                        size={25}
+                                        aria-label="Loading Spinner"
+                                        data-testid="loader"
+                                    />
+                                </div>
+                            )
                             : globalPosts.length === 0
                                 ? <div>No recent posts</div>
                                 : <FeedTab
@@ -248,7 +229,17 @@ export default function FeedContent({ initialPosts }: { initialPosts: { posts: B
                     ? followingPosts === undefined
                         ? <div>Something went wrong</div>
                         : followingPosts === null
-                            ? <div>loading...</div>
+                            ? (
+                                <div className='w-full flex justify-center mt-6'>
+                                    <ClipLoader
+                                        className='loading-spinner'
+                                        loading={true}
+                                        size={25}
+                                        aria-label="Loading Spinner"
+                                        data-testid="loader"
+                                    />
+                                </div>
+                            )
                             : followingPosts.length === 0
                                 ? <div>No posts. Follow more people</div>
                                 : <FeedTab

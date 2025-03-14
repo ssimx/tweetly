@@ -455,7 +455,7 @@ export const getMessagesReadStatus = async (userId: number) => {
     return await prisma.message.findFirst({
         where: {
             receiverId: userId,
-            readAt: undefined,
+            readAt: null,
         },
         select: {
             id: true,

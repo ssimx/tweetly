@@ -12,6 +12,7 @@ import { BasePostDataType, ErrorResponse, getErrorMessage, ProfilePostOrRepostDa
 import ProfileNoContent from './ProfileNoContent';
 import { UserActionType } from '@/lib/userReducer';
 import ProfileRepost from './posts/ProfileRepost';
+import ClipLoader from 'react-spinners/ClipLoader';
 
 type ProfileContentProps = {
     user: UserDataType,
@@ -76,12 +77,11 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                         else if (data.repostsEnd === undefined) throw new Error('repostsEnd property is missing in data response');
                         else if (data.postsReposts === undefined) throw new Error('postsReposts property is missing in data response');
 
+                        setPostsReposts((current) => [...current as ProfilePostOrRepostDataType[], ...data.postsReposts as ProfilePostOrRepostDataType[]]);
                         setPostsCursor(data.postsCursor);
                         setPostsEndReached(data.postsEnd);
                         setRepostsCursor(data.repostsCursor);
                         setRepostsEndReached(data.repostsEnd)
-
-                        setPostsReposts((current) => [...current as ProfilePostOrRepostDataType[], ...postsReposts as ProfilePostOrRepostDataType[]]);
                     } catch (error: unknown) {
                         const errorMessage = getErrorMessage(error);
                         console.error(errorMessage);
@@ -350,7 +350,17 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
 
             {activeTab === 0 && (
                 postsReposts === undefined
-                    ? <div>loading...</div>
+                    ? (
+                        <div className='w-full flex justify-center mt-6'>
+                            <ClipLoader
+                                className='loading-spinner'
+                                loading={true}
+                                size={25}
+                                aria-label="Loading Spinner"
+                                data-testid="loader"
+                            />
+                        </div>
+                    )
                     : postsReposts && postsReposts.length
                         ? (
                             <section className='w-full flex flex-col h-fit'>
@@ -380,8 +390,14 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                                 })}
 
                                 {(!postsEndReached || !repostsEndReached) && (
-                                    <div ref={ref}>
-                                        <p>Loading...</p>
+                                    <div ref={ref} className='w-full flex-center mt-6 mb-6'>
+                                        <ClipLoader
+                                            className='loading-spinner'
+                                            loading={true}
+                                            size={25}
+                                            aria-label="Loading Spinner"
+                                            data-testid="loader"
+                                        />
                                     </div>
                                 )}
                             </section>
@@ -394,7 +410,17 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
 
             {activeTab === 1 && (
                 replies === undefined
-                    ? <div>loading...</div>
+                    ? (
+                        <div className='w-full flex justify-center mt-6'>
+                            <ClipLoader
+                                className='loading-spinner'
+                                loading={true}
+                                size={25}
+                                aria-label="Loading Spinner"
+                                data-testid="loader"
+                            />
+                        </div>
+                    )
                     : replies && replies.length
                         ? (
                             <section className='w-full flex flex-col h-fit'>
@@ -413,8 +439,14 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                                 })}
 
                                 {(!repliesEndReached) && (
-                                    <div ref={ref}>
-                                        <p>Loading...</p>
+                                    <div ref={ref} className='w-full flex-center mt-6 mb-6'>
+                                        <ClipLoader
+                                            className='loading-spinner'
+                                            loading={true}
+                                            size={25}
+                                            aria-label="Loading Spinner"
+                                            data-testid="loader"
+                                        />
                                     </div>
                                 )}
                             </section>
@@ -426,7 +458,17 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
 
             {activeTab === 2 && (
                 media === undefined
-                    ? <div>loading...</div>
+                    ? (
+                        <div className='w-full flex justify-center mt-6'>
+                            <ClipLoader
+                                className='loading-spinner'
+                                loading={true}
+                                size={25}
+                                aria-label="Loading Spinner"
+                                data-testid="loader"
+                            />
+                        </div>
+                    )
                     : media && media.length
                         ? (
                             <section className='w-full h-fit p-2 grid grid-cols-[repeat(4,minmax(100px,1fr))] grid-rows-[200px] auto-rows-[200px] gap-2'>
@@ -441,8 +483,14 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                                 })}
 
                                 {(!mediaEndReached) && (
-                                    <div ref={ref}>
-                                        <p>Loading...</p>
+                                    <div ref={ref} className='w-full flex-center mt-6 mb-6'>
+                                        <ClipLoader
+                                            className='loading-spinner'
+                                            loading={true}
+                                            size={25}
+                                            aria-label="Loading Spinner"
+                                            data-testid="loader"
+                                        />
                                     </div>
                                 )}
                             </section>
@@ -455,7 +503,17 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
 
             {activeTab === 3 && (
                 likedPosts === undefined
-                    ? <div>loading...</div>
+                    ? (
+                        <div className='w-full flex justify-center mt-6'>
+                            <ClipLoader
+                                className='loading-spinner'
+                                loading={true}
+                                size={25}
+                                aria-label="Loading Spinner"
+                                data-testid="loader"
+                            />
+                        </div>
+                    )
                     : likedPosts && likedPosts.length
                         ? (
                             <section className='w-full flex flex-col h-fit'>
@@ -482,8 +540,14 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                                 })}
 
                                 {(!likesEndReached) && (
-                                    <div ref={ref}>
-                                        <p>Loading...</p>
+                                    <div ref={ref} className='w-full flex-center mt-6 mb-6'>
+                                        <ClipLoader
+                                            className='loading-spinner'
+                                            loading={true}
+                                            size={25}
+                                            aria-label="Loading Spinner"
+                                            data-testid="loader"
+                                        />
                                     </div>
                                 )}
                             </section>

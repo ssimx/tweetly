@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { getMoreRepliesForPost } from '@/actions/get-actions';
 import { BasePostDataType, ErrorResponse, getErrorMessage } from 'tweetly-shared';
+import ClipLoader from 'react-spinners/ClipLoader';
 
 type PostRepliesType = {
     parentPostId: number,
@@ -92,8 +93,14 @@ export default function PostReplies({ parentPostId, replies, setReplies, replies
             ))}
 
             {!repliesEndReached && (
-                <div ref={ref}>
-                    <p>Loading...</p>
+                <div ref={ref} className='w-full flex justify-center mt-6'>
+                    <ClipLoader
+                        className='loading-spinner'
+                        loading={true}
+                        size={25}
+                        aria-label="Loading Spinner"
+                        data-testid="loader"
+                    />
                 </div>
             )}
         </div>

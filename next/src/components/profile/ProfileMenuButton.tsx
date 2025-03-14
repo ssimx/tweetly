@@ -76,6 +76,7 @@ export default function ProfileMenuButton({ user, userState, dispatch }: Profile
             e.preventDefault();
             if (isSubmitting) return;
             setIsSubmitting(true);
+            setMenuOpen(false);
 
             try {
                 if (isBlockedByViewer) {
@@ -156,7 +157,11 @@ export default function ProfileMenuButton({ user, userState, dispatch }: Profile
                     <div className='menu-overlay' onClick={toggleMenu}></div>
 
                     <div ref={menuBtn} className='profile-opened-menu'>
-                        <button onClick={handleCopyLink}
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleCopyLink();
+                            }}
                             className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[10px] hover:bg-card-hover'>
                             <Link size={20} className='text-primary-text' />
                             Copy link to profile
@@ -166,7 +171,10 @@ export default function ProfileMenuButton({ user, userState, dispatch }: Profile
                                 ? (
                                     <button
                                         className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[10px] hover:bg-card-hover'
-                                        onClick={handleBlockToggle}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleBlockToggle(e);
+                                        }}
                                         ref={blockBtn}
                                         disabled={isSubmitting}
                                     >
@@ -176,7 +184,10 @@ export default function ProfileMenuButton({ user, userState, dispatch }: Profile
                                 )
                                 : <button
                                     className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[10px] hover:bg-card-hover'
-                                    onClick={handleBlockToggle}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleBlockToggle(e);
+                                    }}
                                     ref={blockBtn}
                                     disabled={isSubmitting}
                                 >
@@ -189,7 +200,11 @@ export default function ProfileMenuButton({ user, userState, dispatch }: Profile
             }
 
             <button className='profile-menu-btn'
-                onClick={toggleMenu}>
+                onClick={(e) => {
+                    e.stopPropagation();
+                    toggleMenu(e);
+                }}
+            >
                 <Ellipsis size={20} className='text-primary-text' />
             </button>
 

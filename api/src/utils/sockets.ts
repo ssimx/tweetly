@@ -3,12 +3,13 @@ import { PrismaClient } from "@prisma/client";
 import { Server as HttpServer } from 'http';
 import { getNotifications, getNotificationsReadStatus } from '../services/notificationService';
 import { updateMessageReadStatus, getMessagesReadStatus, getFirstUnreadMessage } from '../services/conversationService';
+import { BasePostDataType } from 'tweetly-shared';
 
 const prisma = new PrismaClient();
 
 interface ServerToClientEvents {
-    new_following_post: () => void;
-    new_global_post: () => void;
+    new_following_post: (newPost: BasePostDataType) => void;
+    new_global_post: (newPost: BasePostDataType) => void;
     new_notification: () => void;
     new_message: () => void;
     notification_read_status: (status: boolean) => void;
@@ -22,10 +23,10 @@ interface ServerToClientEvents {
 interface ClientToServerEvents {
     get_following: (userId: number) => void;
     get_notifications: (userId: number) => void;
-    new_following_post: (authorId: number) => void;
+    new_global_post: (newPost: BasePostDataType) => void;
+    new_following_post: (authorId: number, newPost: BasePostDataType) => void;
     new_user_notification: (userId: number) => void;
     new_user_message: (userId: number) => void;
-    new_global_post: () => void;
     join_conversation_room: (conversationId: string, joinedUser: string) => void;
     new_conversation_message: (conversationId: string, message: { content: string, createdAt: Date, username: string }) => void;
     conversation_typing_status: (conversationId: string, typingUser: null | string) => void;
@@ -112,12 +113,12 @@ const socketConnection = (server: HttpServer) => {
             socket.emit('message_read_status', messagesReadStatus !== null);
         });
 
-        socket.on('new_following_post', (authorId) => {
-            socket.to(`user_${authorId}`).emit('new_following_post');
+        socket.on('new_following_post', (authorId, newPost) => {
+            socket.to(`user_${authorId}`).emit('new_following_post', newPost);
         });
 
-        socket.on('new_global_post', () => {
-            socket.broadcast.emit('new_global_post',);
+        socket.on('new_global_post', (newPost) => {
+            socket.broadcast.emit('new_global_post', newPost);
         })
 
         socket.on('new_user_notification', (userId) => {

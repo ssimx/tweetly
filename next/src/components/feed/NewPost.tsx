@@ -15,6 +15,7 @@ import { socket } from "@/lib/socket";
 import { createPost } from "@/actions/actions";
 import { BasePostDataType, FormNewPostDataType, getErrorMessage, isZodError, newPostDataSchema, SuccessResponse } from 'tweetly-shared';
 import { z } from 'zod';
+import BarLoader from 'react-spinners/BarLoader';
 
 export default function NewPost({ reply, placeholder }: { reply?: number, placeholder?: string }) {
     const [text, setText] = useState('');
@@ -111,8 +112,8 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
 
             // update feed only if it's not a reply
             if (!reply) {
-                socket.emit('new_global_post');
-                socket.emit('new_following_post', loggedInUser.id)
+                socket.emit('new_global_post', data.post);
+                socket.emit('new_following_post', loggedInUser.id, data.post)
             }
 
             // send notification to users who have notifications enabled
@@ -201,6 +202,17 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
                     }
                 </form>
             </div>
+
+            <div className='w-full'>
+                <BarLoader
+                    className={`loading-bar !w-full ${isSubmitting === false ? 'invisible' : ''}`}
+                    height={2}
+                    loading={true}
+                    aria-label="Bar loader"
+                    data-testid="loader"
+                />
+            </div>
+            
             <DialogFooter>
                 <button className='group'
                     disabled={selectedImagesFiles.length >= 4}
