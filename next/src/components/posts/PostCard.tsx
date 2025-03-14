@@ -2,7 +2,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useReducer } from 'react';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
-import PostMenu from './post-parts/PostMenu';
+import PostMenuButton from './post-parts/PostMenuButton';
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
 import BasicPostTemplate from './templates/BasicPostTemplate';
 import { BasePostDataType } from 'tweetly-shared';
@@ -70,7 +70,7 @@ export default function PostCard({ post, searchSegments }: { post: BasePostDataT
         return (
             <div className="w-full px-4 py-2 flex">
                 <p className="text-secondary-text">You&apos;ve blocked this user. <span>Unblock to see their posts.</span></p>
-                <PostMenu
+                <PostMenuButton
                     post={post}
                     userState={userState}
                     dispatch={dispatch}

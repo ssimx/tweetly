@@ -2,7 +2,7 @@ import UserHoverCard from '@/components/misc/UserHoverCard';
 import Image from 'next/image';
 import Link from 'next/link';
 import React from 'react';
-import PostMenu from '../post-parts/PostMenu';
+import PostMenuButton from '../post-parts/PostMenuButton';
 import PostText from '../post-parts/PostText';
 import PostImages from '../post-parts/PostImages';
 import PostButtons from '../post-parts/PostButtons';
@@ -18,7 +18,7 @@ type VisitedPostTemplateType = {
     scrollRef?: React.RefObject<HTMLDivElement | null>
     postTime: string,
     postDate: string,
-    
+
     replies: BasePostDataType[],
     setReplies: React.Dispatch<React.SetStateAction<BasePostDataType[]>>
     repliesCursor: number | null,
@@ -72,7 +72,7 @@ export default function VisitedPostTemplate({
                         />
                         <p className='text-secondary-text'>@{post.author.username}</p>
                     </div>
-                    <PostMenu
+                    <PostMenuButton
                         post={post}
                         userState={userState}
                         dispatch={dispatch}

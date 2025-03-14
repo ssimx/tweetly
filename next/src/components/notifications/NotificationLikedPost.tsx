@@ -3,7 +3,7 @@ import UserHoverCard from '../misc/UserHoverCard';
 import { useEffect, useReducer, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserContext } from '@/context/UserContextProvider';
-import PostMenu from '../posts/post-parts/PostMenu';
+import PostMenuButton from '../posts/post-parts/PostMenuButton';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
 import { Heart } from 'lucide-react';
@@ -107,7 +107,7 @@ export default function NotificationLikedPost({ post, notifier, isRead }: { post
         return (
             <div className="w-full px-4 py-2 flex">
                 <p className="text-secondary-text">You&apos;ve blocked this user. <span>Unblock to see their posts.</span></p>
-                <PostMenu
+                <PostMenuButton
                     post={post}
                     userState={authorState}
                     dispatch={authorDispatch}

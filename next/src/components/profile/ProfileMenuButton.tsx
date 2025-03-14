@@ -156,7 +156,7 @@ export default function ProfileMenuButton({ user, userState, dispatch }: Profile
                 <>
                     <div className='menu-overlay' onClick={toggleMenu}></div>
 
-                    <div ref={menuBtn} className='profile-opened-menu'>
+                    <div ref={menuBtn} className='shadow-menu bg-primary-foreground border border-primary-border overflow-hidden absolute top-[125%] right-[0%] z-50 w-[250px] h-fit rounded-[20px] py-[10px] pointer-events-none [&>button]:pointer-events-auto'>
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
@@ -208,7 +208,7 @@ export default function ProfileMenuButton({ user, userState, dispatch }: Profile
                 <Ellipsis size={20} className='text-primary-text' />
             </button>
 
-            <div className='profile-copy-alert hidden'
+            <div className='fixed z-[500] bottom-10 left-[50%] translate-x-[-50%] bg-primary text-white-1 font-semibold px-4 py-2 rounded-md hidden'
                 ref={copyProfileUrlAlert} >
                 Copied to clipboard
             </div>

@@ -1,5 +1,5 @@
 'use client';
-import PostMenu from '../post-parts/PostMenu';
+import PostMenuButton from '../post-parts/PostMenuButton';
 import PostText from '../post-parts/PostText';
 import PostImages from '../post-parts/PostImages';
 import PostButtons from '../post-parts/PostButtons';
@@ -58,7 +58,7 @@ export default function BasicPostTemplate({
                     <p>@{post.author.username}</p>
                     <p>·</p>
                     <PostDate createdAt={post.createdAt} />
-                    <PostMenu
+                    <PostMenuButton
                         post={post}
                         userState={userState}
                         dispatch={dispatch}

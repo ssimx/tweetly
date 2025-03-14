@@ -17,7 +17,7 @@ type PostMenuProps = {
     dispatch: React.Dispatch<UserActionType>,
 }
 
-export default function PostMenu({ post, userState, dispatch }: PostMenuProps) {
+export default function PostMenuButton({ post, userState, dispatch }: PostMenuProps) {
     const [menuOpen, setMenuOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const menuBtn = useRef<HTMLDivElement | null>(null);
@@ -217,7 +217,10 @@ export default function PostMenu({ post, userState, dispatch }: PostMenuProps) {
                 <>
                     <button className='menu-overlay' onClick={toggleMenu}></button>
 
-                    <div ref={menuBtn} className='shadow-menu bg-primary-foreground text-primary-text border border-primary-border overflow-hidden absolute top-0 right-[0%] z-50 w-[200px] h-fit rounded-[20px] py-[10px]'>
+                    <div
+                        ref={menuBtn}
+                        className='shadow-menu bg-primary-foreground text-primary-text border border-primary-border overflow-hidden absolute top-0 right-[0%] z-50 w-[200px] h-fit rounded-[20px] py-[10px] pointer-events-none [&>button]:pointer-events-auto'
+                    >
                         {authorIsLoggedInUser
                             ? (
                                 <>

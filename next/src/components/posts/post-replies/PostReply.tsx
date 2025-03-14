@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useReducer } from 'react';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
-import PostMenu from '../post-parts/PostMenu';
+import PostMenuButton from '../post-parts/PostMenuButton';
 import BasicPostTemplate from '../templates/BasicPostTemplate';
 import { BasePostDataType } from 'tweetly-shared';
 import { userInfoReducer, UserStateType } from '@/lib/userReducer';
@@ -72,7 +72,7 @@ export default function ReplyPost({ post }: { post: BasePostDataType }) {
         return (
             <div className="w-full px-4 py-2 flex">
                 <p className="text-secondary-text">You&apos;ve blocked this user. <span>Unblock to see their posts.</span></p>
-                <PostMenu
+                <PostMenuButton
                     post={post}
                     userState={userState}
                     dispatch={dispatch}

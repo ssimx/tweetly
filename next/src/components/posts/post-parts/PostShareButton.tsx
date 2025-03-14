@@ -10,7 +10,6 @@ export default function PostShareButton({ post }: { post: BasePostDataType }) {
 
     const toggleMenu = (e: React.MouseEvent) => {
         e.stopPropagation();
-        setMenuOpen((prev) => !prev);
 
         if (!menuOpen) {
             // Disable interaction behind the menu when it's opened
@@ -19,9 +18,12 @@ export default function PostShareButton({ post }: { post: BasePostDataType }) {
             // Re-enable interaction when the menu is closed
             document.body.classList.remove('disable-interaction');
         }
+
+        setMenuOpen((prev) => !prev);
     };
 
     const handleClickOutside = (event: MouseEvent) => {
+        console.log(menuBtn.current !== event.target)
         if (menuBtn.current && !menuBtn.current.contains(event.target as Node)) {
             setMenuOpen(false);
             document.body.classList.remove('disable-interaction'); // Enable interaction again
@@ -56,11 +58,19 @@ export default function PostShareButton({ post }: { post: BasePostDataType }) {
         <div className='relative flex-center'>
             {menuOpen &&
                 <>
-                    <div className='menu-overlay' onClick={toggleMenu}></div>
+                    <button className='fixed top-0 left-0 w-screen h-screen z-40 pointer-events-auto' onClick={toggleMenu}></button>
 
-                <div ref={menuBtn}
-                    className='shadow-menu bg-primary-foreground border border-primary-border overflow-hidden absolute top-0 right-[0%] z-50 w-[250px] h-fit rounded-[20px] py-[10px]'>
-                        <button onClick={handleCopyLink}
+                    <div
+                        ref={menuBtn}
+                    className='shadow-menu bg-primary-foreground border border-primary-border overflow-hidden absolute top-0 right-[0%] z-50 w-[250px] h-fit rounded-[20px] py-[10px] pointer-events-none [&>button]:pointer-events-auto'
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                handleCopyLink();
+                            }}
                             className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[10px] hover:bg-card-hover'>
                             <Link size={20} className='text-primary-text' />
                             Copy link
@@ -69,13 +79,20 @@ export default function PostShareButton({ post }: { post: BasePostDataType }) {
                 </>
             }
 
-            <button className='share-btn group' onClick={toggleMenu}>
+            <button
+                className='share-btn group'
+                onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    toggleMenu(e);
+                }}
+            >
                 <span className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-pink-500/10'>
                     <Share size={20} className='text-secondary-text group-hover:text-primary ml-[1px]' />
                 </span>
             </button>
 
-            <div className='profile-copy-alert hidden'
+            <div className='fixed z-[500] bottom-10 left-[50%] translate-x-[-50%] bg-primary text-white-1 font-semibold px-4 py-2 rounded-md hidden'
                 ref={copyProfileUrlAlert} >
                 Copied to clipboard
             </div>
