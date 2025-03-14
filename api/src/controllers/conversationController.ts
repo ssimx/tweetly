@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from 'express';
 import { UserProps } from '../lib/types';
 import { getUserId } from '../services/userService';
-import { createConversation, createMessage, getAllConversations, getConversation, getConversationParticipans, getFirstMessage, getFirstUnreadMessage, getMessages, getOldestConversation, updateConversationUpdatedAtTime, updateMessagesReadStatus } from '../services/conversationService';
+import { createConversation, createMessage, getAllConversations, getConversation, getConversationParticipans, getFirstMessage, getFirstUnreadMessage, getLastMessage, getLatestMessages, getNewerMessages, getOlderMessages, getOldestConversation, updateConversationUpdatedAtTime, updateMessagesReadStatus } from '../services/conversationService';
 import { AppError, ConversationCardType, ConversationMessageType, SuccessResponse, ConversationType, LoggedInUserDataType } from 'tweetly-shared';
-
+import { io } from '../utils/sockets';
 // ---------------------------------------------------------------------------------------------------------
 
 export const getUserConversations = async (req: Request, res: Response, next: NextFunction) => {
@@ -24,7 +24,7 @@ export const getUserConversations = async (req: Request, res: Response, next: Ne
                         },
                     };
 
-                    res.status(200).json(successResponse);
+                    return res.status(200).json(successResponse);
                 }
             }
 
@@ -34,8 +34,9 @@ export const getUserConversations = async (req: Request, res: Response, next: Ne
                 updatedAt: conversation.updatedAt,
                 lastMessage: conversation.messages.length ? {
                     id: conversation.messages[0].id,
+                    createdAt: conversation.messages[0].createdAt,
                     content: conversation.messages[0].content,
-                    readStatus: conversation.messages[0].readStatus,
+                    readAt: conversation.messages[0].readAt,
                     sender: {
                         username: conversation.messages[0].sender.username,
                         profile: {
@@ -68,7 +69,7 @@ export const getUserConversations = async (req: Request, res: Response, next: Ne
                 },
             };
 
-            res.status(200).json(successResponse);
+            return res.status(200).json(successResponse);
         } else {
             const oldestConversationId = await getOldestConversation(user.id).then(res => res?.id);
             const conversationsData = await getAllConversations(user.id, cursor as string);
@@ -78,9 +79,10 @@ export const getUserConversations = async (req: Request, res: Response, next: Ne
                 updatedAt: conversation.updatedAt,
                 lastMessage: conversation.messages.length ? {
                     id: conversation.messages[0].id,
+                    createdAt: conversation.messages[0].createdAt,
                     content: conversation.messages[0].content,
                     images: conversation.messages[0].images,
-                    readStatus: conversation.messages[0].readStatus,
+                    readAt: conversation.messages[0].readAt ?? undefined,
                     sender: {
                         username: conversation.messages[0].sender.username,
                         profile: {
@@ -113,7 +115,7 @@ export const getUserConversations = async (req: Request, res: Response, next: Ne
                 },
             };
 
-            res.status(200).json(successResponse);
+            return res.status(200).json(successResponse);
         }
     } catch (error) {
         next(error);
@@ -126,6 +128,7 @@ export const getSpecificConversation = async (req: Request, res: Response, next:
     const user = req.user as LoggedInUserDataType;
     const conversationId = req.params.id;
     const cursor = req.query.cursor;
+    const type = req.query.type;
 
     try {
         if (cursor) {
@@ -144,64 +147,119 @@ export const getSpecificConversation = async (req: Request, res: Response, next:
                     },
                 };
 
-                res.status(200).json(successResponse);
+                return res.status(200).json(successResponse);
             }
 
-            const oldestMessageId = await getFirstMessage(conversationId).then(res => res?.messages[0].id);
-            if (oldestMessageId) {
-                if (cursor === oldestMessageId) {
-                    const successResponse: SuccessResponse<{ messages: ConversationMessageType[], cursor: number | null, end: boolean }> = {
-                        success: true,
-                        data: {
-                            messages: [],
-                            cursor: null,
-                            end: true,
-                        },
-                    };
+            if (type === 'old') {
+                const oldestMessageId = await getFirstMessage(conversationId).then(res => res?.messages[0].id);
+                if (oldestMessageId) {
+                    if (cursor === oldestMessageId) {
+                        const successResponse: SuccessResponse<{ messages: ConversationMessageType[], cursor: number | null, topReached: boolean }> = {
+                            success: true,
+                            data: {
+                                messages: [],
+                                cursor: null,
+                                topReached: true,
+                            },
+                        };
 
-                    res.status(200).json(successResponse);
+                        return res.status(200).json(successResponse);
+                    }
                 }
-            }
 
-            const messages = await getMessages(conversationId, String(cursor)).then(res => res?.messages);
+                const messages = await getOlderMessages(conversationId, String(cursor)).then(res => res?.messages);
 
-            let allMsgsOrdered: ConversationMessageType[] = [];
-            if (messages !== undefined && messages.length !== 0) {
-                allMsgsOrdered = messages
-                    .map((msg) => ({
-                        id: msg.id,
-                        content: msg.content,
-                        images: msg.images,
-                        createdAt: msg.createdAt,
-                        updatedAt: msg.updatedAt,
-                        sentBy: msg.sender.username,
-                        readStatus: msg.readStatus,
-                        status: 'sent'
-                    }))
-                    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) as ConversationMessageType[];
-            }
+                let mappedMessages: ConversationMessageType[] = [];
+                if (messages !== undefined && messages.length !== 0) {
+                    mappedMessages = messages
+                        .map((msg) => ({
+                            id: msg.id,
+                            content: msg.content,
+                            images: msg.images,
+                            createdAt: msg.createdAt,
+                            updatedAt: msg.updatedAt,
+                            sentBy: msg.sender.username,
+                            readAt: msg.readAt ?? undefined,
+                            status: 'sent'
+                        }))
+                        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) as ConversationMessageType[];
+                }
 
-            const messagesEnd = allMsgsOrdered.length === 0
-                ? true
-                : oldestMessageId === allMsgsOrdered[0].id
+                const topReached = mappedMessages.length === 0
                     ? true
-                    : false
+                    : oldestMessageId === mappedMessages[0].id
+                        ? true
+                        : false
 
-            const successResponse: SuccessResponse<{ messages: ConversationMessageType[], cursor: string | null, end: boolean }> = {
-                success: true,
-                data: {
-                    messages: allMsgsOrdered ?? [],
-                    cursor: allMsgsOrdered?.[0].id ?? null,
-                    end: messagesEnd
-                },
-            };
+                const successResponse: SuccessResponse<{ messages: ConversationMessageType[], cursor: string | null, topReached: boolean }> = {
+                    success: true,
+                    data: {
+                        messages: mappedMessages ?? [],
+                        cursor: mappedMessages?.[0].id ?? null,
+                        topReached: topReached
+                    },
+                };
 
-            res.status(200).json(successResponse);
+                return res.status(200).json(successResponse);
+            } else if (type === 'new') {
+                const newestMessageId = await getLastMessage(conversationId).then(res => res?.messages[0].id);
+                if (newestMessageId) {
+                    if (cursor === newestMessageId) {
+                        const successResponse: SuccessResponse<{ messages: ConversationMessageType[], cursor: number | null, bottomReached: boolean }> = {
+                            success: true,
+                            data: {
+                                messages: [],
+                                cursor: null,
+                                bottomReached: true,
+                            },
+                        };
+
+                        return res.status(200).json(successResponse);
+                    }
+                }
+
+                const messages = await getNewerMessages(conversationId, String(cursor)).then(res => res?.messages);
+
+                let mappedMessages: ConversationMessageType[] = [];
+                if (messages !== undefined && messages.length !== 0) {
+                    mappedMessages = messages
+                        .map((msg) => ({
+                            id: msg.id,
+                            content: msg.content,
+                            images: msg.images,
+                            createdAt: msg.createdAt,
+                            updatedAt: msg.updatedAt,
+                            sentBy: msg.sender.username,
+                            readAt: msg.readAt ?? undefined,
+                            status: 'sent'
+                        })) as ConversationMessageType[]
+                    // .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) as ConversationMessageType[];
+                }
+
+                const bottomReached = mappedMessages.length === 0
+                    ? true
+                    : newestMessageId === mappedMessages.slice(-1)[0].id
+                        ? true
+                        : false
+
+                const successResponse: SuccessResponse<{ messages: ConversationMessageType[], cursor: string | null, bottomReached: boolean }> = {
+                    success: true,
+                    data: {
+                        messages: mappedMessages ?? [],
+                        cursor: mappedMessages?.slice(-1)[0].id ?? null,
+                        bottomReached: bottomReached
+                    },
+                };
+
+                return res.status(200).json(successResponse);
+            } else {
+                throw new AppError('Incorrect cursor type', 401, 'INCORRECT_TYPE');
+            }
         } else {
+            // fetch conversation information including latest 25 messages
             const conversation = await getConversation(conversationId);
             if (!conversation) throw new AppError('Conversation not found', 404, 'NOT_FOUND');
             if (!conversation.participants.some(participant => participant.user.username === user.username)) throw new AppError('User unauthorized to view the conversation', 403, 'UNAUTHORIZED');
-
             // check if conversation is empty
             if (conversation.messages.length === 0) {
                 const successResponse: SuccessResponse<{ conversation: ConversationType }> = {
@@ -232,35 +290,23 @@ export const getSpecificConversation = async (req: Request, res: Response, next:
                     },
                 };
 
-                res.status(200).json(successResponse);
+                return res.status(200).json(successResponse);
             }
 
-            // if not, find first message and first unread message from not logged in user (other party)
-            const firstMessageId = await getFirstMessage(conversationId).then(res => res?.messages[0].id as string);
-            const firstUnreadMessage = await getFirstUnreadMessage(conversationId, user.id) as { id: string, createdAt: Date } | null;
+            // if not, find first and last message
+            const oldestMessageId = await getFirstMessage(conversationId).then(res => res?.messages[0].id as string);
+            const newestMessageId = await getLastMessage(conversationId).then(res => res?.messages[0].id as string);
+            // and first unread message from not logged in user (other party)
+            const firstUnreadMessage = await getFirstUnreadMessage(conversationId, user.id);
+            console.log(firstUnreadMessage)
 
-            // if there's a read message, aka conversation is NOT new and is a dialogue
-            // update read status of all messages from the other party, by using first read message timestamp
-            // if conversation IS new and a monologue, update read status for all messages logged in user RECEIVED
-            // firstReadMessage timestamp is optional, if there's a read message use that as a cursor,
-            //      if not, then update all messages
-            updateMessagesReadStatus(conversationId, user.id, firstUnreadMessage?.createdAt);
+            // update read status of all messages from the other party, by using first unread message timestamp
+            if (firstUnreadMessage) updateMessagesReadStatus(conversationId, user.id, firstUnreadMessage.createdAt);
 
-
-            let olderMsgs;
-            if (firstUnreadMessage && conversation.messages.filter(msg => msg.id === firstUnreadMessage.id).length === 0) {
-                // if unread message is not in the conversation initial cluster, fetch more messages
-                olderMsgs = await getMessages(conversationId, firstUnreadMessage.id).then(res => res?.messages);
-            } else if (conversation.messages.filter(msg => msg.id === firstMessageId).length === 0) {
-                // if there's no unread message, fetch all messages by using first message as a cursor
-                olderMsgs = await getMessages(conversationId, firstMessageId).then(res => res?.messages);
-            }
-
-            const allMsgs = olderMsgs ? [...olderMsgs, ...conversation.messages] : [...conversation.messages];
-
-            let allMsgsOrdered: ConversationMessageType[] = [];
-            if (allMsgs.length !== 0) {
-                allMsgsOrdered = allMsgs
+            // if both first and last message ID's are in the conversation initial cluster, no need to fetch anything else
+            if (conversation.messages.filter((msg) => msg.id === oldestMessageId || msg.id === newestMessageId).length === 2) {
+                let allMsgsOrdered: ConversationMessageType[] = [];
+                allMsgsOrdered = conversation.messages
                     .map((msg) => ({
                         id: msg.id,
                         content: msg.content,
@@ -268,15 +314,76 @@ export const getSpecificConversation = async (req: Request, res: Response, next:
                         createdAt: msg.createdAt,
                         updatedAt: msg.updatedAt,
                         sentBy: msg.sender.username,
-                        readStatus: msg.readStatus,
+                        readAt: msg.readAt ?? undefined,
+                        status: 'sent'
+                    }))
+                    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) as ConversationMessageType[];
+                
+                const successResponse: SuccessResponse<{ conversation: ConversationType }> = {
+                    success: true,
+                    data: {
+                        conversation: {
+                            id: conversation.id,
+
+                            participants: conversation.participants.map((participant) => {
+                                return {
+                                    username: participant.user.username,
+                                    createdAt: participant.user.createdAt,
+                                    profile: {
+                                        name: participant.user.profile!.name,
+                                        bio: participant.user.profile!.bio,
+                                        profilePicture: participant.user.profile!.profilePicture,
+                                    },
+                                    stats: {
+                                        followersCount: participant.user._count.followers,
+                                    }
+                                };
+                            }),
+
+                            messages: allMsgsOrdered,
+                            cursor: allMsgsOrdered[0]?.id ?? null,
+                            end: true,
+                        }
+                    },
+                };
+
+                return res.status(200).json(successResponse);
+            }
+
+            // if there's unread message, fetch 25 older and 25 newer messages, use unread message as a cursor
+            // otherwise proceed with conversation initial messages cluster
+            let messages = conversation.messages;
+            if (firstUnreadMessage) {
+                const olderMessages = await getOlderMessages(conversationId, firstUnreadMessage.id).then(res => res?.messages) ?? [];
+                const newerMessages = await getNewerMessages(conversationId, firstUnreadMessage.id).then(res => res?.messages) ?? [];
+                messages = [...newerMessages, firstUnreadMessage, ...olderMessages];
+            }
+
+            let allMsgsOrdered: ConversationMessageType[] = [];
+            if (messages.length !== 0) {
+                allMsgsOrdered = messages
+                    .map((msg) => ({
+                        id: msg.id,
+                        content: msg.content,
+                        images: msg.images,
+                        createdAt: msg.createdAt,
+                        updatedAt: msg.updatedAt,
+                        sentBy: msg.sender.username,
+                        readAt: msg.readAt ?? undefined,
                         status: 'sent'
                     }))
                     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) as ConversationMessageType[];
             }
 
-            const messagesEnd = allMsgsOrdered.length === 0
+            const messagesTopReached = allMsgsOrdered.length === 0
                 ? true
-                : firstMessageId === allMsgsOrdered[0].id
+                : oldestMessageId === allMsgsOrdered[0].id
+                    ? true
+                    : false
+            
+            const messagesBottomReached = allMsgsOrdered.length === 0
+                ? true
+                : newestMessageId === allMsgsOrdered.slice(-1)[0].id
                     ? true
                     : false
 
@@ -302,13 +409,17 @@ export const getSpecificConversation = async (req: Request, res: Response, next:
                         }),
 
                         messages: allMsgsOrdered,
-                        cursor: allMsgsOrdered[0]?.id ?? null,
-                        end: messagesEnd,
+                        topCursor: allMsgsOrdered[0]?.id ?? null,
+                        topReached: messagesTopReached,
+                        bottomCursor: allMsgsOrdered.slice(-1)[0]?.id ?? null,
+                        bottomReached: messagesBottomReached,
                     }
                 },
             };
 
-            res.status(200).json(successResponse);
+            console.log(successResponse)
+
+            return res.status(200).json(successResponse);
         }
     } catch (error) {
         next(error);
@@ -340,12 +451,15 @@ export const createEmptyConversation = async (req: Request, res: Response) => {
 
 export const createConversationMessage = async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as LoggedInUserDataType;
+    const tempId = req.body.tempId;
     const text = req.body.text;
     const conversationId = req.body.conversationId;
     const images = req.body.cloudinaryUrls;
 
     try {
         if (!conversationId) throw new AppError('Conversation ID is missing', 404, 'MISSING_CONVERSATION');
+
+        if (tempId === undefined) throw new AppError('Message temporary ID is missing', 404, 'MISSING_TEMP_ID');
 
         if ((text === undefined || text.length === 0) && (images === undefined || images.length === 0)) {
             throw new AppError('Message content is missing', 404, 'MISSING_CONTENT');
@@ -369,18 +483,23 @@ export const createConversationMessage = async (req: Request, res: Response, nex
             data: {
                 message: {
                     id: newMessage.id,
+                    tempId: tempId,
                     content: newMessage.content ?? undefined,
                     images: newMessage.images,
                     createdAt: newMessage.createdAt,
                     updatedAt: newMessage.createdAt,
                     sentBy: user.username,
-                    readStatus: false,
                     status: 'sent'
                 }
             },
         };
 
-        res.status(200).json(successResponse);
+        // Emit new message to the receiver
+        if (newMessage.receiverId !== user.id) {
+            io.to(`user_${newMessage.receiverId}_messages`).emit('new_message');
+        }
+
+        return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }

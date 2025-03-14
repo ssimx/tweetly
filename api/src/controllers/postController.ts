@@ -97,7 +97,7 @@ export const newPost = async (req: Request, res: Response, next: NextFunction) =
             },
         };
 
-        res.status(200).json(successResponse);
+        return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }
@@ -128,7 +128,7 @@ export const global30DayPosts = async (req: Request, res: Response, next: NextFu
                             },
                         };
 
-                        res.status(200).json(successResponse);
+                        return res.status(200).json(successResponse);
                     }
                 }
 
@@ -159,7 +159,7 @@ export const global30DayPosts = async (req: Request, res: Response, next: NextFu
                     },
                 };
 
-                res.status(200).json(successResponse);
+                return res.status(200).json(successResponse);
             } else if (type === 'NEW') {
                 if (cursor === 'null') {
                     const oldestGlobalPostId = await getOldestGlobal30DayPost(user.id).then(res => res?.id);
@@ -176,7 +176,7 @@ export const global30DayPosts = async (req: Request, res: Response, next: NextFu
                                 },
                             };
 
-                            res.status(200).json(successResponse);
+                            return res.status(200).json(successResponse);
                         }
                     }
 
@@ -206,7 +206,7 @@ export const global30DayPosts = async (req: Request, res: Response, next: NextFu
                         },
                     };
 
-                    res.status(200).json(successResponse);
+                    return res.status(200).json(successResponse);
                 }
 
                 const postsData = await getGlobal30DayNewPosts(user.id, Number(cursor));
@@ -226,7 +226,7 @@ export const global30DayPosts = async (req: Request, res: Response, next: NextFu
                     },
                 };
 
-                res.status(200).json(successResponse);
+                return res.status(200).json(successResponse);
             } else {
                 throw new AppError(`Uknown type (${type}) in search params`, 400, 'UKNOWN_TYPE');
             }
@@ -258,7 +258,7 @@ export const global30DayPosts = async (req: Request, res: Response, next: NextFu
                 },
             };
 
-            res.status(200).json(successResponse);
+            return res.status(200).json(successResponse);
         }
     } catch (error) {
         next(error);
@@ -290,7 +290,7 @@ export const following30DayPosts = async (req: Request, res: Response, next: Nex
                             },
                         };
 
-                        res.status(200).json(successResponse);
+                        return res.status(200).json(successResponse);
                     }
                 }
 
@@ -319,7 +319,7 @@ export const following30DayPosts = async (req: Request, res: Response, next: Nex
                     },
                 };
 
-                res.status(200).json(successResponse);
+                return res.status(200).json(successResponse);
             } else if (type === 'NEW') {
                 if (cursor === 'null') {
                     const oldestFollowingPostId = await getOldestFollowing30DayPost(user.id).then(res => res?.id);
@@ -336,7 +336,7 @@ export const following30DayPosts = async (req: Request, res: Response, next: Nex
                                 },
                             };
 
-                            res.status(200).json(successResponse);
+                            return res.status(200).json(successResponse);
                         }
                     }
 
@@ -366,7 +366,7 @@ export const following30DayPosts = async (req: Request, res: Response, next: Nex
                         },
                     };
 
-                    res.status(200).json(successResponse);
+                    return res.status(200).json(successResponse);
                 }
 
                 const postsData = await getFollowing30DayNewPosts(user.id, Number(cursor));
@@ -387,7 +387,7 @@ export const following30DayPosts = async (req: Request, res: Response, next: Nex
                     },
                 };
 
-                res.status(200).json(successResponse);
+                return res.status(200).json(successResponse);
             } else {
                 throw new AppError(`Uknown type (${type}) in search params`, 400, 'UKNOWN_TYPE');
             }
@@ -418,7 +418,7 @@ export const following30DayPosts = async (req: Request, res: Response, next: Nex
                 },
             };
 
-            res.status(200).json(successResponse);
+            return res.status(200).json(successResponse);
         }
     } catch (error) {
         next(error);
@@ -452,7 +452,7 @@ export const exploreRandomPosts = async (req: Request, res: Response, next: Next
             },
         };
 
-        res.status(200).json(successResponse);
+        return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }
@@ -502,7 +502,7 @@ export const getPost = async (req: Request, res: Response, next: NextFunction) =
             },
         };
 
-        res.status(200).json(successResponse);
+        return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }
@@ -535,7 +535,7 @@ export const postReplies = async (req: Request, res: Response, next: NextFunctio
                         },
                     };
 
-                    res.status(200).json(successResponse);
+                    return res.status(200).json(successResponse);
                 }
             }
 
@@ -564,7 +564,7 @@ export const postReplies = async (req: Request, res: Response, next: NextFunctio
                 },
             };
 
-            res.status(200).json(successResponse);
+            return res.status(200).json(successResponse);
         } else {
             const oldestReplyLeastEnegagementId = await getOldestReplyLeastEnegagement(user.id, postId).then(res => res?.id);
             const repliesData = await getPostReplies(user.id, postId);
@@ -592,7 +592,7 @@ export const postReplies = async (req: Request, res: Response, next: NextFunctio
                 },
             };
 
-            res.status(200).json(successResponse);
+            return res.status(200).json(successResponse);
         }
     } catch (error) {
         next(error);
@@ -626,7 +626,7 @@ export const getUserPosts = async (req: Request, res: Response, next: NextFuncti
                         },
                     };
 
-                    res.status(200).json(successResponse);
+                    return res.status(200).json(successResponse);
                 }
             }
 
@@ -656,7 +656,7 @@ export const getUserPosts = async (req: Request, res: Response, next: NextFuncti
                 },
             };
 
-            res.status(200).json(successResponse);
+            return res.status(200).json(successResponse);
         } else {
             const userOldestPostId = await getOldestPost(username, user.id).then(res => res?.id);
             const postsData = await getPosts(user.id, username);
@@ -685,7 +685,7 @@ export const getUserPosts = async (req: Request, res: Response, next: NextFuncti
                 },
             };
 
-            res.status(200).json(successResponse);
+            return res.status(200).json(successResponse);
         }
     } catch (error) {
         next(error);
@@ -719,7 +719,7 @@ export const getUserReposts = async (req: Request, res: Response, next: NextFunc
                         },
                     };
 
-                    res.status(200).json(successResponse);
+                    return res.status(200).json(successResponse);
                 }
             }
 
@@ -749,7 +749,7 @@ export const getUserReposts = async (req: Request, res: Response, next: NextFunc
                 },
             };
 
-            res.status(200).json(successResponse);
+            return res.status(200).json(successResponse);
         } else {
             const userOldestRepostId = await getOldestRepost(username, user.id).then(res => res?.id);
             const repostsData = await getReposts(user.id, username);
@@ -778,7 +778,7 @@ export const getUserReposts = async (req: Request, res: Response, next: NextFunc
                 },
             };
 
-            res.status(200).json(successResponse);
+            return res.status(200).json(successResponse);
         }
     } catch (error) {
         next(error);
@@ -812,7 +812,7 @@ export const getUserReplies = async (req: Request, res: Response, next: NextFunc
                         },
                     };
 
-                    res.status(200).json(successResponse);
+                    return res.status(200).json(successResponse);
                 }
             }
 
@@ -846,7 +846,7 @@ export const getUserReplies = async (req: Request, res: Response, next: NextFunc
                 },
             };
 
-            res.status(200).json(successResponse);
+            return res.status(200).json(successResponse);
         } else {
             const userOldestReplyId = await getOldestReply(username, user.id).then(res => res?.id);
             let repliesData = await getReplies(user.id, username);
@@ -875,7 +875,7 @@ export const getUserReplies = async (req: Request, res: Response, next: NextFunc
                 },
             };
 
-            res.status(200).json(successResponse);
+            return res.status(200).json(successResponse);
         }
     } catch (error) {
         next(error);
@@ -909,7 +909,7 @@ export const getUserMedia = async (req: Request, res: Response, next: NextFuncti
                         },
                     };
 
-                    res.status(200).json(successResponse);
+                    return res.status(200).json(successResponse);
                 }
             }
 
@@ -939,7 +939,7 @@ export const getUserMedia = async (req: Request, res: Response, next: NextFuncti
                 },
             };
 
-            res.status(200).json(successResponse);
+            return res.status(200).json(successResponse);
         } else {
             const userOldestMediaId = await getOldestMedia(username, user.id).then(res => res?.id);
             const mediaData = await getMedia(user.id, username);
@@ -968,7 +968,7 @@ export const getUserMedia = async (req: Request, res: Response, next: NextFuncti
                 },
             };
 
-            res.status(200).json(successResponse);
+            return res.status(200).json(successResponse);
         }
     } catch (error) {
         next(error);
@@ -997,7 +997,7 @@ export const getUserLikes = async (req: Request, res: Response, next: NextFuncti
                         },
                     };
 
-                    res.status(200).json(successResponse);
+                    return res.status(200).json(successResponse);
                 }
             }
 
@@ -1027,7 +1027,7 @@ export const getUserLikes = async (req: Request, res: Response, next: NextFuncti
                 },
             };
 
-            res.status(200).json(successResponse);
+            return res.status(200).json(successResponse);
         } else {
             const userOldestLikeId = await getOldestLike(user.id).then(res => res?.post.id);
             const likesData = await getLikes(user.id).then(res => res.map(like => like.post));
@@ -1056,7 +1056,7 @@ export const getUserLikes = async (req: Request, res: Response, next: NextFuncti
                 },
             };
 
-            res.status(200).json(successResponse);
+            return res.status(200).json(successResponse);
         }
     } catch (error) {
         next(error);
@@ -1085,7 +1085,7 @@ export const getUserBookmarks = async (req: Request, res: Response, next: NextFu
                         },
                     };
 
-                    res.status(200).json(successResponse);
+                    return res.status(200).json(successResponse);
                 }
             }
 
@@ -1115,7 +1115,7 @@ export const getUserBookmarks = async (req: Request, res: Response, next: NextFu
                 },
             };
 
-            res.status(200).json(successResponse);
+            return res.status(200).json(successResponse);
         } else {
             const userOldestBookmarkId = await getOldestBookmark(user.id).then(res => res?.post.id);
             const bookmarksData = await getBookmarks(user.id).then(res => res.map(bookmark => bookmark.post));
@@ -1144,7 +1144,7 @@ export const getUserBookmarks = async (req: Request, res: Response, next: NextFu
                 },
             };
 
-            res.status(200).json(successResponse);
+            return res.status(200).json(successResponse);
         }
     } catch (error) {
         next(error);

@@ -6,7 +6,7 @@ import { socket } from "@/lib/socket";
 import { useUserContext } from "@/context/UserContextProvider";
 import { useInView } from 'react-intersection-observer';
 import { ConversationMessageType, ConversationType, ErrorResponse, getErrorMessage } from 'tweetly-shared';
-import { getMoreConversationMessages } from '@/actions/get-actions';
+import { getNewerConversationMessages, getOlderConversationMessages } from '@/actions/get-actions';
 import ConversationHeader from './ConversationHeader';
 
 export interface NewMessageType {
@@ -26,22 +26,34 @@ export default function ConversationContent({ conversation }: { conversation: Co
     const receiverInfo = receiver.length === 1 ? receiver[0] : conversation.participants[0];
     const [receiverIsTyping, setReceiverIsTyping] = useState(false);
 
-    const [messagesCursor, setMessagesCursor] = useState<string | null>(conversation.cursor);
-    const [messagesEndReached, setMessagesEndReached] = useState(conversation.end);
+    const [isFetchingMoreMessages, setIsFetchingMoreMessages] = useState(false);
+    const [messagesTopCursor, setMessagesTopCursor] = useState<string | null>(conversation.topCursor);
+    const [messagesTopReached, setMessagesTopReached] = useState(conversation.topReached);
+    const [messagesBottomCursor, setMessagesBottomCursor] = useState<string | null>(conversation.bottomCursor);
+    const [messagesBottomReached, setMessagesBottomReached] = useState(conversation.bottomReached);
     const scrollPositionRef = useRef<number>(0);
     const [scrollPosition, setScrollPosition] = useState(0);
-    const { ref, inView } = useInView({
-        threshold: 0,
-        delay: 100,
+
+    // Top observer
+    const { ref: topRef, inView: topInView } = useInView({
+        threshold: 0.5,
+        fallbackInView: false,
+    });
+
+    // Bottom observer
+    const { ref: bottomRef, inView: bottomInView } = useInView({
+        threshold: 0.5,
+        fallbackInView: false,
     });
 
     // Infinite scroll - fetch older messages when inView is true
     useEffect(() => {
-        if (inView && scrollPositionRef.current !== scrollPosition) {
+        if (topInView && scrollPositionRef.current !== scrollPosition && !isFetchingMoreMessages) {
             const fetchOldMsgs = async () => {
-                if ((!messagesEndReached && messagesCursor)) {
+                if ((!messagesTopReached && messagesTopCursor)) {
                     try {
-                        const response = await getMoreConversationMessages(conversation.id, messagesCursor);
+                        setIsFetchingMoreMessages(true);
+                        const response = await getOlderConversationMessages(conversation.id, messagesTopCursor);
 
                         if (!response.success) {
                             const errorData = response as ErrorResponse;
@@ -52,35 +64,83 @@ export default function ConversationContent({ conversation }: { conversation: Co
                         if (!data) throw new Error('Data is missing in response');
                         else if (data.messages === undefined) throw new Error('Messages property is missing in data response');
                         else if (data.cursor === undefined) throw new Error('Cursor property is missing in data response');
-                        console.log(data.messages)
 
                         setMessages((current) => [...data.messages as ConversationMessageType[], ...current]);
-                        setMessagesCursor(data.cursor);
-                        setMessagesEndReached(data.end);
+                        setMessagesTopCursor(data.cursor);
+                        setMessagesTopReached(data.topReached);
                     } catch (error: unknown) {
                         const errorMessage = getErrorMessage(error);
                         console.error(errorMessage);
-                        setMessagesCursor(null);
-                        setMessagesEndReached(true);
+                        setMessagesTopCursor(null);
+                        setMessagesTopReached(true);
                     } finally {
                         setScrollPosition(scrollPositionRef.current);
+                        setIsFetchingMoreMessages(false);
                     }
                 };
             };
 
             fetchOldMsgs();
+        } else if (bottomInView && scrollPositionRef.current !== scrollPosition && !isFetchingMoreMessages) {
+            const fetchNewMsgs = async () => {
+                if ((!messagesBottomReached && messagesBottomCursor)) {
+                    try {
+                        setIsFetchingMoreMessages(true);
+                        const response = await getNewerConversationMessages(conversation.id, messagesBottomCursor);
+
+                        if (!response.success) {
+                            const errorData = response as ErrorResponse;
+                            throw new Error(errorData.error.message);
+                        }
+
+                        const { data } = response;
+                        if (!data) throw new Error('Data is missing in response');
+                        else if (data.messages === undefined) throw new Error('Messages property is missing in data response');
+                        else if (data.cursor === undefined) throw new Error('Cursor property is missing in data response');
+                        console.log(data)
+
+                        setMessages((current) => [...current, ...data.messages as ConversationMessageType[],]);
+                        setMessagesBottomCursor(data.cursor);
+                        setMessagesBottomReached(data.bottomReached);
+                    } catch (error: unknown) {
+                        const errorMessage = getErrorMessage(error);
+                        console.error(errorMessage);
+                        setMessagesBottomCursor(null);
+                        setMessagesBottomReached(true);
+                    } finally {
+                        setScrollPosition(scrollPositionRef.current);
+                        setIsFetchingMoreMessages(false);
+                    }
+                };
+            };
+
+            fetchNewMsgs();
         }
-    }, [inView, loggedInUser, conversation, messages, messagesCursor, messagesEndReached, scrollPosition]);
+    }, [
+        topInView,
+        bottomInView,
+        scrollPosition,
+        loggedInUser,
+        conversation,
+        messages,
+        messagesTopCursor,
+        messagesTopReached,
+        messagesBottomCursor,
+        messagesBottomReached,
+        isFetchingMoreMessages
+    ]);
 
     // Handle new messages via sockets
     useEffect(() => {
         socket.on('message_received', (message: ConversationMessageType) => {
-            setMessages((prevMessages) => [
-                ...prevMessages,
-                message,
-            ]);
+            if (message.sentBy !== loggedInUser.username && messagesBottomReached) {
+                setMessages((prevMessages) => [
+                    ...prevMessages,
+                    message,
+                ]);
 
-            message.sentBy !== loggedInUser.username && socket.emit('conversation_seen_status', conversation.id, message.id);
+                socket.emit('conversation_seen_status', conversation.id, message.id);
+            }
         });
 
         socket.on('message_typing_status', (typingUser: null | string) => {
@@ -90,8 +150,8 @@ export default function ConversationContent({ conversation }: { conversation: Co
         socket.on('message_seen', (messageId) => {
             setMessages((prevMessages) =>
                 prevMessages.map((msg) =>
-                    (msg.id === messageId || (messageId === null && msg === prevMessages[prevMessages.length - 1]))
-                        ? { ...msg, readStatus: true }
+                    (msg.id === messageId && !msg.readAt)
+                        ? { ...msg, readAt: new Date() }
                         : msg
                 )
             );
@@ -102,7 +162,7 @@ export default function ConversationContent({ conversation }: { conversation: Co
             socket.off('message_typing_status');
             socket.off('message_seen');
         };
-    }, [conversation, loggedInUser]);
+    }, [conversation, messagesBottomReached, loggedInUser]);
 
     // Connect to conversation room
     useEffect(() => {
@@ -112,10 +172,10 @@ export default function ConversationContent({ conversation }: { conversation: Co
         socket.on('conversation_seen', (joinedUser) => {
             if (loggedInUser.username === joinedUser) return;
 
-            setAllMessagesOrdered((prevMessages) =>
+            setMessages((prevMessages) =>
                 prevMessages.map((msg) =>
-                    (msg.sender === true)
-                        ? { ...msg, readStatus: true }
+                    (msg.sentBy === loggedInUser.username && !msg.readAt)
+                        ? { ...msg, readAt: new Date() }
                         : msg
                 )
             );
@@ -127,8 +187,6 @@ export default function ConversationContent({ conversation }: { conversation: Co
         };
     }, [conversation, loggedInUser]);
 
-    console.log(messages, messagesCursor)
-
     return (
         <div className='' style={{ height: 'calc(100vh - var(--header-size))' }}>
             <ConversationHeader receiverInfo={receiverInfo} />
@@ -136,10 +194,14 @@ export default function ConversationContent({ conversation }: { conversation: Co
                 <ConversationMessages
                     messages={messages}
                     receiverInfo={receiverInfo}
-                    loadingRef={ref}
+                    topCursor={messagesTopCursor}
+                    topRef={topRef}
+                    topReached={messagesTopReached}
+                    bottomCursor={messagesBottomCursor}
+                    bottomRef={bottomRef}
+                    bottomReached={messagesBottomReached}
                     scrollPositionRef={scrollPositionRef}
                     scrollPosition={scrollPosition}
-                    endReached={messagesEndReached}
                     receiverIsTyping={receiverIsTyping}
                 />
 
@@ -148,6 +210,7 @@ export default function ConversationContent({ conversation }: { conversation: Co
                 <ConversationInput
                     conversationId={conversation.id}
                     setMessages={setMessages}
+                    messagesBottomReached={messagesBottomReached}
                     setScrollPosition={setScrollPosition}
                 />
             </div>

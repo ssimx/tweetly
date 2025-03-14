@@ -24,7 +24,7 @@ export default function ConversationUser({ user }: { user: Pick<ConversationType
                     </p>
                     <p>·</p>
                     <p className='text-secondary-text text-14'>
-                        {user.stats.followersCount} {user.stats.followersCount > 1 ? 'Followers' : 'Follower'}
+                        {user.stats.followersCount} {user.stats.followersCount > 1 || user.stats.followersCount === 0 ? 'Followers' : 'Follower'}
                     </p>
                 </div>
             </div>

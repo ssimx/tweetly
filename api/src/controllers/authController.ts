@@ -82,7 +82,7 @@ export const registerTempUser = async (req: Request, res: Response, next: NextFu
             data: { token },
         };
 
-        res.status(200).json(successResponse);
+        return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }
@@ -128,7 +128,7 @@ export const updateTempUserUsername = async (req: Request, res: Response, next: 
             success: true,
         };
 
-        res.status(200).json(successResponse);
+        return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }
@@ -217,7 +217,7 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
                 data: { token },
             };
 
-            res.status(200).json(successResponse);
+            return res.status(200).json(successResponse);
         }
     } catch (error) {
         next(error);
@@ -288,7 +288,7 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
             },
         };
 
-        res.status(200).json(successResponse);
+        return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }

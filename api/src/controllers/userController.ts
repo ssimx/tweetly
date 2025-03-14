@@ -47,7 +47,7 @@ export const getUserInfo = async (req: Request, res: Response, next: NextFunctio
             },
         };
 
-        res.status(200).json(successResponse);
+        return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }
@@ -85,7 +85,7 @@ export const getTemporaryUserInfo = async (req: Request, res: Response, next: Ne
             },
         };
 
-        res.status(200).json(successResponse);
+        return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }
@@ -111,7 +111,7 @@ export const getProfileInfo = async (req: Request, res: Response, next: NextFunc
             },
         };
 
-        res.status(200).json(successResponse);
+        return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }
@@ -145,7 +145,7 @@ export const getUserFollowSuggestions = async (req: Request, res: Response, next
             },
         };
 
-        res.status(200).json(successResponse);
+        return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }
@@ -190,7 +190,7 @@ export const updateProfileInfo = async (req: Request, res: Response, next: NextF
             },
         };
 
-        res.status(200).json(successResponse);
+        return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }
@@ -247,7 +247,7 @@ export const followUser = async (req: Request, res: Response, next: NextFunction
             data: undefined
         };
 
-        res.status(200).json(successResponse);
+        return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     };
@@ -268,7 +268,7 @@ export const unfollowUser = async (req: Request, res: Response, next: NextFuncti
             data: undefined
         };
 
-        res.status(200).json(successResponse);
+        return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     };
@@ -369,7 +369,7 @@ export const getUserNotifications = async (req: Request, res: Response, next: Ne
                         },
                     };
 
-                    res.status(200).json(successResponse);
+                    return res.status(200).json(successResponse);
                 }
             }
 
@@ -405,7 +405,7 @@ export const getUserNotifications = async (req: Request, res: Response, next: Ne
                 },
             };
 
-            res.status(200).json(successResponse);
+            return res.status(200).json(successResponse);
         } else {
             const oldestNotificationId = await getOldestNotification(user.id).then(res => res?.id);
             const notificationsData = await getNotifications(user.id);
@@ -440,7 +440,7 @@ export const getUserNotifications = async (req: Request, res: Response, next: Ne
                 },
             };
 
-            res.status(200).json(successResponse);
+            return res.status(200).json(successResponse);
         }
     } catch (error) {
         next(error);
@@ -500,7 +500,7 @@ export const changeUsername = async (req: Request, res: Response, next: NextResp
             }
         };
 
-        res.status(200).json(successResponse);
+        return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }
@@ -559,7 +559,7 @@ export const changeEmail = async (req: Request, res: Response, next: NextFunctio
             }
         };
 
-        res.status(200).json(successResponse);
+        return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }
@@ -593,7 +593,7 @@ export const changeBirthday = async (req: Request, res: Response, next: NextFunc
             data: undefined
         };
 
-        res.status(200).json(successResponse);
+        return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }
@@ -629,7 +629,7 @@ export const changePassword = async (req: Request, res: Response, next: NextFunc
             data: undefined
         };
 
-        res.status(200).json(successResponse);
+        return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }

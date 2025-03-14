@@ -164,7 +164,7 @@ model Message {
     images         String[]     @db.VarChar(280)
     receiverId     Int
     createdAt      DateTime     @default(now())
-    readStatus     Boolean      @default(false)
+    readAt         DateTime?
     senderId       Int
     updatedAt      DateTime     @default(now())
     conversationId String

@@ -14,10 +14,11 @@ import { createNewConversationMessage } from '@/actions/actions';
 type ConversationInputType = {
     conversationId: string,
     setMessages: React.Dispatch<React.SetStateAction<ConversationMessageType[]>>;
+    messagesBottomReached: boolean,
     setScrollPosition: React.Dispatch<React.SetStateAction<number>>
 };
 
-export default function ConversationInput({ conversationId, setMessages, setScrollPosition }: ConversationInputType) {
+export default function ConversationInput({ conversationId, setMessages, messagesBottomReached, setScrollPosition }: ConversationInputType) {
     const { loggedInUser } = useUserContext();
     const [selectedImagesPreview, setSelectedImagesPreview] = useState<string[]>([]);
     const [selectedImagesFiles, setSelectedImagesFiles] = useState<File[]>([]);
@@ -27,6 +28,7 @@ export default function ConversationInput({ conversationId, setMessages, setScro
     const maxChars = 10000;
 
     const [typing, setTyping] = useState(false);
+    const [isSendingImage, setIsSendingImage] = useState(false);
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const {
@@ -60,7 +62,7 @@ export default function ConversationInput({ conversationId, setMessages, setScro
             clearTimeout(typingTimeoutRef.current);
         }
 
-        typingTimeoutRef.current = setTimeout(stopTyping, 1000);
+        typingTimeoutRef.current = setTimeout(stopTyping, 2000);
     };
 
     const handleSelectedImages = async (files: FileList) => {
@@ -97,9 +99,10 @@ export default function ConversationInput({ conversationId, setMessages, setScro
     };
 
     const onSubmitMessage = async (formData: FormNewConversationMessageDataType) => {
-        if (isSubmitting) return;
+        if (isSendingImage) return;
 
         const createdAt = new Date();
+        // generate ID for the message, this will be used on the backend as well
         const msgTempId = uuidv4();
 
         if (typingTimeoutRef.current) {
@@ -107,22 +110,23 @@ export default function ConversationInput({ conversationId, setMessages, setScro
         }
 
         // Optimistically add the temporary message if there's no images being uploaded
-        if (formData.images === undefined) {
+        if (formData.images === undefined || !formData.images.length) {
             const tempMessage: ConversationMessageType = {
                 id: msgTempId,
+                tempId: msgTempId,
                 content: formData.text,
                 images: undefined,
                 createdAt,
                 updatedAt: createdAt,
                 sentBy: loggedInUser.username,
-                readStatus: false,
                 status: 'sending',
             };
 
-            setMessages((prevMessages) => [...prevMessages, tempMessage]);
+            messagesBottomReached && setMessages((prevMessages) => [...prevMessages, tempMessage]);
 
             try {
-                const response = await createNewConversationMessage(formData);
+                reset();
+                const response = await createNewConversationMessage(formData, msgTempId);
 
                 if (!response.success) {
                     const errorData = response as ErrorResponse;
@@ -134,43 +138,38 @@ export default function ConversationInput({ conversationId, setMessages, setScro
                 else if (data.message === undefined) throw new Error('Message property is missing in data response');
 
                 // Update the message status and id from temporary to confirmed
-                setMessages((prevMessages) => {
-                    const messages = prevMessages.toSpliced(-1, 1) as ConversationMessageType[];
-                    return [...messages, data.message]
+                messagesBottomReached && setMessages((prevMessages) => {
+                    return prevMessages.map(msg =>
+                        msg.tempId === data.message.tempId
+                            ? { ...data.message, status: 'sent' }
+                            : msg
+                    );
                 });
-
-                setSelectedImagesPreview([]);
-                setSelectedImagesFiles([]);
 
                 // emit new message to the receiver
-                stopTyping();
                 socket.emit('new_conversation_message', conversationId, data.message);
-                // socket.emit('new_user_message', data.message.receiverId);
             } catch (error) {
                 // Update the message to "failed" if there was an error
-                setMessages((prevMessages) => {
-                    const messages = prevMessages.splice(-1, 1) as ConversationMessageType[];
-                    return [...messages, {
-                        id: msgTempId,
-                        content: formData.text,
-                        images: undefined,
-                        createdAt,
-                        updatedAt: createdAt,
-                        sentBy: loggedInUser.username,
-                        readStatus: false,
-                        status: 'failed',
-                    }]
+                messagesBottomReached && setMessages((prevMessages) => {
+                    return prevMessages.map(msg =>
+                        msg.tempId === tempMessage.tempId
+                            ? { ...tempMessage, status: 'failed' }
+                            : msg
+                    );
                 });
+
+                console.error(error);
+            } finally {
+                stopTyping();
 
                 setSelectedImagesPreview([]);
                 setSelectedImagesFiles([]);
-
-                console.error(error);
-                reset();
             }
         } else {
             try {
-                const response = await createNewConversationMessage(formData);
+                setIsSendingImage(true);
+                reset();
+                const response = await createNewConversationMessage(formData, msgTempId);
 
                 if (!response.success) {
                     const errorData = response as ErrorResponse;
@@ -181,38 +180,34 @@ export default function ConversationInput({ conversationId, setMessages, setScro
                 if (!data) throw new Error('Data is missing in response');
                 else if (data.message === undefined) throw new Error('Message property is missing in data response');
 
-                // Update the message status and id from temporary to confirmed
-                setMessages((prevMessages) => {
+                messagesBottomReached && setMessages((prevMessages) => {
                     return [...prevMessages, data.message]
                 });
 
-                setSelectedImagesPreview([]);
-                setSelectedImagesFiles([]);
-
                 // emit new message to the receiver
-                stopTyping();
                 socket.emit('new_conversation_message', conversationId, data.message);
-                // socket.emit('new_user_message', data.message.receiverId);
             } catch (error) {
                 // Update the message to "failed" if there was an error
-                setMessages((prevMessages) => {
+                messagesBottomReached && setMessages((prevMessages) => {
                     return [...prevMessages, {
                         id: msgTempId,
+                        tempId: msgTempId,
                         content: formData.text,
-                        images: selectedImagesPreview,
-                        createdAt,
-                        updatedAt: createdAt,
+                        images: formData.images!.map((imgFile) => URL.createObjectURL(imgFile)),
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                        readAt: undefined,
                         sentBy: loggedInUser.username,
-                        readStatus: false,
                         status: 'failed',
                     }]
                 });
 
+                console.error(error);
+            } finally {
+                stopTyping();
+                setIsSendingImage(false);
                 setSelectedImagesPreview([]);
                 setSelectedImagesFiles([]);
-
-                console.error(error);
-                reset();
             }
         }
 
@@ -298,7 +293,7 @@ export default function ConversationInput({ conversationId, setMessages, setScro
                     />
 
                     <button type='submit' form={formId} className='disabled:opacity-50'
-                        disabled={isSubmitting || (textWatch.length > 280 || textWatch.length === 0) && (selectedImagesFiles.length === 0 || selectedImagesFiles.length > 4)}
+                        disabled={isSubmitting || isSendingImage || (textWatch.length > 280 || textWatch.length === 0) && (selectedImagesFiles.length === 0 || selectedImagesFiles.length > 4)}
                     >
                         <SendHorizontal size={22} className='text-primary' />
                     </button>

@@ -842,7 +842,7 @@ export async function removeBookmarkPost(postId: number) {
     }
 };
 
-export async function createNewConversationMessage(formData: FormNewConversationMessageDataType): Promise<ApiResponse<{ message: ConversationMessageType }>> {
+export async function createNewConversationMessage(formData: FormNewConversationMessageDataType, tempId: string): Promise<ApiResponse<{ message: ConversationMessageType }>> {
     try {
         const token = await getCurrentUserToken();
         newMessageDataSchema.parse(formData);
@@ -862,6 +862,7 @@ export async function createNewConversationMessage(formData: FormNewConversation
         }
 
         newFormData.append('conversationId', String(formData.conversationId));
+        newFormData.append('tempId', String(tempId));
 
         const response = await fetch(`http://localhost:3000/api/conversations/messages/create`, {
             method: 'POST',

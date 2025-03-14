@@ -173,15 +173,17 @@ export const newMessageCheckup = (req: Request, res: Response, next: NextFunctio
         // Explicitly type req.files to allow indexing with 'images'
         const files = req.files as { [fieldname: string]: Express.Multer.File[] | undefined }; // Cast files to the expected type
 
+        const tempId: string | undefined = req.body.tempId ?? undefined;
         const text: string | undefined = req.body.text ?? undefined;
         const conversationId: string | undefined = req.body.conversationId ?? undefined;
         const images: Express.Multer.File[] | undefined = files["images"] ?? undefined;
 
         if ((text === undefined || text.trim().length === 0) && (images === undefined || images.length === 0)) {
-            return next(new AppError('Post content is missing', 404, 'MISSING_CONTENT'));
+            return next(new AppError('Message content is missing', 404, 'MISSING_CONTENT'));
         }
 
         // Attach parsed fields to req for use in your route handler
+        req.body.tempId = tempId;
         req.body.text = text;
         req.body.conversationId = conversationId;
         req.body.files = images;

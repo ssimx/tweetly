@@ -594,11 +594,11 @@ export async function getMoreConversations(cursor: string): Promise<ApiResponse<
     }
 };
 
-export async function getMoreConversationMessages(id: string, cursor: string): Promise<ApiResponse<{ messages: ConversationMessageType[], cursor: string | null, end: boolean }>> {
+export async function getOlderConversationMessages(id: string, cursor: string): Promise<ApiResponse<{ messages: ConversationMessageType[], cursor: string | null, topReached: boolean }>> {
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://localhost:3000/api/conversations/${id}?cursor=${cursor}`, {
+        const response = await fetch(`http://localhost:3000/api/conversations/${id}?cursor=${cursor}&type=old`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -611,7 +611,7 @@ export async function getMoreConversationMessages(id: string, cursor: string): P
             throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const { data } = await response.json() as SuccessResponse<{ messages: ConversationMessageType[], cursor: string | null, end: boolean }>;
+        const { data } = await response.json() as SuccessResponse<{ messages: ConversationMessageType[], cursor: string | null, topReached: boolean }>;
         if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
         else if (data.messages === undefined) throw new AppError('Messages property is missing in data response', 404, 'MISSING_PROPERTY');
         else if (data.cursor === undefined) throw new AppError('Cursor property is missing in data response', 404, 'MISSING_PROPERTY');
@@ -619,9 +619,62 @@ export async function getMoreConversationMessages(id: string, cursor: string): P
         return {
             success: true,
             data: {
-                messages: data.messages,
-                cursor: data.cursor,
-                end: data.end,
+                messages: data.messages ?? [],
+                cursor: data.cursor ?? null,
+                topReached: data.topReached ?? true,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
+    }
+};
+
+export async function getNewerConversationMessages(id: string, cursor: string): Promise<ApiResponse<{ messages: ConversationMessageType[], cursor: string | null, bottomReached: boolean }>> {
+    try {
+        const token = await getCurrentUserToken();
+
+        const response = await fetch(`http://localhost:3000/api/conversations/${id}?cursor=${cursor}&type=new`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+        }
+
+        const { data } = await response.json() as SuccessResponse<{ messages: ConversationMessageType[], cursor: string | null, bottomReached: boolean }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.messages === undefined) throw new AppError('Messages property is missing in data response', 404, 'MISSING_PROPERTY');
+        else if (data.cursor === undefined) throw new AppError('Cursor property is missing in data response', 404, 'MISSING_PROPERTY');
+
+        return {
+            success: true,
+            data: {
+                messages: data.messages ?? [],
+                cursor: data.cursor ?? null,
+                bottomReached: data.bottomReached ?? true,
             },
         }
     } catch (error: unknown) {

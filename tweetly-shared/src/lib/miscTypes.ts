@@ -19,9 +19,10 @@ export type ConversationCardType = {
     updatedAt: Date,
     lastMessage: {
         id: number,
+        createdAt: Date,
         content?: string,
         images?: string[],
-        readStatus: boolean,
+        readAt?: Date,
         sender: {
             username: string,
             profile: {
@@ -42,15 +43,15 @@ export type ConversationCardType = {
 export type FormNewConversationMessageDataType = z.infer<typeof newMessageDataSchema>;
 
 export type ConversationMessageType = {
-    id: string;
-    content?: string;
-    images?: string[];
-    createdAt: Date;
-    updatedAt: Date;
+    id: string,
+    tempId?: string,
+    content?: string,
+    images?: string[],
+    createdAt: Date,
+    updatedAt: Date,
+    readAt?: Date,
 
     sentBy: string,
-    // receiverId: number,
-    readStatus: boolean;
     status: 'sending' | 'sent' | 'failed',
 };
 
@@ -74,6 +75,8 @@ export type ConversationType = {
 
     messages: ConversationMessageType[];
 
-    cursor: string | null,
-    end: boolean,
+    topCursor: string | null,
+    topReached: boolean,
+    bottomCursor: string | null,
+    bottomReached: boolean,
 };

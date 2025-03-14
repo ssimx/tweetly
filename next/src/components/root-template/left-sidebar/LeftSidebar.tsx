@@ -19,6 +19,11 @@ export default function LeftSidebar() {
     const { savedTheme } = useDisplayContext();
 
     useEffect(() => {
+        socket.connect();
+
+        // After connecting, tell the server which users this user has notifications on for
+        socket.emit('get_notifications', loggedInUser.id);
+
         const onNewNotification = () => {
             setNotifications(true);
         };
@@ -45,21 +50,11 @@ export default function LeftSidebar() {
         socket.on('new_message', onNewMessages);
 
         return () => {
+            socket.disconnect();
             socket.off('notification_read_status', initializeNotificationsStatus);
             socket.off('message_read_status', initializeNotificationsStatus);
             socket.off('new_notification', onNewNotification);
             socket.off('new_message', onNewMessages);
-        };
-    }), [];
-
-    useEffect(() => {
-        socket.connect();
-
-        // After connecting, tell the server which users this user has notifications on for
-        socket.emit('get_notifications', loggedInUser.id);
-
-        return () => {
-            socket.disconnect();
         };
     }, [loggedInUser]);
     

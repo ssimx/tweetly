@@ -9,11 +9,11 @@ export const getAllConversations = async (userId: number, cursor?: string) => {
             participants: {
                 some: {
                     userId: userId,
-                    isDeleted: false, // Ensure the conversation is not deleted by the user
+                    isDeleted: false,
                 },
             },
             messages: {
-                some: {}, // Ensures that at least one message exists in the conversation
+                some: {},
             },
         },
         orderBy: {
@@ -21,7 +21,7 @@ export const getAllConversations = async (userId: number, cursor?: string) => {
         },
         take: 10,
         skip: cursor ? 1 : 0,
-        cursor: cursor ? { id: cursor }: undefined,
+        cursor: cursor ? { id: cursor } : undefined,
         select: {
             id: true,
             participants: {
@@ -41,9 +41,10 @@ export const getAllConversations = async (userId: number, cursor?: string) => {
                 take: 1, // Only take the latest message
                 select: {
                     id: true,
+                    createdAt: true,
                     content: true,
                     images: true,
-                    readStatus: true,
+                    readAt: true,
                     sender: {
                         select: {
                             username: true,
@@ -79,8 +80,12 @@ export const getOldestConversation = async (userId: number) => {
         where: {
             participants: {
                 some: {
-                    userId
+                    userId,
+                    isDeleted: false,
                 }
+            },
+            messages: {
+                some: {}
             }
         },
         orderBy: {
@@ -156,16 +161,15 @@ export const getConversation = async (id: string) => {
                     id: true,
                     content: true,
                     images: true,
-                    readStatus: true,
                     createdAt: true,
                     updatedAt: true,
+                    readAt: true,
                     sender: {
                         select: {
                             username: true,
                         }
                     }
                 },
-
             }
         }
     })
@@ -173,30 +177,24 @@ export const getConversation = async (id: string) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getMessages = async (id: string, cursorId: string) => {
+export const getLatestMessages = async (id: string) => {
     return await prisma.conversation.findFirst({
         where: {
             id
         },
         select: {
             messages: {
-                ...(cursorId && {
-                    cursor: {
-                        id: cursorId
-                    },
-                    skip: 1,
-                }),
                 orderBy: {
-                    createdAt: 'desc'
+                    createdAt: 'desc',
                 },
                 take: 25,
                 select: {
                     id: true,
                     content: true,
                     images: true,
-                    readStatus: true,
                     createdAt: true,
                     updatedAt: true,
+                    readAt: true,
                     sender: {
                         select: {
                             username: true,
@@ -225,6 +223,132 @@ export const getFirstMessage = async (id: string) => {
                 select: {
                     id: true
                 }
+            }
+        }
+    })
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getLastMessage = async (id: string) => {
+    return prisma.conversation.findFirst({
+        where: {
+            id
+        },
+        select: {
+            messages: {
+                orderBy: {
+                    createdAt: 'desc'
+                },
+                take: 1,
+                select: {
+                    id: true
+                }
+            }
+        }
+    })
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getFirstUnreadMessage = async (conversationId: string, loggedInUserId: number) => {
+    return await prisma.message.findFirst({
+        where: {
+            conversationId,
+            senderId: {
+                not: loggedInUserId,
+            },
+            readAt: null,
+        },
+        orderBy: {
+            createdAt: 'asc',
+        },
+        select: {
+            id: true,
+            content: true,
+            images: true,
+            createdAt: true,
+            updatedAt: true,
+            readAt: true,
+            sender: {
+                select: {
+                    username: true,
+                }
+            }
+        },
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getOlderMessages = async (id: string, cursorId: string) => {
+    return await prisma.conversation.findFirst({
+        where: {
+            id
+        },
+        select: {
+            messages: {
+                ...(cursorId && {
+                    cursor: {
+                        id: cursorId
+                    },
+                    skip: 1,
+                }),
+                orderBy: {
+                    createdAt: 'desc',
+                },
+                take: 25,
+                select: {
+                    id: true,
+                    content: true,
+                    images: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    readAt: true,
+                    sender: {
+                        select: {
+                            username: true,
+                        }
+                    }
+                },
+
+            }
+        }
+    })
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const getNewerMessages = async (id: string, cursorId: string) => {
+    return await prisma.conversation.findFirst({
+        where: {
+            id
+        },
+        select: {
+            messages: {
+                ...(cursorId && {
+                    cursor: {
+                        id: cursorId
+                    },
+                    skip: 1,
+                }),
+                orderBy: {
+                    createdAt: 'asc',
+                },
+                take: 25,
+                select: {
+                    id: true,
+                    content: true,
+                    images: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    readAt: true,
+                    sender: {
+                        select: {
+                            username: true,
+                        }
+                    }
+                },
             }
         }
     })
@@ -271,58 +395,23 @@ export const createMessage = async (senderId: number, receiverId: number, conten
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const getFirstUnreadMessage = async (conversationId: string, loggedInUserId: number) => {
-    return await prisma.message.findFirst({
+export const updateMessagesReadStatus = async (conversationId: string, loggedInUserId: number, firstUnreadMessageTimestamp: Date) => {
+    return prisma.message.updateMany({
         where: {
             conversationId,
+            // update status for messages of the other party
             senderId: {
                 not: loggedInUserId,
             },
-            readStatus: false
-        },
-        orderBy: {
-            createdAt: 'desc',
-        },
-        select: {
-            id: true,
-            createdAt: true,
-        },
-    });
-};
-
-// ---------------------------------------------------------------------------------------------------------
-
-export const updateMessagesReadStatus = async (conversationId: string, loggedInUserId: number, firstUnreadMessageTimestamp?: Date) => {
-    if (firstUnreadMessageTimestamp) {
-        return prisma.message.updateMany({
-            where: {
-                conversationId,
-                // update status for messages of the other party
-                senderId: {
-                    not: loggedInUserId,
-                },
-                createdAt: {
-                    gte: firstUnreadMessageTimestamp,
-                },
-                readStatus: false,
+            createdAt: {
+                gte: firstUnreadMessageTimestamp,
             },
-            data: {
-                readStatus: true,
-            }
-        })
-    } else {
-        return prisma.message.updateMany({
-            where: {
-                conversationId,
-                senderId: {
-                    not: loggedInUserId,
-                },
-            },
-            data: {
-                readStatus: true,
-            }
-        })
-    }
+            readAt: null,
+        },
+        data: {
+            readAt: new Date(),
+        }
+    })
 };
 
 // ---------------------------------------------------------------------------------------------------------
@@ -331,10 +420,11 @@ export const updateMessageReadStatus = async (conversationId: string, messageId:
     return prisma.message.update({
         where: {
             id: messageId,
-            conversationId
+            conversationId,
+            readAt: null,
         },
         data: {
-            readStatus: true
+            readAt: new Date(),
         },
         select: {
             sender: {
@@ -359,3 +449,16 @@ export const updateConversationUpdatedAtTime = async (conversationId: string, ti
     })
 };
 
+// ---------------------------------------------------------------------------------------------------------
+
+export const getMessagesReadStatus = async (userId: number) => {
+    return await prisma.message.findFirst({
+        where: {
+            receiverId: userId,
+            readAt: undefined,
+        },
+        select: {
+            id: true,
+        }
+    })
+};

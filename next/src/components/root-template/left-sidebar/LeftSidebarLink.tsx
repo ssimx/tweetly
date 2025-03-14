@@ -24,7 +24,7 @@ export default function LeftSidebarLink({ link, messages, notifications }: { lin
                 className='left-sidebar-link top-0 right-0'>
                 <div className='relative flex items-center gap-4'>
                     {notifications === true && (
-                        <div className='absolute right-0 top-0 translate-y-[-25%] translate-x-[25%] z-10 w-[15px] h-[15px] bg-primary rounded-full border-2 border-[#ffffff]'></div>
+                        <div className='absolute right-0 top-0 translate-y-[-25%] translate-x-[100%] z-10 w-[12px] h-[12px] bg-primary rounded-full border border-[var(--primary-text-color)]'></div>
                     )}
                     <Icon className='z-1 icon'
                         color={pathname === link.route ? 'hsl(var(--primary))' : 'hsl(var(--primary-text-color))'}
@@ -42,7 +42,7 @@ export default function LeftSidebarLink({ link, messages, notifications }: { lin
                 className='left-sidebar-link top-0 right-0'>
                 <div className='relative flex items-center gap-4'>
                     {messages === true && (
-                        <div className='absolute right-0 top-0 translate-y-[-25%] translate-x-[25%] z-10 w-[15px] h-[15px] bg-primary rounded-full border-2 border-[#ffffff]'></div>
+                        <div className='absolute right-0 top-0 translate-y-[-25%] translate-x-[100%] z-10 w-[12px] h-[12px] bg-primary rounded-full border border-[var(--primary-text-color)]'></div>
                     )}
                     <Icon className='z-1 icon'
                         color={pathname === link.route || /^\/messages\/.+/.test(pathname) ? 'hsl(var(--primary))' : 'hsl(var(--primary-text-color))'}

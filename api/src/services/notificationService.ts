@@ -269,20 +269,6 @@ export const getNotificationsReadStatus = async (userId: number) => {
 };
 
 // ---------------------------------------------------------------------------------------------------------
-
-export const getMessagesReadStatus = async (userId: number) => {
-    return await prisma.message.findFirst({
-        where: {
-            receiverId: userId,
-            readStatus: false,
-        },
-        select: {
-            id: true,
-        }
-    })
-};
-
-// ---------------------------------------------------------------------------------------------------------
 //                                          SETTER SERVICES
 // ---------------------------------------------------------------------------------------------------------
 

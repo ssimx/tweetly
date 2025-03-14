@@ -10,7 +10,7 @@ export const newMessageDataSchema = z.object({
         .instanceof(File).array().optional(),
     conversationId: z
         .string()
-        .trim()
+        .trim(),
 }).superRefine((data, ctx) => {
     // Check if text is empty
     if (data.images?.length === 0 && data.text?.length === 0) {

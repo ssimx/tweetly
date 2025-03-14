@@ -65,8 +65,8 @@ input, textarea {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #afafaf;
-    font-size: 14px;
+    color: hsl(var(--secondary-text-color));
+    font-size: 1.05rem;
     font-weight: normal;
     position: relative;
     text-align: center;

@@ -24,7 +24,7 @@ export default function ConversationCard({ conversation }: { conversation: Conve
     return (
         <Link href={`/messages/${conversation.id}`}>
             <div
-                className={`w-full min-w-0 h-full px-4 py-4 flex gap-2 hover:bg-card-hover hover:cursor-pointer ${conversation.lastMessage.sender.username !== loggedInUser.username && conversation.lastMessage.readStatus === false ? 'bg-post-hover group' : null}`}
+                className={`w-full min-w-0 h-full px-4 py-4 flex gap-2 hover:bg-card-hover hover:cursor-pointer ${conversation.lastMessage.sender.username !== loggedInUser.username && conversation.lastMessage.readAt === undefined ? 'bg-post-hover group' : null}`}
             >
                 <div className='min-w-[40px]'>
                     <Image
@@ -38,8 +38,8 @@ export default function ConversationCard({ conversation }: { conversation: Conve
                         <p className='font-bold text-primary-text whitespace-nowrap overflow-hidden'>{messageUserPreviewInfo.profile?.name}</p>
                         <p className=''>@{messageUserPreviewInfo.username}</p>
                         <p>·</p>
-                        <PostDate createdAt={conversation.updatedAt} />
-                        {conversation.lastMessage.sender.username !== loggedInUser.username && conversation.lastMessage.readStatus === false && (
+                        <PostDate createdAt={conversation.lastMessage.createdAt} />
+                        {conversation.lastMessage.sender.username !== loggedInUser.username && conversation.lastMessage.readAt === undefined && (
                             <div className='ml-auto self-center bg-primary rounded-full w-[8px] h-[8px] group-hover:scale-110'></div>
                         )}
                     </div>

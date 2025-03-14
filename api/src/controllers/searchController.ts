@@ -29,7 +29,7 @@ export async function usernameOrEmailLookup(req: Request, res: Response, next: N
             },
         };
 
-        res.status(200).json(successResponse);
+        return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }
@@ -101,7 +101,7 @@ export async function searchUsers(req: Request, res: Response, next: NextFunctio
             },
         };
 
-        res.status(200).json(successResponse);
+        return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }
@@ -210,7 +210,7 @@ export async function searchUsersAndPosts(req: Request, res: Response, next: Nex
             },
         };
 
-        res.status(200).json(successResponse);
+        return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }
@@ -274,7 +274,7 @@ export async function searchPostsWithCursor(req: Request, res: Response, next: N
             },
         };
 
-        res.status(200).json(successResponse);
+        return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
     }

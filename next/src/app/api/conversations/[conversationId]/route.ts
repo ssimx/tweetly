@@ -22,40 +22,77 @@ export async function GET(req: NextRequest, props: { params: Promise<{ conversat
             const apiUrl = process.env.EXPRESS_API_URL;
             const params = await props.params;
             const searchParams = req.nextUrl.searchParams;
-            const query = searchParams.get('cursor');
+            const cursor = searchParams.get('cursor');
+            const type = searchParams.get('type');
 
-            if (query !== null) {
-                const response = await fetch(`${apiUrl}/conversations/${params.conversationId}?cursor=${query}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
-                    },
-                });
+            if (cursor !== null) {
+                if (type === 'old') {
+                    const response = await fetch(`${apiUrl}/conversations/${params.conversationId}?cursor=${cursor}&type=old`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                        },
+                    });
 
-                if (!response.ok) {
-                    const errorData = await response.json() as ErrorResponse;
-                    throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
-                }
-
-                const { data } = await response.json() as SuccessResponse<{ messages: ConversationMessageType[], cursor: string | null, end: boolean }>;
-                if (data === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
-                else if (data.messages === undefined) throw new AppError('Messages property is missing in data response', 404, 'MISSING_PROPERTY');
-                else if (data.cursor === undefined) throw new AppError('Cursor property is missing in data response', 404, 'MISSING_PROPERTY');
-
-                const successResponse: SuccessResponse<{ messages: ConversationMessageType[], cursor: string | null, end: boolean }> = {
-                    success: true,
-                    data: {
-                        messages: data.messages,
-                        cursor: data.cursor ?? null,
-                        end: data.end ?? true,
+                    if (!response.ok) {
+                        const errorData = await response.json() as ErrorResponse;
+                        throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
                     }
-                };
 
-                return NextResponse.json(
-                    successResponse,
-                    { status: response.status }
-                );
+                    const { data } = await response.json() as SuccessResponse<{ messages: ConversationMessageType[], cursor: string | null, topReached: boolean }>;
+                    if (data === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+                    else if (data.messages === undefined) throw new AppError('Messages property is missing in data response', 404, 'MISSING_PROPERTY');
+                    else if (data.cursor === undefined) throw new AppError('Cursor property is missing in data response', 404, 'MISSING_PROPERTY');
+
+                    const successResponse: SuccessResponse<{ messages: ConversationMessageType[], cursor: string | null, topReached: boolean }> = {
+                        success: true,
+                        data: {
+                            messages: data.messages,
+                            cursor: data.cursor ?? null,
+                            topReached: data.topReached ?? true,
+                        }
+                    };
+
+                    return NextResponse.json(
+                        successResponse,
+                        { status: response.status }
+                    );
+                } else if (type === 'new') {
+                    const response = await fetch(`${apiUrl}/conversations/${params.conversationId}?cursor=${cursor}&type=new`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                        },
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json() as ErrorResponse;
+                        throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+                    }
+
+                    const { data } = await response.json() as SuccessResponse<{ messages: ConversationMessageType[], cursor: string | null, bottomReached: boolean }>;
+                    if (data === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+                    else if (data.messages === undefined) throw new AppError('Messages property is missing in data response', 404, 'MISSING_PROPERTY');
+                    else if (data.cursor === undefined) throw new AppError('Cursor property is missing in data response', 404, 'MISSING_PROPERTY');
+
+                    const successResponse: SuccessResponse<{ messages: ConversationMessageType[], cursor: string | null, bottomReached: boolean }> = {
+                        success: true,
+                        data: {
+                            messages: data.messages,
+                            cursor: data.cursor ?? null,
+                            bottomReached: data.bottomReached ?? true,
+                        }
+                    };
+
+                    return NextResponse.json(
+                        successResponse,
+                        { status: response.status }
+                    );
+                } else {
+                    throw new AppError('Incorrect cursor type', 401, 'INCORRECT_TYPE');
+                }
             } else {
                 const response = await fetch(`${apiUrl}/conversations/${params.conversationId}`, {
                     method: 'GET',

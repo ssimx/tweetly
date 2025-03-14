@@ -1,8 +1,8 @@
 import { Server } from 'socket.io';
 import { PrismaClient } from "@prisma/client";
 import { Server as HttpServer } from 'http';
-import { getMessagesReadStatus, getNotifications, getNotificationsReadStatus } from '../services/notificationService';
-import { updateMessageReadStatus } from '../services/conversationService';
+import { getNotifications, getNotificationsReadStatus } from '../services/notificationService';
+import { updateMessageReadStatus, getMessagesReadStatus, getFirstUnreadMessage } from '../services/conversationService';
 
 const prisma = new PrismaClient();
 
@@ -41,8 +41,10 @@ interface SocketData {
     age: number;
 };
 
+let io: Server;
+
 const socketConnection = (server: HttpServer) => {
-    const io = new Server<
+    io = new Server<
         ClientToServerEvents,
         ServerToClientEvents,
         InterServerEvents,
@@ -100,6 +102,7 @@ const socketConnection = (server: HttpServer) => {
 
             // Store the user's followers in the socket session
             socket.join(pushNotificationUsers.map((user) => `user_${user.id}`));
+            console.log(`user_${userId}_messages`)
             socket.join(`user_${userId}_messages`);
 
             const notificationsReadStatus = await getNotificationsReadStatus(userId);
@@ -118,7 +121,7 @@ const socketConnection = (server: HttpServer) => {
         })
 
         socket.on('new_user_notification', (userId) => {
-            socket.to(`user_${userId}`).emit('new_notification');
+            socket.to(`user_${userId}`).emit('new_user_notification');
         });
 
         socket.on('join_conversation_room', async (conversationId, joinedUser) => {
@@ -150,4 +153,4 @@ const socketConnection = (server: HttpServer) => {
     })
 };
 
-export { socketConnection };
+export { io, socketConnection };
