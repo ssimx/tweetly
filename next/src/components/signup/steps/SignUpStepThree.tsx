@@ -93,6 +93,7 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
     // Call the debounced function when username changes
     useEffect(() => {
         setIsAvailable(null);
+        console.log('test')
 
         // For cancel method
         let debouncedCheckFn: ReturnType<typeof debounce> | null = null;
@@ -109,7 +110,7 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
         };
     }, [usernameWatch, isSubmitting, checkUsernameAvailability]);
 
-    const onSubmit = async (formData: FormTemporaryUserUsernameType) => {
+    const onSubmit = useCallback(async (formData: FormTemporaryUserUsernameType) => {
         if (isSubmitting || isChecking) return;
         setCustomError(null);
 
@@ -148,18 +149,22 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
             }
 
         }
-    };
+    }, [isChecking, isSubmitting, reset, setRegistrationStep, setError, setCustomError]);
 
     return (
         <Dialog open={dialogOpen} >
             <DialogContent
-                className='w-[90%] sm:w-[700px] sm:h-[75%] flex flex-col justify-center items-center px-20 py-5 bg-primary-foreground'
+                className='w-[90%] h-[45%] px-[2em] py-5 flex flex-col justify-center items-center bg-primary-foreground sm:h-[40%] sm:px-[5em]'
                 hideClose
             >
 
-                <div className=''>
-                    <Image src={savedTheme === 0 ? TweetlyLogoBlack : TweetlyLogoWhite} alt='Tweetly logo' width='30' height='30' className='mx-auto' />
-                </div>
+                <Image
+                    src={savedTheme === 0 ? TweetlyLogoBlack : TweetlyLogoWhite}
+                    alt='Tweetly logo'
+                    width='30'
+                    height='30'
+                    className='mx-auto'
+                />
 
                 <button
                     className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
@@ -190,16 +195,14 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
                                 className="pl-8 pr-3 py-2 text-md w-full rounded shadow-sm"
                             />
 
-                            {isAvailable === true
-                                && (
+                            {isAvailable === true && (
                                     <div title='Username is available'>
                                         <CircleCheck size={18} className="absolute right-0 mr-3 top-1/2 transform -translate-y-1/2 text-green-400 z-10" />
                                     </div>
                                 )
                             }
 
-                            {isAvailable === false
-                                && (
+                            {isAvailable === false && (
                                     <div title='Username is not available'>
                                         <CircleX size={18} className="absolute right-0 mr-3 top-1/2 transform -translate-y-1/2 text-red-600 z-10" />
                                     </div>
@@ -217,23 +220,19 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
                     )}
                 </div>
 
-                {isSubmitting
-                    ? (
-                        <Button disabled
-                            className='w-full h-[3rem] text-[1.1rem] bg-primary font-semibold text-white-1 mt-auto rounded-[25px]'>
+                <Button form={formId}
+                    className='w-full h-[3rem] text-[1.1rem] bg-primary font-semibold text-white-1 mt-auto rounded-[25px]'
+                    disabled={!isAvailable || isSubmitting}
+                >
+                    {isSubmitting ? (
+                        <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Creating account...
-                        </Button>
-                    )
-                    : (
-                        <Button form={formId}
-                            className='w-full h-[3rem] text-[1.1rem] bg-primary font-semibold text-white-1 mt-auto rounded-[25px]'
-                            disabled={!isAvailable}
-                        >
-                            Next
-                        </Button>
-                    )
-                }
+                            Saving...
+                        </>
+                    ) : (
+                        'Next'
+                    )}
+                </Button>
 
             </DialogContent>
         </Dialog>
