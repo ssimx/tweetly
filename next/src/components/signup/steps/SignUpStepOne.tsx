@@ -8,7 +8,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Loader2, X, Eye, EyeOff } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from '@/components/ui/input';
@@ -16,11 +16,13 @@ import { registerTemporaryUser } from '@/actions/actions';
 import { z } from 'zod';
 import Image from 'next/image';
 import { useDisplayContext } from '@/context/DisplayContextProvider';
-import { FormTemporaryUserPasswordType, getErrorMessage, isZodError, temporaryUserPasswordSchema } from 'tweetly-shared';
+import { FormTemporaryUserBasicDataType, FormTemporaryUserPasswordType, getErrorMessage, isZodError, temporaryUserPasswordSchema } from 'tweetly-shared';
 import { SignUpStepType } from '../SignUpProcess';
 
 type SignUpStepOneProps = SignUpStepType & {
-    basicUserInfo: NonNullable<SignUpStepType['basicUserInfo']>;
+    // Step 1 inherits step 0 user basic data such as profile name, email and date of birth
+    // this will be used alongside password to register a new temporary user
+    basicUserInfo: FormTemporaryUserBasicDataType,
 };
 
 export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrationStep, customError, setCustomError, basicUserInfo }: SignUpStepOneProps) {
@@ -41,11 +43,13 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrati
     const [passwordWatch, setPasswordWatch] = useState('');
     const [confirmPasswordWatch, setConfirmPasswordWatch] = useState('');
 
-    const onSubmit = async (formData: FormTemporaryUserPasswordType) => {
+    const onSubmit = useCallback(async (formData: FormTemporaryUserPasswordType) => {
         if (isSubmitting) return;
         setCustomError(null);
 
         try {
+            temporaryUserPasswordSchema.parse(formData);
+
             const response = await registerTemporaryUser(basicUserInfo, formData);
 
             if (!response.success) {
@@ -59,7 +63,6 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrati
                 else throw new Error(response.error.message);
             }
 
-            setCustomError(null);
             setRegistrationStep(() => 3);
         } catch (error: unknown) {
             if (isZodError(error)) {
@@ -75,14 +78,15 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrati
             } else {
                 const errorMessage = getErrorMessage(error);
                 console.error('Registration error:', errorMessage);
+                setRegistrationStep(() => 0);
                 setCustomError(errorMessage ?? 'Something went wrong, refresh the page or remove cookies. If problem persists, contact the support');
                 reset();
             }
-
         }
-    };
+    }, [isSubmitting, basicUserInfo, reset, setRegistrationStep, setError, setCustomError]);
 
     useEffect(() => {
+        // Prevent fast typing issue where confirmed password doesn't match the password on submission
         setIsSubmitButtonEnabled(false);
         let timeoutId: NodeJS.Timeout | null = null;
 
@@ -100,13 +104,17 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrati
     return (
         <Dialog open={dialogOpen} >
             <DialogContent
-                className='w-[90%] sm:w-[700px] sm:h-[75%] flex flex-col justify-center items-center px-20 py-5 bg-primary-foreground'
+                className='w-[90%] h-[60%] px-[2em] py-5 flex flex-col justify-center items-center bg-primary-foreground sm:h-[75%] sm:px-[5em]'
                 hideClose
             >
 
-                <div className=''>
-                    <Image src={savedTheme === 0 ? TweetlyLogoBlack : TweetlyLogoWhite} alt='Tweetly logo' width='30' height='30' className='mx-auto' />
-                </div>
+                <Image
+                    src={savedTheme === 0 ? TweetlyLogoBlack : TweetlyLogoWhite}
+                    alt='Tweetly logo'
+                    width='30'
+                    height='30'
+                    className='mx-auto'
+                />
 
                 <button
                     className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
@@ -184,24 +192,19 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrati
                     )}
                 </div>
 
-                {isSubmitting
-                    ? (
-                        <Button disabled
-                            className='w-full h-[3rem] text-[1.1rem] bg-primary font-semibold text-white-1 mt-auto rounded-[25px]'>
+                <Button form={formId}
+                    className='w-full h-[3rem] text-[1.1rem] bg-primary font-semibold text-white-1 mt-auto rounded-[25px]'
+                    disabled={isSubmitButtonEnabled || isSubmitting}
+                >
+                    {isSubmitting ? (
+                        <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Creating account...
-                        </Button>
-                    )
-                    : (
-                        <Button form={formId}
-                            className='w-full h-[3rem] text-[1.1rem] bg-primary font-semibold text-white-1 mt-auto rounded-[25px]'
-                            tabIndex={6}
-                            disabled={!isSubmitButtonEnabled}
-                        >
-                            Next
-                        </Button>
-                    )
-                }
+                        </>
+                    ) : (
+                        'Submit'
+                    )}
+                </Button>
 
             </DialogContent>
         </Dialog>
