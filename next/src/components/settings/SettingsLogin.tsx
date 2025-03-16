@@ -1,5 +1,4 @@
 'use client';
-import { settingsPasswordSchema } from "@/lib/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Input } from "../ui/input";
@@ -9,25 +8,27 @@ import { z } from "zod";
 import SettingsHeaderInfo from "./SettingsHeaderInfo";
 import { verifyLoginPasswordForSettings } from '@/actions/actions';
 import { FormUserSettingsAccessType, getErrorMessage, isZodError, userSettingsAccessSchema } from 'tweetly-shared';
-
-type FormData = z.infer<typeof settingsPasswordSchema>;
+import { useState } from 'react';
 
 export default function SettingsLogin() {
+    const [customError, setCustomError] = useState<string | null>(null);
 
     const {
         register,
         handleSubmit,
         formState: { errors, isSubmitting },
         setError,
-    } = useForm<FormData>({ resolver: zodResolver(userSettingsAccessSchema) });
+    } = useForm<FormUserSettingsAccessType>({ resolver: zodResolver(userSettingsAccessSchema) });
 
     const onSubmit = async (formData: FormUserSettingsAccessType) => {
         if (isSubmitting) return;
 
         try {
+            setCustomError(null);
             const response = await verifyLoginPasswordForSettings(formData);
 
             if (!response.success) {
+                console.log(response)
                 if (response.error.details) throw new z.ZodError(response.error.details);
                 else throw new Error(response.error.message);
             }
@@ -46,6 +47,7 @@ export default function SettingsLogin() {
             } else {
                 const errorMessage = getErrorMessage(error);
                 console.error('Something went wrong:', errorMessage);
+                setCustomError(errorMessage);
             }
         }
     };
@@ -62,9 +64,19 @@ export default function SettingsLogin() {
 
                 <div>
                     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
-                        <Input {...register("password")} type="password" placeholder="password" className='bg-transparent' />
+                        <Input
+                            {...register("password", {
+                                onChange: () => setCustomError(null),
+                            })}
+                            type="password"
+                            placeholder="password"
+                            className='bg-transparent'
+                        />
                         {errors.password && (
                             <p className="error-msg">{`${errors.password.message}`}</p>
+                        )}
+                        {customError && (
+                            <p className="error-msg">{`${customError}`}</p>
                         )}
                         {isSubmitting
                             ? <Button className='text-white-1' disabled>

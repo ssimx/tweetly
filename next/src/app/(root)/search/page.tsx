@@ -134,14 +134,22 @@ export default function Search() {
         };
     }, [searchQuery, router]);
 
-    if (users === undefined || posts === undefined) return <div>loading...</div>
-
     return (
         <section className='w-full h-fit'>
             <div className='feed-hr-line'></div>
             <div className=''>
                 {users === undefined
-                    ? <div>loading...</div>
+                    ? (
+                        <div className='w-full flex justify-center my-6'>
+                            <ClipLoader
+                                className='loading-spinner'
+                                loading={true}
+                                size={25}
+                                aria-label="Loading Spinner"
+                                data-testid="loader"
+                            />
+                        </div>
+                    )
                     : users && users.length
                         ? (
                             <div className='px-4 pb-4 pt-2'>
@@ -186,7 +194,17 @@ export default function Search() {
                 <div className='feed-hr-line'></div>
 
                 {posts === undefined
-                    ? <div>loading...</div>
+                    ? (
+                        <div className='w-full flex justify-center my-6'>
+                            <ClipLoader
+                                className='loading-spinner'
+                                loading={true}
+                                size={25}
+                                aria-label="Loading Spinner"
+                                data-testid="loader"
+                            />
+                        </div>
+                    )
                     : posts && posts.length
                         ? (
                             posts.map((post, index) => {
@@ -203,7 +221,7 @@ export default function Search() {
                             : null
                 }
 
-                {!postsEndReached && (
+                {!postsEndReached && users !== undefined && posts !== undefined && (
                     <div ref={ref} className='w-full flex justify-center mt-6'>
                         <ClipLoader
                             className='loading-spinner'

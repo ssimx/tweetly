@@ -930,9 +930,9 @@ export async function hardRedirect(uri: string) {
 // ---------------------------------------------------------------------------------------------------------
 
 export async function verifyLoginPasswordForSettings(formData: UserSettingsAccessType): Promise<ApiResponse<undefined>> {
-    const sessionToken = await getCurrentUserToken();
-
     try {
+        const sessionToken = await getCurrentUserToken();
+
         const alreadyValidSettingsToken = await verifyCurrentUserSettingsToken();
         if (alreadyValidSettingsToken) {
             throw new Error('User already has valid token');

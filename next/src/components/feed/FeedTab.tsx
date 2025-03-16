@@ -3,13 +3,13 @@ import FeedPost from '../posts/PostCard';
 import { BasePostDataType } from 'tweetly-shared';
 import ClipLoader from 'react-spinners/ClipLoader';
 
-interface FeedTabType {
+type FeedTabType = {
     posts: BasePostDataType[],
     loadingRef: (node?: Element | null) => void;
     scrollPositionRef: React.RefObject<number>;
     endReached: boolean;
     searchSegments?: string[]
-}
+};
 
 export default function FeedTab({ posts, loadingRef, scrollPositionRef, endReached = true, searchSegments }: FeedTabType) {
 
@@ -38,7 +38,7 @@ export default function FeedTab({ posts, loadingRef, scrollPositionRef, endReach
             }
 
             {!endReached && (
-                <div ref={loadingRef} className='w-full flex justify-center mt-6'>
+                <div ref={loadingRef} className='w-full flex justify-center my-6'>
                     <ClipLoader
                         className='loading-spinner'
                         loading={true}

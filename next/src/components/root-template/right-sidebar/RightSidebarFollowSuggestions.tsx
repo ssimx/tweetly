@@ -9,6 +9,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
+import ClipLoader from 'react-spinners/ClipLoader';
 
 export default function RightSidebarFollowSuggestions() {
     const { suggestions } = useFollowSuggestionContext();
@@ -19,7 +20,17 @@ export default function RightSidebarFollowSuggestions() {
             <div className='flex-grow'>
                 {
                     suggestions === undefined
-                        ? 'loading'
+                        ? (
+                            <div className='w-full flex justify-center my-3'>
+                                <ClipLoader
+                                    className='loading-spinner'
+                                    loading={true}
+                                    size={25}
+                                    aria-label="Loading Spinner"
+                                    data-testid="loader"
+                                />
+                            </div>
+                        )
                         : suggestions.length === 0
                             ? 'You are currently following everyone'
                             : suggestions.slice(0, 4).map((user) => (
@@ -40,7 +51,17 @@ export default function RightSidebarFollowSuggestions() {
                             <div className='flex-grow overflow-y-auto max-h-[calc(90vh-100px)]'>
                                 {
                                     suggestions === undefined
-                                        ? 'loading'
+                                        ? (
+                                            <div className='w-full flex justify-center my-3'>
+                                                <ClipLoader
+                                                    className='loading-spinner'
+                                                    loading={true}
+                                                    size={25}
+                                                    aria-label="Loading Spinner"
+                                                    data-testid="loader"
+                                                />
+                                            </div>
+                                        )
                                         : suggestions.map((user) => (
                                             <DialogSuggestionCard key={user.username} user={user} />
                                         ))

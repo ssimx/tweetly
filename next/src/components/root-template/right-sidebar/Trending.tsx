@@ -9,6 +9,7 @@ import {
 import TrendingCard from './TrendingCard';
 import DialogTrendingCard from './DialogTrendingCard';
 import { useTrendingContext } from "@/context/TrendingContextProvider";
+import ClipLoader from 'react-spinners/ClipLoader';
 
 export default function Trending() {
     const { hashtags } = useTrendingContext();
@@ -19,7 +20,17 @@ export default function Trending() {
             <div className='flex flex-col flex-grow'>
                 {
                     hashtags === undefined
-                        ? 'loading'
+                        ? (
+                            <div className='w-full flex justify-center my-3'>
+                                <ClipLoader
+                                    className='loading-spinner'
+                                    loading={true}
+                                    size={25}
+                                    aria-label="Loading Spinner"
+                                    data-testid="loader"
+                                />
+                            </div>
+                        )
                         : hashtags.slice(0, 8).length === 0
                             ? 'There is currently no trending hashtags'
                             : hashtags.slice(0, 8).map((hashtag) => (
@@ -40,7 +51,17 @@ export default function Trending() {
                             <div className='flex-grow overflow-y-auto max-h-[calc(90vh-100px)]'>
                                 {
                                     hashtags === undefined
-                                        ? 'loading'
+                                        ? (
+                                            <div className='w-full flex justify-center my-3'>
+                                                <ClipLoader
+                                                    className='loading-spinner'
+                                                    loading={true}
+                                                    size={25}
+                                                    aria-label="Loading Spinner"
+                                                    data-testid="loader"
+                                                />
+                                            </div>
+                                        )
                                         : hashtags.map((hashtag) => (
                                             <DialogTrendingCard key={hashtag.name} hashtag={hashtag} />
                                         ))
