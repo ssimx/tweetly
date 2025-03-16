@@ -91,17 +91,29 @@ export default function LogIn() {
                     {errors.usernameOrEmail && (
                         <p className="error-msg">{`${errors.usernameOrEmail.message}`}</p>
                     )}
+
                     <Input {...register("password")} type="password" placeholder="password" />
                     {errors.password && (
                         <p className="error-msg">{`${errors.password.message}`}</p>
                     )}
+
                     {isSubmitting
-                        ? <Button disabled>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Logging in
-                        </Button>
-                        : <Button className='bg-primary font-bold text-white-1'>Log in</Button>
+                        ? (
+                            <Button
+                                disabled
+                                className='bg-primary font-bold text-white-1'
+                            >
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Logging in
+                            </Button>
+                        )
+                        : (
+                            <Button className='bg-primary font-bold text-white-1'>
+                                Log in
+                            </Button>
+                        )
                     }
+                    
                     {isError && (
                         <p className="!mt-0 error-msg text-center">Something wen&apos;t wrong, please contact the support</p>
                     )}

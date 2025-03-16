@@ -8,7 +8,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Loader2, X } from "lucide-react";
-import { useId, useState } from "react";
+import { useCallback, useId, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormTemporaryUserBasicDataType, getErrorMessage, isZodError, SuccessResponse, temporaryUserBasicDataSchema } from 'tweetly-shared';
@@ -21,12 +21,21 @@ import { checkIfEmailIsAvailable } from '@/actions/actions';
 import { z } from 'zod';
 
 type SignUpStepZeroProps = SignUpStepType & {
-    setBasicUserInfo: NonNullable<SignUpStepType['setBasicUserInfo']>;
+    // Save step 0 basic info data which will be used on step 1 to register a new temporary user
+    basicUserInfo: FormTemporaryUserBasicDataType,
+    setBasicUserInfo: React.Dispatch<React.SetStateAction<FormTemporaryUserBasicDataType | null>>,
 };
 
 export default function SignUpStepZero({ dialogOpen, setDialogOpen, setRegistrationStep, customError, setCustomError, basicUserInfo, setBasicUserInfo }: SignUpStepZeroProps) {
     const { savedTheme } = useDisplayContext();
     const formId = useId();
+
+    const defaultValues = useMemo(() => ({
+        // If there's an error on step 1 while submitting userBasicInfo (such as email taken), 
+        // revert to step 0 and display saved data from before
+        profileName: basicUserInfo?.profileName || '',
+        email: basicUserInfo?.email || ''
+    }), [basicUserInfo]);
 
     const {
         register,
@@ -37,25 +46,23 @@ export default function SignUpStepZero({ dialogOpen, setDialogOpen, setRegistrat
         setValue,
     } = useForm<FormTemporaryUserBasicDataType>({
         resolver: zodResolver(temporaryUserBasicDataSchema),
-        defaultValues: { profileName: basicUserInfo?.profileName, email: basicUserInfo?.email }
+        defaultValues: defaultValues,
     });
 
-    // React hook form's watch API is causing performance issue
-    const [profileNameWatch, setProfileNameWatch] = useState(basicUserInfo?.profileName ?? '');
-    const [emailWatch, setEmailWatch] = useState(basicUserInfo?.email ?? '');
-
+    const profileNameWatch = useWatch({ control, name: 'profileName' }) || '';
+    const emailWatch = useWatch({ control, name: 'email' }) || '';
     const yearWatch = useWatch({ control, name: 'year' });
     const monthWatch = useWatch({ control, name: 'month' });
     const dayWatch = useWatch({ control, name: 'day' });
 
-    const onSubmit = async (formData: FormTemporaryUserBasicDataType) => {
+    const onSubmit = useCallback(async (formData: FormTemporaryUserBasicDataType) => {
         if (isSubmitting) return;
         setCustomError(null);
 
         try {
-            const validatedData = temporaryUserBasicDataSchema.parse(formData);
+            temporaryUserBasicDataSchema.parse(formData);
 
-            const response = await checkIfEmailIsAvailable({ email: validatedData.email });
+            const response = await checkIfEmailIsAvailable({ email: formData.email });
 
             if (!response.success) {
                 if (response.error.details) throw new z.ZodError(response.error.details);
@@ -75,7 +82,6 @@ export default function SignUpStepZero({ dialogOpen, setDialogOpen, setRegistrat
             }
 
             setBasicUserInfo({ ...formData });
-            setCustomError(null);
             setRegistrationStep(() => 1);
         } catch (error: unknown) {
             if (isZodError(error)) {
@@ -94,17 +100,31 @@ export default function SignUpStepZero({ dialogOpen, setDialogOpen, setRegistrat
                 setCustomError('Something went wrong');
             }
         }
-    };
+    }, [isSubmitting, setBasicUserInfo, setRegistrationStep, setError, setCustomError]);
+
+    const isNextButtonDisabled =
+        profileNameWatch.length < 2 ||
+        !emailWatch.includes('@') ||
+        !emailWatch.includes('.') ||
+        !yearWatch ||
+        !monthWatch ||
+        !dayWatch;
 
     return (
         <Dialog open={dialogOpen} >
             <DialogContent
-                className='w-[90%] sm:w-[700px] sm:h-[75%] flex flex-col justify-center items-center px-20 py-5 bg-primary-foreground'
+                className='w-[90%] h-[60%] px-[2em] py-5 flex flex-col justify-center items-center bg-primary-foreground sm:h-[75%] sm:px-[5em]'
                 hideClose
             >
 
                 <div className=''>
-                    <Image src={savedTheme === 0 ? TweetlyLogoBlack : TweetlyLogoWhite} alt='Tweetly logo' width='30' height='30' className='mx-auto' />
+                    <Image
+                        src={savedTheme === 0 ? TweetlyLogoBlack : TweetlyLogoWhite}
+                        alt='Tweetly logo'
+                        width='30'
+                        height='30'
+                        className='mx-auto'
+                    />
                 </div>
 
                 <button
@@ -127,7 +147,6 @@ export default function SignUpStepZero({ dialogOpen, setDialogOpen, setRegistrat
                             {...register('profileName')}
                             placeholder="Name"
                             maxLength={50}
-                            onChange={(e) => setProfileNameWatch(e.target.value)}
                         />
                         {errors.profileName && (
                             <p className="error-msg">{`${errors.profileName.message}`}</p>
@@ -137,7 +156,6 @@ export default function SignUpStepZero({ dialogOpen, setDialogOpen, setRegistrat
                             {...register('email')}
                             placeholder="Email"
                             maxLength={254}
-                            onChange={(e) => setEmailWatch(e.target.value)}
                         />
                         {errors.email && (
                             <p className="error-msg">{`${errors.email.message}`}</p>
@@ -155,23 +173,19 @@ export default function SignUpStepZero({ dialogOpen, setDialogOpen, setRegistrat
                     )}
                 </div>
 
-                {isSubmitting
-                    ? (
-                        <Button disabled
-                            className='w-full h-[3rem] text-[1.1rem] bg-primary font-semibold text-white-1 mt-auto rounded-[25px]'>
+                <Button form={formId}
+                    className='w-full h-[3rem] text-[1.1rem] bg-primary font-semibold text-white-1 mt-auto rounded-[25px]'
+                    disabled={isNextButtonDisabled || isSubmitting}
+                >
+                    {isSubmitting ? (
+                        <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Creating account...
-                        </Button>
-                    )
-                    : (
-                        <Button form={formId}
-                            className='w-full h-[3rem] text-[1.1rem] bg-primary font-semibold text-white-1 mt-auto rounded-[25px]'
-                            disabled={!(profileNameWatch.length >= 2 && (emailWatch.includes('@') && emailWatch.includes('.')) && yearWatch && monthWatch && dayWatch)}
-                        >
-                            Next
-                        </Button>
-                    )
-                }
+                            Saving...
+                        </>
+                    ) : (
+                        'Next'
+                    )}
+                </Button>
 
             </DialogContent>
         </Dialog>

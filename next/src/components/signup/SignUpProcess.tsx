@@ -15,8 +15,6 @@ export type SignUpStepType = {
     setRegistrationStep: React.Dispatch<React.SetStateAction<number | undefined>>,
     customError: string | null,
     setCustomError: React.Dispatch<React.SetStateAction<string | null>>,
-    basicUserInfo?: FormTemporaryUserBasicDataType,
-    setBasicUserInfo?: React.Dispatch<React.SetStateAction<FormTemporaryUserBasicDataType | null>>,
 };
 
 // -------------------------------------------------------------------------------------
@@ -48,12 +46,12 @@ export type SignUpStepType = {
 
 export default function SignUpProcess({ user }: { user: LoggedInTemporaryUserDataType | null }) {
     const [registrationStep, setRegistrationStep] = useState<number | undefined>(undefined);
+    // basic user info stores step 0 data which will be combined with step 1 data and used for registering temporary user
     const [basicUserInfo, setBasicUserInfo] = useState<FormTemporaryUserBasicDataType | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [customError, setCustomError] = useState<string | null>(null);
 
     useEffect(() => {
-        console.log('test')
         if (user) {
             if (!user.profileName || !user.email || !user.dateOfBirth) {
                 setRegistrationStep(0);
