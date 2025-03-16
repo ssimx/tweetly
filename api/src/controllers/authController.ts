@@ -6,8 +6,10 @@ import { UserProps } from '../lib/types';
 import bcrypt from 'bcrypt';
 
 // ---------------------------------------------------------------------------------------------------------
+// ----------------------------- TEMPORARY USER REGISTRATION PROCESS ---------------------------------------
+// ---------------------------------------------------------------------------------------------------------
 
-export const registerTempUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const registerTempUser = async (req: Request, res: Response, next: NextFunction) => {
     const body = req.body as { basicData: FormTemporaryUserBasicDataType, passwordData: FormTemporaryUserPasswordType };
 
     try {
@@ -30,13 +32,7 @@ export const registerTempUser = async (req: Request, res: Response, next: NextFu
         email = email.toLowerCase();
 
         // check if user already exists
-        let existingUser;
-        try {
-            existingUser = await checkEmailAvailability(email);
-        } catch (error) {
-            return next(new AppError('Database error while checking user existence', 500, 'DB_ERROR'));
-        }
-
+        const existingUser = await checkEmailAvailability(email);
         if (existingUser) {
             throw new AppError('Email is already in use', 400, 'EMAIL_TAKEN');
         }
@@ -52,7 +48,7 @@ export const registerTempUser = async (req: Request, res: Response, next: NextFu
 
         // Check if there was a unique constraint violation
         if ('error' in response) {
-            if (response.fields?.includes('username')) {
+            if (response.fields?.includes('email')) {
                 throw new AppError('Email is already in use', 400, 'EMAIL_TAKEN');
             }
 
@@ -88,7 +84,7 @@ export const registerTempUser = async (req: Request, res: Response, next: NextFu
     }
 };
 
-export const updateTempUserUsername = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const updateTempUserUsername = async (req: Request, res: Response, next: NextFunction) => {
     let body = req.body;
     const user = req.user as LoggedInTemporaryUserDataType;
 
@@ -134,7 +130,7 @@ export const updateTempUserUsername = async (req: Request, res: Response, next: 
     }
 };
 
-export const updateTempUserProfilePicture = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const updateTempUserProfilePicture = async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as LoggedInTemporaryUserDataType;
 
     try {
@@ -162,8 +158,10 @@ export const updateTempUserProfilePicture = async (req: Request, res: Response, 
 };
 
 // ---------------------------------------------------------------------------------------------------------
+// ---------------------------------------- REAL USER ------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------
 
-export const registerUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const registerUser = async (req: Request, res: Response, next: NextFunction) => {
     const tempUserId = req.body.tempUserId;
 
     try {
@@ -216,15 +214,13 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
                 success: true,
                 data: { token },
             };
-
+           
             return res.status(200).json(successResponse);
         }
     } catch (error) {
         next(error);
     }
 };
-
-// ---------------------------------------------------------------------------------------------------------
 
 export const loginUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -294,8 +290,6 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
     }
 };
 
-// ---------------------------------------------------------------------------------------------------------
-
 export const settingsAccess = async (req: Request, res: Response, next: NextFunction) => {
     const { password } = req.body as { password: string };
     const user = req.user as UserProps;
@@ -323,8 +317,6 @@ export const settingsAccess = async (req: Request, res: Response, next: NextFunc
         // Generate and send settings JWT token with 15m expiry
         const token: string = generateUserSettingsToken(tokenPayload);
 
-        console.log(token)
-
         const successResponse: SuccessResponse<{ token: string }> = {
             success: true,
             data: {
@@ -337,3 +329,5 @@ export const settingsAccess = async (req: Request, res: Response, next: NextFunc
         next(error);
     }
 };
+
+// ---------------------------------------------------------------------------------------------------------
