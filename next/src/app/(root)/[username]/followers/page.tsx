@@ -31,7 +31,6 @@ export default function Followers(props: { params: Promise<{ username: string }>
         if (inView && scrollPositionRef.current !== scrollPosition) {
             const fetchMoreFollowers = async () => {
                 if (cursor || !endReached) {
-                    console.log('test')
                     try {
                         setHasFetchError(false);
                         const response = await getFollowersForProfile(username, cursor!);

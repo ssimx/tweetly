@@ -93,7 +93,6 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
     // Call the debounced function when username changes
     useEffect(() => {
         setIsAvailable(null);
-        console.log('test')
 
         // For cancel method
         let debouncedCheckFn: ReturnType<typeof debounce> | null = null;
@@ -154,7 +153,7 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
     return (
         <Dialog open={dialogOpen} >
             <DialogContent
-                className='w-[90%] h-[45%] px-[2em] py-5 flex flex-col justify-center items-center bg-primary-foreground sm:h-[40%] sm:px-[5em]'
+                className='w-[90%] h-[55%] px-[2em] py-5 flex flex-col justify-center items-center bg-primary-foreground sm:h-[60%] sm:px-[5em]'
                 hideClose
             >
 

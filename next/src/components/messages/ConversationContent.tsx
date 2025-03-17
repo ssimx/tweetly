@@ -97,7 +97,6 @@ export default function ConversationContent({ conversation }: { conversation: Co
                         if (!data) throw new Error('Data is missing in response');
                         else if (data.messages === undefined) throw new Error('Messages property is missing in data response');
                         else if (data.cursor === undefined) throw new Error('Cursor property is missing in data response');
-                        console.log(data)
 
                         setMessages((current) => [...current, ...data.messages as ConversationMessageType[],]);
                         setMessagesBottomCursor(data.cursor);

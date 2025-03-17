@@ -816,8 +816,6 @@ export const getUserReplies = async (req: Request, res: Response, next: NextFunc
                 }
             }
 
-            console.log(userOldestReplyId)
-
             const repliesData = await getReplies(user.id, username, Number(cursor));
 
             const replies = repliesData.map((reply) => {
@@ -828,8 +826,6 @@ export const getUserReplies = async (req: Request, res: Response, next: NextFunc
 
                 return remapPostInformation(reply);
             }).filter((reply): reply is NonNullable<typeof reply> => reply !== undefined);
-
-            console.log(repliesData)
 
             const repliesEnd = replies.length === 0
                 ? true

@@ -372,8 +372,6 @@ export const getProfileFollowing = async (req: Request, res: Response, next: Nex
                 },
             };
 
-            console.log(successResponse)
-
             return res.status(200).json(successResponse);
         }
     } catch (error) {

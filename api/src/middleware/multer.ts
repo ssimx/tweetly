@@ -25,14 +25,22 @@ export const registerUserCheckup = (req: Request, res: Response, next: NextFunct
         return next(); // Skip multer if no file is being uploaded
     }
 
-    registerUserUpload.array("image", 1)(req, res, (err: any) => {
+    registerUserUpload.fields([
+        { name: "profilePicture", maxCount: 1 },
+    ])(req, res, (err: any) => {
         if (err) {
-            if (err instanceof multer.MulterError) {
-                return next(new AppError(err.message, 400, err.code));
-            }
-            return next(new AppError("File format is not supported", 400, "INVALID_FILE_FORMAT"));
+            return next(err); // Pass any errors to the next middleware (e.g. multer errors)
         }
-        next(); // Call next() only if there is no error
+
+        // Explicitly type req.files to allow indexing with 'images'
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] | undefined }; // Cast files to the expected type
+
+        const profilePicture = files?.profilePicture?.[0] ?? undefined;
+        const images: Express.Multer.File[] = [];
+        if (profilePicture) images.push(profilePicture);
+        req.body.files = images;
+
+        next();
     });
 };
 

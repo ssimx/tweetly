@@ -28,7 +28,6 @@ export default function SettingsLogin() {
             const response = await verifyLoginPasswordForSettings(formData);
 
             if (!response.success) {
-                console.log(response)
                 if (response.error.details) throw new z.ZodError(response.error.details);
                 else throw new Error(response.error.message);
             }

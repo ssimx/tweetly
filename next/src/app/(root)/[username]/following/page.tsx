@@ -31,7 +31,6 @@ export default function Following(props: { params: Promise<{ username: string }>
         if (inView && scrollPositionRef.current !== scrollPosition) {
             const fetchMoreFollowing = async () => {
                 if (cursor || !endReached) {
-                    console.log('test')
                     try {
                         setHasFetchError(false);
                         const response = await getFollowingForProfile(username, cursor!);
@@ -86,8 +85,6 @@ export default function Following(props: { params: Promise<{ username: string }>
                 const { data } = response;
                 if (!data) throw new Error('Data is missing in response');
                 else if (data.followings === undefined) throw new Error('Followings property is missing in data response');
-
-                console.log(data.followings)
 
                 setFollowing(data.followings);
                 setCursor(data.cursor ?? null);

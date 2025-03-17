@@ -18,17 +18,18 @@ export async function PATCH(req: NextRequest) {
                 throw new AppError('User not logged in', 400, 'NOT_LOGGED_IN');
             }
 
-            let image = null;
-            const contentType = req.headers.get("content-type");
-            // Only parse formData if request contains multipart/form-data
-            if (contentType && contentType.includes("multipart/form-data")) {
-                const body = await req.formData();
-                image = body.get("image") ?? null;
+            let profilePicture: File | undefined = undefined;
 
-                if (image) {
-                    temporaryUserProfilePictureSchema.parse({ image });
-                }
+            const contentType = req.headers.get("content-type");
+            let formData: FormData;
+            if (contentType && contentType.includes("multipart/form-data")) {
+                formData = await req.formData();
+                profilePicture = formData.get('profilePicture') as File ?? undefined;
+            } else {
+                throw new AppError('Incorrect content type', 400, 'INCORRECT_CONTENT_TYPE');
             }
+
+            temporaryUserProfilePictureSchema.parse({ profilePicture });
 
             const apiUrl = process.env.EXPRESS_API_URL;
             const response = await fetch(`${apiUrl}/auth/temporary/profilePicture`, {
@@ -36,13 +37,7 @@ export async function PATCH(req: NextRequest) {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
-                ...(image && {
-                    body: (() => {
-                        const newFormData = new FormData();
-                        newFormData.append('image', image);
-                        return newFormData;
-                    })(),
-                }),
+                body: formData,
             });
 
             if (!response.ok) {
@@ -66,7 +61,6 @@ export async function PATCH(req: NextRequest) {
                 { status: response.status }
             );
         } catch (error: unknown) {
-            console.log(error)
             if (error instanceof AppError) {
                 return NextResponse.json(
                     {

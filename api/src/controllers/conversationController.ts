@@ -300,7 +300,6 @@ export const getSpecificConversation = async (req: Request, res: Response, next:
             const newestMessageId = await getLastMessage(conversationId).then(res => res?.messages[0].id as string);
             // and first unread message from not logged in user (other party)
             const firstUnreadMessage = await getFirstUnreadMessage(conversationId, user.id);
-            console.log(firstUnreadMessage)
 
             // update read status of all messages from the other party, by using first unread message timestamp
             if (firstUnreadMessage) updateMessagesReadStatus(conversationId, user.id, firstUnreadMessage.createdAt);
@@ -420,8 +419,6 @@ export const getSpecificConversation = async (req: Request, res: Response, next:
                     }
                 },
             };
-
-            console.log(successResponse)
 
             return res.status(200).json(successResponse);
         }

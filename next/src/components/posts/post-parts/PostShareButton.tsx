@@ -23,7 +23,6 @@ export default function PostShareButton({ post }: { post: BasePostDataType }) {
     };
 
     const handleClickOutside = (event: MouseEvent) => {
-        console.log(menuBtn.current !== event.target)
         if (menuBtn.current && !menuBtn.current.contains(event.target as Node)) {
             setMenuOpen(false);
             document.body.classList.remove('disable-interaction'); // Enable interaction again

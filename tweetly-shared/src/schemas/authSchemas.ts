@@ -73,27 +73,27 @@ export const temporaryUserUsernameSchema = z.object({
 });
 
 export const temporaryUserProfilePictureSchema = z.object({
-    image:
+    profilePicture:
         z.optional(z.instanceof(File))
 }).superRefine((data, ctx) => {
-    if (data.image) {
-        if (!(data.image instanceof File)) {
+    if (data.profilePicture) {
+        if (!(data.profilePicture instanceof File)) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 message: 'Input is not a file',
-                path: ['image'],
+                path: ['profilePicture'],
             });
-        } else if (data.image.size >= 5000000) {
+        } else if (data.profilePicture.size >= 5000000) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 message: 'Max image size is 5MB',
-                path: ['image'],
+                path: ['profilePicture'],
             });
-        } else if (!(["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(data.image.type))) {
+        } else if (!(["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(data.profilePicture.type))) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 message: 'Only .jpg, .jpeg, .png and .webp formats are supported',
-                path: ['image'],
+                path: ['profilePicture'],
             });
         }
     }

@@ -144,7 +144,6 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
         setCustomError(null);
 
         try {
-            console.log(formData)
             const response = await updateProfile(formData);
 
             if (!response.success) {
@@ -157,7 +156,6 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
             setOpen(false);
             refetchUserData();
         } catch (error: unknown) {
-            console.log(error)
             if (isZodError(error)) {
                 error.issues.forEach((detail) => {
                     if (detail.path && detail.message) {

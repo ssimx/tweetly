@@ -1034,8 +1034,6 @@ export async function getPostsForProfile(profileUsername: string, postsCursor?: 
         if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
         else if (data.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
 
-        console.log(data.posts[0])
-
         return {
             success: true,
             data: {

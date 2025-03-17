@@ -31,7 +31,6 @@ export default function ChangePassword() {
 
         try {
             const response = await changePassword(formData);
-            console.log(response)
 
             if (!response.success) {
                 if (response.error.details) throw new z.ZodError(response.error.details);

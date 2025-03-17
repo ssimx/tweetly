@@ -18,7 +18,6 @@ export default function SidebarUserBtn() {
 
     const signOut = async (e: React.MouseEvent) => {
         e.preventDefault();
-        console.log('Signing out...');
         router.push('/logout');
     };
 

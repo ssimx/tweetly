@@ -44,8 +44,6 @@ export async function PATCH(req: NextRequest) {
                 body: JSON.stringify(validatedData),
             });
 
-            console.log(response)
-
             if (!response.ok) {
                 const errorData = await response.json() as ErrorResponse;
                 throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);

@@ -105,8 +105,6 @@ export default function PostButtons({ post, setPostIsVisible }: PostButtonsProps
                         socket.emit('new_user_notification', loggedInUser.id);
                     }
                 } catch (error) {
-                    console.log(error);
-
                     // revert the styling
                     switch (type) {
                         case 'repost':
@@ -195,8 +193,6 @@ export default function PostButtons({ post, setPostIsVisible }: PostButtonsProps
                         socket.emit('new_user_notification', loggedInUser.id);
                     }
                 } catch (error) {
-                    console.log(error);
-
                     // revert the styling
                     switch (type) {
                         case 'repost':

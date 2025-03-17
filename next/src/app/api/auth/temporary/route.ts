@@ -30,7 +30,6 @@ export async function GET(req: NextRequest) {
 
             if (!response.ok) {
                 const errorData = await response.json() as ErrorResponse;
-                console.log(errorData)
                 throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
             }
 

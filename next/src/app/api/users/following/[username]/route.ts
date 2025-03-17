@@ -55,7 +55,6 @@ export async function GET(req: NextRequest, props: { params: Promise<{ username:
                     { status: response.status }
                 );
             } else {
-                console.log(params.username)
                 const response = await fetch(`${apiUrl}/users/following/${params.username}`, {
                     method: 'GET',
                     headers: {

@@ -86,7 +86,6 @@ export default function SignUpStepZero({ dialogOpen, setDialogOpen, setRegistrat
         } catch (error: unknown) {
             if (isZodError(error)) {
                 error.issues.forEach((detail) => {
-                    console.log(detail)
                     if (detail.path && detail.message) {
                         setError(detail.path[0] as keyof FormTemporaryUserBasicDataType, {
                             type: 'manual',

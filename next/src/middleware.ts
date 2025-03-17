@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserSessionToken, verifySession } from '@/lib/session'; // Adjust imports as necessary
 
 export async function middleware(request: NextRequest) {
-    console.log('middleware');
-
     if (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup/')) {
         const sessionToken = await getUserSessionToken();
         const sessionIsValid = await verifySession(sessionToken);

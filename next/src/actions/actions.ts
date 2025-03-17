@@ -184,7 +184,7 @@ export async function updateTemporaryUserUsername(
 // Third step of the registration process, update temporary user's profile picture
 //      remove temp user and create a new user
 export async function updateTemporaryUserProfilePicture(
-    formData?: FormTemporaryUserProfilePictureType
+    formData: FormTemporaryUserProfilePictureType
 ): Promise<ApiResponse<undefined>> {
 
     const sessionToken = await getUserSessionToken();
@@ -194,20 +194,19 @@ export async function updateTemporaryUserProfilePicture(
         const temporaryToken = await getCurrentTemporaryUserToken();
         if (!temporaryToken) throw new AppError('User not logged in', 400, 'NOT_LOGGED_IN');
 
-        formData && temporaryUserProfilePictureSchema.parse(formData);
+        temporaryUserProfilePictureSchema.parse(formData);
+        const newFormData = new FormData();
+
+        if (formData.profilePicture) {
+            newFormData.append('profilePicture', formData.profilePicture);
+        }
 
         const response = await fetch(`http://localhost:3000/api/auth/temporary/profilePicture`, {
             method: 'PATCH',
             headers: {
                 'Authorization': `Bearer ${temporaryToken}`,
             },
-            ...(formData?.image && {
-                body: (() => {
-                    const newFormData = new FormData();
-                    newFormData.append('image', formData.image);
-                    return newFormData;
-                })(),
-            }),
+            body: newFormData,
         });
 
         if (!response.ok) {
@@ -219,7 +218,6 @@ export async function updateTemporaryUserProfilePicture(
         if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
         else if (data.token === undefined) throw new AppError('JWT is missing in data response', 404, 'MISSING_JWT');
 
-        console.log(data.token)
         await removeTemporarySession();
         await createSession(data.token);
 
@@ -921,7 +919,6 @@ export async function createNewConversationMessage(formData: FormNewConversation
 }; 
 
 export async function hardRedirect(uri: string) {
-    console.log('redirecting');
     return redirect(uri);
 };
 

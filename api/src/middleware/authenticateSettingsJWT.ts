@@ -8,7 +8,6 @@ export function authenticateSettingsJWT(req: Request, res: Response, next: NextF
     passport.authenticate('settings-jwt', { session: false }, (err: PassportError, user: User | false, info: { message: string | null | undefined }) => {
 
         if (err) {
-            console.log(err)
             next(new AppError(err.message, err.status || 400, err.name));
         }
 

@@ -67,7 +67,6 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrati
         } catch (error: unknown) {
             if (isZodError(error)) {
                 error.issues.forEach((detail) => {
-                    console.log(detail.path)
                     if (detail.path && detail.message) {
                         setError(detail.path[0] as keyof FormTemporaryUserPasswordType, {
                             type: 'manual',
@@ -194,7 +193,7 @@ export default function SignUpStepOne({ dialogOpen, setDialogOpen, setRegistrati
 
                 <Button form={formId}
                     className='w-full h-[3rem] text-[1.1rem] bg-primary font-semibold text-white-1 mt-auto rounded-[25px]'
-                    disabled={isSubmitButtonEnabled || isSubmitting}
+                    disabled={!isSubmitButtonEnabled || isSubmitting}
                 >
                     {isSubmitting ? (
                         <>

@@ -36,7 +36,6 @@ export default function ChangeEmail() {
 
         try {
             const response = await changeEmail(formData);
-            console.log(response)
             if (!response.success) {
                 if (response.error.details) throw new z.ZodError(response.error.details);
                 else if (response.error.code === 'EMAIL_TAKEN') {

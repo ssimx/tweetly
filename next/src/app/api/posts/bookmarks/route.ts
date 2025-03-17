@@ -24,7 +24,6 @@ export async function GET(req: NextRequest) {
             const cursor = searchParams.get('cursor');
 
             if (cursor !== null) {
-                console.log(cursor)
                 const response = await fetch(`${apiUrl}/posts/bookmarks?cursor=${cursor}`, {
                     method: 'GET',
                     headers: {

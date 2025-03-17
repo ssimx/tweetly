@@ -133,7 +133,6 @@ export default function Search() {
         if (queryWatch && !isSubmitting) {
             if (queryWatch === searchQuery) return;
             setIsOutputVisible(true);
-            console.log(queryWatch)
             debouncedCheckFn = executeSearch(queryWatch);
         }
 

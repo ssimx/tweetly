@@ -113,7 +113,6 @@ export default function VisitedPostInfoModal({ post, photoId }: { post: VisitedP
             return;
         }
 
-        console.log(targetElement)
         // Otherwise, navigate to the post in new tab
         if (e.button === 1) {
             // Check if it's a middle mouse button click

@@ -20,29 +20,20 @@ import { SignUpStepType } from '../SignUpProcess';
 import Croppie, { CropType } from "croppie";
 import "croppie/croppie.css";
 import { useRouter } from 'next/navigation';
-
-const croppieProfileOptions = {
-    showZoomer: true,
-    enableOrientation: true,
-    mouseWheelZoom: true,
-    viewport: {
-        width: 450,
-        height: 450,
-        type: "square" as CropType
-    },
-    boundary: {
-        width: 500,
-        height: 500
-    }
-};
+import { useMediaQuery } from 'usehooks-ts';
 
 type CroppieInstance = Croppie | null;
 
 export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrationStep, customError, setCustomError }: SignUpStepType) {
     const { savedTheme } = useDisplayContext();
+    const formId = useId();
+    const router = useRouter();
     const [uploadedPictureData, setUploadedPictureData] = useState<File | null>(null);
 
     const defaultProfilePictureLink = 'https://res.cloudinary.com/ddj6z1ptr/image/upload/v1728503826/profilePictures/ynh7bq3eynvkv5xhivaf.png';
+
+    const smViewport = useMediaQuery('(min-width: 640px)');
+    const mdViewport = useMediaQuery('(min-width: 768px)');
 
     // If picture is selected and applied, display it to the user
     const [profilePicturePreview, setProfilePicturePreview] = useState<string>(defaultProfilePictureLink);
@@ -51,8 +42,6 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
     const imageInputRef = useRef<HTMLInputElement | null>(null);
     const croppieContainerRef = useRef<HTMLDivElement | null>(null);
     const croppieRef = useRef<CroppieInstance>(null);
-    const formId = useId();
-    const router = useRouter();
     
     const {
         register,
@@ -61,7 +50,7 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
         formState: { errors, isSubmitting },
     } = useForm<FormTemporaryUserProfilePictureType>({ resolver: zodResolver(temporaryUserProfilePictureSchema) });
     
-    const { ref, ...rest } = register('image');
+    const { ref, ...rest } = register('profilePicture');
 
     const onSubmit = async (formData: FormTemporaryUserProfilePictureType) => {
         if (isSubmitting) return;
@@ -103,6 +92,25 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
     };
 
     // CROPPIE
+    const croppieProfileOptions = {
+        showZoomer: true,
+        enableOrientation: true,
+        mouseWheelZoom: true,
+        viewport: {
+            width: mdViewport === true
+                ? 550 * 0.9
+                : smViewport === true
+                    ? 500 * 0.9
+                    : 400 * 0.9,
+            height: mdViewport === true
+                ? 550 * 0.9
+                : smViewport === true
+                    ? 500 * 0.9
+                    : 400 * 0.9,
+            type: "square" as CropType
+        },
+    };
+
     const initializeCroppie = (): Croppie => {
         if (!croppieRef.current && croppieContainerRef.current) {
             croppieRef.current = new Croppie(croppieContainerRef.current, croppieProfileOptions);
@@ -118,7 +126,7 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
             setCustomError(null);
             setIsFileUploaded(() => false);
             setProfilePicturePreview(base64);
-            setValue('image', new File([base64], 'profile picture', { type: uploadedPictureData!.type }));
+            setValue('profilePicture', new File([base64], 'profile picture', { type: uploadedPictureData!.type }));
             setUploadedPictureData(new File([base64], 'profile picture', { type: uploadedPictureData!.type }));
         });
     };
@@ -154,6 +162,12 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
     };
 
     useEffect(() => {
+        // Track change in viewport (window resize)
+        // and reset the croppie by removing the uploaded picture
+        setIsFileUploaded(false);
+    }, [smViewport, mdViewport]);
+
+    useEffect(() => {
         // Cleanup Croppie instance when edit media is cancelled
         if (!isFileUploaded && croppieRef.current) {
             croppieRef.current.destroy();
@@ -176,13 +190,17 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
             {!isFileUploaded
                 ? (
                     <DialogContent
-                        className='w-[90%] sm:w-[700px] sm:h-[75%] flex flex-col justify-center items-center px-20 py-5 bg-primary-foreground'
+                        className='w-[90%] h-[60%] max-h-[80vh] min-h-[500px] px-[2em] py-5 flex flex-col justify-center items-center bg-primary-foreground sm:h-[75%] sm:px-[5em]'
                         hideClose
                     >
 
-                        <div className=''>
-                            <Image src={savedTheme === 0 ? TweetlyLogoBlack : TweetlyLogoWhite} alt='Tweetly logo' width='30' height='30' className='mx-auto' />
-                        </div>
+                        <Image
+                            src={savedTheme === 0 ? TweetlyLogoBlack : TweetlyLogoWhite}
+                            alt='Tweetly logo'
+                            width='30'
+                            height='30'
+                            className='mx-auto'
+                        />
 
                         <button
                             className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
@@ -213,7 +231,7 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
                                     <input
                                         {...rest} name="picture" ref={(e) => {
                                             ref(e);
-                                            setValue('image', uploadedPictureData ?? undefined);
+                                            setValue('profilePicture', uploadedPictureData ?? undefined);
                                             imageInputRef.current = e;
                                         }} 
                                         type="file"
@@ -242,40 +260,36 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
                                     Reset
                                 </button>
                             )}
+                            {errors.profilePicture && (
+                                <p className="w-fit !mt-0 error-msg">{`${errors.profilePicture.message}`}</p>
+                            )}
 
                             {customError && (
                                 <p className="w-fit !mt-0 error-msg">{`${customError}`}</p>
                             )}
 
-                            {errors.image && (
-                                <p className="w-fit !mt-0 error-msg">{`${errors.image.message}`}</p>
-                            )}
                         </div>
 
-                        {isSubmitting
-                            ? (
-                                <Button disabled
-                                    className='w-full h-[3rem] text-[1.1rem] bg-primary font-semibold text-white-1 mt-auto rounded-[25px]'>
+                        <Button
+                            form={formId}
+                            className='w-full h-[3rem] text-[1.1rem] bg-primary font-semibold text-white-1 mt-auto rounded-[25px]'
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? (
+                                <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Creating account...
-                                </Button>
-                            )
-                            : (
-                                <Button
-                                    form={formId}
-                                    className='w-full h-[3rem] text-[1.1rem] bg-primary font-semibold text-white-1 mt-auto rounded-[25px]'
-                                    type='submit'
-                                >
-                                    {!uploadedPictureData ? 'Skip for now' : 'Next'}
-                                </Button>
-                            )
-                        }
+                                    Saving...
+                                </>
+                            ) : (
+                                !uploadedPictureData ? 'Skip for now' : 'Next'
+                            )}
+                        </Button>
 
                     </DialogContent>
                 )
                 : (
                     <DialogContent
-                        className='w-[90%] sm:w-[700px] sm:h-[75%] flex flex-col justify-center py-5 bg-primary-foreground'
+                        className='w-[450px] h-[600px] px-[2em] py-5 flex flex-col justify-center items-center bg-primary-foreground sm:w-[550px] sm:h-[700px] sm:px-[5em] md:w-[700px] md:h-[750px]'
                         hideClose
                     >
                         <div className='h-fit flex gap-6 px-2 mr-auto mb-auto'>
@@ -287,9 +301,10 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
                             </button>
                             <h1 className='text-20 font-bold'>Edit media</h1>
                         </div>
-                        <div className=''>
+                        <div className='w-[400px] h-[400px] sm:w-[500px] sm:h-[500px] md:w-[550px] md:h-[550px]'>
                             <div ref={croppieContainerRef}></div>
                         </div>
+
                         <Button type="button"
                             className='mt-auto ml-auto mr-auto font-bold w-fit rounded-3xl text-white-1'
                             onClick={onResult}
