@@ -176,8 +176,8 @@ export default function Search() {
         <div className='relative w-full'>
             <div ref={searchContainer} className='w-full'>
                 <form onSubmit={handleSubmit(onSubmit)} className='h-fit w-full'>
-                    <label className="h-[50px] w-full flex items-center gap-4 text-gray-400 rounded-[25px] border px-4">
-                        <SearchIcon size={18} />
+                    <label className="h-[50px] flex items-center gap-3 text-gray-400 rounded-[25px] border px-4">
+                        <SearchIcon size={16} className='min-w-[16px]'/>
                         <input
                             {...register('q')}
                             type="search"

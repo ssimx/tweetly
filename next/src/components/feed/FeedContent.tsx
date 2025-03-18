@@ -6,15 +6,16 @@ import { socket } from '@/lib/socket';
 import { useUserContext } from "@/context/UserContextProvider";
 import FeedTab from "./FeedTab";
 import { useInView } from "react-intersection-observer";
-import { getHomeFollowingFeed, getMorePostsForHomeFollowingFeed, getMorePostsForHomeGlobalFeed } from "@/actions/get-actions";
+import { getHomeFollowingFeed, getHomeGlobalFeed, getMorePostsForHomeFollowingFeed, getMorePostsForHomeGlobalFeed } from "@/actions/get-actions";
 import { BasePostDataType, ErrorResponse, SuccessResponse } from 'tweetly-shared';
 import ClipLoader from 'react-spinners/ClipLoader';
+import { Rss } from 'lucide-react';
 
-export default function FeedContent({ initialPosts }: { initialPosts: { posts: BasePostDataType[], end: boolean } | undefined }) {
+export default function FeedContent() {
     const [activeTab, setActiveTab] = useState(0);
-    const [globalPosts, setGlobalPosts] = useState<BasePostDataType[] | undefined>(initialPosts ? initialPosts.posts : undefined);
+    const [globalPosts, setGlobalPosts] = useState<BasePostDataType[] | undefined | null>(undefined);
     const [newGlobalPosts, setNewGlobalPosts] = useState<BasePostDataType[]>([]);
-    const [followingPosts, setFollowingPosts] = useState<BasePostDataType[] | undefined | null>(null);
+    const [followingPosts, setFollowingPosts] = useState<BasePostDataType[] | undefined | null>(undefined);
     const [newFollowingPosts, setNewFollowingPosts] = useState<BasePostDataType[]>([]);
     const [newGlobalPostCount, setNewGlobalPostCount] = useState(0);
     const [newFollowingPostCount, setNewFollowingPostCount] = useState(0);
@@ -23,8 +24,8 @@ export default function FeedContent({ initialPosts }: { initialPosts: { posts: B
     // scroll and pagination
     const scrollPositionRef = useRef<number>(0);
     const [scrollPosition, setScrollPosition] = useState(0);
-    const [globalFeedCursor, setGlobalFeedCursor] = useState<number | null | undefined>(initialPosts ? initialPosts.posts.length !== 0 ? initialPosts.posts.slice(-1)[0].id : null : undefined);
-    const [globalFeedEndReached, setGlobalFeedEndReached] = useState<boolean | undefined>(initialPosts ? initialPosts.end : undefined);
+    const [globalFeedCursor, setGlobalFeedCursor] = useState<number | null | undefined>(undefined);
+    const [globalFeedEndReached, setGlobalFeedEndReached] = useState<boolean | undefined>(undefined);
     const [followingFeedCursor, setFollowingFeedCursor] = useState<number | null | undefined>(undefined);
     const [followingFeedEndReached, setFollowingFeedEndReached] = useState<boolean | undefined>(undefined);
     const { ref, inView } = useInView({
@@ -100,9 +101,41 @@ export default function FeedContent({ initialPosts }: { initialPosts: { posts: B
 
     useEffect(() => {
         // for fetching following tab, check for active tab AND whether followingPosts has yet been fetched OR logged in user has followed new user
-        if (activeTab === 1 && (followingPosts === null || newFollowing === true)) {
-            const fetchFeedPosts = async () => {
+        if (activeTab === 0 && !globalPosts) {
+            const fetchGlobalPosts = async () => {
                 try {
+                    console.log('test fetching global');
+                    const response = await getHomeGlobalFeed();
+
+                    if (!response.success) {
+                        const errorData = response as ErrorResponse;
+                        throw new Error(errorData.error.message);
+                    }
+
+                    const { data } = response as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
+                    if (data === undefined) throw new Error('Data is missing in response');
+                    else if (data.posts === undefined) throw new Error('Posts property is missing in data response');
+
+                    setGlobalFeedEndReached(data.end ?? true);
+                    setGlobalFeedCursor(data.posts.length ? data.posts.slice(-1)[0].id : null);
+                    setGlobalPosts(data.posts);
+                } catch (error) {
+                    console.error("Something went wrong:", error);
+
+                    setGlobalFeedEndReached(true);
+                    setGlobalFeedCursor(null);
+                    setGlobalPosts(undefined);
+                } finally {
+                    setScrollPosition(scrollPositionRef.current);
+                }
+            }
+
+            fetchGlobalPosts();
+        } else if (activeTab === 1 && (!followingPosts || newFollowing === true)) {
+            const fetchFollowingPosts = async () => {
+                try {
+                    console.log('test fetching following');
+
                     const response = await getHomeFollowingFeed();
 
                     if (!response.success) {
@@ -128,9 +161,9 @@ export default function FeedContent({ initialPosts }: { initialPosts: { posts: B
                 }
             }
 
-            fetchFeedPosts();
+            fetchFollowingPosts();
         }
-    }, [activeTab, followingPosts, newFollowing, setNewFollowing]);
+    }, [activeTab, globalPosts, followingPosts, newFollowing, setNewFollowing]);
 
     // Add posts received from websockets if user has chosen to show new posts
     const showNewPosts = (type: 'GLOBAL' | 'FOLLOWING') => {
@@ -176,7 +209,7 @@ export default function FeedContent({ initialPosts }: { initialPosts: { posts: B
 
     return (
         <>
-            <section className='feed-header'>
+            <section className='min-w-[400px] flex flex-col'>
                 <FeedHeaderTabs activeTab={activeTab} setActiveTab={setActiveTab} />
                 <NewPost />
                 {activeTab === 0
@@ -199,24 +232,41 @@ export default function FeedContent({ initialPosts }: { initialPosts: { posts: B
                 }
             </section>
 
-            <section className='feed-posts-desktop'>
+            <section className='min-w-[400px] flex flex-col h-fit'>
                 {activeTab === 0
                     ? globalPosts === undefined
-                        ? <div>Something went wrong</div>
+                        ? (
+                            <div className='w-full flex justify-center mt-6'>
+                                <ClipLoader
+                                    className='loading-spinner'
+                                    loading={true}
+                                    size={25}
+                                    aria-label="Loading Spinner"
+                                    data-testid="loader"
+                                />
+                            </div>
+                        )
                         : globalPosts === null
                             ? (
-                                <div className='w-full flex justify-center mt-6'>
-                                    <ClipLoader
-                                        className='loading-spinner'
-                                        loading={true}
-                                        size={25}
-                                        aria-label="Loading Spinner"
-                                        data-testid="loader"
-                                    />
+                                <div className='w-full mt-4 flex flex-col items-center grow gap-4'>
+                                    <p className='text-secondary-text'>Something went wrong.</p>
+                                    <button
+                                        className='w-fit bg-primary text-white-1 hover:bg-primary-dark border border-primary-border font-bold rounded-[25px] px-4 py-2 text-14'
+                                        onClick={() => setGlobalPosts(undefined)}
+                                    >
+                                        Reload
+                                    </button>
                                 </div>
                             )
                             : globalPosts.length === 0
-                                ? <div>No recent posts</div>
+                                ? (
+                                    <div className='w-full mt-4 flex flex-col items-center grow gap-4'>
+                                        <div className='w-fit h-fit p-5 rounded-full bg-secondary-foreground'>
+                                            <Rss size={28} className='text-primary' />
+                                        </div>
+                                        <p className='text-secondary-text'>No recent posts.</p>
+                                    </div>
+                                )
                                 : <FeedTab
                                     posts={globalPosts}
                                     loadingRef={ref}
@@ -227,21 +277,38 @@ export default function FeedContent({ initialPosts }: { initialPosts: { posts: B
 
                 {activeTab === 1
                     ? followingPosts === undefined
-                        ? <div>Something went wrong</div>
+                        ? (
+                            <div className='w-full flex justify-center mt-6'>
+                                <ClipLoader
+                                    className='loading-spinner'
+                                    loading={true}
+                                    size={25}
+                                    aria-label="Loading Spinner"
+                                    data-testid="loader"
+                                />
+                            </div>
+                        )
                         : followingPosts === null
                             ? (
-                                <div className='w-full flex justify-center mt-6'>
-                                    <ClipLoader
-                                        className='loading-spinner'
-                                        loading={true}
-                                        size={25}
-                                        aria-label="Loading Spinner"
-                                        data-testid="loader"
-                                    />
+                                <div className='w-full mt-4 flex flex-col items-center grow gap-4'>
+                                    <p className='text-secondary-text'>Something went wrong.</p>
+                                    <button
+                                        className='w-fit bg-primary text-white-1 hover:bg-primary-dark border border-primary-border font-bold rounded-[25px] px-4 py-2 text-14'
+                                        onClick={() => setFollowingPosts(undefined)}
+                                    >
+                                        Reload
+                                    </button>
                                 </div>
                             )
                             : followingPosts.length === 0
-                                ? <div>No posts. Follow more people</div>
+                                ? (
+                                    <div className='w-full mt-4 flex flex-col items-center grow gap-4'>
+                                        <div className='w-fit h-fit p-5 rounded-full bg-secondary-foreground'>
+                                            <Rss size={28} className='text-primary' />
+                                        </div>
+                                        <p className='text-secondary-text'>No recent posts, follow more people.</p>
+                                    </div>
+                                )
                                 : <FeedTab
                                     posts={followingPosts}
                                     loadingRef={ref}

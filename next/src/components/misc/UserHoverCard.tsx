@@ -42,8 +42,8 @@ export default function UserHoverCard({
     return (
         <div onClick={() => router.push(`/${user.username}`)} role='link'>
             <HoverCard>
-                <HoverCardTrigger asChild onClick={(e) => handleLinkClick(e)}>
-                    <Link href={`/${user.username}`} className='text-primary-text w-fit whitespace-nowrap overflow-hidden font-bold hover:underline'>
+                <HoverCardTrigger asChild onClick={(e) => handleLinkClick(e)} className='truncate'>
+                    <Link href={`/${user.username}`} className='text-primary-text overflow-hidden font-bold hover:underline truncate block'>
                         {user.profile.name}
                     </Link>
                 </HoverCardTrigger>

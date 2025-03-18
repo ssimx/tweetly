@@ -25,13 +25,17 @@ export default async function Layout({
     const savedColor = Number((await cookies()).get("color")?.value) || 0;
 
     return (
-        <html lang="en" suppressHydrationWarning>
-            <body suppressHydrationWarning className={`${inter.variable} ${ibm.variable} antialiased selection:bg-primary selection:text-[#ffffff]`} data-color={getColor(savedColor)} data-theme={getTheme(savedTheme)}>
-                <DisplayContextProvider savedTheme={savedTheme} savedColor={savedColor}>
-                    {children}
-                    {modals}
-                </DisplayContextProvider>
-            </body>
+        <html
+            lang="en"
+            data-color={getColor(savedColor)}
+            data-theme={getTheme(savedTheme)}
+            className={`${inter.variable} ${ibm.variable} antialiased selection:bg-primary selection:text-[#ffffff]`}
+            suppressHydrationWarning
+        >
+            <DisplayContextProvider savedTheme={savedTheme} savedColor={savedColor}>
+                {children}
+                {modals}
+            </DisplayContextProvider>
         </html>
     );
 }

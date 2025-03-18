@@ -215,7 +215,7 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
         <div className='ml-auto w-[30px] h-[25px] relative flex-center'>
             {menuOpen &&
                 <>
-                    <button className='menu-overlay' onClick={toggleMenu}></button>
+                    <button className='fixed top-0 left-0 w-screen h-screen z-40 pointer-events-auto' onClick={toggleMenu}></button>
 
                     <div
                         ref={menuBtn}

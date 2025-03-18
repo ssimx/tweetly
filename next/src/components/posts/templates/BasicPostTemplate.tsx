@@ -49,14 +49,16 @@ export default function BasicPostTemplate({
             )}
 
             <div className='w-full flex flex-col min-w-0'>
-                <div className='flex gap-2 text-secondary-text'>
-                    <UserHoverCard
-                        user={post.author}
-                        userState={userState}
-                        dispatch={dispatch}
-                    />
-                    <p>@{post.author.username}</p>
-                    <p>·</p>
+                <div className='w-full min-w-[0px] grid grid-cols-[auto_auto_auto_auto_1fr] grid-rows-1 gap-1 text-secondary-text'>
+                    <div className="overflow-hidden min-w-0">
+                        <UserHoverCard
+                            user={post.author}
+                            userState={userState}
+                            dispatch={dispatch}
+                        />
+                    </div>
+                    <p className='overflow-hidden'>@{post.author.username}</p>
+                    <p className='w-fit'>·</p>
                     <PostDate createdAt={post.createdAt} />
                     <PostMenuButton
                         post={post}

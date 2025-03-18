@@ -80,7 +80,7 @@ export default function FollowButton({ user, userState, dispatch }: FollowButton
 
     return (
         <button
-            className={`!w-[100px] follow-btn text-14 ${isFollowedByViewer ? "following before:content-['Following'] hover:before:content-['Unfollow']" : "before:content-['Follow']"}`}
+            className={`!w-[75px] follow-btn text-14 ${isFollowedByViewer ? "following before:content-['Following'] hover:before:content-['Unfollow']" : "before:content-['Follow']"}`}
             onClick={handleFollowToggle}
             disabled={isSubmitting}
         ></button>

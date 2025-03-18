@@ -31,11 +31,11 @@ export default function RightSidebarFollowSuggestions() {
                                 />
                             </div>
                         )
-                        : suggestions.length === 0
-                            ? 'You are currently following everyone'
-                            : suggestions.slice(0, 4).map((user) => (
+                        : suggestions.length !== 0
+                            ? suggestions.slice(0, 4).map((user) => (
                                 <SuggestionCard key={user.username} user={user} />
                             ))
+                            : null
                 }
             </div>
             <Dialog>

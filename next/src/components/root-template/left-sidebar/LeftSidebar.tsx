@@ -57,16 +57,19 @@ export default function LeftSidebar() {
             socket.off('new_message', onNewMessages);
         };
     }, [loggedInUser]);
-    
+
     return (
-        <nav className='left-sidebar'>
+        <nav className='hidden fixed top-0 h-full pt-4 pb-6
+                        xs:flex xs:flex-col xs:gap-12 xs:[&_p]:hidden xs:[&_span]:hidden
+                        xl:items-start xl:[&_p]:block xl:[&_span]:flex xl:w-[200px]'
+        >
             <Link href='/'>
                 <Image src={savedTheme === 0 ? TweetlyLogoBlack : TweetlyLogoWhite} alt='Tweetly logo' width='30' height='30' className='mx-auto' />
             </Link>
-            <div className='left-sidebar-links'>
+            <div className='flex flex-col'>
                 {leftSidebarLinks.map((link) => (
-                    <LeftSidebarLink 
-                        key={link.label} 
+                    <LeftSidebarLink
+                        key={link.label}
                         link={link}
                         messages={messages}
                         notifications={notifications} />

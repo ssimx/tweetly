@@ -151,10 +151,10 @@ export default function ProfileMenuButton({ user, userState, dispatch }: Profile
     }, [menuOpen]);
 
     return (
-        <div className='profile-menu'>
+        <div className='w-[38px] h-[38px] relative flex-center'>
             {menuOpen &&
                 <>
-                    <div className='menu-overlay' onClick={toggleMenu}></div>
+                    <div className='fixed top-0 left-0 w-screen h-screen z-40 pointer-events-auto' onClick={toggleMenu}></div>
 
                     <div ref={menuBtn} className='shadow-menu bg-primary-foreground border border-primary-border overflow-hidden absolute top-[125%] right-[0%] z-50 w-[250px] h-fit rounded-[20px] py-[10px] pointer-events-none [&>button]:pointer-events-auto'>
                         <button

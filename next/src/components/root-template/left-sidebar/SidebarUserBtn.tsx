@@ -6,24 +6,33 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 export default function SidebarUserBtn() {
-    const [menuOpen, setMenuOpen] = useState(false);
     const { loggedInUser } = useUserContext();
-    const menuRef = useRef<HTMLButtonElement | null>(null);
     const router = useRouter();
-
-    const toggleMenu = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setMenuOpen((prev) => !prev);
-    };
+    const [menuOpen, setMenuOpen] = useState(false);
+    const menuBtn = useRef<HTMLDivElement | null>(null);
 
     const signOut = async (e: React.MouseEvent) => {
         e.preventDefault();
         router.push('/logout');
     };
 
+    const toggleMenu = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setMenuOpen((prev) => !prev);
+
+        if (!menuOpen) {
+            // Disable interaction behind the menu when it's opened
+            document.body.classList.add('disable-interaction');
+        } else {
+            // Re-enable interaction when the menu is closed
+            document.body.classList.remove('disable-interaction');
+        }
+    };
+
     const handleClickOutside = (event: MouseEvent) => {
-        if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        if (menuBtn.current && !menuBtn.current.contains(event.target as Node)) {
             setMenuOpen(false);
+            document.body.classList.remove('disable-interaction'); // Enable interaction again
         }
     };
 
@@ -35,19 +44,40 @@ export default function SidebarUserBtn() {
         }
 
         return () => {
-            window.removeEventListener('click', handleClickOutside); // Cleanup on unmount
+            window.removeEventListener('click', handleClickOutside);
+            document.body.classList.remove('disable-interaction');
         };
     }, [menuOpen]);
 
     return (
-        <div className='user-btn'>
-            {menuOpen &&
-                <button ref={menuRef} type='button' onClick={signOut} className='user-menu w-full h-full text-left font-bold border border-primary-border hover:bg-card-hover'>Sign out @{loggedInUser?.username} </button>
-            }
+        <div className='w-full h-fit mt-auto relative [&_svg]:hidden xl:w-full xl:[&_svg]:block'>
+            {menuOpen && (
+                <>
+                    <div
+                        className='fixed top-0 left-0 w-screen h-screen z-40 pointer-events-auto'
+                        onClick={toggleMenu}></div>
+
+                    <div ref={menuBtn} className='shadow-menu bg-primary-foreground overflow-hidden absolute z-50 w-[200px] h-fit rounded-[20px] py-[10px] mb-2 translate-y-[-125%] xl:w-[110%] xl:translate-x-[-5%] pointer-events-none [&>button]:pointer-events-auto'>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                signOut(e);
+                            }}
+                            className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[10px] hover:bg-card-hover'
+                        >
+                            Sign out @{loggedInUser?.username}
+                        </button>
+                    </div>
+                </>
+            )}
 
             <button type='button'
                 className='w-full h-[50px] flex gap-4 items-center rounded-[25px] bg-transparent text-primary-text font-bold'
-                onClick={toggleMenu}>
+                onClick={(e) => {
+                    e.stopPropagation();
+                    toggleMenu(e);
+                }}
+            >
                 <Image width={50} height={50} src={loggedInUser?.profile.profilePicture} alt='User profile' className='w-[40px] h-[40px] xl:w-[50px] xl:h-[50px] rounded-full bg-[hsl(var(--primary))]' />
                 <span className='flex flex-col items-start leading-tight'><span className=''>{loggedInUser?.profile.name}</span> <span className='text-secondary-text font-medium'>@{loggedInUser?.username}</span></span>
                 <Ellipsis size={22} color={'#5B7083'} className='ml-auto' />

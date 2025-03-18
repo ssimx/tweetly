@@ -27,7 +27,7 @@ export default function FeedTab({ posts, loadingRef, scrollPositionRef, endReach
     }, [scrollPositionRef]);
 
     return (
-        <div>
+        <>
             {
                 posts.map((post, index) => (
                     <div key={post.id}>
@@ -36,7 +36,7 @@ export default function FeedTab({ posts, loadingRef, scrollPositionRef, endReach
                     </div>
                 ))
             }
-
+            
             {!endReached && (
                 <div ref={loadingRef} className='w-full flex justify-center my-6'>
                     <ClipLoader
@@ -48,6 +48,6 @@ export default function FeedTab({ posts, loadingRef, scrollPositionRef, endReach
                     />
                 </div>
             )}
-        </div>
+        </>
     )
 }

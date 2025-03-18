@@ -21,7 +21,7 @@ export default function LeftSidebarLink({ link, messages, notifications }: { lin
         return (
             <Link
                 href={link.route}
-                className='left-sidebar-link top-0 right-0'>
+                className='w-fit flex gap-4 items-center hover:bg-card-hover px-3 py-4 rounded-[30px] top-0 right-0'>
                 <div className='relative flex items-center gap-4'>
                     {notifications === true && (
                         <div className='absolute right-0 top-0 translate-y-[-25%] translate-x-[100%] z-10 w-[12px] h-[12px] bg-primary rounded-full border border-[var(--primary-text-color)]'></div>
@@ -39,7 +39,7 @@ export default function LeftSidebarLink({ link, messages, notifications }: { lin
         return (
             <Link
                 href={link.route}
-                className='left-sidebar-link top-0 right-0'>
+                className='w-fit flex gap-4 items-center hover:bg-card-hover px-3 py-4 rounded-[30px] top-0 right-0'>
                 <div className='relative flex items-center gap-4'>
                     {messages === true && (
                         <div className='absolute right-0 top-0 translate-y-[-25%] translate-x-[100%] z-10 w-[12px] h-[12px] bg-primary rounded-full border border-[var(--primary-text-color)]'></div>
@@ -55,7 +55,7 @@ export default function LeftSidebarLink({ link, messages, notifications }: { lin
 
     if (link.label === 'Settings') {
         return (
-            <Link href={link.route} className='left-sidebar-link'>
+            <Link href={link.route} className='w-fit flex gap-4 items-center hover:bg-card-hover px-3 py-4 rounded-[30px]'>
                 <Icon className='icon'
                     color={pathname.includes('settings') ? 'hsl(var(--primary))' : 'hsl(var(--primary-text-color))'}
                 />
@@ -66,7 +66,7 @@ export default function LeftSidebarLink({ link, messages, notifications }: { lin
 
     if (link.label === 'Profile') {
         return (
-            <Link href={link.route === '/profile' ? `/${loggedInUser.username}` : link.route} className='left-sidebar-link'>
+            <Link href={link.route === '/profile' ? `/${loggedInUser.username}` : link.route} className='w-fit flex gap-4 items-center hover:bg-card-hover px-3 py-4 rounded-[30px]'>
                 <Icon className='icon'
                     color={pathname === '/' + loggedInUser.username ? 'hsl(var(--primary))' : 'hsl(var(--primary-text-color))'}
                 />
@@ -76,7 +76,7 @@ export default function LeftSidebarLink({ link, messages, notifications }: { lin
     }
 
     return (
-        <Link href={link.route === '/profile' ? `/${loggedInUser.username}` : link.route} className='left-sidebar-link'>
+        <Link href={link.route === '/profile' ? `/${loggedInUser.username}` : link.route} className='w-fit flex gap-4 items-center hover:bg-card-hover px-3 py-4 rounded-[30px]'>
             <Icon className='icon'
                 color={pathname === link.route ? 'hsl(var(--primary))' : 'hsl(var(--primary-text-color))'}
             />
