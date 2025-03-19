@@ -80,7 +80,8 @@ export default function FollowButton({ user, userState, dispatch }: FollowButton
 
     return (
         <button
-            className={`!w-[75px] follow-btn text-14 ${isFollowedByViewer ? "following before:content-['Following'] hover:before:content-['Unfollow']" : "before:content-['Follow']"}`}
+            className={`min-w-[100px] bg-primary text-white-1 hover:bg-primary-dark border border-primary-border font-bold rounded-[25px] px-4 py-2
+                text-14 ${isFollowedByViewer ? "following before:content-['Following'] hover:before:content-['Unfollow']" : "before:content-['Follow']"}`}
             onClick={handleFollowToggle}
             disabled={isSubmitting}
         ></button>

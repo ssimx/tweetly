@@ -103,19 +103,23 @@ export type UserUpdateBirthdayType = z.infer<typeof userUpdateBirthdaySchema>;
 export const userUpdateProfileSchema = z.object({
     name: z
         .string()
+        .trim()
         .min(1, 'Please enter the name')
         .max(50, "Name can't exceed 50 characters"),
     bio: z
         .optional(z
             .string()
+            .trim()
             .max(160, "Bio can't exceed 60 characters")),
     location: z
         .optional(z
             .string()
+            .trim()
             .max(30, "Location can't exceed 30 characters")),
     website: z
         .optional(z
             .string()
+            .trim()
             .max(100, "Website url can't exceed 30 characters")
             .refine((val) => val === '' || /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?$/.test(val as string), {
                 message: 'Invalid website URL',
@@ -176,11 +180,6 @@ export const userUpdateProfileSchema = z.object({
 
 export type UserUpdateProfileType = z.infer<typeof userUpdateProfileSchema>;
 
-
-
-
-
-// Email schema
 export const emailSchema = z.object({
     email: z
         .string()
@@ -189,7 +188,6 @@ export const emailSchema = z.object({
         .email(),
 });
 
-// Username schema
 export const usernameSchema = z.object({
     username: z
         .string()
@@ -201,7 +199,6 @@ export const usernameSchema = z.object({
         .regex(/^[a-zA-Z0-9]+$/, "Username contains invalid characters."),
 });
 
-// Email or username availability lookup
 export const usernameOrEmailAvailibilitySchema = z.discriminatedUnion('type',
     [
         z.object({

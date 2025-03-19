@@ -36,8 +36,6 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
     // tab 3
     const [likedPosts, setLikedPosts] = useState<BasePostDataType[] | undefined | null>(undefined);
 
-    const [hasFetchError, setHasFetchError] = useState(false);
-
     // scroll and pagination
     const scrollPositionRef = useRef<number>(0);
     const [scrollPosition, setScrollPosition] = useState(0);
@@ -192,7 +190,46 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
 
     // Initial replies/likes fetch, save cursor
     useEffect(() => {
-        if (activeTab === 1 && replies === undefined) {
+        if (activeTab === 0 && postsReposts === undefined) {
+            const fetchPostsReposts = async () => {
+                try {
+                    const response = await getPostsAndRepostsForProfile(user.username);
+
+                    if (!response.success) {
+                        const errorData = response as ErrorResponse;
+                        throw new Error(errorData.error.message);
+                    }
+
+                    const { data } = response;
+                    if (!data) throw new Error('Data is missing in response');
+                    else if (data.postsCursor === undefined) throw new Error('postsCursor property is missing in data response');
+                    else if (data.postsEnd === undefined) throw new Error('postsEnd property is missing in data response');
+                    else if (data.repostsCursor === undefined) throw new Error('repostsCursor property is missing in data response');
+                    else if (data.repostsEnd === undefined) throw new Error('repostsEnd property is missing in data response');
+                    else if (data.postsReposts === undefined) throw new Error('postsReposts property is missing in data response');
+
+                    setPostsCursor(data.postsCursor);
+                    setPostsEndReached(data.postsEnd);
+                    setRepostsCursor(data.repostsCursor);
+                    setRepostsEndReached(data.repostsEnd)
+                    setPostsReposts(data.postsReposts);
+                } catch (error) {
+                    console.error("Something went wrong:", error);
+
+                    setPostsReposts([]);
+
+                    setPostsEndReached(true);
+                    setRepostsEndReached(true);
+
+                    setPostsCursor(null);
+                    setRepostsCursor(null);
+                }
+
+                setScrollPosition(scrollPositionRef.current);
+            }
+
+            fetchPostsReposts();
+        } else if (activeTab === 1 && replies === undefined) {
             const fetchReplies = async () => {
                 try {
                     const response = await getRepliesForProfile(user.username);
@@ -213,7 +250,6 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                 } catch (error) {
                     console.error("Something went wrong:", error);
 
-                    setHasFetchError(true);
                     setRepliesEndReached(true);
                     setRepliesCursor(null);
                     setReplies([]);
@@ -244,7 +280,6 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                 } catch (error) {
                     console.error("Something went wrong:", error);
 
-                    setHasFetchError(true);
                     setMediaEndReached(true);
                     setMediaCursor(null);
                     setMedia([]);
@@ -275,7 +310,6 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                 } catch (error) {
                     console.error("Something went wrong:", error);
 
-                    setHasFetchError(true);
                     setLikesEndReached(true);
                     setLikesCursor(null);
                     setLikedPosts([]);
@@ -286,50 +320,9 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
 
             fetchLikedPosts();
         }
-    }, [user.username, activeTab, replies, media, likedPosts]);
+    }, [user.username, activeTab, postsReposts, replies, media, likedPosts]);
 
-    // Initial posts/reposts fetch, save cursor
     useEffect(() => {
-        const fetchPostsReposts = async () => {
-            try {
-                const response = await getPostsAndRepostsForProfile(user.username);
-
-                if (!response.success) {
-                    const errorData = response as ErrorResponse;
-                    throw new Error(errorData.error.message);
-                }
-
-                const { data } = response;
-                if (!data) throw new Error('Data is missing in response');
-                else if (data.postsCursor === undefined) throw new Error('postsCursor property is missing in data response');
-                else if (data.postsEnd === undefined) throw new Error('postsEnd property is missing in data response');
-                else if (data.repostsCursor === undefined) throw new Error('repostsCursor property is missing in data response');
-                else if (data.repostsEnd === undefined) throw new Error('repostsEnd property is missing in data response');
-                else if (data.postsReposts === undefined) throw new Error('postsReposts property is missing in data response');
-
-                setPostsCursor(data.postsCursor);
-                setPostsEndReached(data.postsEnd);
-                setRepostsCursor(data.repostsCursor);
-                setRepostsEndReached(data.repostsEnd)
-                setPostsReposts(data.postsReposts);
-            } catch (error) {
-                console.error("Something went wrong:", error);
-
-                setHasFetchError(true);
-                setPostsReposts([]);
-
-                setPostsEndReached(true);
-                setRepostsEndReached(true);
-
-                setPostsCursor(null);
-                setRepostsCursor(null);
-            }
-
-            setScrollPosition(scrollPositionRef.current);
-        }
-
-        fetchPostsReposts();
-
         // Track scroll position on user scroll
         function handleScroll() {
             scrollPositionRef.current = window.scrollY;
@@ -340,7 +333,7 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
         return () => {
             window.removeEventListener('scroll', handleScroll);
         };
-    }, [user.username]);
+    }, []);
 
     return (
         <div className='h-full grid grid-rows-[auto,auto,1fr] border-b border-primary-border'>
@@ -361,51 +354,62 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                             />
                         </div>
                     )
-                    : postsReposts && postsReposts.length
+                    : postsReposts === null
                         ? (
-                            <section className='w-full flex flex-col h-fit'>
-                                {postsReposts.map((post) => {
-                                    return (
-                                        <div key={post.id}>
-                                            {post.type === 'REPOST' && (
-                                                <ProfileRepost
-                                                    profileUsername={user.username}
-                                                    post={post}
-                                                    authorized={authorized}
-                                                    userState={userState}
-                                                    dispatch={dispatch}
-                                                />
-                                            )}
-
-                                            {post.type === 'POST' && (
-                                                <ProfilePost
-                                                    post={post}
-                                                    userState={userState}
-                                                    dispatch={dispatch}
-                                                />
-                                            )}
-                                            <div className='feed-hr-line'></div>
-                                        </div>
-                                    )
-                                })}
-
-                                {(!postsEndReached || !repostsEndReached) && (
-                                    <div ref={ref} className='w-full flex-center mt-6 mb-6'>
-                                        <ClipLoader
-                                            className='loading-spinner'
-                                            loading={true}
-                                            size={25}
-                                            aria-label="Loading Spinner"
-                                            data-testid="loader"
-                                        />
-                                    </div>
-                                )}
-                            </section>
+                            <div className='w-full mt-4 flex flex-col items-center grow gap-4'>
+                                <p className='text-secondary-text'>Something went wrong.</p>
+                                <button
+                                    className='w-fit bg-primary text-white-1 hover:bg-primary-dark border border-primary-border font-bold rounded-[25px] px-4 py-2 text-14'
+                                    onClick={() => setPostsReposts(undefined)}
+                                >
+                                    Reload
+                                </button>
+                            </div>
                         )
-                        : hasFetchError
-                            ? <div>Something went wrong</div>
-                            : postsReposts && !postsReposts.length && <ProfileNoContent type='POSTS' authorized={authorized} />
+                        : postsReposts && postsReposts.length
+                            ? (
+                                <section className='w-full flex flex-col h-fit'>
+                                    {postsReposts.map((post) => {
+                                        return (
+                                            <div key={post.id}>
+                                                {post.type === 'REPOST' && (
+                                                    <ProfileRepost
+                                                        profileUsername={user.username}
+                                                        post={post}
+                                                        authorized={authorized}
+                                                        userState={userState}
+                                                        dispatch={dispatch}
+                                                    />
+                                                )}
 
+                                                {post.type === 'POST' && (
+                                                    <ProfilePost
+                                                        post={post}
+                                                        userState={userState}
+                                                        dispatch={dispatch}
+                                                    />
+                                                )}
+                                                <div className='feed-hr-line'></div>
+                                            </div>
+                                        )
+                                    })}
+
+                                    {(!postsEndReached || !repostsEndReached) && (
+                                        <div ref={ref} className='w-full flex-center mt-6 mb-6'>
+                                            <ClipLoader
+                                                className='loading-spinner'
+                                                loading={true}
+                                                size={25}
+                                                aria-label="Loading Spinner"
+                                                data-testid="loader"
+                                            />
+                                        </div>
+                                    )}
+                                </section>
+                            )
+                            : postsReposts && !postsReposts.length && (
+                                <ProfileNoContent type='POSTS' authorized={authorized} />
+                            )
             )}
 
             {activeTab === 1 && (
@@ -421,39 +425,51 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                             />
                         </div>
                     )
-                    : replies && replies.length
+                    : replies === null
                         ? (
-                            <section className='w-full flex flex-col h-fit'>
-                                {replies.map((post, index) => {
-                                    return (
-                                        <div key={post.id}>
-                                            <ProfileReply
-                                                profileUsername={user.username}
-                                                post={post}
-                                                userState={userState}
-                                                dispatch={dispatch}
-                                            />
-                                            {(index + 1) !== replies.length && <div className='feed-hr-line'></div>}
-                                        </div>
-                                    )
-                                })}
-
-                                {(!repliesEndReached) && (
-                                    <div ref={ref} className='w-full flex-center mt-6 mb-6'>
-                                        <ClipLoader
-                                            className='loading-spinner'
-                                            loading={true}
-                                            size={25}
-                                            aria-label="Loading Spinner"
-                                            data-testid="loader"
-                                        />
-                                    </div>
-                                )}
-                            </section>
+                            <div className='w-full mt-4 flex flex-col items-center grow gap-4'>
+                                <p className='text-secondary-text'>Something went wrong.</p>
+                                <button
+                                    className='w-fit bg-primary text-white-1 hover:bg-primary-dark border border-primary-border font-bold rounded-[25px] px-4 py-2 text-14'
+                                    onClick={() => setReplies(undefined)}
+                                >
+                                    Reload
+                                </button>
+                            </div>
                         )
-                        : hasFetchError
-                            ? <div>Something went wrong</div>
-                            : replies && !replies.length && <ProfileNoContent type='REPLIES' authorized={authorized} />
+                        : replies && replies.length
+                            ? (
+                                <section className='w-full flex flex-col h-fit'>
+                                    {replies.map((post, index) => {
+                                        return (
+                                            <div key={post.id}>
+                                                <ProfileReply
+                                                    profileUsername={user.username}
+                                                    post={post}
+                                                    userState={userState}
+                                                    dispatch={dispatch}
+                                                />
+                                                {(index + 1) !== replies.length && <div className='feed-hr-line'></div>}
+                                            </div>
+                                        )
+                                    })}
+
+                                    {(!repliesEndReached) && (
+                                        <div ref={ref} className='w-full flex-center mt-6 mb-6'>
+                                            <ClipLoader
+                                                className='loading-spinner'
+                                                loading={true}
+                                                size={25}
+                                                aria-label="Loading Spinner"
+                                                data-testid="loader"
+                                            />
+                                        </div>
+                                    )}
+                                </section>
+                            )
+                            : replies && !replies.length && (
+                                <ProfileNoContent type='REPLIES' authorized={authorized} />
+                            )
             )}
 
             {activeTab === 2 && (
@@ -469,36 +485,47 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                             />
                         </div>
                     )
-                    : media && media.length
+                    : media === null
                         ? (
-                            <section className='w-full h-fit p-2 grid grid-cols-[repeat(3,minmax(100px,1fr))] lg:grid-cols-[repeat(4,minmax(100px,1fr))] grid-rows-[125px] auto-rows-[125px] gap-2'>
-                                {media.map((post) => {
-                                    return (
-                                        <div key={post.id}>
-                                            <ProfileMediaPost
-                                                post={post}
+                            <div className='w-full mt-4 flex flex-col items-center grow gap-4'>
+                                <p className='text-secondary-text'>Something went wrong.</p>
+                                <button
+                                    className='w-fit bg-primary text-white-1 hover:bg-primary-dark border border-primary-border font-bold rounded-[25px] px-4 py-2 text-14'
+                                    onClick={() => setMedia(undefined)}
+                                >
+                                    Reload
+                                </button>
+                            </div>
+                        )
+                        : media && media.length
+                            ? (
+                                <section className='w-full h-fit p-2 grid grid-cols-[repeat(3,minmax(100px,1fr))] lg:grid-cols-[repeat(4,minmax(100px,1fr))] grid-rows-[125px] auto-rows-[125px] gap-2'>
+                                    {media.map((post) => {
+                                        return (
+                                            <div key={post.id}>
+                                                <ProfileMediaPost
+                                                    post={post}
+                                                />
+                                            </div>
+                                        )
+                                    })}
+
+                                    {(!mediaEndReached) && (
+                                        <div ref={ref} className='w-full flex-center mt-6 mb-6'>
+                                            <ClipLoader
+                                                className='loading-spinner'
+                                                loading={true}
+                                                size={25}
+                                                aria-label="Loading Spinner"
+                                                data-testid="loader"
                                             />
                                         </div>
-                                    )
-                                })}
-
-                                {(!mediaEndReached) && (
-                                    <div ref={ref} className='w-full flex-center mt-6 mb-6'>
-                                        <ClipLoader
-                                            className='loading-spinner'
-                                            loading={true}
-                                            size={25}
-                                            aria-label="Loading Spinner"
-                                            data-testid="loader"
-                                        />
-                                    </div>
-                                )}
-                            </section>
-                        )
-                        : hasFetchError
-                            ? <div>Something went wrong</div>
-                            : media && !media.length && <ProfileNoContent type='MEDIA' authorized={authorized} />
-
+                                    )}
+                                </section>
+                            )
+                            : media && !media.length && (
+                                <ProfileNoContent type='MEDIA' authorized={authorized} />
+                            )
             )}
 
             {activeTab === 3 && (
@@ -514,48 +541,59 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                             />
                         </div>
                     )
-                    : likedPosts && likedPosts.length
+                    : likedPosts === null
                         ? (
-                            <section className='w-full flex flex-col h-fit'>
-                                {likedPosts.map((post, index) => {
-                                    return (
-                                        <div key={post.id}>
-                                            {post.replyTo
-                                                ? <ProfileLikedPostReply
-                                                    profileUsername={user.username}
-                                                    post={post}
-                                                    userState={userState}
-                                                    dispatch={dispatch}
-                                                />
-                                                : <ProfileLikedPost
-                                                    profileUsername={user.username}
-                                                    post={post}
-                                                    userState={userState}
-                                                    dispatch={dispatch}
-                                                />
-                                            }
-                                            {(index + 1) !== likedPosts.length && <div className='feed-hr-line'></div>}
-                                        </div>
-                                    )
-                                })}
-
-                                {(!likesEndReached) && (
-                                    <div ref={ref} className='w-full flex-center mt-6 mb-6'>
-                                        <ClipLoader
-                                            className='loading-spinner'
-                                            loading={true}
-                                            size={25}
-                                            aria-label="Loading Spinner"
-                                            data-testid="loader"
-                                        />
-                                    </div>
-                                )}
-                            </section>
+                            <div className='w-full mt-4 flex flex-col items-center grow gap-4'>
+                                <p className='text-secondary-text'>Something went wrong.</p>
+                                <button
+                                    className='w-fit bg-primary text-white-1 hover:bg-primary-dark border border-primary-border font-bold rounded-[25px] px-4 py-2 text-14'
+                                    onClick={() => setLikedPosts(undefined)}
+                                >
+                                    Reload
+                                </button>
+                            </div>
                         )
-                        : hasFetchError
-                            ? <div>Something went wrong</div>
-                            : likedPosts && !likedPosts.length && <ProfileNoContent type='LIKES' authorized={authorized} />
+                        : likedPosts && likedPosts.length
+                            ? (
+                                <section className='w-full flex flex-col h-fit'>
+                                    {likedPosts.map((post, index) => {
+                                        return (
+                                            <div key={post.id}>
+                                                {post.replyTo
+                                                    ? <ProfileLikedPostReply
+                                                        profileUsername={user.username}
+                                                        post={post}
+                                                        userState={userState}
+                                                        dispatch={dispatch}
+                                                    />
+                                                    : <ProfileLikedPost
+                                                        profileUsername={user.username}
+                                                        post={post}
+                                                        userState={userState}
+                                                        dispatch={dispatch}
+                                                    />
+                                                }
+                                                {(index + 1) !== likedPosts.length && <div className='feed-hr-line'></div>}
+                                            </div>
+                                        )
+                                    })}
 
+                                    {(!likesEndReached) && (
+                                        <div ref={ref} className='w-full flex-center mt-6 mb-6'>
+                                            <ClipLoader
+                                                className='loading-spinner'
+                                                loading={true}
+                                                size={25}
+                                                aria-label="Loading Spinner"
+                                                data-testid="loader"
+                                            />
+                                        </div>
+                                    )}
+                                </section>
+                            )
+                            : likedPosts && !likedPosts.length && (
+                                <ProfileNoContent type='LIKES' authorized={authorized} />
+                            )
             )}
 
         </div>

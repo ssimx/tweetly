@@ -28,6 +28,7 @@ export default function ProfileDynamicInfo({ user, authorized }: { user: UserDat
         }
     };
     const [userState, dispatch] = useReducer(userInfoReducer, initialState);
+
     const {
         isFollowingViewer,
         hasBlockedViewer,
@@ -52,12 +53,12 @@ export default function ProfileDynamicInfo({ user, authorized }: { user: UserDat
         <div className='h-full grid grid-rows-[auto,auto,1fr]'>
             {authorized
                 ? (
-                    <div className='edit-profile'>
+                    <div className='w-full h-[55px] flex justify-end items-center pr-5'>
                         <ProfileEditBtn profileInfo={user.profile} />
                     </div>
                 )
                 : (
-                    <div className='profile-interaction'>
+                    <div className='w-full h-[55px] flex justify-end items-center gap-2 pr-5'>
                         <ProfileMenuButton
                             user={user.username}
                             userState={userState}
@@ -90,7 +91,7 @@ export default function ProfileDynamicInfo({ user, authorized }: { user: UserDat
                 )
             }
 
-            <div className='mt-8 px-4 flex flex-col gap-2'>
+            <div className='px-4 flex flex-col gap-2' style={{ marginTop: "clamp(5px, 2.5vw, 50px)" }}>
                 <div>
                     <p className='font-bold text-[1.5rem]'>{user.profile.name}</p>
                     <div className='flex gap-2 items-center text-secondary-text'>

@@ -15,13 +15,13 @@ export default async function Profile(props: { params: Promise<{ username: strin
 
     return (
         <section className='w-full min-h-screen h-fit grid grid-rows-[max-content,1fr]'>
-            <div className='w-full h-[200px]'>
+            <div className='w-full h-[175px] md:h-[190px] lg:h-[200px]'>
                 <div className='h-full relative'>
                     <Image
                         src={user.profile.profilePicture}
                         alt='User profile picture'
                         height={150} width={150}
-                        className='h-[150px] w-[150px] absolute bottom-0 left-5 translate-y-[50%] rounded-full border-primary-foreground border-4' />
+                        className='profile-picture absolute bottom-0 left-5 translate-y-[50%] rounded-full border-primary-foreground border-4' />
                     {user.profile.bannerPicture
                         ? <Image
                             src={user.profile.bannerPicture}

@@ -9,6 +9,19 @@
     /* border: 1px solid red; */
 }
 
+html {
+    scrollbar-gutter: stable;
+}
+
+/* html tag is required here to provide higher specificity */
+html {
+    @supports (scrollbar-gutter: stable) {
+        body {
+            margin: 0 !important;
+        }
+    }
+}
+
 body {
     font-family: var(--font-inter), Arial, Helvetica, sans-serif;
     width: 100wv;
@@ -17,7 +30,16 @@ body {
 
     color: hsl(var(--primary-text-color)) !important;
     background-color: hsl(var(--primary-foreground)) !important;
+
+    overflow-y: visible !important;
 }
+
+html body[data-scroll-locked] {
+    overflow: visible !important;
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+}
+
 
 input, textarea {
     background-color: transparent;
@@ -149,6 +171,11 @@ input, textarea {
 
 .post-preview {
     background-color: hsl(var(--primary-foreground));
+}
+
+.profile-picture {
+    width: clamp(100px, 20vw, 150px);
+    height: clamp(100px, 20vw, 150px);
 }
 
 input[type="search"]::-webkit-search-decoration,

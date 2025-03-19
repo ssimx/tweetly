@@ -7,7 +7,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import TextareaAutosize from 'react-textarea-autosize';
 import { Button } from "../ui/button";
@@ -32,6 +32,7 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
     const [location, setLocation] = useState(profileInfo.location);
     const [website, setWebsite] = useState(profileInfo.websiteUrl);
     const [customError, setCustomError] = useState<string | null>(null);
+    const formId = useId();
 
     const defaultProfilePictureLink = 'https://res.cloudinary.com/ddj6z1ptr/image/upload/v1728503826/profilePictures/ynh7bq3eynvkv5xhivaf.png';
 
@@ -95,9 +96,6 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
     const { ref: profilePictureRef, ...profilePictureRest } = register('profilePicture');
     const { ref: bannerPictureRef, ...bannerPictureRest } = register('bannerPicture');
 
-
-
-
     const onSubmit = async (formData: UserUpdateProfileType) => {
         if (isSubmitting) return;
         setCustomError(null);
@@ -112,7 +110,7 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
 
             // if success, redirect
             router.refresh();
-            setOpen(false);
+            setDialogOpen(false);
             refetchUserData();
         } catch (error: unknown) {
             if (isZodError(error)) {
@@ -285,7 +283,7 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
             {!isFileUploaded
                 ? (
                     <DialogContent
-                        className="w-[90%] flex flex-col px-[2em]"
+                        className="w-[90%] flex flex-col gap-2 px-[2em]"
                         hideClose
                     >
                         <div className='flex justify-between'>
@@ -309,13 +307,13 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                                     alt='User banner picture'
                                                     height={180} width={600}
                                                     className='w-full h-full absolute' />
-                                                <button className=' z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30'
+                                                <button className=' z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30 border'
                                                     onClick={() => bannerPictureInputRef.current?.click()}>
-                                                    <ImagePlus size={20} className='text-primary-text' />
+                                                    <ImagePlus size={20} className='text-primary-text-color-white' />
                                                 </button>
                                                 <button className=' z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30'
                                                     onClick={handleRemoveBannerPicture}>
-                                                    <X size={20} className='text-primary-text' />
+                                                    <X size={20} className='text-primary-text-color-white' />
                                                 </button>
                                             </>)
                                         : (
@@ -323,7 +321,7 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                                 <div className='w-full h-full absolute bg-secondary-foreground' ></div>
                                                 <button className=' z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30'
                                                     onClick={() => bannerPictureInputRef.current?.click()}>
-                                                    <ImagePlus size={20} className='text-primary-text' />
+                                                    <ImagePlus size={20} className='text-primary-text-color-white' />
                                                 </button>
                                             </>
                                         )
@@ -359,11 +357,11 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                                 <div className='flex gap-2'>
                                                     <button className='z-10 bg-black-1/30 p-3 rounded-full hover:bg-black-1/50'
                                                         onClick={() => profilePictureInputRef.current?.click()}>
-                                                        <ImagePlus size={20} className='text-primary-text' />
+                                                        <ImagePlus size={20} className='text-primary-text-color-white' />
                                                     </button>
                                                     <button className='z-10 bg-black-1/30 p-3 rounded-full hover:bg-black-1/50'
                                                         onClick={handleRemoveProfilePicture}>
-                                                        <X size={20} className='text-primary-text' />
+                                                        <X size={20} className='text-primary-text-color-white' />
                                                     </button>
                                                 </div>
                                             </>
@@ -377,7 +375,7 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                                     className='absolute top-0 left-0 z-0' />
                                                 <button className=' z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30'
                                                     onClick={() => profilePictureInputRef.current?.click()}>
-                                                    <ImagePlus size={20} className='text-primary-text' />
+                                                    <ImagePlus size={20} className='text-primary-text-color-white' />
                                                 </button>
                                             </>
                                         )
@@ -401,7 +399,7 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                             </div>
                         </div>
 
-                        <form onSubmit={handleSubmit(onSubmit)} id='editProfileForm' className='mt-[75px]'>
+                        <form onSubmit={handleSubmit(onSubmit)} id={formId} className='flex flex-col gap-4 mt-[75px]'>
                             <div className='flex flex-col'>
                                 {errors.bannerPicture && <p className='!mt-2 error-msg'>Banner picture: {errors.bannerPicture.message}</p>}
                                 {errors.profilePicture && <p className='!mt-2 error-msg'>Profile picture: {errors.profilePicture.message}</p>}
@@ -466,24 +464,27 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                 )}
                             </div>
                         </form>
+
                         <DialogFooter>
                             {customError && (
                                 <p className='!my-auto error-msg'>{customError}</p>
                             )}
 
-                            {isSubmitting
-                                ? (<Button disabled className='ml-auto font-bold w-fit rounded-3xl text-primary-text'>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Saving
-                                </Button>)
-                                : (<Button type="submit"
-                                    className='ml-auto font-bold w-fit rounded-3xl text-primary-text'
-                                    disabled={!buttonEnabled}
-                                    form='editProfileForm'
-                                >
-                                    Save
-                                </Button>)
-                            }
+                            <Button
+                                form={formId}
+                                className='ml-auto font-bold w-fit rounded-3xl text-primary-text-color-white'
+                                disabled={isSubmitting || !buttonEnabled}
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    'Save'
+                                )}
+                            </Button>
+
                         </DialogFooter>
                     </DialogContent>
                 )
