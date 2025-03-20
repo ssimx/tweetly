@@ -103,7 +103,6 @@ const socketConnection = (server: HttpServer) => {
 
             // Store the user's followers in the socket session
             socket.join(pushNotificationUsers.map((user) => `user_${user.id}`));
-            console.log(`user_${userId}_messages`)
             socket.join(`user_${userId}_messages`);
 
             const notificationsReadStatus = await getNotificationsReadStatus(userId);

@@ -60,7 +60,7 @@ export default async function AuthorizedLayout({ children, modals }: Readonly<{ 
                                         </div>
 
                                         {/* Right Sidebar */}
-                                        <aside className="hidden lg:hidden xl:flex justify-center h-fit w-full pt-5 px-4">
+                                        <aside className="hidden lg:hidden xl:flex justify-center h-fit w-[400px] pt-5 px-4">
                                             <RightSidebar />
                                         </aside>
                                     </div>

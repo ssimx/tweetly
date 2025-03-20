@@ -11,6 +11,7 @@
 
 html {
     scrollbar-gutter: stable;
+    overflow-y: scroll !important;
 }
 
 /* html tag is required here to provide higher specificity */
@@ -30,8 +31,6 @@ body {
 
     color: hsl(var(--primary-text-color)) !important;
     background-color: hsl(var(--primary-foreground)) !important;
-
-    overflow-y: visible !important;
 }
 
 html body[data-scroll-locked] {

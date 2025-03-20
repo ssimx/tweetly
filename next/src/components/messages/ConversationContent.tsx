@@ -132,12 +132,14 @@ export default function ConversationContent({ conversation }: { conversation: Co
     // Handle new messages via sockets
     useEffect(() => {
         socket.on('message_received', (message: ConversationMessageType) => {
-            if (message.sentBy !== loggedInUser.username && messagesBottomReached) {
+            if (messagesBottomReached) {
                 setMessages((prevMessages) => [
                     ...prevMessages,
                     message,
                 ]);
 
+                // If received message was sent by logged in user, do not update message to seen
+                if (message.sentBy === loggedInUser.username) return;
                 socket.emit('conversation_seen_status', conversation.id, message.id);
             }
         });
@@ -147,9 +149,10 @@ export default function ConversationContent({ conversation }: { conversation: Co
         });
 
         socket.on('message_seen', (messageId) => {
+            console.log(messageId)
             setMessages((prevMessages) =>
                 prevMessages.map((msg) =>
-                    (msg.id === messageId && !msg.readAt)
+                    (msg.id === messageId && !msg.readAt && msg.sentBy !== loggedInUser.username)
                         ? { ...msg, readAt: new Date() }
                         : msg
                 )
