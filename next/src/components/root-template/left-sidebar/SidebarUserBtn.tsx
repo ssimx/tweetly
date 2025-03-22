@@ -72,15 +72,18 @@ export default function SidebarUserBtn() {
             )}
 
             <button type='button'
-                className='w-full h-[50px] flex gap-4 items-center rounded-[25px] bg-transparent text-primary-text font-bold'
+                className='w-full h-[50px] flex-center gap-4 rounded-[25px] bg-transparent text-primary-text font-bold'
                 onClick={(e) => {
                     e.stopPropagation();
                     toggleMenu(e);
                 }}
             >
                 <Image width={50} height={50} src={loggedInUser?.profile.profilePicture} alt='User profile' className='w-[40px] h-[40px] xl:w-[50px] xl:h-[50px] rounded-full bg-[hsl(var(--primary))]' />
-                <span className='flex flex-col items-start leading-tight'><span className=''>{loggedInUser?.profile.name}</span> <span className='text-secondary-text font-medium'>@{loggedInUser?.username}</span></span>
-                <Ellipsis size={22} color={'#5B7083'} className='ml-auto' />
+                    <div className='hidden w-full lg:flex flex-col items-start leading-tight truncate'>
+                        <p className='' title={loggedInUser.profile.name}>{loggedInUser.profile.name}</p>
+                        <p className='text-secondary-text font-medium'>@{loggedInUser.username}</p>
+                    </div>
+                    <Ellipsis size={30} strokeWidth={3} color={'#5B7083'} className='hidden lg:block ml-auto' />
             </button>
         </div>
     )

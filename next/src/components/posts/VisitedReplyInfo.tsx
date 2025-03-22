@@ -183,13 +183,17 @@ export default function VisitedReplyInfo({ post, photoId }: { post: VisitedPostD
 
             {(isOverlayVisible && overlayCurrentImageIndex !== null) &&
                 createPortal(
-                    <div className={`fixed inset-0 z-50 bg-black-1/50 grid ${!isPostInfoVisible ? 'grid-cols-[100%]' : 'grid-cols-[80%,20%]'}`} >
-                        <div className='relative h-[100vh] flex-center' onClick={closePhoto}>
-                            <button className='absolute z-[100] inset-0 m-3 p-2 h-fit w-fit rounded-full bg-gray-800 hover:bg-gray-700 hover:cursor-pointer'
-                                onClick={closePhoto}>
+                    <div className={`overflow-y-scroll custom-scrollbar min-h-screen h-auto fixed inset-0 z-50 bg-black-1/90 flex flex-col xl:overflow-y-hidden xl:grid xl:grid-rows-1 ${!isPostInfoVisible ? 'xl:grid-cols-[100%]' : 'xl:grid-cols-[70%,30%]'}`} >
+                        
+                        <div className='relative h-[70vh] xl:h-[100vh] flex-center shrink-0' onClick={closePhoto}>
+                            <button className='absolute z-[100] inset-0 m-3 p-2 h-fit w-fit rounded-full opacity-90 bg-secondary-foreground hover:opacity-100 hover:cursor-pointer'
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    closePhoto();
+                                }}>
                                 <X size={24} className='color-white-1 ' />
                             </button>
-                            <button className='absolute z-[100] right-0 top-0 m-3 p-2 h-fit w-fit rounded-full bg-gray-800 hover:bg-gray-700 hover:cursor-pointer'
+                            <button className='hidden xl:block absolute z-[100] right-0 top-0 m-3 p-2 h-fit w-fit rounded-full opacity-90 bg-secondary-foreground hover:opacity-100 hover:cursor-pointer'
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setIsPostInfoVisible((current) => !current);
@@ -200,7 +204,7 @@ export default function VisitedReplyInfo({ post, photoId }: { post: VisitedPostD
                                 }
                             </button>
                             {overlayCurrentImageIndex !== 0 && (
-                                <button className='absolute z-[100] left-0 m-3 p-2 h-fit w-fit rounded-full bg-gray-800 hover:bg-gray-700 hover:cursor-pointer'
+                                <button className='absolute z-[100] left-0 m-3 p-2 h-fit w-fit rounded-full opacity-40 bg-secondary-foreground hover:opacity-100 hover:cursor-pointer'
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         const previousImageIndex = overlayCurrentImageIndex - 1;
@@ -212,7 +216,7 @@ export default function VisitedReplyInfo({ post, photoId }: { post: VisitedPostD
                             )}
                             {post.images.length > 1 && overlayCurrentImageIndex + 1 < post.images.length
                                 ? (
-                                    <button className='absolute z-[100] right-0 m-3 p-2 h-fit w-fit rounded-full bg-gray-800 hover:bg-gray-700 hover:cursor-pointer'
+                                    <button className='absolute z-[100] right-0 m-3 p-2 h-fit w-fit rounded-full opacity-40 bg-secondary-foreground hover:opacity-100 hover:cursor-pointer'
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             const nextImageIndex = overlayCurrentImageIndex + 1;
@@ -225,18 +229,21 @@ export default function VisitedReplyInfo({ post, photoId }: { post: VisitedPostD
                                 : null
                             }
 
-                            <div className='relative max-w-[100%] max-h-[80vh] pointer-events-auto' onClick={(e) => e.stopPropagation()} >
+                            <div className='w-auto max-w-[90%] h-[80%]'>
                                 <Image
                                     src={post.images[overlayCurrentImageIndex]}
                                     alt={`Post image ${overlayCurrentImageIndex}`}
-                                    width={1000}
                                     height={1000}
-                                    className='object-contain w-full max-w-[100%] max-h-[80vh]'
+                                    width={1000}
+                                    className='object-contain h-full w-auto'
                                 />
                             </div>
                         </div>
-                        <div ref={scrollElementRef}
-                            className={`bg-primary-foreground p-2 border-l-[1px] border-primary-border overflow-y-auto max-h-[100vh] ${!isPostInfoVisible ? 'translate-x-[100%]' : null}`} >
+
+                        <div
+                            ref={scrollElementRef}
+                            className={`w-full h-auto sm:flex sm:grow sm:justify-center xl:block bg-primary-foreground p-2 border-l-[1px] border-primary-border xl:max-h-[100vh] xl:overflow-y-auto ${!isPostInfoVisible ? 'translate-x-[100%]' : ''}`}
+                        >
 
                             <div
                                 className='px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'
@@ -272,11 +279,12 @@ export default function VisitedReplyInfo({ post, photoId }: { post: VisitedPostD
                                 openPhoto={openPhoto}
                                 type='overlay'
                             />
-                            
+
                         </div>
                     </div>,
                     document.body // Append to <body>
-                )}
+                )
+            }
         </>
     )
 }

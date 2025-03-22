@@ -13,7 +13,7 @@ export function formatPostDate(date: string | number | Date) {
     if (hoursDiff < 1) {
         const min = Math.floor(Math.abs(now.getTime() - postDate.getTime()) / (1000 * 60));
         if (min === 0) return 'now';
-        return `${min}m`
+        return `${min}m ago`
     }
     if (hoursDiff < 24) {
         return `${Math.floor(hoursDiff)}h`;

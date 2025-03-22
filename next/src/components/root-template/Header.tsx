@@ -51,7 +51,7 @@ export default function TemplateHeader() {
 
             }
             {(pathName.startsWith('search') || pathName.startsWith('explore')) && (
-                <div className='w-full [&_label]:h-[40px]'>
+                <div className='min-w-0 [&_label]:h-[40px]'>
                     <Search />
                 </div>
             )}

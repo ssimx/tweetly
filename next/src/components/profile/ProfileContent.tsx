@@ -336,7 +336,7 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
     }, []);
 
     return (
-        <div className='h-full grid grid-rows-[auto,auto,1fr] border-b border-primary-border'>
+        <div className='h-full grid grid-rows-[auto,auto,1fr] border-primary-border'>
             <ProfileContentTabs activeTab={activeTab} setActiveTab={setActiveTab} authorized={authorized} />
 
             <div className='feed-hr-line'></div>
@@ -369,7 +369,7 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                         : postsReposts && postsReposts.length
                             ? (
                                 <section className='w-full flex flex-col h-fit'>
-                                    {postsReposts.map((post) => {
+                                    {postsReposts.map((post, index) => {
                                         return (
                                             <div key={post.id}>
                                                 {post.type === 'REPOST' && (
@@ -389,7 +389,8 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                                                         dispatch={dispatch}
                                                     />
                                                 )}
-                                                <div className='feed-hr-line'></div>
+                                                
+                                                {(index + 1) !== postsReposts.length && <div className='feed-hr-line'></div>}
                                             </div>
                                         )
                                     })}

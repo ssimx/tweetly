@@ -209,7 +209,7 @@ export default function FeedContent() {
 
     return (
         <>
-            <section className='min-w-[400px] flex flex-col'>
+            <section className='w-full flex flex-col'>
                 <FeedHeaderTabs activeTab={activeTab} setActiveTab={setActiveTab} />
                 <NewPost />
                 {activeTab === 0

@@ -85,7 +85,7 @@ export default function ConversationsList({ initialConversations, cursor, end }:
     }, [conversations]);
 
     return (
-        <Command>
+        <Command className=''>
             <div className='p-2'>
                 <CommandInput placeholder="Search Direct Messages" />
             </div>

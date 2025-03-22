@@ -74,7 +74,7 @@ export default function NotificationPost({ post, isRead }: { post: BasePostDataT
     return (
         <div
             ref={cardRef}
-            className={`w-full flex flex-col gap-3 px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer ${isRead === false ? "bg-secondary-foreground" : ""}`}
+        className={`w-full flex flex-col gap-3 px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer ${isRead === false ? "bg-secondary-foreground" : ""}`}
             role="link"
             tabIndex={0}
             aria-label={`View post by ${post.author.username}`}

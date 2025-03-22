@@ -10,8 +10,8 @@
 }
 
 html {
-    scrollbar-gutter: stable;
-    overflow-y: scroll !important;
+    display: flex;
+    justify-content: center;
 }
 
 /* html tag is required here to provide higher specificity */
@@ -31,6 +31,7 @@ body {
 
     color: hsl(var(--primary-text-color)) !important;
     background-color: hsl(var(--primary-foreground)) !important;
+    overflow-y: scroll;
 }
 
 html body[data-scroll-locked] {
@@ -63,23 +64,23 @@ input, textarea {
     /* Firefox */
 }
 
+.custom-scrollbar {
+  overflow-y: scroll;
+  scrollbar-width: auto; /* For Firefox */
+  scrollbar-color: rgba(155, 155, 155, 0.7) transparent; /* For Firefox */
+}
+
 .custom-scrollbar::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
-    border-radius: 2px;
+  width: 10px; /* Width of the scrollbar */
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-    background: #dddddd;
+  background: transparent; /* Track background */
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #b1b1b1;
-    border-radius: 50px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #8f8f8f;
+  background-color: rgba(155, 155, 155, 0.7); /* Thumb color */
+  border-radius: 6px;
 }
 
 .loading-spinner {
@@ -87,8 +88,13 @@ input, textarea {
 }
 
 .loading-bar {
+    background-color: transparent !important;
+}
+
+.loading-bar > span {
     background-color: hsl(var(--primary)) !important;
 }
+
 
 .unread-message {
     display: flex;

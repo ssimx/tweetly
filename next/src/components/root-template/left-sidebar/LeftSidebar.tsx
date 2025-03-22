@@ -66,7 +66,7 @@ export default function LeftSidebar() {
             <Link href='/'>
                 <Image src={savedTheme === 0 ? TweetlyLogoBlack : TweetlyLogoWhite} alt='Tweetly logo' width='30' height='30' className='mx-auto' />
             </Link>
-            <div className='flex flex-col'>
+            <div className='flex flex-col mx-auto'>
                 {leftSidebarLinks.map((link) => (
                     <LeftSidebarLink
                         key={link.label}
@@ -76,7 +76,9 @@ export default function LeftSidebar() {
                 ))}
             </div>
 
-            <NewPostModal />
+            <div className='w-full flex justify-center'>
+                <NewPostModal />
+            </div>
 
             <SidebarUserBtn />
         </nav>

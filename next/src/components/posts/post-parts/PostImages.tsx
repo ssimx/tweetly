@@ -18,6 +18,7 @@ export default function PostImages({ images, authorUsername, postId, openPhoto }
             {images.length === 1
                 ? (
                     <Link
+                        className='w-fit h-fit'
                         href={images[0]}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -38,7 +39,7 @@ export default function PostImages({ images, authorUsername, postId, openPhoto }
                         <Image
                             src={images[0]}
                             alt="Selected preview"
-                            className="max-h-[500px] w-fit mt-2 object-contain rounded-md hover:cursor-pointer"
+                            className="max-h-[500px] w-fit mt-2 object-contain rounded-md hover:cursor-pointer hover:opacity-90"
                             width={400} height={400}
                         />
                     </Link>
@@ -47,26 +48,26 @@ export default function PostImages({ images, authorUsername, postId, openPhoto }
                     ? (
                         <div className={`mt-2 grid gap-1 w-full h-[300px] ${images.length === 2 ? 'grid-cols-2 grid-rows-1' : 'grid-cols-2 grid-rows-2'}`}>
                             {images.map((image, index) => (
-                                <div key={index} className='h-full relative'>
-                                    <Link
-                                        href={image}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        onClick={(e) => {
-                                            if (e.button === 0 || e.button === 1) { // Left click
-                                                e.preventDefault();
-                                                openPhoto(index, authorUsername, postId);
-                                            }
-                                        }}
-                                    >
-                                        <Image
-                                            src={image}
-                                            alt="Selected preview"
-                                            className="max-h-[500px] w-fit mt-2 object-contain rounded-md hover:cursor-pointer"
-                                            width={400} height={400}
-                                        />
-                                    </Link>
-                                </div>
+                                <Link
+                                    key={index}
+                                    className='w-auto h-full'
+                                    href={image}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => {
+                                        if (e.button === 0 || e.button === 1) { // Left click
+                                            e.preventDefault();
+                                            openPhoto(index, authorUsername, postId);
+                                        }
+                                    }}
+                                >
+                                    <Image
+                                        src={image}
+                                        alt="Selected preview"
+                                        className="max-w-full max-h-full object-cover rounded-md hover:cursor-pointer hover:opacity-90"
+                                        width={400} height={400}
+                                    />
+                                </Link>
                             ))}
                         </div>
                     )

@@ -173,15 +173,15 @@ export default function Search() {
     }, [isOutputVisible]);
 
     return (
-        <div className='relative w-full'>
-            <div ref={searchContainer} className='w-full'>
-                <form onSubmit={handleSubmit(onSubmit)} className='h-fit w-full'>
+        <div className='relative'>
+            <div ref={searchContainer} className=''>
+                <form onSubmit={handleSubmit(onSubmit)} className='h-fit'>
                     <label className="h-[50px] flex items-center gap-3 text-gray-400 rounded-[25px] border px-4">
                         <SearchIcon size={16} className='min-w-[16px]'/>
                         <input
                             {...register('q')}
                             type="search"
-                            className='outline-none text-primary-text'
+                            className='w-full outline-none text-primary-text'
                             placeholder="Search"
                             autoComplete="off"
                             onClick={() => setIsOutputVisible(queryWatch.length === 0 ? false : true)} />

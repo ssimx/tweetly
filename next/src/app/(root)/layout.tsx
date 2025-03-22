@@ -32,7 +32,7 @@ export default async function AuthorizedLayout({ children, modals }: Readonly<{ 
                     <BlockedUsersContextProvider>
                         <PostInteractionContextProvider>
                             <body suppressHydrationWarning
-                                className={`w-[99%] min-w-[0px] max-w-[1300px] min-h-[0px] min-h-100dvh overflow-x-hidden box-border
+                                className={`w-[99%] min-w-[0px] max-w-[1300px] h-[100dvh] max-h-[100dvh]
                                     grid xs:grid-cols-[auto,auto]
                                     lg:grid-cols-[auto,auto]
                                     mx-auto justify-center content-center`}
@@ -52,7 +52,7 @@ export default async function AuthorizedLayout({ children, modals }: Readonly<{ 
                                 <main className="h-fit min-h-screen w-full col-start-2 col-end-3">
                                     <div className="grid grid-cols-[minmax(400px,600px)] xl:grid xl:grid-cols-[minmax(500px,600px),1fr] mx-auto max-w-[1200px]">
                                         {/* Middle Content */}
-                                        <div className="h-fit min-h-screen border-x border-primary-border
+                                        <div className="h-fit min-h-screen border-x border-b border-primary-border 
                                                         w-full max-w-[600px] mx-auto xl:mx-0">
                                             <TemplateHeader />
                                             {children}
