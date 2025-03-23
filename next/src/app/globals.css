@@ -23,6 +23,11 @@ html {
     }
 }
 
+html, body {
+    height: 100%;
+    width: 100%;
+}
+
 body {
     font-family: var(--font-inter), Arial, Helvetica, sans-serif;
     width: 100wv;

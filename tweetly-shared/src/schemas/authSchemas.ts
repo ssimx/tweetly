@@ -29,7 +29,7 @@ export const temporaryUserBasicDataSchema = z.object({
         .number()
         .int()
         .nonnegative("Day can't be negative number")
-        .lte(11, "Day does not exist"),
+        .lte(31, "Day does not exist"),
 }).superRefine((data, ctx) => {
     // Check if DoB is older than 13
     const birthDate = `${data.year}-${String(data.month).padStart(2, '0')}-${String(data.day).padStart(2, '0')}`;

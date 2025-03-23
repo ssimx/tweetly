@@ -19,12 +19,12 @@ type DateOfBirthProps = {
     // For new user registration process
     signUpRegister?: UseFormRegister<FormTemporaryUserBasicDataType>;
     signUpSetValues?: UseFormSetValue<FormTemporaryUserBasicDataType>;
-    
+
     // For user settings
     settingsRegister?: UseFormRegister<DateOfBirthDataType>;
     settingsGetValues?: UseFormGetValues<DateOfBirthDataType>;
     settingsSetValues?: UseFormSetValue<DateOfBirthDataType>;
-    
+
     errors: FieldErrors;
 };
 
@@ -38,7 +38,7 @@ export function DateOfBirthSelect({ signUpRegister, signUpSetValues, settingsReg
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const months30 = [4, 6, 9, 11]; // April, June, September, November
     const months31 = [1, 3, 5, 7, 8, 10, 12]; // Jan, Mar, May, July, Aug, Oct, Dec
-    
+
     const days28 = Array.from({ length: 28 }, (_, i) => i + 1);
     const days29 = Array.from({ length: 29 }, (_, i) => i + 1);
     const days30 = Array.from({ length: 30 }, (_, i) => i + 1);
@@ -80,7 +80,7 @@ export function DateOfBirthSelect({ signUpRegister, signUpSetValues, settingsReg
                 <div>
                     <p className="font-bold">Date Of Birth</p>
                     <p className='text-secondary-text text-14'>
-                            This will not be shown publicly. Confirm your own age, even if this account is for a business, a pet, or something else.
+                        This will not be shown publicly. Confirm your own age, even if this account is for a business, a pet, or something else.
                     </p>
                 </div>
             )}
@@ -93,7 +93,7 @@ export function DateOfBirthSelect({ signUpRegister, signUpSetValues, settingsReg
                         onValueChange={(value) => handleFieldChange(value, 'year')}
                         defaultValue={savedYear?.toString()}
                     >
-                        
+
                         <SelectTrigger>
                             <SelectValue placeholder="Year" />
                         </SelectTrigger>

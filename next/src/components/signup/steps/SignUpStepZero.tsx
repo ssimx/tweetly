@@ -112,7 +112,9 @@ export default function SignUpStepZero({ dialogOpen, setDialogOpen, setRegistrat
     return (
         <Dialog open={dialogOpen} >
             <DialogContent
-                className='w-[90%] h-[60%] px-[2em] py-5 flex flex-col justify-center items-center bg-primary-foreground sm:h-[75%] sm:px-[5em]'
+                className='flex flex-col justify-center items-center bg-primary-foreground py-5 px-[2em]
+                    w-[90%] h-[85svh] max-h-[700px]
+                    sm:h-[75%] sm:px-[5em]'
                 hideClose
             >
 

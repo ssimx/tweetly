@@ -1193,9 +1193,12 @@ export const getUsersBySearch = async (userId: number, searchTerms: string[]) =>
 // ---------------------------------------------------------------------------------------------------------
 
 export const getUserByUsername = async (username: string) => {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.user.findFirst({
         where: {
-            username
+            username: {
+                contains: username,
+                mode: 'insensitive',
+            },
         },
         select: {
             username: true,
@@ -1204,9 +1207,12 @@ export const getUserByUsername = async (username: string) => {
 
     if (user) return user;
 
-    const temporaryUser = await prisma.temporaryUser.findUnique({
+    const temporaryUser = await prisma.temporaryUser.findFirst({
         where: {
-            username
+            username: {
+                contains: username,
+                mode: 'insensitive',
+            },
         },
         select: {
             username: true,
@@ -1219,9 +1225,12 @@ export const getUserByUsername = async (username: string) => {
 // ---------------------------------------------------------------------------------------------------------
 
 export const getUserByEmail = async (email: string) => {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.user.findFirst({
         where: {
-            email
+            email: {
+                contains: email,
+                mode: 'insensitive',
+            },
         },
         select: {
             email: true,
@@ -1230,9 +1239,12 @@ export const getUserByEmail = async (email: string) => {
 
     if (user) return user;
 
-    const temporaryUser = await prisma.temporaryUser.findUnique({
+    const temporaryUser = await prisma.temporaryUser.findFirst({
         where: {
-            email
+            email: {
+                contains: email,
+                mode: 'insensitive',
+            },
         },
         select: {
             email: true,

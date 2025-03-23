@@ -153,7 +153,9 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
     return (
         <Dialog open={dialogOpen} >
             <DialogContent
-                className='w-[90%] h-[55%] px-[2em] py-5 flex flex-col justify-center items-center bg-primary-foreground sm:h-[60%] sm:px-[5em]'
+                className='flex flex-col justify-center items-center bg-primary-foreground px-[2em] py-5
+                    w-[90%] h-[90svh] max-h-[700px]
+                    sm:h-[60%] sm:px-[5em]'
                 hideClose
             >
 

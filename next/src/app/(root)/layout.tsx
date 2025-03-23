@@ -32,8 +32,11 @@ export default async function AuthorizedLayout({ children, modals }: Readonly<{ 
                     <BlockedUsersContextProvider>
                         <PostInteractionContextProvider>
                             <body suppressHydrationWarning
-                                className={`w-[99%] min-w-[0px] max-w-[1300px] h-[100dvh] max-h-[100dvh]
-                                    grid xs:grid-cols-[auto,auto]
+                                className={`
+                                    h-dvh
+                                    grid grid-cols-1 grid-rows-[auto,auto]
+                                    xs:min-h-screen xs:w-[99%] xs:max-w-[1300px]
+                                    xs:grid-cols-[auto,auto]
                                     lg:grid-cols-[auto,auto]
                                     mx-auto justify-center content-center`}
                             >

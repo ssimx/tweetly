@@ -32,9 +32,6 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
 
     const defaultProfilePictureLink = 'https://res.cloudinary.com/ddj6z1ptr/image/upload/v1728503826/profilePictures/ynh7bq3eynvkv5xhivaf.png';
 
-    const smViewport = useMediaQuery('(min-width: 640px)');
-    const mdViewport = useMediaQuery('(min-width: 768px)');
-
     // If picture is selected and applied, display it to the user
     const [profilePicturePreview, setProfilePicturePreview] = useState<string>(defaultProfilePictureLink);
     // If picture is selected and in edit mode, change state to true, when returned/applied change it back to false
@@ -42,14 +39,14 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
     const imageInputRef = useRef<HTMLInputElement | null>(null);
     const croppieContainerRef = useRef<HTMLDivElement | null>(null);
     const croppieRef = useRef<CroppieInstance>(null);
-    
+
     const {
         register,
         setValue,
         handleSubmit,
         formState: { errors, isSubmitting },
     } = useForm<FormTemporaryUserProfilePictureType>({ resolver: zodResolver(temporaryUserProfilePictureSchema) });
-    
+
     const { ref, ...rest } = register('profilePicture');
 
     const onSubmit = async (formData: FormTemporaryUserProfilePictureType) => {
@@ -91,6 +88,13 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
         }
     };
 
+    const phoneSmallestViewport = useMediaQuery('(min-width: 375px');
+    const phoneSmallViewport = useMediaQuery('(min-width: 390px)');
+    const phoneBigViewport = useMediaQuery('(min-width: 400px)');
+    const phoneBiggerViewport = useMediaQuery('(min-width: 450px)');
+    const smViewport = useMediaQuery('(min-width: 640px)');
+    const mdViewport = useMediaQuery('(min-width: 768px)');
+
     // CROPPIE
     const croppieProfileOptions = {
         showZoomer: true,
@@ -98,18 +102,36 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
         mouseWheelZoom: true,
         viewport: {
             width: mdViewport === true
-                ? 550 * 0.9
+                ? 550 * 0.8
                 : smViewport === true
-                    ? 500 * 0.9
-                    : 400 * 0.9,
+                    ? 500 * 0.8
+                    : phoneBiggerViewport === true
+                        ? 450 * 0.8
+                        : phoneBigViewport === true
+                            ? 400 * 0.8
+                            : phoneSmallViewport === true
+                                ? 390 * 0.8
+                                : phoneSmallestViewport === true
+                                    ? 375 * 0.8
+                                    : 300,
             height: mdViewport === true
-                ? 550 * 0.9
+                ? 550 * 0.8
                 : smViewport === true
-                    ? 500 * 0.9
-                    : 400 * 0.9,
+                    ? 500 * 0.8
+                    : phoneBiggerViewport === true
+                        ? 450 * 0.8
+                        : phoneBigViewport === true
+                            ? 400 * 0.8
+                            : phoneSmallViewport === true
+                                ? 390 * 0.8
+                                : phoneSmallestViewport === true
+                                    ? 375 * 0.8
+                                    : 300,
             type: "square" as CropType
         },
     };
+
+    console.log(croppieProfileOptions)
 
     const initializeCroppie = (): Croppie => {
         if (!croppieRef.current && croppieContainerRef.current) {
@@ -165,7 +187,9 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
         // Track change in viewport (window resize)
         // and reset the croppie by removing the uploaded picture
         setIsFileUploaded(false);
-    }, [smViewport, mdViewport]);
+        setUploadedPictureData(null);
+        setProfilePicturePreview(defaultProfilePictureLink);
+    }, [phoneSmallestViewport, phoneSmallViewport, phoneBigViewport, phoneBiggerViewport, smViewport, mdViewport]);
 
     useEffect(() => {
         // Cleanup Croppie instance when edit media is cancelled
@@ -190,7 +214,9 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
             {!isFileUploaded
                 ? (
                     <DialogContent
-                        className='w-[90%] h-[60%] max-h-[80vh] min-h-[500px] px-[2em] py-5 flex flex-col justify-center items-center bg-primary-foreground sm:h-[75%] sm:px-[5em]'
+                        className='flex flex-col justify-center items-center bg-primary-foreground px-[2em] py-5
+                            w-[90%] h-[90svh] max-h-[700px]
+                            sm:h-[75%] sm:px-[5em]'
                         hideClose
                     >
 
@@ -233,7 +259,7 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
                                             ref(e);
                                             setValue('profilePicture', uploadedPictureData ?? undefined);
                                             imageInputRef.current = e;
-                                        }} 
+                                        }}
                                         type="file"
                                         accept=".png, .jpg, .jpeg .webp"
                                         className="hidden"
@@ -289,7 +315,7 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
                 )
                 : (
                     <DialogContent
-                        className='w-[450px] h-[600px] px-[2em] py-5 flex flex-col justify-center items-center bg-primary-foreground sm:w-[550px] sm:h-[700px] sm:px-[5em] md:w-[700px] md:h-[750px]'
+                        className='w-[90%] min-h-[500px] h-[60svh] max-h-[700px] flex flex-col justify-center items-center bg-primary-foreground sm:w-[550px] sm:h-[700px] sm:px-[5em] md:w-[700px] md:h-[750px]'
                         hideClose
                     >
                         <div className='h-fit flex gap-6 px-2 mr-auto mb-auto'>
@@ -301,7 +327,7 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
                             </button>
                             <h1 className='text-20 font-bold'>Edit media</h1>
                         </div>
-                        <div className='w-[400px] h-[400px] sm:w-[500px] sm:h-[500px] md:w-[550px] md:h-[550px]'>
+                        <div className='w-[85vw] h-[85vw] sm:w-[500px] sm:h-[500px] md:w-[550px] md:h-[550px]'>
                             <div ref={croppieContainerRef}></div>
                         </div>
 
