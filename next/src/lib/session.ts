@@ -14,7 +14,7 @@ export async function createSession(token: string) {
     const cookieStore = await cookies();
     cookieStore.set('access-token', token, {
         httpOnly: true,
-        secure: true,
+        // secure: true,
         expires: expiresAt,
         sameSite: 'lax',
         path: '/',
@@ -65,7 +65,7 @@ export async function updateSessionToken(newToken: string) {
     const cookieStore = await cookies();
     cookieStore.set('access-token', newToken, {
         httpOnly: true,
-        secure: true,
+        // secure: true,
         expires: expiresAt,
         sameSite: 'lax',
         path: '/',
@@ -89,7 +89,7 @@ export async function createTemporarySession(token: string) {
     const cookieStore = await cookies();
     cookieStore.set('temporary-access-token', token, {
         httpOnly: true,
-        secure: true,
+        // secure: true,
         expires: expiresAt,
         sameSite: 'lax',
         path: '/',
@@ -117,7 +117,7 @@ export async function updateTemporarySessionToken(newToken: string) {
     const cookieStore = await cookies();
     cookieStore.set('temporary-access-token', newToken, {
         httpOnly: true,
-        secure: true,
+        // secure: true,
         expires: expiresAt,
         sameSite: 'lax',
         path: '/',
@@ -131,7 +131,7 @@ export async function createSettingsSession(token: string) {
     const cookieStore = await cookies();
     cookieStore.set('settings-token', token, {
         httpOnly: true,
-        secure: true,
+        // secure: true,
         expires: expiresAt,
         sameSite: 'lax',
         path: '/settings/account',
@@ -169,7 +169,7 @@ export async function verifySettingsToken(token: string | undefined) {
 export async function removeSettingsToken() {
     const cookieStore = await cookies();
     cookieStore.delete({
-        name: 'settings-token', 
+        name: 'settings-token',
         path: '/settings/account',
     });
 };
