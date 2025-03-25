@@ -106,9 +106,11 @@ export default function NewPostModal() {
             if (data === undefined) throw new Error('Data is missing in response');
             else if (data.post === undefined) throw new Error('Post property is missing in data response');
 
-            // update feed
-            socket.emit('new_global_post');
-            socket.emit('new_following_post', loggedInUser.id)
+            // update feed only if it's not a reply
+            if (!data.post.replyTo) {
+                socket.emit('new_global_post', data.post);
+                socket.emit('new_following_post', loggedInUser.id, data.post)
+            }
 
             // send notification to users who have notifications enabled
             socket.emit('new_user_notification', loggedInUser.id);

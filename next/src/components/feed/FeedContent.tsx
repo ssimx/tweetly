@@ -315,15 +315,17 @@ export default function FeedContent() {
                                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                             >
                                 <ArrowUp size={18} className='text-white-1 mr-1' />
-                                {newGlobalPosts.slice(0, 3).map((post) => (
-                                    <Image
-                                        src={post.author.profile.profilePicture}
-                                        alt='New post author profile picture'
-                                        width={20} height={20}
-                                        className='rounded-full -mr-1 z-30'
-                                        key={post.id}
-                                    />
-                                ))}
+                                {newGlobalPosts && newGlobalPosts.length && (
+                                    newGlobalPosts.slice(0, 3).map((post) => (
+                                        <Image
+                                            src={post.author.profile.profilePicture}
+                                            alt='New post author profile picture'
+                                            width={20} height={20}
+                                            className='rounded-full -mr-1 z-30'
+                                            key={post.id}
+                                        />
+                                    ))
+                                )}
                             </button>
                         )}
                     </>
