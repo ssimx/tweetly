@@ -62,7 +62,7 @@ export default function SettingsLogin() {
                 </div>
 
                 <div>
-                    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
+                    <form suppressHydrationWarning onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
                         <Input
                             {...register("password", {
                                 onChange: () => setCustomError(null),

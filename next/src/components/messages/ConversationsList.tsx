@@ -66,9 +66,17 @@ export default function ConversationsList({ initialConversations, cursor, end }:
     }, [inView, conversationsCursor, conversationsEndReached, scrollPosition]);
 
     useEffect(() => {
-        // Track scroll position on user scroll
+        // Track scroll position on user scroll with throttling
+        let ticking = false;
+
         function handleScroll() {
-            scrollPositionRef.current = window.scrollY;
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    scrollPositionRef.current = window.scrollY;
+                    ticking = false;
+                });
+                ticking = true;
+            }
         }
 
         window.addEventListener('scroll', handleScroll, { passive: true });
@@ -77,6 +85,7 @@ export default function ConversationsList({ initialConversations, cursor, end }:
             window.removeEventListener('scroll', handleScroll);
         };
     }, [scrollPositionRef]);
+
 
     useEffect(() => {
         // there are issues with CommandEmpty being visible on component mount for quick second

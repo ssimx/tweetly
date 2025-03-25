@@ -86,7 +86,7 @@ export default function LogIn() {
 
                 <p>Or</p>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
+                <form suppressHydrationWarning onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
                     <Input {...register("usernameOrEmail")} placeholder="Username or email address" />
                     {errors.usernameOrEmail && (
                         <p className="error-msg">{`${errors.usernameOrEmail.message}`}</p>
@@ -113,7 +113,7 @@ export default function LogIn() {
                             </Button>
                         )
                     }
-                    
+
                     {isError && (
                         <p className="!mt-0 error-msg text-center">Something wen&apos;t wrong, please contact the support</p>
                     )}

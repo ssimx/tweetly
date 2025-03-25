@@ -14,7 +14,7 @@ export async function checkIfEmailIsAvailable(formData: { email: string }): Prom
     try {
         const validatedData = emailSchema.parse(formData);
 
-        const response = await fetch(`http://localhost:3000/api/search/user?type=email&data=${validatedData.email}`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/search/user?type=email&data=${validatedData.email}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -73,7 +73,7 @@ export async function checkIfUsernameIsAvailable(formData: { username: string })
     try {
         const validatedData = usernameSchema.parse(formData);
 
-        const response = await fetch(`http://localhost:3000/api/search/user?type=username&data=${validatedData.username}`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/search/user?type=username&data=${validatedData.username}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -138,7 +138,7 @@ export async function registerTemporaryUser(
         const validatedBasicData = temporaryUserBasicDataSchema.parse(basicDataForm);
         const validatedPassword = temporaryUserPasswordSchema.parse(passwordDataForm);
 
-        const response = await fetch(`http://localhost:3000/api/auth/register`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/auth/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -210,7 +210,7 @@ export async function updateTemporaryUserUsername(
 
         const validatedUsername = temporaryUserUsernameSchema.parse(formData);
 
-        const response = await fetch(`http://localhost:3000/api/auth/temporary/username`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/auth/temporary/username`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -281,7 +281,7 @@ export async function updateTemporaryUserProfilePicture(
             newFormData.append('profilePicture', formData.profilePicture);
         }
 
-        const response = await fetch(`http://localhost:3000/api/auth/temporary/profilePicture`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/auth/temporary/profilePicture`, {
             method: 'PATCH',
             headers: {
                 'Authorization': `Bearer ${temporaryToken}`,
@@ -340,7 +340,7 @@ export async function updateTemporaryUserProfilePicture(
 
 // -> login
 export async function loginUser(formData: FormLogInUserDataType): Promise<ApiResponse<{ type: 'user' | 'temporary' }>> {
-    const response = await fetchWithNoAuth<{ token: string }>('http://localhost:3000/api/auth/login', {
+    const response = await fetchWithNoAuth<{ token: string }>('http://192.168.1.155:3000/api/auth/login', {
         method: 'POST',
         body: formData,
     });

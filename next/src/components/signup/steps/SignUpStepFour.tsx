@@ -255,6 +255,7 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
                                         className={`rounded-full w-full h-full`} />
 
                                     <input
+                                        suppressHydrationWarning
                                         {...rest} name="picture" ref={(e) => {
                                             ref(e);
                                             setValue('profilePicture', uploadedPictureData ?? undefined);

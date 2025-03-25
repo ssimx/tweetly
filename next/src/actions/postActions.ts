@@ -12,7 +12,7 @@ export async function getHomeGlobalFeed(): Promise<ApiResponse<{ posts: BasePost
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://localhost:3000/api/posts/feed/global`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/posts/feed/global`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -65,7 +65,7 @@ export async function getMorePostsForHomeGlobalFeed(postCursor: number): Promise
         const token = await getCurrentUserToken();
         if (!postCursor) throw new AppError('Post cursor is missing', 400, 'MISSING_CURSOR');
 
-        const response = await fetch(`http://localhost:3000/api/posts/feed/global?cursor=${postCursor}&type=old`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/posts/feed/global?cursor=${postCursor}&type=old`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -118,7 +118,7 @@ export async function getNewPostsForHomeGlobalFeed(postCursor: number | null): P
         const token = await getCurrentUserToken();
         if (postCursor === undefined) throw new AppError('Post cursor is missing', 400, 'MISSING_CURSOR');
 
-        const response = await fetch(`http://localhost:3000/api/posts/feed/global?cursor=${postCursor}&type=new`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/posts/feed/global?cursor=${postCursor}&type=new`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -170,7 +170,7 @@ export async function getHomeFollowingFeed(): Promise<ApiResponse<{ posts: BaseP
     const token = await getCurrentUserToken();
 
     try {
-        const response = await fetch(`http://localhost:3000/api/posts/feed/following`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/posts/feed/following`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -223,7 +223,7 @@ export async function getMorePostsForHomeFollowingFeed(postCursor: number): Prom
         const token = await getCurrentUserToken();
         if (!postCursor) throw new AppError('Post cursor is missing', 400, 'MISSING_CURSOR');
 
-        const response = await fetch(`http://localhost:3000/api/posts/feed/following?cursor=${postCursor}&type=old`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/posts/feed/following?cursor=${postCursor}&type=old`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -276,7 +276,7 @@ export async function getNewPostsForHomeFollowingFeed(postCursor: number | null)
         const token = await getCurrentUserToken();
         if (!postCursor) throw new AppError('Post cursor is missing', 400, 'MISSING_CURSOR');
 
-        const response = await fetch(`http://localhost:3000/api/posts/feed/following?cursor=${postCursor}&type=new`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/posts/feed/following?cursor=${postCursor}&type=new`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -332,7 +332,7 @@ export async function getPostsForProfile(profileUsername: string, postsCursor?: 
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://localhost:3000/api/posts/userPosts/${profileUsername}${postsCursor ? `?cursor=${postsCursor}` : ''}`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/posts/userPosts/${profileUsername}${postsCursor ? `?cursor=${postsCursor}` : ''}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -384,7 +384,7 @@ export async function getRepostsForProfile(profileUsername: string, repostsCurso
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://localhost:3000/api/posts/userReposts/${profileUsername}${repostsCursor ? `?cursor=${repostsCursor}` : ''}`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/posts/userReposts/${profileUsername}${repostsCursor ? `?cursor=${repostsCursor}` : ''}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -608,7 +608,7 @@ export async function getRepliesForProfile(profileUsername: string, repliesCurso
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://localhost:3000/api/posts/userReplies/${profileUsername}${repliesCursor ? `?cursor=${repliesCursor}` : ''}`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/posts/userReplies/${profileUsername}${repliesCursor ? `?cursor=${repliesCursor}` : ''}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -660,7 +660,7 @@ export async function getMediaForProfile(profileUsername: string, mediaCursor?: 
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://localhost:3000/api/posts/userMedia/${profileUsername}${mediaCursor ? `?cursor=${mediaCursor}` : ''}`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/posts/userMedia/${profileUsername}${mediaCursor ? `?cursor=${mediaCursor}` : ''}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -715,7 +715,7 @@ export async function getLikesForProfile(profileUsername: string, likesCursor?: 
 
         if (payload.username !== profileUsername) throw new AppError('Unauthorized', 401, 'ANAUTHORIZED');
 
-        const response = await fetch(`http://localhost:3000/api/posts/userLikes${likesCursor ? `?cursor=${likesCursor}` : ''}`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/posts/userLikes${likesCursor ? `?cursor=${likesCursor}` : ''}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -790,7 +790,7 @@ export async function createPost(formData: FormNewPostDataType): Promise<ApiResp
             newFormData.append('replyToId', String(formData.replyToId));
         }
 
-        const response = await fetch(`http://localhost:3000/api/posts/create`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/posts/create`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -850,7 +850,7 @@ export async function repostPost(postId: number) {
     const token = await getCurrentUserToken();
 
     try {
-        const response = await fetch(`http://localhost:3000/api/posts/repost/${postId}`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/posts/repost/${postId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -875,7 +875,7 @@ export async function removeRepostPost(postId: number) {
     const token = await getCurrentUserToken();
 
     try {
-        const response = await fetch(`http://localhost:3000/api/posts/removeRepost/${postId}`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/posts/removeRepost/${postId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -900,7 +900,7 @@ export async function likePost(postId: number) {
     const token = await getCurrentUserToken();
 
     try {
-        const response = await fetch(`http://localhost:3000/api/posts/like/${postId}`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/posts/like/${postId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -925,7 +925,7 @@ export async function removeLikePost(postId: number) {
     const token = await getCurrentUserToken();
 
     try {
-        const response = await fetch(`http://localhost:3000/api/posts/removeLike/${postId}`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/posts/removeLike/${postId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -950,7 +950,7 @@ export async function bookmarkPost(postId: number) {
     const token = await getCurrentUserToken();
 
     try {
-        const response = await fetch(`http://localhost:3000/api/posts/bookmark/${postId}`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/posts/bookmark/${postId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -975,7 +975,7 @@ export async function removeBookmarkPost(postId: number) {
     const token = await getCurrentUserToken();
 
     try {
-        const response = await fetch(`http://localhost:3000/api/posts/removeBookmark/${postId}`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/posts/removeBookmark/${postId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',

@@ -10,6 +10,7 @@ import BlockedUsersContextProvider from "@/context/BlockedUsersContextProvider";
 import PostInteractionContextProvider from "@/context/PostInteractionContextProvider";
 import { getFollowSuggestions } from '@/actions/get-actions';
 import { redirect } from 'next/navigation';
+import NewPostModal from '@/components/root-template/left-sidebar/NewPostModal';
 
 export default async function AuthorizedLayout({ children, modals }: Readonly<{ children: React.ReactNode, modals: React.ReactNode }>) {
     const userPromise = getLoggedInUser();
@@ -33,15 +34,16 @@ export default async function AuthorizedLayout({ children, modals }: Readonly<{ 
                         <PostInteractionContextProvider>
                             <body suppressHydrationWarning
                                 className={`
-                                    h-dvh
-                                    grid grid-cols-1 grid-rows-[auto,auto]
-                                    xs:min-h-screen xs:w-[99%] xs:max-w-[1300px]
-                                    xs:grid-cols-[auto,auto]
-                                    lg:grid-cols-[auto,auto]
-                                    mx-auto justify-center content-center`}
+                                    h-dvh w-screen
+                                    xs:mx-auto xs:justify-center xs:content-center
+                                    xs:min-h-screen xs:w-[99%]
+                                    xs:grid xs:grid-cols-[auto,1fr]
+                                    sm:max-w-[680px]
+                                    xl:max-w-[1300px]`
+                                }
                             >
                                 <header
-                                    className="min-w-[0px] min-h-[0px] col-start-1 col-end-2 hidden relative
+                                    className="hidden min-w-[0px] min-h-[0px] col-start-1 col-end-2 relative
                                         xs:flex xs:w-[80px]
                                         xl:w-[250px]"
                                     role='banner'
@@ -52,8 +54,15 @@ export default async function AuthorizedLayout({ children, modals }: Readonly<{ 
                                     </div>
                                 </header>
 
-                                <main className="h-fit min-h-screen w-full col-start-2 col-end-3">
-                                    <div className="grid grid-cols-[minmax(400px,600px)] xl:grid xl:grid-cols-[minmax(500px,600px),1fr] mx-auto max-w-[1200px]">
+                                <main
+                                    className="h-fit min-h-svh w-full pb-[75px] 
+                                        xs:pb-0 xs:col-start-2 xs:col-end-3"
+                                >
+                                    <div
+                                        className="grid grid-cols-[minmax(100%,600px)] 
+                                            xl:grid-cols-[minmax(500px,600px),1fr] mx-auto max-w-[1200px]"
+                                    >
+
                                         {/* Middle Content */}
                                         <div className="h-fit min-h-screen border-x border-b border-primary-border 
                                                         w-full max-w-[600px] mx-auto xl:mx-0">

@@ -23,7 +23,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
     const [selectedImagesPreview, setSelectedImagesPreview] = useState<string[]>([]);
     const [selectedImagesFiles, setSelectedImagesFiles] = useState<File[]>([]);
     const [newPostError, setNewPostError] = useState('');
-    
+
     const imageInputRef = useRef<HTMLInputElement | null>(null);
     const maxChars = 280;
     const charsPercentage = Math.min((text.length / maxChars) * 100, 100);
@@ -37,6 +37,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
         setError,
         clearErrors,
         setValue,
+        reset,
     } = useForm<FormNewPostDataType>({
         resolver: zodResolver(newPostDataSchema),
         defaultValues: { replyToId: reply ? String(reply) : undefined }
@@ -86,7 +87,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
             }
             validFiles.push(file);
         });
-        
+
         setSelectedImagesFiles((current) => [...current, ...validFiles]); // Array of file objects
         setSelectedImagesPreview((current) => [...current, ...validFiles.map((file) => URL.createObjectURL(file))]); // Array of image previews
         setValue('images', [
@@ -120,7 +121,9 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
             socket.emit('new_user_notification', loggedInUser.id);
 
             // hard redirect server action does not work, modal stays mounted / open
-            return window.location.href = `http://localhost:3000/${data.post.author.username}/status/${data.post.id}`;
+            const postUrl = `http://192.168.1.155:3000/${data.post.author.username}/status/${data.post.id}`;
+            reset();
+            return window.location.href = postUrl;
         } catch (error: unknown) {
             // Handle validation errors
             if (isZodError(error)) {
@@ -142,14 +145,16 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
     };
 
     return (
-        <div className={`border-y h-fit flex flex-col px-4 min-h-[100px]`}>
+        <div className={`hidden xs:flex border-b h-fit flex-col px-4 min-h-[100px]`}>
             <div className="grid grid-cols-post-layout gap-4 my-2 h-full">
                 <Image src={loggedInUser.profile?.profilePicture}
                     alt='User profile'
                     width={54} height={54}
                     className="w-[54px] h-[54px] rounded-full" />
-                <form onSubmit={handleSubmit(onSubmitPost)} id={formId} className='min-h-full pr-4 flex flex-col'>
-                    <TextareaAutosize maxLength={maxChars}
+                <form suppressHydrationWarning onSubmit={handleSubmit(onSubmitPost)} id={formId} className='min-h-full pr-4 flex flex-col'>
+                    <TextareaAutosize
+                        suppressHydrationWarning
+                        maxLength={maxChars}
                         className='h-[28px] mt-3 mb-auto w-full focus:outline-none text-xl resize-none bg-transparent'
                         placeholder={placeholder ? placeholder : 'What is happening?!'}
                         onClick={(e) => handleClick(e)}
@@ -163,42 +168,42 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
                         <p className="text-center text-red-600 font-bold text-xs">{`${errors.text.message}`}</p>
                     )}
                     { // selected images preview
-                    selectedImagesPreview.length === 1
-                        ? (
-                            <div className="mt-2 relative inline-block w-fit max-h-[500px]">
-                                <Image src={selectedImagesPreview[0]} alt="Selected preview" className="max-h-[500px] w-auto object-contain rounded-md" width={400} height={400} />
-                                <button type='button' className='absolute top-2 right-2 group rounded-full bg-black-1/40 p-1 flex-center'
-                                    onClick={() => {
-                                        setSelectedImagesPreview([]);
-                                        setSelectedImagesFiles([]);
-                                        setValue('images', []);
-                                    }}>
-                                    <X size={20} className='' />
-                                </button>
-                            </div>
-                        )
-                        : (selectedImagesPreview.length > 1 && selectedImagesPreview.length < 5)
+                        selectedImagesPreview.length === 1
                             ? (
-                                <div className={`mt-2 grid gap-1 w-full h-[300px] ${selectedImagesPreview.length === 2 ? 'grid-cols-2 grid-rows-1' : 'grid-cols-2 grid-rows-2'}`}>
-                                    {selectedImagesPreview.map((image, index) => (
-                                        <div key={index} className='h-full relative'>
-                                            <Image src={image} alt="Selected preview" className="h-full w-full object-cover rounded-md" width={400} height={400} />
-                                            <button type='button' className='absolute top-2 right-2 group rounded-full bg-black-1/40 p-1 flex-center'
-                                                onClick={() => {
-                                                    const updatedImagesPreview = selectedImagesPreview.toSpliced(index, 1);
-                                                    setSelectedImagesPreview(updatedImagesPreview);
-
-                                                    const updatedImagesFiles = selectedImagesFiles.toSpliced(index, 1);
-                                                    setSelectedImagesFiles(updatedImagesFiles)
-                                                    setValue('images', updatedImagesFiles);
-                                                }}>
-                                                <X size={20} className='' />
-                                            </button>
-                                        </div>
-                                    ))}
+                                <div className="mt-2 relative inline-block w-fit max-h-[500px]">
+                                    <Image src={selectedImagesPreview[0]} alt="Selected preview" className="max-h-[500px] w-auto object-contain rounded-md" width={400} height={400} />
+                                    <button type='button' className='absolute top-2 right-2 group rounded-full bg-black-1/40 p-1 flex-center'
+                                        onClick={() => {
+                                            setSelectedImagesPreview([]);
+                                            setSelectedImagesFiles([]);
+                                            setValue('images', []);
+                                        }}>
+                                        <X size={20} className='' />
+                                    </button>
                                 </div>
                             )
-                            : null
+                            : (selectedImagesPreview.length > 1 && selectedImagesPreview.length < 5)
+                                ? (
+                                    <div className={`mt-2 grid gap-1 w-full h-[300px] ${selectedImagesPreview.length === 2 ? 'grid-cols-2 grid-rows-1' : 'grid-cols-2 grid-rows-2'}`}>
+                                        {selectedImagesPreview.map((image, index) => (
+                                            <div key={index} className='h-full relative'>
+                                                <Image src={image} alt="Selected preview" className="h-full w-full object-cover rounded-md" width={400} height={400} />
+                                                <button type='button' className='absolute top-2 right-2 group rounded-full bg-black-1/40 p-1 flex-center'
+                                                    onClick={() => {
+                                                        const updatedImagesPreview = selectedImagesPreview.toSpliced(index, 1);
+                                                        setSelectedImagesPreview(updatedImagesPreview);
+
+                                                        const updatedImagesFiles = selectedImagesFiles.toSpliced(index, 1);
+                                                        setSelectedImagesFiles(updatedImagesFiles)
+                                                        setValue('images', updatedImagesFiles);
+                                                    }}>
+                                                    <X size={20} className='' />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )
+                                : null
                     }
                 </form>
             </div>
@@ -212,7 +217,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
                     data-testid="loader"
                 />
             </div>
-            
+
             <DialogFooter>
                 <button className='group'
                     disabled={selectedImagesFiles.length >= 4}
@@ -220,6 +225,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
                     <Img size={24} className="text-primary group-hover:text-primary-text group-disabled:text-gray-500" />
                 </button>
                 <input
+                    suppressHydrationWarning
                     type="file"
                     multiple
                     accept=".png, .jpg, .jpeg"

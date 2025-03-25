@@ -58,9 +58,17 @@ export default function BookmarksContent({ initialBookmarks, cursor, end }: { in
     }, [inView, bookmarksCursor, bookmarksEndReached, scrollPosition]);
 
     useEffect(() => {
-        // Track scroll position on user scroll
+        // Track scroll position on user scroll with throttling
+        let ticking = false;
+
         function handleScroll() {
-            scrollPositionRef.current = window.scrollY;
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    scrollPositionRef.current = window.scrollY;
+                    ticking = false;
+                });
+                ticking = true;
+            }
         }
 
         window.addEventListener('scroll', handleScroll, { passive: true });
@@ -68,8 +76,7 @@ export default function BookmarksContent({ initialBookmarks, cursor, end }: { in
         return () => {
             window.removeEventListener('scroll', handleScroll);
         };
-    }, []);
-
+    }, [scrollPositionRef]);
     return (
         <section className='w-full h-fit'>
             <div className='feed-hr-line'></div>

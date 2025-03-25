@@ -272,8 +272,9 @@ export default function ConversationInput({ conversationId, setMessages, message
                         <Img size={22} className="text-primary group-hover:text-primary-text group-disabled:text-gray-500" />
                     </button>
 
-                    <form onSubmit={handleSubmit(onSubmitMessage)} id={formId} className='w-full flex-center'>
+                    <form suppressHydrationWarning onSubmit={handleSubmit(onSubmitMessage)} id={formId} className='w-full flex-center'>
                         <TextareaAutosize
+                            suppressHydrationWarning
                             maxLength={maxChars}
                             maxRows={7}
                             className="h-[24px] w-full bg-transparent focus:outline-none text-16 resize-none overflow-y-auto"
@@ -286,6 +287,7 @@ export default function ConversationInput({ conversationId, setMessages, message
                     </form>
 
                     <input
+                        suppressHydrationWarning
                         type="file"
                         multiple
                         accept=".png, .jpg, .jpeg"

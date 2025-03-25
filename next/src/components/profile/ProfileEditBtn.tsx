@@ -327,6 +327,7 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                         )
                                     }
                                     <input
+                                        suppressHydrationWarning
                                         {...bannerPictureRest} name="bannerPicture" ref={(e) => {
                                             bannerPictureRef(e);
                                             setValue('bannerPicture', uploadedBannerPictureData ?? undefined);
@@ -381,6 +382,7 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                         )
                                     }
                                     <input
+                                        suppressHydrationWarning
                                         {...profilePictureRest} name="profilePicture" ref={(e) => {
                                             profilePictureRef(e);
                                             setValue('profilePicture', uploadedProfilePictureData ?? undefined);
@@ -399,7 +401,7 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                             </div>
                         </div>
 
-                        <form onSubmit={handleSubmit(onSubmit)} id={formId} className='flex flex-col gap-4 mt-[75px]'>
+                        <form suppressHydrationWarning onSubmit={handleSubmit(onSubmit)} id={formId} className='flex flex-col gap-4 mt-[75px]'>
                             <div className='flex flex-col'>
                                 {errors.bannerPicture && <p className='!mt-2 error-msg'>Banner picture: {errors.bannerPicture.message}</p>}
                                 {errors.profilePicture && <p className='!mt-2 error-msg'>Profile picture: {errors.profilePicture.message}</p>}
@@ -410,6 +412,7 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                     <p className={`${name.length === maxNameChars ? 'text-red-500' : null}`}>{`${name.length} / ${maxNameChars}`}</p>
                                 </label>
                                 <TextareaAutosize
+                                    suppressHydrationWarning
                                     maxLength={maxNameChars}
                                     {...register('name')}
                                     className='profile-textarea'
@@ -425,6 +428,7 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                     <p className={`${bio.length === maxBioChars ? 'text-red-500' : null}`}>{`${bio.length} / ${maxBioChars}`}</p>
                                 </label>
                                 <TextareaAutosize
+                                    suppressHydrationWarning
                                     maxLength={maxBioChars}
                                     className='profile-textarea'
                                     placeholder='Your biography...'
@@ -439,6 +443,7 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                     <p className={`${location.length === maxLocationChars ? 'text-red-500' : null}`}>{`${location.length} / ${maxLocationChars}`}</p>
                                 </label>
                                 <TextareaAutosize
+                                    suppressHydrationWarning
                                     maxLength={maxLocationChars}
                                     {...register('location')}
                                     className='profile-textarea'
@@ -454,6 +459,7 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                     <p className={`${website.length === maxWebsiteChars ? 'text-red-500' : null}`}>{`${website.length} / ${maxWebsiteChars}`}</p>
                                 </label>
                                 <TextareaAutosize
+                                    suppressHydrationWarning
                                     maxLength={maxWebsiteChars}
                                     {...register('website')}
                                     className='profile-textarea'

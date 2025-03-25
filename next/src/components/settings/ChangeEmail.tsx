@@ -71,7 +71,7 @@ export default function ChangeEmail() {
             <div className='feed-hr-line'></div>
 
             <div className='px-4 mt-4'>
-                <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
+                <form suppressHydrationWarning onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
                     <Input
                         {...register("newEmail")}
                         type="text" placeholder="Email"

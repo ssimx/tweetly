@@ -68,7 +68,7 @@ export default function ChangePassword() {
             <div className='feed-hr-line'></div>
 
             <div className='px-4 mt-4'>
-                <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
+                <form suppressHydrationWarning onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
                     {/* Current Password */}
                     <div className="relative h-10 w-full">
                         <Input
@@ -85,7 +85,7 @@ export default function ChangePassword() {
                             className="absolute right-0 mr-3 top-1/2 transform -translate-y-1/2 text-secondary-text z-10"
                             tabIndex={4}
                         >
-                            {currentPasswordType === 'password' ? <EyeOff size={18} /> : <Eye size={18} className='text-primary'/>}
+                            {currentPasswordType === 'password' ? <EyeOff size={18} /> : <Eye size={18} className='text-primary' />}
                         </button>
                     </div>
                     {errors.currentPassword && <p className="error-msg">{errors.currentPassword.message}</p>}
@@ -107,7 +107,7 @@ export default function ChangePassword() {
                             className="absolute right-0 mr-3 top-1/2 transform -translate-y-1/2 text-secondary-text z-10"
                             tabIndex={5}
                         >
-                            {newPasswordType === 'password' ? <EyeOff size={18} /> : <Eye size={18} className='text-primary'/>}
+                            {newPasswordType === 'password' ? <EyeOff size={18} /> : <Eye size={18} className='text-primary' />}
                         </button>
                     </div>
                     {errors.newPassword && <p className="error-msg">{errors.newPassword.message}</p>}
@@ -127,7 +127,7 @@ export default function ChangePassword() {
                             className="absolute right-0 mr-3 top-1/2 transform -translate-y-1/2 text-secondary-text z-10"
                             tabIndex={6}
                         >
-                            {confirmNewPasswordType === 'password' ? <EyeOff size={18} /> : <Eye size={18} className='text-primary'/>}
+                            {confirmNewPasswordType === 'password' ? <EyeOff size={18} /> : <Eye size={18} className='text-primary' />}
                         </button>
                     </div>
                     {errors.confirmNewPassword && <p className="error-msg">{errors.confirmNewPassword.message}</p>}

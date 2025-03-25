@@ -175,10 +175,11 @@ export default function Search() {
     return (
         <div className='relative'>
             <div ref={searchContainer} className=''>
-                <form onSubmit={handleSubmit(onSubmit)} className='h-fit'>
+                <form suppressHydrationWarning onSubmit={handleSubmit(onSubmit)} className='h-fit'>
                     <label className="h-[50px] flex items-center gap-3 text-gray-400 rounded-[25px] border px-4">
-                        <SearchIcon size={16} className='min-w-[16px]'/>
+                        <SearchIcon size={16} className='min-w-[16px]' />
                         <input
+                            suppressHydrationWarning
                             {...register('q')}
                             type="search"
                             className='w-full outline-none text-primary-text'

@@ -4,8 +4,8 @@ import { SetStateAction } from "react";
 export default function FeedHeaderTabs({ activeTab, setActiveTab }: { activeTab: number, setActiveTab: React.Dispatch<SetStateAction<number>> }) {
 
     return (
-        <div className='w-full h-[50px] flex sticky'>
-            <div className='feed-header-tab-btn relative'>
+        <div className='w-[full] h-[50px] flex sticky top-0 bg-white z-10 border-b bg-primary-foreground'>
+            <div className='w-full relative flex-center'>
                 <button
                     className={`z-10 absolute w-full h-full ${activeTab === 0 ? 'text-primary-text font-bold' : 'text-secondary-text font-medium'}`}
                     onClick={() => setActiveTab(0)} >
@@ -19,7 +19,7 @@ export default function FeedHeaderTabs({ activeTab, setActiveTab }: { activeTab:
                 )}
             </div>
 
-            <div className='feed-header-tab-btn relative'>
+            <div className='w-full relative flex-center'>
                 <button
                     className={`z-10 absolute w-full h-full ${activeTab === 1 ? 'text-primary-text font-bold' : 'text-secondary-text font-medium'}`}
                     onClick={() => setActiveTab(1)} >

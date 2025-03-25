@@ -8,7 +8,7 @@ export default async function AuthLayout({ children }: Readonly<{ children: Reac
 
     return (
         <body className='h-svh max-h-svh w-[90%] max-w-[90%] sm:h-screen sm:max-h-screen'>
-            <main className='w-full flex flex-col items-center justify-center gap-y-[5%] py-[5%] md:flex-row md:gap-x-[10%]'>
+            <main className='w-full h-full flex flex-col items-center justify-center gap-y-[5%] py-[5%] md:flex-row md:gap-x-[10%]'>
                 <section className='h-auto md:h-auto'>
                     <Image
                         src={savedTheme === 0 ? TweetlyLogoBlack : TweetlyLogoWhite}

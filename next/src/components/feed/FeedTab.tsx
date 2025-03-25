@@ -14,9 +14,17 @@ type FeedTabType = {
 export default function FeedTab({ posts, loadingRef, scrollPositionRef, endReached = true, searchSegments }: FeedTabType) {
 
     useEffect(() => {
-        // Track scroll position on user scroll
+        // Track scroll position on user scroll with throttling
+        let ticking = false;
+
         function handleScroll() {
-            scrollPositionRef.current = window.scrollY;
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    scrollPositionRef.current = window.scrollY;
+                    ticking = false;
+                });
+                ticking = true;
+            }
         }
 
         window.addEventListener('scroll', handleScroll, { passive: true });
@@ -25,6 +33,10 @@ export default function FeedTab({ posts, loadingRef, scrollPositionRef, endReach
             window.removeEventListener('scroll', handleScroll);
         };
     }, [scrollPositionRef]);
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
     return (
         <>

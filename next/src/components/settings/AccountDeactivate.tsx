@@ -72,7 +72,7 @@ export default function AccountDeactivate() {
                 </p>
             </div>
             <div className='feed-hr-line my-2 mb-4'></div>
-            <form onSubmit={(e) => onSubmit(e)} id='deactivate' className='w-full px-6 flex-center'>
+            <form suppressHydrationWarning onSubmit={(e) => onSubmit(e)} id='deactivate' className='w-full px-6 flex-center'>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
                         {isSubmitting

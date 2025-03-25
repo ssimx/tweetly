@@ -83,7 +83,7 @@ export default function ProfileReply({ profileUsername, post, userState, dispatc
     };
 
     const openPhoto = (photoIndex: number, authorUsername: string, postId: number) => {
-        router.push(`http://localhost:3000/${authorUsername}/status/${postId}/photo/${photoIndex + 1}`, { scroll: false });
+        router.push(`http://192.168.1.155:3000/${authorUsername}/status/${postId}/photo/${photoIndex + 1}`, { scroll: false });
     };
 
     // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

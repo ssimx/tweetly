@@ -79,7 +79,7 @@ export default function VisitedPostInfoModal({ post, photoId }: { post: VisitedP
 
     const openPhoto = (photoIndex: number, authorUsername: string, postId: number) => {
         document.body.style.overflow = '';
-        router.push(`http://localhost:3000/${authorUsername}/status/${postId}/photo/${photoIndex + 1}`, { scroll: false });
+        router.push(`http://192.168.1.155:3000/${authorUsername}/status/${postId}/photo/${photoIndex + 1}`, { scroll: false });
     };
 
     const closePhoto = () => {
@@ -99,7 +99,7 @@ export default function VisitedPostInfoModal({ post, photoId }: { post: VisitedP
             {isOverlayVisible &&
                 createPortal(
                     <div className={`overflow-y-scroll custom-scrollbar min-h-screen h-auto fixed inset-0 z-50 bg-black-1/90 flex flex-col xl:overflow-y-hidden xl:grid xl:grid-rows-1 ${!isPostInfoVisible ? 'xl:grid-cols-[100%]' : 'xl:grid-cols-[70%,30%]'}`} >
-                        
+
                         <div className='relative h-[70vh] xl:h-[100vh] flex-center shrink-0' onClick={closePhoto}>
                             <button className='absolute z-[100] inset-0 m-3 p-2 h-fit w-fit rounded-full opacity-90 bg-secondary-foreground hover:opacity-100 hover:cursor-pointer'
                                 onClick={(e) => {
@@ -154,7 +154,7 @@ export default function VisitedPostInfoModal({ post, photoId }: { post: VisitedP
                                 />
                             </div>
                         </div>
-                        
+
                         <div
                             ref={scrollElementRef}
                             className={`w-full h-auto sm:flex sm:grow sm:justify-center xl:block bg-primary-foreground p-2 border-l-[1px] border-primary-border xl:max-h-[100vh] xl:overflow-y-auto ${!isPostInfoVisible ? 'translate-x-[100%]' : ''}`}

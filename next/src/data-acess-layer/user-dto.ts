@@ -20,7 +20,7 @@ export const getTemporaryUser = async (): Promise<ApiResponse<{ user: LoggedInTe
     };
 
     try {
-        const response = await fetch('http://localhost:3000/api/users/temporary', {
+        const response = await fetch('http://192.168.1.155:3000/api/users/temporary', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -73,7 +73,7 @@ export const getLoggedInUser = cache(async (): Promise<ApiResponse<{ user: Logge
     const token = await getCurrentUserToken();
 
     try {
-        const response = await fetch('http://localhost:3000/api/users', {
+        const response = await fetch('http://192.168.1.155:3000/api/users', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -126,7 +126,7 @@ export async function getNotifications(): Promise<ApiResponse<{ notifications: N
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch('http://localhost:3000/api/users/notifications', {
+        const response = await fetch('http://192.168.1.155:3000/api/users/notifications', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -179,7 +179,7 @@ export async function getBookmarks(): Promise<ApiResponse<{ bookmarks: BasePostD
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch('http://localhost:3000/api/posts/bookmarks', {
+        const response = await fetch('http://192.168.1.155:3000/api/posts/bookmarks', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -232,7 +232,7 @@ export async function getConversations(): Promise<ApiResponse<{ conversations: C
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch('http://localhost:3000/api/conversations', {
+        const response = await fetch('http://192.168.1.155:3000/api/conversations', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -291,7 +291,7 @@ export async function getConversationById(id: string) {
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://localhost:3000/api/conversations/${id}`, {
+        const response = await fetch(`http://192.168.1.155:3000/api/conversations/${id}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -391,7 +391,7 @@ async function authorizedToEditProfile(username: string): Promise<ApiResponse<{ 
 export async function getUserProfile(username: string) {
     try {
         const token = await getCurrentUserToken();
-        const userProfileResponse = await fetch(`http://localhost:3000/api/users/${username}`, {
+        const userProfileResponse = await fetch(`http://192.168.1.155:3000/api/users/${username}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

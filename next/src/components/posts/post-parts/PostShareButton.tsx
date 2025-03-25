@@ -30,7 +30,7 @@ export default function PostShareButton({ post }: { post: BasePostDataType }) {
     };
 
     const handleCopyLink = () => {
-        const postUrl = `http://localhost:3000/${post.author.username}/status/${post.id}`;
+        const postUrl = `http://192.168.1.155:3000/${post.author.username}/status/${post.id}`;
         navigator.clipboard.writeText(postUrl);
         setMenuOpen((prev) => !prev);
         copyProfileUrlAlert.current?.classList.toggle('hidden');
@@ -61,7 +61,7 @@ export default function PostShareButton({ post }: { post: BasePostDataType }) {
 
                     <div
                         ref={menuBtn}
-                    className='shadow-menu bg-primary-foreground border border-primary-border overflow-hidden absolute top-0 right-[0%] z-50 w-[250px] h-fit rounded-[20px] py-[10px] pointer-events-none [&>button]:pointer-events-auto'
+                        className='shadow-menu bg-primary-foreground border border-primary-border overflow-hidden absolute top-0 right-[0%] z-50 w-[250px] h-fit rounded-[20px] py-[10px] pointer-events-none [&>button]:pointer-events-auto'
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button

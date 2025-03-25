@@ -103,9 +103,17 @@ export default function Followers(props: { params: Promise<{ username: string }>
 
         fetchUserFollowers();
 
-        // Track scroll position on user scroll
+        // Track scroll position on user scroll with throttling
+        let ticking = false;
+
         function handleScroll() {
-            scrollPositionRef.current = window.scrollY;
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    scrollPositionRef.current = window.scrollY;
+                    ticking = false;
+                });
+                ticking = true;
+            }
         }
 
         window.addEventListener('scroll', handleScroll, { passive: true });

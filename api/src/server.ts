@@ -40,7 +40,7 @@ app.use('/api/v1/conversations', conversationRouter);
 app.use(errorHandler);
 
 const server = app.listen(port, () => {
-    console.log(`[server]: Server is running at http://localhost:${port}`);
+    console.log(`[server]: Server is running at http://192.168.1.155:${port}`);
 });
 
 socketConnection(server);

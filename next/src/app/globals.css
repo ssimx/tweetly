@@ -30,9 +30,6 @@ html, body {
 
 body {
     font-family: var(--font-inter), Arial, Helvetica, sans-serif;
-    width: 100wv;
-    display: flex;
-    justify-content: center;
 
     color: hsl(var(--primary-text-color)) !important;
     background-color: hsl(var(--primary-foreground)) !important;
@@ -187,6 +184,19 @@ input, textarea {
     width: clamp(100px, 20vw, 150px);
     height: clamp(100px, 20vw, 150px);
 }
+
+/* PULL TO REFRESH */
+.ptr__pull-down svg circle:first-of-type {
+    stroke: hsl(var(--secondary-foreground)) !important;
+}
+
+.ptr__pull-down svg circle {
+    stroke: hsl(var(--primary)) !important;
+}
+
+/* .lds-ellipsis {
+    display: none !important;
+} */
 
 input[type="search"]::-webkit-search-decoration,
 input[type="search"]::-webkit-search-cancel-button,

@@ -28,12 +28,21 @@ export default function PostReplies({ parentPostId, replies, setReplies, replies
     });
 
     useEffect(() => {
+        // Track scroll position on user scroll with throttling
+        let ticking = false;
+
         const scrollElement = scrollElementRef?.current;
 
         // Track scroll position on user scroll for element
-        const handleScroll = () => {
-            scrollPositionRef.current = scrollElement ? scrollElement.scrollTop : window.scrollY;
-        };
+        function handleScroll() {
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    scrollPositionRef.current = scrollElement ? scrollElement.scrollTop : window.scrollY;
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        }
 
         scrollElement
             ? scrollElement.addEventListener('scroll', handleScroll, { passive: true })

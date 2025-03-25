@@ -33,7 +33,7 @@ export default function NewPostModal() {
     const { loggedInUser } = useUserContext();
     const charsPercentage = Math.min((text.length / maxChars) * 100, 100);
     const formId = useId();
-    
+
     const {
         register,
         handleSubmit,
@@ -114,7 +114,9 @@ export default function NewPostModal() {
             socket.emit('new_user_notification', loggedInUser.id);
 
             // hard redirect server action does not work, modal stays mounted / open
-            return window.location.href = `http://localhost:3000/${data.post.author.username}/status/${data.post.id}`;
+            const postUrl = `http://192.168.1.155:3000/${data.post.author.username}/status/${data.post.id}`;
+            reset();
+            return window.location.href = postUrl;
         } catch (error: unknown) {
             // Handle validation errors
             if (isZodError(error)) {
@@ -140,7 +142,7 @@ export default function NewPostModal() {
         <Dialog onOpenChange={handleOpenChange}>
             <DialogTrigger className='post-btn'>
                 <Feather className='feather-icon' />
-                <p>Post</p>
+                <p className='hidden xs:block'>Post</p>
             </DialogTrigger>
             <DialogContent className="w-[90%] sm:max-w-[550px]">
                 <VisuallyHidden.Root><DialogTitle>New Post</DialogTitle></VisuallyHidden.Root>
@@ -150,8 +152,9 @@ export default function NewPostModal() {
                         alt='User profile'
                         width={40} height={40}
                         className="w-[40xp] h-[40px] rounded-full" />
-                    <form onSubmit={handleSubmit(onSubmitModalPost)} id={formId} className='pr-4'>
+                    <form suppressHydrationWarning onSubmit={handleSubmit(onSubmitModalPost)} id={formId} className='pr-4'>
                         <TextareaAutosize
+                            suppressHydrationWarning
                             maxLength={maxChars}
                             className='h-[28px] w-full focus:outline-none text-xl resize-none mt-2'
                             placeholder='What is happening?!'
@@ -222,6 +225,7 @@ export default function NewPostModal() {
                         <Img size={24} className="text-primary group-hover:text-primary-text group-disabled:text-gray-500" />
                     </button>
                     <input
+                        suppressHydrationWarning
                         type="file"
                         multiple
                         accept=".png, .jpg, .jpeg"
@@ -243,7 +247,7 @@ export default function NewPostModal() {
                     {newPostError && (
                         <p className="text-center text-red-600 font-bold text-xs ml-4">{`${newPostError}`}</p>
                     )}
-                    
+
                     {isSubmitting
                         ? (<Button disabled className='ml-auto font-bold w-fit rounded-3xl text-white-1'>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

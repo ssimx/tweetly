@@ -52,7 +52,7 @@ const socketConnection = (server: HttpServer) => {
         SocketData
     >(server, {
         cors: {
-            origin: "http://localhost:3000"
+            origin: "http://192.168.1.155:3000"
         }
     });
 
@@ -93,7 +93,7 @@ const socketConnection = (server: HttpServer) => {
                             }
                         }
                     ]
-                    
+
 
                 },
                 select: {
@@ -107,7 +107,7 @@ const socketConnection = (server: HttpServer) => {
 
             const notificationsReadStatus = await getNotificationsReadStatus(userId);
             const messagesReadStatus = await getMessagesReadStatus(userId);
-            
+
             socket.emit('notification_read_status', notificationsReadStatus !== null);
             socket.emit('message_read_status', messagesReadStatus !== null);
         });
@@ -130,7 +130,7 @@ const socketConnection = (server: HttpServer) => {
         });
 
         socket.on('conversation_typing_status', async (conversationId, typingUser) => {
-            socket.to(`${conversationId}`).emit('message_typing_status', typingUser); 
+            socket.to(`${conversationId}`).emit('message_typing_status', typingUser);
         });
 
         socket.on('new_conversation_message', async (conversationId, message) => {

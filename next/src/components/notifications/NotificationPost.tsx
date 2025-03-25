@@ -62,7 +62,7 @@ export default function NotificationPost({ post, isRead }: { post: BasePostDataT
     };
 
     const openPhoto = (photoIndex: number, authorUsername: string, postId: number) => {
-        router.push(`http://localhost:3000/${authorUsername}/status/${postId}/photo/${photoIndex + 1}`, { scroll: false });
+        router.push(`http://192.168.1.155:3000/${authorUsername}/status/${postId}/photo/${photoIndex + 1}`, { scroll: false });
     };
 
     const changeCardColor = () => {
@@ -74,7 +74,7 @@ export default function NotificationPost({ post, isRead }: { post: BasePostDataT
     return (
         <div
             ref={cardRef}
-        className={`w-full flex flex-col gap-3 px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer ${isRead === false ? "bg-secondary-foreground" : ""}`}
+            className={`w-full flex flex-col gap-3 px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer ${isRead === false ? "bg-secondary-foreground" : ""}`}
             role="link"
             tabIndex={0}
             aria-label={`View post by ${post.author.username}`}
