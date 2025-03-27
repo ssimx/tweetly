@@ -5,8 +5,10 @@ import TemplateHeader from './Header';
 import RightSidebar from './right-sidebar/RightSidebar';
 import MobileSidebar from './MobileSidebar';
 import PhoneBottomNav from './PhoneBottomNav';
+import { useAlertMessageContext } from '@/context/AlertMessageContextProvider';
 
 export default function MainContent({ children, modals }: Readonly<{ children: React.ReactNode, modals: React.ReactNode }>) {
+    const { alertMessage } = useAlertMessageContext();
 
     // PHONE SIDEBAR
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -183,6 +185,12 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
 
                 </div>
             </main>
+
+            {alertMessage !== null && (
+                <div className='fixed z-[500] bottom-10 left-[50%] translate-x-[-50%] bg-primary text-white-1 font-semibold px-4 py-2 rounded-md'>
+                    {alertMessage}
+                </div>
+            )}
 
             {/* Mobile Navigation */}
             <PhoneBottomNav sidebarOpen={sidebarOpen} />

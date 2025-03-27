@@ -59,7 +59,7 @@ export default function LeftSidebar() {
     }, [loggedInUser]);
 
     return (
-        <nav className='hidden fixed top-0 h-full pt-4 pb-6
+        <nav className='hidden fixed z-[5000] top-0 h-full pt-4 pb-6
                         xs:flex xs:flex-col xs:gap-12 xs:[&_p]:hidden xs:[&_span]:hidden
                         xl:items-start xl:[&_p]:block xl:[&_span]:flex xl:w-[200px]'
         >

@@ -8,6 +8,7 @@ import { Ellipsis } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { BasePostDataType, getErrorMessage, UserAndViewerRelationshipType, UserStatsType } from 'tweetly-shared';
 import { RemoveScroll } from 'react-remove-scroll';
+import { useAlertMessageContext } from '@/context/AlertMessageContextProvider';
 
 type PostMenuProps = {
     post: BasePostDataType,
@@ -19,6 +20,8 @@ type PostMenuProps = {
 }
 
 export default function PostMenuButton({ post, userState, dispatch }: PostMenuProps) {
+    const { setAlertMessage } = useAlertMessageContext();
+
     const [menuOpen, setMenuOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const menuBtn = useRef<HTMLDivElement | null>(null);
@@ -54,6 +57,8 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
                     if (!response.success) {
                         throw new Error(response.error.message);
                     }
+
+                    setAlertMessage('User unfollowed');
                 } else {
                     // Optimistically update UI
                     dispatch({ type: 'FOLLOW' });
@@ -68,6 +73,8 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
                     if (!response.success) {
                         throw new Error(response.error.message);
                     }
+
+                    setAlertMessage('User followed');
                 }
             } catch (error: unknown) {
                 const errorMessage = getErrorMessage(error);
@@ -76,6 +83,8 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
                     console.error(`Error unfollowing the user:`, errorMessage);
                     dispatch({ type: 'FOLLOW' });
                     updateSuggestedUserFollowState(post.author.username, true);
+
+                    setAlertMessage('Failed to unfollow the user');
                 } else {
                     console.error(`Error following the user:`, errorMessage);
                     dispatch({ type: 'UNFOLLOW' });
@@ -83,6 +92,8 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
                     updateSuggestedUserFollowState(post.author.username, false);
                     isFollowingViewer && setFollowersCount((current) => current + 1);
                     isFollowedByViewer && setFollowingCount((current) => current + 1);
+
+                    setAlertMessage('Failed to follow the user');
                 }
             } finally {
                 setIsSubmitting(false);
@@ -98,6 +109,7 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
             setFollowersCount,
             setFollowingCount,
             updateSuggestedUserFollowState,
+            setAlertMessage,
         ],
     );
 
@@ -118,6 +130,8 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
                     if (!response.success) {
                         throw new Error(response.error.message);
                     }
+
+                    setAlertMessage('User unblocked');
                 } else {
                     // Optimistically update UI
                     dispatch({ type: 'BLOCK' });
@@ -131,6 +145,8 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
                     if (!response.success) {
                         throw new Error(response.error.message);
                     }
+
+                    setAlertMessage('User blocked');
                 }
             } catch (error: unknown) {
                 const errorMessage = getErrorMessage(error);
@@ -139,6 +155,8 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
                     console.error(`Error unblocking the user:`, errorMessage);
                     dispatch({ type: 'BLOCK' });
                     addBlockedUser(post.author.username);
+
+                    setAlertMessage('Failed to unblock the user');
                 } else {
                     console.error(`Error blocking the user:`, errorMessage);
                     dispatch({ type: 'UNBLOCK' });
@@ -146,6 +164,8 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
                     setNewFollowing(false);
                     isFollowingViewer && setFollowersCount((current) => current + 1);
                     isFollowedByViewer && setFollowingCount((current) => current + 1);
+
+                    setAlertMessage('Failed to block the user');
                 }
             } finally {
                 setIsSubmitting(false);
@@ -163,6 +183,7 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
             isFollowingViewer,
             setFollowersCount,
             setFollowingCount,
+            setAlertMessage
         ],
     );
 
@@ -209,9 +230,9 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
         <div className='ml-auto w-[30px] h-[25px] relative flex-center'>
             {menuOpen &&
                 <>
-                <RemoveScroll>
-                    <button className='fixed top-0 left-0 w-full h-full z-40 pointer-events-auto' onClick={toggleMenu}></button>
-                </RemoveScroll>
+                    <RemoveScroll>
+                        <button className='fixed top-0 left-0 w-full h-full z-40 pointer-events-auto' onClick={toggleMenu}></button>
+                    </RemoveScroll>
 
                     <div
                         ref={menuBtn}

@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getErrorMessage, UserAndViewerRelationshipType, UserStatsType } from 'tweetly-shared';
 import { useUserContext } from '@/context/UserContextProvider';
 import { RemoveScroll } from 'react-remove-scroll';
+import { useAlertMessageContext } from '@/context/AlertMessageContextProvider';
 
 type ProfileMenuButtonProps = {
     user: string,
@@ -18,10 +19,11 @@ type ProfileMenuButtonProps = {
 };
 
 export default function ProfileMenuButton({ user, userState, dispatch }: ProfileMenuButtonProps) {
+    const { setAlertMessage } = useAlertMessageContext();
+
     const [menuOpen, setMenuOpen] = useState(false);
     const menuBtn = useRef<HTMLDivElement | null>(null);
     const blockBtn = useRef<HTMLButtonElement | null>(null);
-    const copyProfileUrlAlert = useRef<HTMLDivElement | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const {
@@ -38,11 +40,7 @@ export default function ProfileMenuButton({ user, userState, dispatch }: Profile
         const profileUrl = `${url}/${user}`;
         navigator.clipboard.writeText(profileUrl);
         setMenuOpen((prev) => !prev);
-        copyProfileUrlAlert.current?.classList.toggle('hidden');
-
-        setTimeout(() => {
-            copyProfileUrlAlert.current?.classList.toggle('hidden');
-        }, 3000);
+        setAlertMessage('Copied to clipboard');
     };
 
     const handleBlockToggle = useCallback(
@@ -63,6 +61,8 @@ export default function ProfileMenuButton({ user, userState, dispatch }: Profile
                     if (!response.success) {
                         throw new Error(response.error.message);
                     }
+
+                    setAlertMessage('User unblocked');
                 } else {
                     // Optimistically update UI
                     dispatch({ type: 'BLOCK' });
@@ -76,6 +76,8 @@ export default function ProfileMenuButton({ user, userState, dispatch }: Profile
                     if (!response.success) {
                         throw new Error(response.error.message);
                     }
+
+                    setAlertMessage('User blocked');
                 }
             } catch (error: unknown) {
                 const errorMessage = getErrorMessage(error);
@@ -84,6 +86,8 @@ export default function ProfileMenuButton({ user, userState, dispatch }: Profile
                     console.error(`Error unblocking the user:`, errorMessage);
                     dispatch({ type: 'BLOCK' });
                     addBlockedUser(user);
+
+                    setAlertMessage('Failed to unblock the user');
                 } else {
                     console.error(`Error blocking the user:`, errorMessage);
                     dispatch({ type: 'UNBLOCK' });
@@ -91,6 +95,8 @@ export default function ProfileMenuButton({ user, userState, dispatch }: Profile
                     setNewFollowing(false);
                     isFollowingViewer && setFollowersCount((current) => current + 1);
                     isFollowedByViewer && setFollowingCount((current) => current + 1);
+
+                    setAlertMessage('Failed to block the user');
                 }
             } finally {
                 setIsSubmitting(false);
@@ -108,6 +114,7 @@ export default function ProfileMenuButton({ user, userState, dispatch }: Profile
             isFollowingViewer,
             setFollowersCount,
             setFollowingCount,
+            setAlertMessage,
         ],
     );
 
@@ -201,10 +208,6 @@ export default function ProfileMenuButton({ user, userState, dispatch }: Profile
                 <Ellipsis size={20} className='text-primary-text' />
             </button>
 
-            <div className='fixed z-[500] bottom-10 left-[50%] translate-x-[-50%] bg-primary text-white-1 font-semibold px-4 py-2 rounded-md hidden'
-                ref={copyProfileUrlAlert} >
-                Copied to clipboard
-            </div>
         </div>
     )
 }

@@ -3,50 +3,19 @@ import { Share, Link } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { BasePostDataType } from 'tweetly-shared';
 import { RemoveScroll } from 'react-remove-scroll';
+import { useAlertMessageContext } from '@/context/AlertMessageContextProvider';
 
 export default function PostShareButton({ post }: { post: BasePostDataType }) {
+    const { setAlertMessage } = useAlertMessageContext();
+
     const [menuOpen, setMenuOpen] = useState(false);
     const menuBtn = useRef<HTMLDivElement | null>(null);
-    const copyProfileUrlAlert = useRef<HTMLDivElement | null>(null);
 
-    const handleCopyLink = async () => {
+    const handleCopyLink = () => {
         const postUrl = `http://192.168.1.155:3000/${post.author.username}/status/${post.id}`;
-        try {
-            // Attempt to use the modern Clipboard API
-            await navigator.clipboard.writeText(postUrl);
-            // Success: toggle menu and show notification
-            setMenuOpen((prev) => !prev);
-            copyProfileUrlAlert.current?.classList.toggle('hidden');
-            setTimeout(() => {
-                copyProfileUrlAlert.current?.classList.toggle('hidden');
-            }, 3000);
-        } catch (err) {
-            console.error('Clipboard API failed, trying fallback: ', err);
-            // Fallback to document.execCommand
-            const textArea = document.createElement('textarea');
-            textArea.value = postUrl;
-            // Ensure the textarea is not visible
-            textArea.style.position = 'fixed';
-            textArea.style.top = '-9999px';
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                // Success: toggle menu and show notification
-                setMenuOpen((prev) => !prev);
-                copyProfileUrlAlert.current?.classList.toggle('hidden');
-                setTimeout(() => {
-                    copyProfileUrlAlert.current?.classList.toggle('hidden');
-                }, 3000);
-            } catch (fallbackErr) {
-                console.error('Fallback failed: ', fallbackErr);
-                // Optionally, notify the user of the failure
-                alert('Failed to copy the link. Please copy it manually.');
-            } finally {
-                // Clean up
-                document.body.removeChild(textArea);
-            }
-        }
+        navigator.clipboard.writeText(postUrl);
+        setMenuOpen((prev) => !prev);
+        setAlertMessage('Copied to clipboard');
     };
 
     const toggleMenu = (e: React.MouseEvent) => {
@@ -116,10 +85,6 @@ export default function PostShareButton({ post }: { post: BasePostDataType }) {
                 </span>
             </button>
 
-            <div className='fixed z-[500] bottom-10 left-[50%] translate-x-[-50%] bg-primary text-white-1 font-semibold px-4 py-2 rounded-md hidden'
-                ref={copyProfileUrlAlert} >
-                Copied to clipboard
-            </div>
         </div>
     )
 }

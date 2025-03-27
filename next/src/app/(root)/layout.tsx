@@ -9,6 +9,7 @@ import PostInteractionContextProvider from "@/context/PostInteractionContextProv
 import { getFollowSuggestions } from '@/actions/get-actions';
 import { redirect } from 'next/navigation';
 import MainContent from '@/components/root-template/MainContent';
+import AlertMessageContextProvider from '@/context/AlertMessageContextProvider';
 
 export default async function AuthorizedLayout({ children, modals }: Readonly<{ children: React.ReactNode, modals: React.ReactNode }>) {
     const userPromise = getLoggedInUser();
@@ -52,9 +53,11 @@ export default async function AuthorizedLayout({ children, modals }: Readonly<{ 
                                     </div>
                                 </header>
 
-                                <MainContent modals={modals}>
-                                    {children}
-                                </MainContent>
+                                <AlertMessageContextProvider>
+                                    <MainContent modals={modals}>
+                                        {children}
+                                    </MainContent>
+                                </AlertMessageContextProvider>
 
                             </body>
                         </PostInteractionContextProvider>
