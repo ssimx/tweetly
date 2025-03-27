@@ -1,7 +1,5 @@
-import TemplateHeader from "@/components/root-template/Header";
 import LeftSidebar from "@/components/root-template/left-sidebar/LeftSidebar";
 import PhoneBottomNav from "@/components/root-template/PhoneBottomNav";
-import RightSidebar from "@/components/root-template/right-sidebar/RightSidebar";
 import UserContextProvider from "@/context/UserContextProvider";
 import FollowSuggestionContextProvider from "@/context/FollowSuggestionContextProvider";
 import TrendingContextProvider from "@/context/TrendingContextProvider";
@@ -10,7 +8,7 @@ import BlockedUsersContextProvider from "@/context/BlockedUsersContextProvider";
 import PostInteractionContextProvider from "@/context/PostInteractionContextProvider";
 import { getFollowSuggestions } from '@/actions/get-actions';
 import { redirect } from 'next/navigation';
-import NewPostModal from '@/components/root-template/left-sidebar/NewPostModal';
+import MainContent from '@/components/root-template/MainContent';
 
 export default async function AuthorizedLayout({ children, modals }: Readonly<{ children: React.ReactNode, modals: React.ReactNode }>) {
     const userPromise = getLoggedInUser();
@@ -54,32 +52,10 @@ export default async function AuthorizedLayout({ children, modals }: Readonly<{ 
                                     </div>
                                 </header>
 
-                                <main
-                                    className="h-fit min-h-svh w-full pb-[75px] 
-                                        xs:pb-0 xs:col-start-2 xs:col-end-3"
-                                >
-                                    <div
-                                        className="grid grid-cols-[minmax(100%,600px)] 
-                                            xl:grid-cols-[minmax(500px,600px),1fr] mx-auto max-w-[1200px]"
-                                    >
+                                <MainContent modals={modals}>
+                                    {children}
+                                </MainContent>
 
-                                        {/* Middle Content */}
-                                        <div className="h-fit min-h-screen border-x border-b border-primary-border 
-                                                        w-full max-w-[600px] mx-auto xl:mx-0">
-                                            <TemplateHeader />
-                                            {children}
-                                            {modals}
-                                        </div>
-
-                                        {/* Right Sidebar */}
-                                        <aside className="hidden lg:hidden xl:flex justify-center h-fit w-[400px] pt-5 px-4">
-                                            <RightSidebar />
-                                        </aside>
-                                    </div>
-                                </main>
-
-                                {/* Mobile Navigation */}
-                                <PhoneBottomNav />
                             </body>
                         </PostInteractionContextProvider>
                     </BlockedUsersContextProvider>

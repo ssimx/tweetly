@@ -127,8 +127,11 @@ export default function Followers(props: { params: Promise<{ username: string }>
         <div>
             <div className='profile-content-header'>
                 <div className='profile-content-header-btn'>
-                    <Link href={`/${username}/following`}
-                        className={`w-full h-full z-10 absolute text-secondary-text font-medium flex-center`}>
+                    <Link
+                        href={`/${username}/following`}
+                        replace={true}
+                        className={`w-full h-full z-10 absolute text-secondary-text font-medium flex-center`}
+                    >
                         Following
                     </Link>
                 </div>

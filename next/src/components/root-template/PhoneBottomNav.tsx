@@ -4,9 +4,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React, { useEffect, useRef, useState } from 'react'
 import NewPostModal from './left-sidebar/NewPostModal';
+import { useDisplayContext } from '@/context/DisplayContextProvider';
 
-export default function PhoneBottomNav() {
-    const pathname = usePathname();
+export default function PhoneBottomNav({ sidebarOpen }: { sidebarOpen: boolean }) {
+    const pathName = usePathname();
+    const { savedTheme } = useDisplayContext();
     const [isTransparent, setIsTransparent] = useState(false);
     const lastScrollY = useRef(0);
     const scrollingDown = useRef(true);
@@ -86,19 +88,28 @@ export default function PhoneBottomNav() {
     }, []);
 
     return (
-        <nav className={`w-full h-[75px] fixed bottom-0 right-0 pt-5 bg-gradient-to-b from-black-1/90 from-0% to-50% to-black-1 xs:hidden ${isTransparent ? 'opacity-30' : 'opacity-100'}`}>
-            <div className='relative'>
-                <div className='absolute top-0 right-0 translate-y-[-175%] translate-x-[-25%]'>
-                    <NewPostModal />
+        <nav
+            className={`w-full h-[50px] fixed bottom-0 right-0 bg-gradient-to-b xs:hidden 
+                ${savedTheme === 0 ? 'from-black-1/90 from-0% to-20% to-black-1' : 'from-white-1/90 from-0% to-20% to-white-1'}
+                ${isTransparent ? 'opacity-30' : 'opacity-100'}
+                transform transition-transform duration-300
+                ${sidebarOpen ? 'translate-y-[100%]' : 'translate-y-0'}`
+            }
+        >
+            {!pathName.startsWith('/settings') && (
+                <div className='relative'>
+                    <div className='absolute top-0 right-0 translate-y-[-150%] translate-x-[-25%]'>
+                        <NewPostModal />
+                    </div>
                 </div>
-            </div>
-            
-            <div className='h-full flex gap-8 justify-evenly'>
+            )}
+
+            <div className='h-full flex gap-8 justify-evenly items-center'>
                 {bottomNavLinks.map((link, index) => {
                     const Icon = link.icon;
                     return (
                         <Link key={index} href={link.route}>
-                            <Icon size={24} color={pathname === link.route ? 'hsl(var(--primary))' : '#F4F3F2'} />
+                            <Icon size={24} className={pathName === link.route ? 'text-primary' : 'text-secondary-foreground'} />
                         </Link>
                     )
                 })}

@@ -57,7 +57,7 @@ export default function VisitedPostTemplate({
 
     return (
         <>
-            <div className='post' ref={postRef}>
+            <div className='w-full px-4 flex flex-col gap-2' ref={postRef}>
                 <div className='w-full flex gap-2 items-center'>
                     <Link href={`/${post.author.username}`} className='group'>
                         <Image
@@ -79,22 +79,20 @@ export default function VisitedPostTemplate({
                     />
                 </div>
 
-                <div className='post-content flex-col'>
+                <div className='w-full min-w-[1%] flex break-words whitespace-normal flex-col'>
                     <PostText content={post.content} />
                     {type === 'normal' && <PostImages images={post.images} authorUsername={post.author.username} postId={post.id} openPhoto={openPhoto} />}
                 </div>
-                <div className='post-footer'>
+                <div className='flex mb-2 text-secondary-text'>
                     <p>{postTime}</p>
                     <p className='px-1'>·</p>
                     <p>{postDate}</p>
                 </div>
-                <div className='post-btns'>
+                <div className='py-1 border-t'>
                     <PostButtons post={post} />
                 </div>
             </div>
-            <div className='reply'>
-                <NewPost placeholder='Post your reply' reply={post.id} />
-            </div>
+            <NewPost placeholder='Post your reply' reply={post.id} />
             <PostReplies
                 parentPostId={post.id}
                 replies={replies}
