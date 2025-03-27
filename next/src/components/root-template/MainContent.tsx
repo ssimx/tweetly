@@ -21,7 +21,6 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
     const swipeThreshold = 10; // Minimum horizontal movement to consider as a swipe left/right
 
     // Detect swipe gestures to open/close sidebar
-    // Detect swipe gestures to open/close sidebar
     useEffect(() => {
         // Helper function to get touch/pointer coordinates
         const getCoordinates = (e: TouchEvent | PointerEvent) => {

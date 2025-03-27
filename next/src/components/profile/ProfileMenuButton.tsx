@@ -6,6 +6,7 @@ import { Ellipsis, Link, Ban, CircleOff } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getErrorMessage, UserAndViewerRelationshipType, UserStatsType } from 'tweetly-shared';
 import { useUserContext } from '@/context/UserContextProvider';
+import { RemoveScroll } from 'react-remove-scroll';
 
 type ProfileMenuButtonProps = {
     user: string,
@@ -15,13 +16,6 @@ type ProfileMenuButtonProps = {
     },
     dispatch: React.Dispatch<UserActionType>,
 };
-
-// this button can be displayed on user profile
-//      - relationship: block/unblock user
-//      - other things such as copy profile link
-// or inside a post
-//      - relationship: block/unblock, follow/unfollow user, notifications
-//      - other things such as copy post link
 
 export default function ProfileMenuButton({ user, userState, dispatch }: ProfileMenuButtonProps) {
     const [menuOpen, setMenuOpen] = useState(false);
@@ -38,26 +32,6 @@ export default function ProfileMenuButton({ user, userState, dispatch }: Profile
 
     const { setNewFollowing, setFollowingCount, setFollowersCount } = useUserContext();
     const { addBlockedUser, removeBlockedUser } = useBlockedUsersContext();
-
-    const toggleMenu = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setMenuOpen((prev) => !prev);
-
-        if (!menuOpen) {
-            // Disable interaction behind the menu when it's opened
-            document.body.classList.add('disable-interaction');
-        } else {
-            // Re-enable interaction when the menu is closed
-            document.body.classList.remove('disable-interaction');
-        }
-    };
-
-    const handleClickOutside = (event: MouseEvent) => {
-        if (menuBtn.current && !menuBtn.current.contains(event.target as Node)) {
-            setMenuOpen(false);
-            document.body.classList.remove('disable-interaction'); // Enable interaction again
-        }
-    };
 
     const handleCopyLink = () => {
         const url = window.location.origin;
@@ -137,16 +111,33 @@ export default function ProfileMenuButton({ user, userState, dispatch }: Profile
         ],
     );
 
+    const toggleMenu = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setMenuOpen((prev) => !prev);
+    };
+
+    const handleClickOutside = (event: MouseEvent) => {
+        if (menuBtn.current && !menuBtn.current.contains(event.target as Node)) {
+            setMenuOpen(false);
+            document.body.classList.remove('disable-interaction'); // Enable interaction again
+        }
+    };
+
     useEffect(() => {
         if (menuOpen) {
             window.addEventListener('click', handleClickOutside);
+            document.body.classList.add('disable-interaction');
+            document.body.classList.add('overflow-y-none');
         } else {
             window.removeEventListener('click', handleClickOutside);
+            document.body.classList.remove('disable-interaction');
+            document.body.classList.remove('overflow-y-none');
         }
 
         return () => {
             window.removeEventListener('click', handleClickOutside);
             document.body.classList.remove('disable-interaction');
+            document.body.classList.remove('overflow-y-none');
         };
     }, [menuOpen]);
 
@@ -154,7 +145,9 @@ export default function ProfileMenuButton({ user, userState, dispatch }: Profile
         <div className='w-[38px] h-[38px] relative flex-center'>
             {menuOpen &&
                 <>
-                    <div className='fixed top-0 left-0 w-screen h-screen z-40 pointer-events-auto' onClick={toggleMenu}></div>
+                    <RemoveScroll>
+                        <button className='fixed top-0 left-0 w-full h-full z-40 pointer-events-auto' onClick={toggleMenu}></button>
+                    </RemoveScroll>
 
                     <div ref={menuBtn} className='shadow-menu bg-primary-foreground border border-primary-border overflow-hidden absolute top-[125%] right-[0%] z-50 w-[250px] h-fit rounded-[20px] py-[10px] pointer-events-none [&>button]:pointer-events-auto'>
                         <button

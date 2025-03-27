@@ -7,6 +7,7 @@ import { UserActionType } from '@/lib/userReducer';
 import { Ellipsis } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { BasePostDataType, getErrorMessage, UserAndViewerRelationshipType, UserStatsType } from 'tweetly-shared';
+import { RemoveScroll } from 'react-remove-scroll';
 
 type PostMenuProps = {
     post: BasePostDataType,
@@ -35,27 +36,6 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
     } = userState.relationship;
 
     const authorIsLoggedInUser = post.author.username === loggedInUser.username;
-
-    const toggleMenu = (e: React.MouseEvent) => {
-        e.stopPropagation();
-
-        if (!menuOpen) {
-            // Disable interaction behind the menu when it's opened
-            document.body.classList.add('disable-interaction');
-        } else {
-            // Re-enable interaction when the menu is closed
-            document.body.classList.remove('disable-interaction');
-        }
-
-        setMenuOpen((prev) => !prev);
-    };
-
-    const handleClickOutside = (event: MouseEvent) => {
-        if (menuBtn.current && !menuBtn.current.contains(event.target as Node)) {
-            setMenuOpen(false);
-            document.body.classList.remove('disable-interaction'); // Enable interaction again
-        }
-    };
 
     const handleFollowToggle = useCallback(
         async (e: React.MouseEvent) => {
@@ -198,11 +178,25 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
         console.log('Report post');
     };
 
+    const toggleMenu = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setMenuOpen((prev) => !prev);
+    };
+
+    const handleClickOutside = (event: MouseEvent) => {
+        if (menuBtn.current && !menuBtn.current.contains(event.target as Node)) {
+            setMenuOpen(false);
+            document.body.classList.remove('disable-interaction'); // Enable interaction again
+        }
+    };
+
     useEffect(() => {
         if (menuOpen) {
             window.addEventListener('click', handleClickOutside);
+            document.body.classList.add('disable-interaction');
         } else {
             window.removeEventListener('click', handleClickOutside);
+            document.body.classList.remove('disable-interaction');
         }
 
         return () => {
@@ -215,7 +209,9 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
         <div className='ml-auto w-[30px] h-[25px] relative flex-center'>
             {menuOpen &&
                 <>
-                    <button className='fixed top-0 left-0 w-screen h-screen z-40 pointer-events-auto' onClick={toggleMenu}></button>
+                <RemoveScroll>
+                    <button className='fixed top-0 left-0 w-full h-full z-40 pointer-events-auto' onClick={toggleMenu}></button>
+                </RemoveScroll>
 
                     <div
                         ref={menuBtn}

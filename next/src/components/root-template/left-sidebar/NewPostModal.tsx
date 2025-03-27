@@ -146,7 +146,7 @@ export default function NewPostModal() {
                 <Feather className='feather-icon' />
                 <p className='hidden xs:block'>Post</p>
             </DialogTrigger>
-            <DialogContent className="w-[90%] sm:max-w-[550px]">
+            <DialogContent className="min-h-[150px] h-auto w-[90%] sm:max-w-[550px]" onOpenAutoFocus={(e) => e.preventDefault()}>
                 <VisuallyHidden.Root><DialogTitle>New Post</DialogTitle></VisuallyHidden.Root>
                 <div className="grid grid-cols-post-layout gap-2 mt-4 min-h-[60px] sm:min-h-[80px]">
                     <Image
@@ -164,7 +164,7 @@ export default function NewPostModal() {
                                 onChange: (e) => handleTextChange(e),
                             })}
                         />
-                        <Progress value={charsPercentage} className={`mb-4 ${text.length === 0 && 'invisible'}`} />
+                        <Progress value={charsPercentage} className={`my-4 xs:my-2 ${text.length === 0 && 'invisible'}`} />
                         {charsPercentage === 100 && <p className='text-center text-red-600 font-bold text-xs'>Max characters reached</p>}
                         {errors.text && (
                             <p className="text-center text-red-600 font-bold text-xs">{`${errors.text.message}`}</p>

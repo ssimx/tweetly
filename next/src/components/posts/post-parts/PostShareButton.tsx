@@ -2,23 +2,55 @@
 import { Share, Link } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { BasePostDataType } from 'tweetly-shared';
+import { RemoveScroll } from 'react-remove-scroll';
 
 export default function PostShareButton({ post }: { post: BasePostDataType }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const menuBtn = useRef<HTMLDivElement | null>(null);
     const copyProfileUrlAlert = useRef<HTMLDivElement | null>(null);
 
+    const handleCopyLink = async () => {
+        const postUrl = `http://192.168.1.155:3000/${post.author.username}/status/${post.id}`;
+        try {
+            // Attempt to use the modern Clipboard API
+            await navigator.clipboard.writeText(postUrl);
+            // Success: toggle menu and show notification
+            setMenuOpen((prev) => !prev);
+            copyProfileUrlAlert.current?.classList.toggle('hidden');
+            setTimeout(() => {
+                copyProfileUrlAlert.current?.classList.toggle('hidden');
+            }, 3000);
+        } catch (err) {
+            console.error('Clipboard API failed, trying fallback: ', err);
+            // Fallback to document.execCommand
+            const textArea = document.createElement('textarea');
+            textArea.value = postUrl;
+            // Ensure the textarea is not visible
+            textArea.style.position = 'fixed';
+            textArea.style.top = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                // Success: toggle menu and show notification
+                setMenuOpen((prev) => !prev);
+                copyProfileUrlAlert.current?.classList.toggle('hidden');
+                setTimeout(() => {
+                    copyProfileUrlAlert.current?.classList.toggle('hidden');
+                }, 3000);
+            } catch (fallbackErr) {
+                console.error('Fallback failed: ', fallbackErr);
+                // Optionally, notify the user of the failure
+                alert('Failed to copy the link. Please copy it manually.');
+            } finally {
+                // Clean up
+                document.body.removeChild(textArea);
+            }
+        }
+    };
+
     const toggleMenu = (e: React.MouseEvent) => {
         e.stopPropagation();
-
-        if (!menuOpen) {
-            // Disable interaction behind the menu when it's opened
-            document.body.classList.add('disable-interaction');
-        } else {
-            // Re-enable interaction when the menu is closed
-            document.body.classList.remove('disable-interaction');
-        }
-
         setMenuOpen((prev) => !prev);
     };
 
@@ -29,22 +61,13 @@ export default function PostShareButton({ post }: { post: BasePostDataType }) {
         }
     };
 
-    const handleCopyLink = () => {
-        const postUrl = `http://192.168.1.155:3000/${post.author.username}/status/${post.id}`;
-        navigator.clipboard.writeText(postUrl);
-        setMenuOpen((prev) => !prev);
-        copyProfileUrlAlert.current?.classList.toggle('hidden');
-
-        setTimeout(() => {
-            copyProfileUrlAlert.current?.classList.toggle('hidden');
-        }, 3000);
-    };
-
     useEffect(() => {
         if (menuOpen) {
             window.addEventListener('click', handleClickOutside);
+            document.body.classList.add('disable-interaction');
         } else {
             window.removeEventListener('click', handleClickOutside);
+            document.body.classList.remove('disable-interaction');
         }
 
         return () => {
@@ -57,7 +80,9 @@ export default function PostShareButton({ post }: { post: BasePostDataType }) {
         <div className='relative flex-center'>
             {menuOpen &&
                 <>
-                    <button className='fixed top-0 left-0 w-screen h-screen z-40 pointer-events-auto' onClick={toggleMenu}></button>
+                    <RemoveScroll>
+                        <button className='fixed top-0 left-0 w-full h-full z-40 pointer-events-auto' onClick={toggleMenu}></button>
+                    </RemoveScroll>
 
                     <div
                         ref={menuBtn}
