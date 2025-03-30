@@ -21,7 +21,7 @@ export default function PhoneBottomNavLink({ link, messages, notifications }: { 
                 href={link.route} >
                 <div className='relative flex items-center gap-4'>
                     {notifications === true && (
-                        <div className='absolute right-0 top-0 translate-y-[-25%] translate-x-[50%] z-10 w-[12px] h-[12px] bg-primary rounded-full border border-[var(--primary-text-color)]'></div>
+                        <div className='absolute right-0 top-0 translate-y-[-40%] translate-x-[50%] z-10 w-[12px] h-[12px] bg-primary rounded-full'></div>
                     )}
                     <Icon size={24} className={pathName === link.route ? 'text-primary' : 'text-secondary-foreground'} />
                 </div>
@@ -35,7 +35,7 @@ export default function PhoneBottomNavLink({ link, messages, notifications }: { 
                 href={link.route}>
                 <div className='relative flex items-center gap-4'>
                     {messages === true && (
-                        <div className='absolute right-0 top-0 translate-y-[-25%] translate-x-[50%] z-10 w-[12px] h-[12px] bg-primary rounded-full border border-[var(--primary-text-color)]'></div>
+                        <div className='absolute right-0 top-0 translate-y-[-40%] translate-x-[50%] z-10 w-[12px] h-[12px] bg-primary rounded-full'></div>
                     )}
                     <Icon size={24} className={pathName === link.route ? 'text-primary' : 'text-secondary-foreground'} />
                 </div>

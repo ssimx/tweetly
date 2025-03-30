@@ -226,7 +226,7 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
                         ${sidebarOpen ? '' : '-translate-x-full'}`}
             >
 
-                <MobileSidebar setSidebarOpen={setSidebarOpen} />
+                <MobileSidebar setSidebarOpen={setSidebarOpen} notifications={notifications} messages={messages} />
             </div>
 
             <main

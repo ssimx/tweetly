@@ -8,7 +8,7 @@ import { leftSidebarLinks } from '@/constants';
 import { usePathname } from 'next/navigation';
 import { LogOut } from 'lucide-react';
 
-export default function MobileSidebar({ setSidebarOpen }: { setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
+export default function MobileSidebar({ setSidebarOpen, notifications, messages }: { setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>, notifications: boolean, messages: boolean }) {
     const { loggedInUser } = useUserContext();
     const pathName = usePathname();
 
@@ -53,6 +53,52 @@ export default function MobileSidebar({ setSidebarOpen }: { setSidebarOpen: Reac
             <div className='flex flex-col'>
                 {leftSidebarLinks.map((link) => {
                     const Icon = link.icon;
+
+                    if (link.label === 'Notifications') {
+                        return (
+                            <Link
+                                key={link.label}
+                                href={link.route === '/profile' ? `/${loggedInUser.username}` : link.route}
+                                className='w-full flex gap-4 items-center hover:bg-card-hover p-4'
+                                onClick={() => setSidebarOpen(false)}
+                            >
+                                <div className='relative flex items-center gap-4'>
+                                    {notifications === true && (
+                                        <div className='absolute right-0 top-0 translate-y-[-40%] translate-x-[150%] z-10 w-[12px] h-[12px] bg-primary rounded-full'></div>
+                                    )}
+                                    <Icon
+                                        className='icon'
+                                        color={pathName === link.route ? 'hsl(var(--primary))' : 'hsl(var(--primary-text-color))'}
+                                        strokeWidth={3}
+                                    />
+                                    <p className={`${pathName === link.route && 'font-bold'} text-20`} >{link.label}</p>
+                                </div>
+                            </Link>
+                        )
+                    }
+
+                    if (link.label === 'Messages') {
+                        return (
+                            <Link
+                                key={link.label}
+                                href={link.route === '/profile' ? `/${loggedInUser.username}` : link.route}
+                                className='w-full flex gap-4 items-center hover:bg-card-hover p-4'
+                                onClick={() => setSidebarOpen(false)}
+                            >
+                                <div className='relative flex items-center gap-4'>
+                                    {messages === true && (
+                                        <div className='absolute right-0 top-0 translate-y-[-40%] translate-x-[150%] z-10 w-[12px] h-[12px] bg-primary rounded-full'></div>
+                                    )}
+                                    <Icon
+                                        className='icon'
+                                        color={pathName === link.route ? 'hsl(var(--primary))' : 'hsl(var(--primary-text-color))'}
+                                        strokeWidth={3}
+                                    />
+                                    <p className={`${pathName === link.route && 'font-bold'} text-20`} >{link.label}</p>
+                                </div>
+                            </Link>
+                        )
+                    }
 
                     return (
                         <Link
