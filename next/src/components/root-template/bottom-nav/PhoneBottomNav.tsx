@@ -1,12 +1,12 @@
 'use client';
 import { bottomNavLinks } from '@/constants';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React, { useEffect, useRef, useState } from 'react'
-import NewPostModal from './left-sidebar/NewPostModal';
+import NewPostModal from '../left-sidebar/NewPostModal';
 import { useDisplayContext } from '@/context/DisplayContextProvider';
+import PhoneBottomNavLink from './PhoneBottomNavLink';
 
-export default function PhoneBottomNav({ sidebarOpen }: { sidebarOpen: boolean }) {
+export default function PhoneBottomNav({ sidebarOpen, messages, notifications }: { sidebarOpen: boolean, messages: boolean, notifications: boolean }) {
     const pathName = usePathname();
     const { savedTheme } = useDisplayContext();
     const [isTransparent, setIsTransparent] = useState(false);
@@ -105,14 +105,13 @@ export default function PhoneBottomNav({ sidebarOpen }: { sidebarOpen: boolean }
             )}
 
             <div className='h-full flex gap-8 justify-evenly items-center'>
-                {bottomNavLinks.map((link, index) => {
-                    const Icon = link.icon;
-                    return (
-                        <Link key={index} href={link.route}>
-                            <Icon size={24} className={pathName === link.route ? 'text-primary' : 'text-secondary-foreground'} />
-                        </Link>
-                    )
-                })}
+                {bottomNavLinks.map((link) => (
+                    <PhoneBottomNavLink
+                        key={link.label}
+                        link={link}
+                        messages={messages}
+                        notifications={notifications} />
+                ))}
             </div>
         </nav>
     )

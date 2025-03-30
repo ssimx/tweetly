@@ -1,7 +1,6 @@
-import { AppError, isZodError, userUpdateProfileSchema } from 'tweetly-shared';
+import { AppError, userUpdateProfileSchema } from 'tweetly-shared';
 import multer from "multer";
 import { Request, Response, NextFunction } from "express";
-import { ZodError } from 'zod';
 
 // Configure Multer storage (optional, using memory storage here)
 const storage = multer.memoryStorage(); // or use diskStorage()

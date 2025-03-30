@@ -1,9 +1,11 @@
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { PrismaClient } from "@prisma/client";
 import { Server as HttpServer } from 'http';
-import { getNotifications, getNotificationsReadStatus } from '../services/notificationService';
-import { updateMessageReadStatus, getMessagesReadStatus, getFirstUnreadMessage } from '../services/conversationService';
-import { BasePostDataType } from 'tweetly-shared';
+import { getNotificationsReadStatus } from '../services/notificationService';
+import { updateMessageReadStatus, getMessagesReadStatus } from '../services/conversationService';
+import express, { type Express, type Request, type Response, type NextFunction } from 'express';
+import { BasePostDataType, LoggedInUserDataType, LoggedInUserJwtPayload } from 'tweetly-shared';
+import passport from 'passport';
 
 const prisma = new PrismaClient();
 
@@ -52,12 +54,13 @@ const socketConnection = (server: HttpServer) => {
         SocketData
     >(server, {
         cors: {
-            origin: "http://192.168.1.155:3000"
+            origin: "http://192.168.1.155:3000",
         }
     });
 
     io.on("connection", (socket) => {
-
+        console.log('connected');
+        
         // Fetch the list of users the connected user is following
         socket.on('get_following', async (userId) => {
             // Fetch the list of users that user follows
@@ -75,6 +78,7 @@ const socketConnection = (server: HttpServer) => {
         });
 
         socket.on('get_notifications', async (userId) => {
+
             const pushNotificationUsers = await prisma.user.findMany({
                 where: {
                     AND: [
@@ -145,10 +149,6 @@ const socketConnection = (server: HttpServer) => {
 
         socket.on('new_user_message', async (receiverId) => {
             socket.to(`user_${receiverId}_messages`).emit('new_message');
-        });
-
-        socket.on('disconnect', () => {
-            console.log('user disconnected');
         });
     })
 };

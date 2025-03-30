@@ -5,6 +5,7 @@ import { useUserContext } from "@/context/UserContextProvider";
 import { UserActionType } from '@/lib/userReducer';
 import { useCallback, useState } from "react";
 import { getErrorMessage, UserStatsType, UserAndViewerRelationshipType } from 'tweetly-shared';
+import { socket } from "@/lib/socket";
 
 type FollowButtonProps = {
     user: string,
@@ -16,9 +17,10 @@ type FollowButtonProps = {
 };
 
 export default function FollowButton({ user, userState, dispatch }: FollowButtonProps) {
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const { updateFollowState } = useFollowSuggestionContext();
     const { setNewFollowing, setFollowingCount } = useUserContext();
+    const { loggedInUser } = useUserContext();
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const { isFollowedByViewer } = userState.relationship;
 
     const handleFollowToggle = useCallback(
@@ -54,6 +56,9 @@ export default function FollowButton({ user, userState, dispatch }: FollowButton
                     if (!response.success) {
                         throw new Error(response.error.message);
                     }
+
+                    // send notification to users who have notifications enabled
+                    socket.emit('new_user_notification', loggedInUser.id);
                 }
             } catch (error: unknown) {
                 const errorMessage = getErrorMessage(error);

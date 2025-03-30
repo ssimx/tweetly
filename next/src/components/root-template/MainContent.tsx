@@ -4,11 +4,20 @@ import React, { useEffect, useRef, useState } from 'react';
 import TemplateHeader from './Header';
 import RightSidebar from './right-sidebar/RightSidebar';
 import MobileSidebar from './MobileSidebar';
-import PhoneBottomNav from './PhoneBottomNav';
 import { useAlertMessageContext } from '@/context/AlertMessageContextProvider';
+import { socket } from '@/lib/socket';
+import { useUserContext } from '@/context/UserContextProvider';
+import LeftSidebar from './left-sidebar/LeftSidebar';
+import PhoneBottomNav from './bottom-nav/PhoneBottomNav';
+import { usePathname } from 'next/navigation';
 
 export default function MainContent({ children, modals }: Readonly<{ children: React.ReactNode, modals: React.ReactNode }>) {
     const { alertMessage } = useAlertMessageContext();
+    const { loggedInUser } = useUserContext();
+
+    const pathName = usePathname();
+    const [notifications, setNotifications] = useState(false);
+    const [messages, setMessages] = useState(false);
 
     // PHONE SIDEBAR
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -93,7 +102,7 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
         ];
 
         events.forEach(({ type, listener, options }) => {
-            window.addEventListener(type, listener as EventListener, options);
+            mainRef && mainRef.current && mainRef.current.addEventListener(type, listener as EventListener, options);
         });
 
         return () => {
@@ -101,7 +110,7 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
                 window.removeEventListener(type, listener as EventListener);
             });
         };
-    }, [sidebarOpen]);
+    }, [sidebarOpen, mainRef]);
 
     // Prevent scrolling when sidebar is open
     useEffect(() => {
@@ -134,8 +143,71 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
         };
     }, [sidebarOpen]);
 
+    // Set notifications status to false if user opens them
+    useEffect(() => {
+        if (pathName === '/notifications') setNotifications(false);
+    }, [pathName]);
+
+    // Sockets
+    useEffect(() => {
+        socket.connect();
+
+        // After connecting, tell the server which users this user has notifications on for
+        socket.emit('get_notifications', loggedInUser.id);
+
+        const onNewNotification = () => {
+            console.log('test')
+            setNotifications(true);
+        };
+
+        const onNewMessages = () => {
+            setMessages(true);
+        };
+
+        const initializeNotificationsStatus = (status: boolean) => {
+            console.log(status)
+            setNotifications(status);
+        };
+
+        const initializeMessagesStatus = (status: boolean) => {
+            setMessages(status);
+        };
+
+        socket.on('notification_read_status', (status) => {
+            initializeNotificationsStatus(status);
+        });
+
+        socket.on('message_read_status', (status) => {
+            initializeMessagesStatus(status);
+        });
+
+        socket.on('new_notification', onNewNotification);
+        socket.on('new_message', onNewMessages);
+
+        return () => {
+            socket.disconnect();
+            socket.off('notification_read_status', initializeNotificationsStatus);
+            socket.off('message_read_status', initializeNotificationsStatus);
+            socket.off('new_notification', onNewNotification);
+            socket.off('new_message', onNewMessages);
+        };
+    }, [loggedInUser]);
+
     return (
         <>
+            {/* Normal Sidebar - Visible on bigger screens */}
+            <header
+                className="hidden min-w-[0px] min-h-[0px] col-start-1 col-end-2 relative
+                    xs:flex xs:w-[80px]
+                    xl:w-[250px]"
+                role='banner'
+            >
+                {/* The actual sidebar - Fixed position */}
+                <div className='w-full flex justify-center relative'>
+                    <LeftSidebar messages={messages} notifications={notifications} />
+                </div>
+            </header>
+
             {/* Mobile Sidebar - Only visible on small screens */}
             {sidebarOpen && (
                 <div
@@ -151,7 +223,7 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
                 ref={sidebarRef}
                 className={`fixed top-0 left-0 w-[75%] h-full bg-white z-[9999] border-r
                         transform transition-transform duration-300 bg-primary-foreground xs:hidden
-                        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+                        ${sidebarOpen ? '' : '-translate-x-full'}`}
             >
 
                 <MobileSidebar setSidebarOpen={setSidebarOpen} />
@@ -160,13 +232,14 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
             <main
                 ref={mainRef}
                 className={`h-fit min-h-svh w-full pb-[50px] xs:pb-0 xs:col-start-2 xs:col-end-3
-                        flex overflow-x-hidden overscroll-x-none xs:overflow-x-visible touch-none
+                        flex overflow-x-clip overscroll-x-none xs:overflow-x-visible
                         transition-transform duration-300 relative
-                        ${sidebarOpen ? 'translate-x-[250px]' : 'translate-x-0'}`}
+                        ${sidebarOpen ? 'translate-x-[250px]' : ''}`}
             >
                 <div
-                    className="grid grid-cols-[minmax(100%,600px)]
-                        xl:grid-cols-[minmax(500px,600px),1fr] mx-auto max-w-[1200px]"
+                    className="mx-auto max-w-[1200px]
+                        grid grid-cols-[minmax(100%,600px)]
+                        xl:grid-cols-[minmax(500px,600px),1fr]"
                 >
 
                     {/* Middle Content */}
@@ -179,7 +252,7 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
                     </div>
 
                     {/* Right Sidebar */}
-                    <aside className="hidden lg:hidden xl:flex justify-center h-fit w-[400px] pt-5 px-4">
+                    <aside className="hidden xl:flex justify-center h-fit w-[400px] pt-5 px-4">
                         <RightSidebar />
                     </aside>
 
@@ -193,7 +266,7 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
             )}
 
             {/* Mobile Navigation */}
-            <PhoneBottomNav sidebarOpen={sidebarOpen} />
+            <PhoneBottomNav sidebarOpen={sidebarOpen} messages={messages} notifications={notifications} />
         </>
     )
 }

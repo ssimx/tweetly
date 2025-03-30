@@ -46,22 +46,27 @@ export const bottomNavLinks = [
     {
         icon: House,
         route: "/",
+        label: "Home",
     },
     {
         icon: Search,
         route: "/explore",
+        label: "Explore",
     },
     {
         icon: Bookmark,
         route: "/bookmarks",
+        label: "Bookmarks",
     },
     {
         icon: BellRing,
         route: "/notifications",
+        label: "Notifications",
     },
     {
         icon: Mail,
         route: "/messages",
+        label: "Messages",
     },
 ];
 

@@ -1,5 +1,4 @@
 import { LoggedInUserJwtPayload, TemporaryUserJwtPayload } from 'tweetly-shared';
-import { TemporaryUserTokenType, UserTokenProps } from "../lib/types";
 
 import jwt from 'jsonwebtoken';
 

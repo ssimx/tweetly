@@ -1,5 +1,3 @@
-import LeftSidebar from "@/components/root-template/left-sidebar/LeftSidebar";
-import PhoneBottomNav from "@/components/root-template/PhoneBottomNav";
 import UserContextProvider from "@/context/UserContextProvider";
 import FollowSuggestionContextProvider from "@/context/FollowSuggestionContextProvider";
 import TrendingContextProvider from "@/context/TrendingContextProvider";
@@ -32,8 +30,7 @@ export default async function AuthorizedLayout({ children, modals }: Readonly<{ 
                     <BlockedUsersContextProvider>
                         <PostInteractionContextProvider>
                             <body suppressHydrationWarning
-                                className={`
-                                    h-dvh w-screen
+                                className={`h-dvh w-screen
                                     xs:mx-auto xs:justify-center xs:content-center
                                     xs:min-h-screen xs:w-[99%]
                                     xs:grid xs:grid-cols-[auto,1fr]
@@ -41,17 +38,6 @@ export default async function AuthorizedLayout({ children, modals }: Readonly<{ 
                                     xl:max-w-[1300px]`
                                 }
                             >
-                                <header
-                                    className="hidden min-w-[0px] min-h-[0px] col-start-1 col-end-2 relative
-                                        xs:flex xs:w-[80px]
-                                        xl:w-[250px]"
-                                    role='banner'
-                                >
-                                    {/* The actual sidebar - Fixed position */}
-                                    <div className='w-full flex justify-center relative'>
-                                        <LeftSidebar />
-                                    </div>
-                                </header>
 
                                 <AlertMessageContextProvider>
                                     <MainContent modals={modals}>

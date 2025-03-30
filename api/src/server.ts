@@ -6,11 +6,11 @@ import userRouter from './routes/userRoutes';
 import searchRouter from './routes/searchRoutes';
 import conversationRouter from './routes/conversationRoutes';
 import { configurePassport, configureSettingsPassport } from './middleware/passport';
-import { socketConnection } from './utils/sockets';
 import { authenticateSessionJWT } from './middleware/authenticateSessionJWT';
 import { errorHandler } from './middleware/errorHandler';
 import passport from 'passport';
 import cors from 'cors';
+import { socketConnection } from './utils/sockets';
 
 dotenv.config();
 const app: Express = express();

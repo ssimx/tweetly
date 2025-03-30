@@ -36,9 +36,6 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
 
     const defaultProfilePictureLink = 'https://res.cloudinary.com/ddj6z1ptr/image/upload/v1728503826/profilePictures/ynh7bq3eynvkv5xhivaf.png';
 
-    const smViewport = useMediaQuery('(min-width: 640px)');
-    const mdViewport = useMediaQuery('(min-width: 768px)');
-
     const [uploadedProfilePictureData, setUploadedProfilePictureData] = useState<File | null>(null);
     // If picture is selected and applied, display it to the user
     const [profilePicturePreview, setProfilePicturePreview] = useState<string>(profileInfo.profilePicture);
@@ -147,23 +144,42 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
         setValue('removeProfilePicture', true);
     };
 
+    const phoneSmallestViewport = useMediaQuery('(min-width: 375px');
+    const phoneSmallViewport = useMediaQuery('(min-width: 390px)');
+    const phoneBigViewport = useMediaQuery('(min-width: 400px)');
+    const phoneBiggerViewport = useMediaQuery('(min-width: 450px)');
+    const smViewport = useMediaQuery('(min-width: 640px)');
+    const mdViewport = useMediaQuery('(min-width: 768px)');
+
     // CROPPIE
     const croppieProfileOptions = {
         showZoomer: true,
         enableOrientation: true,
         mouseWheelZoom: true,
         viewport: {
-            width: mdViewport === true
-                ? 550 * 0.9
-                : smViewport === true
-                    ? 500 * 0.9
-                    : 400 * 0.9,
-            height: mdViewport === true
-                ? 550 * 0.9
-                : smViewport === true
-                    ? 500 * 0.9
-                    : 400 * 0.9,
-            type: "square" as CropType
+            width: mdViewport === true || smViewport === true
+                    ? 500 * 0.8
+                    : phoneBiggerViewport === true
+                        ? 450 * 0.8
+                        : phoneBigViewport === true
+                            ? 400 * 0.8
+                            : phoneSmallViewport === true
+                                ? 390 * 0.8
+                                : phoneSmallestViewport === true
+                                    ? 375 * 0.8
+                                    : 300,
+            height: mdViewport === true || smViewport === true
+                    ? 500 * 0.8
+                    : phoneBiggerViewport === true
+                        ? 450 * 0.8
+                        : phoneBigViewport === true
+                            ? 400 * 0.8
+                            : phoneSmallViewport === true
+                                ? 390 * 0.8
+                                : phoneSmallestViewport === true
+                                    ? 375 * 0.8
+                                    : 300,
+            type: "circle" as CropType
         },
     };
 
@@ -172,16 +188,28 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
         enableOrientation: true,
         mouseWheelZoom: true,
         viewport: {
-            width: mdViewport === true
-                ? 550 * 0.9
-                : smViewport === true
-                    ? 500 * 0.9
-                    : 400 * 0.9,
-            height: mdViewport === true
-                ? 250 * 0.9
-                : smViewport === true
-                    ? 200 * 0.9
-                    : 150 * 0.9,
+            width: mdViewport === true || smViewport === true
+                    ? 500 * 0.8
+                    : phoneBiggerViewport === true
+                        ? 450 * 0.8
+                        : phoneBigViewport === true
+                            ? 400 * 0.8
+                            : phoneSmallViewport === true
+                                ? 390 * 0.8
+                                : phoneSmallestViewport === true
+                                    ? 375 * 0.8
+                                    : 300,
+            height: mdViewport === true || smViewport === true
+                    ? 225 * 0.8
+                    : phoneBiggerViewport === true
+                        ? 200 * 0.8
+                        : phoneBigViewport === true
+                            ? 175 * 0.8
+                            : phoneSmallViewport === true
+                                ? 170 * 0.8
+                                : phoneSmallestViewport === true
+                                    ? 165 * 0.8
+                                    : 150,
             type: "square" as CropType
         },
     };
@@ -283,49 +311,57 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
             {!isFileUploaded
                 ? (
                     <DialogContent
-                        className="w-[90%] flex flex-col gap-2 px-[2em]"
+                        className="w-[90%] max-h-[90dvh] flex flex-col gap-2 px-[2em] z-[9999] overflow-y-auto"
                         hideClose
                     >
-                        <div className='flex justify-between'>
-                            <DialogTitle className='h-[35px] text-20 font-bold'>Edit profile</DialogTitle>
+                        <div className="flex justify-between">
+                            <DialogTitle className="h-[35px] text-20 font-bold">Edit profile</DialogTitle>
                             <button
                                 className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
                                 onClick={() => setDialogOpen(false)}
                             >
-                                <X size={22} className='text-primary-text' />
+                                <X size={22} className="text-primary-text" />
                                 <span className="sr-only">Close</span>
                             </button>
                         </div>
-                        <div className='relative h-[180px]'>
-                            <div className='w-full h-full'>
-                                <div className='relative w-full h-full flex-center gap-2'>
-                                    {bannerPicturePreview !== ''
-                                        ? (
-                                            <>
-                                                <Image
-                                                    src={bannerPicturePreview}
-                                                    alt='User banner picture'
-                                                    height={180} width={600}
-                                                    className='w-full h-full absolute' />
-                                                <button className=' z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30 border'
-                                                    onClick={() => bannerPictureInputRef.current?.click()}>
-                                                    <ImagePlus size={20} className='text-primary-text-color-white' />
-                                                </button>
-                                                <button className=' z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30'
-                                                    onClick={handleRemoveBannerPicture}>
-                                                    <X size={20} className='text-primary-text-color-white' />
-                                                </button>
-                                            </>)
-                                        : (
-                                            <>
-                                                <div className='w-full h-full absolute bg-secondary-foreground' ></div>
-                                                <button className=' z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30'
-                                                    onClick={() => bannerPictureInputRef.current?.click()}>
-                                                    <ImagePlus size={20} className='text-primary-text-color-white' />
-                                                </button>
-                                            </>
-                                        )
-                                    }
+
+                        {/* Banner and Profile Picture Container */}
+                        <div className="relative">
+                            {/* Banner with Aspect Ratio */}
+                            <div className="w-full h-[125px] xs:h-[150px] lg:h-[175px]">
+                                <div className="h-full relative flex-center gap-2">
+                                    {bannerPicturePreview !== "" ? (
+                                        <>
+                                            <Image
+                                                src={bannerPicturePreview}
+                                                alt="User banner picture"
+                                                fill
+                                                style={{ objectFit: "cover" }}
+                                            />
+                                            <button
+                                                className="z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30 border"
+                                                onClick={() => bannerPictureInputRef.current?.click()}
+                                            >
+                                                <ImagePlus size={20} className="text-primary-text-color-white" />
+                                            </button>
+                                            <button
+                                                className="z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30"
+                                                onClick={handleRemoveBannerPicture}
+                                            >
+                                                <X size={20} className="text-primary-text-color-white" />
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="absolute top-0 left-0 w-full h-full bg-secondary-foreground"></div>
+                                            <button
+                                                className="z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30"
+                                                onClick={() => bannerPictureInputRef.current?.click()}
+                                            >
+                                                <ImagePlus size={20} className="text-primary-text-color-white" />
+                                            </button>
+                                        </>
+                                    )}
                                     <input
                                         suppressHydrationWarning
                                         {...bannerPictureRest} name="bannerPicture" ref={(e) => {
@@ -345,42 +381,49 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                     />
                                 </div>
                             </div>
-                            <div className='w-[125px] h-[125px] absolute bottom-0 left-5 translate-y-[50%] rounded-full border-4 overflow-hidden border-[#ffffff]'>
-                                <div className='relative w-full h-full flex-center'>
-                                    {profilePicturePreview !== defaultProfilePictureLink
-                                        ? (
-                                            <>
-                                                <Image
-                                                    src={profilePicturePreview}
-                                                    alt='User profile picture'
-                                                    height={125} width={125}
-                                                    className='absolute top-0 left-0 z-0' />
-                                                <div className='flex gap-2'>
-                                                    <button className='z-10 bg-black-1/30 p-3 rounded-full hover:bg-black-1/50'
-                                                        onClick={() => profilePictureInputRef.current?.click()}>
-                                                        <ImagePlus size={20} className='text-primary-text-color-white' />
-                                                    </button>
-                                                    <button className='z-10 bg-black-1/30 p-3 rounded-full hover:bg-black-1/50'
-                                                        onClick={handleRemoveProfilePicture}>
-                                                        <X size={20} className='text-primary-text-color-white' />
-                                                    </button>
-                                                </div>
-                                            </>
-                                        )
-                                        : (
-                                            <>
-                                                <Image
-                                                    src={profilePicturePreview}
-                                                    alt='User profile picture'
-                                                    height={125} width={125}
-                                                    className='absolute top-0 left-0 z-0' />
-                                                <button className=' z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30'
-                                                    onClick={() => profilePictureInputRef.current?.click()}>
-                                                    <ImagePlus size={20} className='text-primary-text-color-white' />
+
+                            {/* Profile Picture */}
+                            <div className="absolute bottom-0 left-5 translate-y-[50%] size-[100px] xs:size-[125px] md:size-[150px] rounded-full border-4 overflow-hidden border-[#ffffff]">
+                                <div className="relative w-full h-full flex-center">
+                                    {profilePicturePreview !== defaultProfilePictureLink ? (
+                                        <>
+                                            <Image
+                                                src={profilePicturePreview}
+                                                alt="User profile picture"
+                                                fill
+                                                style={{ objectFit: "cover" }}
+                                            />
+                                            <div className="w-full flex-center gap-2">
+                                                <button
+                                                    className="z-10 bg-black-1/30 p-2 xs:p-3 rounded-full hover:bg-black-1/50"
+                                                    onClick={() => profilePictureInputRef.current?.click()}
+                                                >
+                                                    <ImagePlus size={16} className="size-[16px] xs:size-[20px] text-primary-text-color-white" />
                                                 </button>
-                                            </>
-                                        )
-                                    }
+                                                <button
+                                                    className="z-10 bg-black-1/30 p-2 xs:p-3 rounded-full hover:bg-black-1/50"
+                                                    onClick={handleRemoveProfilePicture}
+                                                >
+                                                    <X size={16} className="size-[16px] xs:size-[20px] text-primary-text-color-white" />
+                                                </button>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Image
+                                                src={profilePicturePreview}
+                                                alt="User profile picture"
+                                                fill
+                                                style={{ objectFit: "cover" }}
+                                            />
+                                            <button
+                                                className="z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30"
+                                                onClick={() => profilePictureInputRef.current?.click()}
+                                            >
+                                                <ImagePlus size={16} className="size-[16px] xs:size-[20px] text-primary-text-color-white" />
+                                            </button>
+                                        </>
+                                    )}
                                     <input
                                         suppressHydrationWarning
                                         {...profilePictureRest} name="profilePicture" ref={(e) => {
@@ -401,23 +444,34 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                             </div>
                         </div>
 
-                        <form suppressHydrationWarning onSubmit={handleSubmit(onSubmit)} id={formId} className='flex flex-col gap-4 mt-[75px]'>
-                            <div className='flex flex-col'>
-                                {errors.bannerPicture && <p className='!mt-2 error-msg'>Banner picture: {errors.bannerPicture.message}</p>}
-                                {errors.profilePicture && <p className='!mt-2 error-msg'>Profile picture: {errors.profilePicture.message}</p>}
+                        {/* Form */}
+                        <form
+                            suppressHydrationWarning
+                            onSubmit={handleSubmit(onSubmit)}
+                            id={formId}
+                            className="flex flex-col gap-4 mt-[75px]"
+                        >
+                            <div className="flex flex-col">
+                                {errors.bannerPicture && (
+                                    <p className="!mt-2 error-msg">Banner picture: {errors.bannerPicture.message}</p>
+                                )}
+                                {errors.profilePicture && (
+                                    <p className="!mt-2 error-msg">Profile picture: {errors.profilePicture.message}</p>
+                                )}
                             </div>
-                            <div className='profile-bio-input'>
-                                <label className='flex justify-between text-14 text-secondary-text'>
+                            <div className="profile-bio-input">
+                                <label className="flex justify-between text-14 text-secondary-text">
                                     <p>Name</p>
-                                    <p className={`${name.length === maxNameChars ? 'text-red-500' : null}`}>{`${name.length} / ${maxNameChars}`}</p>
+                                    <p className={`${name.length === maxNameChars ? "text-red-500" : null}`}>{`${name.length} / ${maxNameChars}`}</p>
                                 </label>
                                 <TextareaAutosize
                                     suppressHydrationWarning
                                     maxLength={maxNameChars}
-                                    {...register('name')}
-                                    className='profile-textarea'
+                                    {...register("name")}
+                                    className="profile-textarea"
                                     value={name}
-                                    onChange={(e) => setName(e.target.value)} />
+                                    onChange={(e) => setName(e.target.value)}
+                                />
                                 {errors.name && (
                                     <p className="text-center text-red-600 font-bold text-xs">{`${errors.name.message}`}</p>
                                 )}
@@ -496,13 +550,14 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                 )
                 : (
                     <DialogContent
-                        className="w-[450px] h-[600px] px-[2em] py-5 flex flex-col justify-between items-center bg-primary-foreground 
-                            sm:w-[550px] sm:h-[700px]
-                            md:w-[700px] md:h-[750px]"
+                        className='w-[90%] min-h-[500px] h-[80svh] max-h-[900px] z-[9999]
+                            flex flex-col justify-between items-center bg-primary-foreground 
+                            sm:w-[550px] sm:px-[2em]
+                            md:w-[700px]'
                         hideClose
                     >
-                        <div className='w-full flex'>
-                            <div className='h-[35px] text-20 font-bold flex items-center gap-2'>
+                        <div className='w-full'>
+                            <div className='h-fit flex gap-6 px-2 mr-auto mb-auto'>
                                 <button
                                     onClick={() => {
                                         setUploadedBannerPictureData(null);
@@ -529,9 +584,10 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                             </button>
                         </div>
 
-                        <div className='w-[400px] h-[400px] sm:w-[500px] sm:h-[500px] md:w-[550px] md:h-[550px] mb-auto mt-4'>
+                        <div className='w-[85vw] h-[85vw] sm:w-[500px] sm:h-[500px]'>
                             <div ref={croppieContainerRef}></div>
                         </div>
+                        
                         <Button type="button"
                             className='ml-auto mr-auto font-bold w-fit rounded-3xl text-white-1'
                             onClick={onResult}

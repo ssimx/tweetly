@@ -11,10 +11,10 @@ import { BasePostDataType, ErrorResponse, SuccessResponse } from 'tweetly-shared
 import ClipLoader from 'react-spinners/ClipLoader';
 import { Rss } from 'lucide-react';
 import PullToRefresh from 'react-simple-pull-to-refresh';
-import { ArrowUp } from 'lucide-react';
-import Image from 'next/image';
 
 export default function FeedContent() {
+    const { loggedInUser, newFollowing, setNewFollowing } = useUserContext();
+
     const [activeTab, setActiveTab] = useState(0);
     const [globalPosts, setGlobalPosts] = useState<BasePostDataType[] | undefined | null>(undefined);
     const [newGlobalPosts, setNewGlobalPosts] = useState<BasePostDataType[]>([]);
@@ -22,11 +22,23 @@ export default function FeedContent() {
     const [newFollowingPosts, setNewFollowingPosts] = useState<BasePostDataType[]>([]);
     const [newGlobalPostCount, setNewGlobalPostCount] = useState(0);
     const [newFollowingPostCount, setNewFollowingPostCount] = useState(0);
-    const { loggedInUser, newFollowing, setNewFollowing } = useUserContext();
+    const [isNewPostsIndicatorVisible, setIsNewPostsIndicatorVisible] = useState(false);
+    const newPostsRef = useRef<HTMLButtonElement | null>(null);
     const { ref: newPostsContainerRef, inView: newPostsContainerInView } = useInView({
         threshold: 0,
         delay: 100,
+        trackVisibility: true,
     });
+
+    const setNewPostsRefs = useCallback(
+        (node: HTMLButtonElement) => {
+            // Ref's from useRef needs to have the node assigned to `current`
+            newPostsRef.current = node;
+            // Callback refs, like the one from `useInView`, is a function that takes the node as an argument
+            newPostsContainerRef(node);
+        },
+        [newPostsContainerRef],
+    );
 
     // scroll and pagination
     const scrollPositionRef = useRef<number>(0);
@@ -40,6 +52,16 @@ export default function FeedContent() {
         threshold: 0,
         delay: 100,
     });
+
+    // For updating new posts indicator visibility
+    useEffect(() => {
+        if (newPostsRef && newPostsRef.current && !newPostsContainerInView) {
+            setIsNewPostsIndicatorVisible(true);
+            return;
+        } 
+
+        setIsNewPostsIndicatorVisible(false);
+    }, [activeTab, newPostsRef, newPostsContainerInView]);
 
     // Reset scroll position when switching tabs
     useEffect(() => {
@@ -112,8 +134,8 @@ export default function FeedContent() {
         }
     }, [infiniteScrollInView, activeTab, isFetchingNew, setIsFetchingNew, globalFeedCursor, followingFeedCursor, globalFeedEndReached, followingFeedEndReached, scrollPosition]);
 
+    // For fetching following tab, check for active tab AND whether followingPosts has yet been fetched OR logged in user has followed new user
     useEffect(() => {
-        // for fetching following tab, check for active tab AND whether followingPosts has yet been fetched OR logged in user has followed new user
         if (activeTab === 0 && !globalPosts) {
             const fetchGlobalPosts = async () => {
                 try {
@@ -175,11 +197,6 @@ export default function FeedContent() {
             fetchFollowingPosts();
         }
     }, [activeTab, globalPosts, followingPosts, newFollowing, setNewFollowing]);
-
-    // Dynamic new posts indicator
-    useEffect(() => {
-        console.log(newPostsContainerInView)
-    }, [newPostsContainerInView]);
 
     // Pull to refresh
     const handlePullToRefresh = useCallback(
@@ -274,7 +291,7 @@ export default function FeedContent() {
             // Following posts have to already be fetched and saved in order to add new ones to the array
             // If following posts are undefined aka user never clicked on the Following tab, there's no point in saving these posts
             //      as they'll be included in the fetch
-            if (followingPosts !== null) {
+            if (followingPosts !== undefined) {
                 setNewFollowingPostCount(currentPostCount => currentPostCount + 1);
                 setNewFollowingPosts((currentPosts) => [newPost, ...currentPosts!]);
             }
@@ -293,67 +310,36 @@ export default function FeedContent() {
         };
     }, [loggedInUser, globalPosts, followingPosts]);
 
-    console.log(newGlobalPosts)
-
     return (
-        <section className='min-w-screen flex flex-col h-fit min-h-svh'>
-            <FeedHeaderTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+        <section className='min-w-screen h-fit min-h-svh flex flex-col xs:w-full xs:min-w-full'>
+            <FeedHeaderTabs
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                newFollowingPosts={newFollowingPosts}
+                newGlobalPosts={newGlobalPosts}
+                isNewPostsIndicatorVisible={isNewPostsIndicatorVisible}
+            />
 
             <NewPost />
 
             {activeTab === 0
-                ? newGlobalPostCount !== 0 && (
+                && newGlobalPostCount !== 0 && (
                     <>
-                        <button ref={newPostsContainerRef} onClick={() => showNewPosts('GLOBAL')} className='text-primary py-3 hover:bg-post-hover'>
+                    <button ref={setNewPostsRefs} onClick={() => showNewPosts('GLOBAL')} className='text-primary py-3 hover:bg-post-hover'>
                             {newGlobalPostCount > 1 ? `Show ${newGlobalPostCount} posts` : 'Show new post'}
                         </button>
                         <div className='feed-hr-line'></div>
-
-                        {newPostsContainerInView === false && (
-                            <button
-                                className='fixed z-50 top-0 left-1/2 -translate-x-1/2 translate-y-[200%] flex items-center bg-primary rounded-[25px] h-[2rem] px-2 pr-4'
-                                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                            >
-                                <ArrowUp size={18} className='text-white-1 mr-1' />
-                                {newGlobalPosts && newGlobalPosts.length && (
-                                    newGlobalPosts.slice(0, 3).map((post) => (
-                                        <Image
-                                            src={post.author.profile.profilePicture}
-                                            alt='New post author profile picture'
-                                            width={20} height={20}
-                                            className='rounded-full -mr-1 z-30'
-                                            key={post.id}
-                                        />
-                                    ))
-                                )}
-                            </button>
-                        )}
                     </>
                 )
-                : newFollowingPostCount !== 0 && (
+            }
+
+            {activeTab === 1
+                && newFollowingPostCount !== 0 && (
                     <>
                         <button ref={newPostsContainerRef} onClick={() => showNewPosts('FOLLOWING')} className='text-primary py-3 hover:bg-post-hover'>
                             {newFollowingPostCount > 1 ? `Show ${newFollowingPostCount} posts` : 'Show new post'}
                         </button>
                         <div className='feed-hr-line'></div>
-
-                        {newPostsContainerInView === false && (
-                            <button
-                                className='fixed z-50 top-0 left-1/2 -translate-x-1/2 translate-y-[200%] flex items-center bg-primary rounded-[25px] h-[2rem] px-2 pr-4'
-                                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                            >
-                                <ArrowUp size={18} className='text-white-1 mr-1' />
-                                {newGlobalPosts.slice(0, 3).map((post) => (
-                                    <Image
-                                        src={post.author.profile.profilePicture}
-                                        alt='New post author profile picture'
-                                        width={20} height={20}
-                                        className='rounded-full -mr-1 z-30'
-                                        key={post.id}
-                                    />
-                                ))}
-                            </button>
-                        )}
                     </>
                 )
             }

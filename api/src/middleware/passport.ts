@@ -1,7 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { Strategy, ExtractJwt, StrategyOptions, VerifiedCallback } from 'passport-jwt';
 import { PassportStatic } from 'passport';
-import { getErrorMessage } from 'tweetly-shared';
 import { Request } from 'express';
 
 const prisma = new PrismaClient({

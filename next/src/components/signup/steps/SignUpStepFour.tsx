@@ -127,11 +127,9 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
                                 : phoneSmallestViewport === true
                                     ? 375 * 0.8
                                     : 300,
-            type: "square" as CropType
+            type: "circle" as CropType
         },
     };
-
-    console.log(croppieProfileOptions)
 
     const initializeCroppie = (): Croppie => {
         if (!croppieRef.current && croppieContainerRef.current) {
@@ -328,6 +326,7 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
                             </button>
                             <h1 className='text-20 font-bold'>Edit media</h1>
                         </div>
+                        
                         <div className='w-[85vw] h-[85vw] sm:w-[500px] sm:h-[500px] md:w-[550px] md:h-[550px]'>
                             <div ref={croppieContainerRef}></div>
                         </div>

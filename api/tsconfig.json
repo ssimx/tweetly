@@ -8,7 +8,8 @@
     "resolveJsonModule": true,
     "outDir": "./dist",  // Output directory for compiled JS
     "strict": true,  // Enable strict mode for TypeScript
-    "lib": ["esnext"]  // Include latest JavaScript features
+    "lib": ["esnext"],  // Include latest JavaScript features
+    "allowJs": true
   },
   "include": [
     "src/**/*.ts"  // Include all TypeScript files in the src folder
