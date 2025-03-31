@@ -46,6 +46,7 @@ export default function VisitedPostInfoModal({ post, photoId }: { post: VisitedP
     const [isOverlayVisible, setIsOverlayVisible] = useState(true);
     const [overlayCurrentImageIndex, setOverlayCurrentImageIndex] = useState<number>(photoId - 1);
     const [isPostInfoVisible, setIsPostInfoVisible] = useState(true);
+    const imageRef = useRef(null);
 
     // For handling overlay
     useEffect(() => {
@@ -82,7 +83,9 @@ export default function VisitedPostInfoModal({ post, photoId }: { post: VisitedP
         router.push(`http://192.168.1.155:3000/${authorUsername}/status/${postId}/photo/${photoIndex + 1}`, { scroll: false });
     };
 
-    const closePhoto = () => {
+    const closePhoto = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+        if (e.target === imageRef.current) return;
+
         document.body.style.overflow = '';
         router.back();
     };
@@ -100,12 +103,8 @@ export default function VisitedPostInfoModal({ post, photoId }: { post: VisitedP
                 createPortal(
                     <div className={`overflow-y-scroll min-h-dvh h-auto fixed inset-0 z-[9999] bg-black-1/90 flex flex-col lg:overflow-y-hidden lg:grid lg:grid-rows-1 ${!isPostInfoVisible ? 'lg:grid-cols-[100%]' : 'lg:grid-cols-[65%,35%] xl:grid-cols-[1fr,minmax(25%,500px)]'}`} >
 
-                        <div className='relative h-[70vh] lg:h-[100vh] flex-center shrink-0' onClick={closePhoto}>
-                            <button className='absolute z-[100] inset-0 m-3 p-2 h-fit w-fit rounded-full opacity-90 bg-secondary-foreground hover:opacity-100 hover:cursor-pointer'
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    closePhoto();
-                                }}>
+                        <div className='relative h-[70vh] lg:h-[100vh] flex-center shrink-0' onClick={(e) => closePhoto(e)}>
+                            <button className='absolute z-[100] inset-0 m-3 p-2 h-fit w-fit rounded-full opacity-90 bg-secondary-foreground hover:opacity-100 hover:cursor-pointer'>
                                 <X size={24} className='color-white-1 ' />
                             </button>
                             <button className='hidden lg:block absolute z-[100] right-0 top-0 m-3 p-2 h-fit w-fit rounded-full opacity-90 bg-secondary-foreground hover:opacity-100 hover:cursor-pointer'
@@ -146,6 +145,7 @@ export default function VisitedPostInfoModal({ post, photoId }: { post: VisitedP
 
                             <div className='w-auto max-w-[90%] h-[80%]'>
                                 <Image
+                                    ref={imageRef}
                                     src={post.images[overlayCurrentImageIndex]}
                                     alt={`Post image ${overlayCurrentImageIndex}`}
                                     height={1000}

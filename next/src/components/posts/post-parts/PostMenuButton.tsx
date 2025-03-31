@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { BasePostDataType, getErrorMessage, UserAndViewerRelationshipType, UserStatsType } from 'tweetly-shared';
 import { RemoveScroll } from 'react-remove-scroll';
 import { useAlertMessageContext } from '@/context/AlertMessageContextProvider';
+import { usePathname } from 'next/navigation';
 
 type PostMenuProps = {
     post: BasePostDataType,
@@ -21,12 +22,14 @@ type PostMenuProps = {
 
 export default function PostMenuButton({ post, userState, dispatch }: PostMenuProps) {
     const { setAlertMessage } = useAlertMessageContext();
+    const pathName = usePathname();
 
     const [menuOpen, setMenuOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const menuBtn = useRef<HTMLDivElement | null>(null);
     const followBtn = useRef<HTMLButtonElement | null>(null);
     const blockBtn = useRef<HTMLButtonElement | null>(null);
+    const [showScrollbar, setShowScrollbar] = useState(true);
 
     const { loggedInUser, setNewFollowing, setFollowersCount, setFollowingCount } = useUserContext();
     const { updateFollowState: updateSuggestedUserFollowState } = useFollowSuggestionContext();
@@ -211,6 +214,16 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
         }
     };
 
+    // For tracking whether overlay is opened, to hide background scrollbar
+    useEffect(() => {
+        console.log(pathName)
+        if (pathName.includes('photo')) {
+            setShowScrollbar(false);
+        } else {
+            setShowScrollbar(true);
+        }
+    }, [pathName]);
+
     useEffect(() => {
         if (menuOpen) {
             window.addEventListener('click', handleClickOutside);
@@ -230,9 +243,15 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
         <div className='ml-auto w-[30px] h-[25px] relative flex-center'>
             {menuOpen &&
                 <>
-                    <RemoveScroll>
-                        <button className='fixed top-0 left-0 w-full h-full z-40 pointer-events-auto' onClick={toggleMenu}></button>
-                    </RemoveScroll>
+                    {showScrollbar === false
+                        ? (
+                            <button className='fixed top-0 left-0 w-full h-full z-40 pointer-events-auto bla' onClick={toggleMenu}></button>
+                        )
+                        : (
+                            <RemoveScroll>
+                                <button className='fixed top-0 left-0 w-full h-full z-40 pointer-events-auto' onClick={toggleMenu}></button>
+                            </RemoveScroll>
+                        )}
 
                     <div
                         ref={menuBtn}

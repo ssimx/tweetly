@@ -4,11 +4,14 @@ import { useEffect, useRef, useState } from 'react';
 import { BasePostDataType } from 'tweetly-shared';
 import { RemoveScroll } from 'react-remove-scroll';
 import { useAlertMessageContext } from '@/context/AlertMessageContextProvider';
+import { usePathname } from 'next/navigation';
 
 export default function PostShareButton({ post }: { post: BasePostDataType }) {
     const { setAlertMessage } = useAlertMessageContext();
+    const pathName = usePathname();
 
     const [menuOpen, setMenuOpen] = useState(false);
+    const [showScrollbar, setShowScrollbar] = useState(true);
     const menuBtn = useRef<HTMLDivElement | null>(null);
 
     const handleCopyLink = () => {
@@ -30,6 +33,16 @@ export default function PostShareButton({ post }: { post: BasePostDataType }) {
         }
     };
 
+    // For tracking whether overlay is opened, to hide background scrollbar
+    useEffect(() => {
+        console.log(pathName)
+        if (pathName.includes('photo')) {
+            setShowScrollbar(false);
+        } else {
+            setShowScrollbar(true);
+        }
+    }, [pathName]);
+
     useEffect(() => {
         if (menuOpen) {
             window.addEventListener('click', handleClickOutside);
@@ -49,9 +62,15 @@ export default function PostShareButton({ post }: { post: BasePostDataType }) {
         <div className='relative flex-center'>
             {menuOpen &&
                 <>
-                    <RemoveScroll>
-                        <button className='fixed top-0 left-0 w-full h-full z-40 pointer-events-auto' onClick={toggleMenu}></button>
-                    </RemoveScroll>
+                    {showScrollbar === false
+                        ? (
+                            <button className='fixed top-0 left-0 w-full h-full z-40 pointer-events-auto bla' onClick={toggleMenu}></button>
+                        )
+                        : (
+                            <RemoveScroll>
+                                <button className='fixed top-0 left-0 w-full h-full z-40 pointer-events-auto' onClick={toggleMenu}></button>
+                            </RemoveScroll>
+                        )}
 
                     <div
                         ref={menuBtn}

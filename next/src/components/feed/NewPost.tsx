@@ -178,7 +178,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
                                             setSelectedImagesFiles([]);
                                             setValue('images', []);
                                         }}>
-                                        <X size={20} className='' />
+                                        <X size={20} className='text-white-1' />
                                     </button>
                                 </div>
                             )
@@ -197,7 +197,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
                                                         setSelectedImagesFiles(updatedImagesFiles)
                                                         setValue('images', updatedImagesFiles);
                                                     }}>
-                                                    <X size={20} className='' />
+                                                    <X size={20} className='text-white-1' />
                                                 </button>
                                             </div>
                                         ))}
