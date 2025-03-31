@@ -320,7 +320,9 @@ export default function FeedContent() {
                 isNewPostsIndicatorVisible={isNewPostsIndicatorVisible}
             />
 
-            <NewPost />
+            <div className='hidden xs:block'>
+                <NewPost />
+            </div>
 
             {activeTab === 0
                 && newGlobalPostCount !== 0 && (

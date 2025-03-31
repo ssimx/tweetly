@@ -137,7 +137,7 @@ export const getUserFollowSuggestions = async (req: Request, res: Response, next
             const remappedUser = remapUserInformation({ ...user, profile: user.profile! });
 
             return remappedUser;
-        }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
+        }).filter((user): user is NonNullable<typeof user> => user !== undefined);
 
         const successResponse: SuccessResponse<{ suggestedUsers: UserDataType[] }> = {
             success: true,

@@ -36,7 +36,7 @@ import {
 } from '../services/postService';
 import { createNotificationsForNewLike, createNotificationsForNewPost, createNotificationsForNewReply, createNotificationsForNewRepost, removeNotificationsForLike, removeNotificationsForRepost } from '../services/notificationService';
 import { deleteImageFromCloudinary } from './uploadController';
-import { AppError, BasePostDataType, LoggedInUserDataType, SuccessResponse, VisitedPostDataType } from 'tweetly-shared';
+import { AppError, BasePostDataType, LoggedInUserDataType, SuccessResponse, TrendingHashtagType, VisitedPostDataType } from 'tweetly-shared';
 import { remapPostInformation, remapUserInformation, remapVisitedPostInformation } from '../lib/helpers';
 import { getProfile } from '../services/userService';
 
@@ -460,14 +460,33 @@ export const exploreRandomPosts = async (req: Request, res: Response, next: Next
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const trendingHashtags = async (req: Request, res: Response) => {
+export const trendingHashtags = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const hashtags = await getTrendingHastags();
-        if (!hashtags) return res.status(404).json({ error: "Couldn't find trending hashtags" });
-        return res.status(200).json({ hashtags });
+        const hashtagsData = await getTrendingHastags();
+
+        const hashtags = hashtagsData.map((hashtag) => {
+            // skip if there's no information
+            if (!hashtag) return;
+            if (!hashtag._count) return;
+
+            const remappedHashtag = {
+                name: hashtag.name,
+                postsCount: hashtag._count.posts,
+            };
+
+            return remappedHashtag;
+        }).filter((hashtag): hashtag is NonNullable<typeof hashtag> => hashtag !== undefined);
+
+        const successResponse: SuccessResponse<{ hashtags: TrendingHashtagType[] }> = {
+            success: true,
+            data: {
+                hashtags: hashtags ?? [],
+            },
+        };
+
+        return res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error fetching data: ', error);
-        return res.status(500).json({ error: 'Failed to fetch hashtags' });
+        next(error);
     }
 };
 

@@ -80,3 +80,8 @@ export type ConversationType = {
     bottomCursor: string | null,
     bottomReached: boolean,
 };
+
+export type TrendingHashtagType = {
+    name: string;
+    postsCount: number,
+};

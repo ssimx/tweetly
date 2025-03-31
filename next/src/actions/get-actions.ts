@@ -2,9 +2,8 @@
 import { getCurrentUserToken } from "@/data-acess-layer/auth";
 import { getLoggedInUser } from "@/data-acess-layer/user-dto";
 import { decryptSession } from '@/lib/session';
-import { BookmarkPostType, } from "@/lib/types";
 import { cache } from 'react';
-import { ApiResponse, AppError, BasePostDataType, ConversationCardType, ConversationMessageType, ErrorResponse, getErrorMessage, LoggedInUserJwtPayload, NotificationType, ProfilePostOrRepostDataType, SearchQuerySegmentsType, SuccessResponse, UserDataType, VisitedPostDataType } from 'tweetly-shared';
+import { ApiResponse, AppError, BasePostDataType, ConversationCardType, ConversationMessageType, ErrorResponse, getErrorMessage, LoggedInUserJwtPayload, NotificationType, ProfilePostOrRepostDataType, SearchQuerySegmentsType, SuccessResponse, TrendingHashtagType, UserDataType, VisitedPostDataType } from 'tweetly-shared';
 
 // GET actions for client/dynamic components
 
@@ -922,9 +921,10 @@ export async function getMorePostsBySearch(encodedSearch: string, cursor: number
 
 // MISC
 
-export const getTrendingHashtags = cache(async () => {
+export const getTrendingHashtags = cache(async (): Promise<ApiResponse<{ hashtags: TrendingHashtagType[] }>> => {
     try {
         const token = await getCurrentUserToken();
+
         const response = await fetch('http://192.168.1.155:3000/api/posts/trending', {
             method: 'GET',
             headers: {
@@ -935,21 +935,40 @@ export const getTrendingHashtags = cache(async () => {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(getErrorMessage(errorData));
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const hashtags = await response.json().then((res) => {
-            if (typeof res === 'object' && res !== null && 'hashtags' in res) {
-                return res.hashtags as TrendingHashtagType[];
-            }
-            return [];
-        });
-        return hashtags;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return [];
+        const { data } = await response.json() as SuccessResponse<{ hashtags: TrendingHashtagType[] }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (data.hashtags === undefined) throw new AppError('Hashtags property is missing in data response', 404, 'MISSING_PROPERTY');
+
+        return {
+            success: true,
+            data: {
+                hashtags: data.hashtags,
+            },
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 });
 

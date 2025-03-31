@@ -145,7 +145,7 @@ export default function NewPost({ reply, placeholder }: { reply?: number, placeh
     };
 
     return (
-        <div className={`hidden xs:flex border-b h-fit flex-col px-4 min-h-[100px]`}>
+        <div className={`flex border-b h-fit flex-col px-4 min-h-[100px]`}>
             <div className="grid grid-cols-post-layout gap-4 my-2 h-full">
                 <Image src={loggedInUser.profile?.profilePicture}
                     alt='User profile'

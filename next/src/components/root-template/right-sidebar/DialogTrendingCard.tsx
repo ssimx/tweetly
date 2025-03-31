@@ -1,5 +1,5 @@
-import { TrendingHashtagType } from '@/lib/types';
 import Link from 'next/link';
+import { TrendingHashtagType } from 'tweetly-shared';
 
 export default function DialogTrendingCard({ hashtag }: { hashtag: TrendingHashtagType }) {
 
@@ -8,7 +8,7 @@ export default function DialogTrendingCard({ hashtag }: { hashtag: TrendingHasht
             <p className='flex flex-col'>
                 <span className='text-18 text-primary-text font-bold'>#{hashtag.name}</span>
             </p>
-            <p className='ml-auto'>{hashtag['_count'].posts} posts</p>
+            <p className='ml-auto'>{hashtag.postsCount} posts</p>
         </Link>
     )
 }
