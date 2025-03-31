@@ -8,6 +8,9 @@ const config: Config = {
         "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
         "./pages/**/*.{ts,tsx}",
     ],
+    future: {
+        hoverOnlyWhenSupported: true,
+    },
     theme: {
         extend: {
             scale: {
