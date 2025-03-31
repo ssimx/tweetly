@@ -127,7 +127,7 @@ export default function ConversationMessages({
 
                     {messages.map((msg, index) => (
                         <div key={msg.id}
-                            className={`message-content ${msg.sentBy === loggedInUser.username ? 'self-end' : 'self-start'} ${firstUnreadMessage?.id === msg.id ? 'w-full' : ''}`}
+                            className={`min-w-[1%] break-words whitespace-normal max-w-[90%] ${msg.sentBy === loggedInUser.username ? 'self-end' : 'self-start'} ${firstUnreadMessage?.id === msg.id ? 'w-full' : ''}`}
                             ref={firstUnreadMessage?.id === msg.id ? unreadMessageRef : null}
                         >
 

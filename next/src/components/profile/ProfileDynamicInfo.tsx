@@ -102,7 +102,7 @@ export default function ProfileDynamicInfo({ user, authorized }: { user: UserDat
                     </div>
                 </div>
                 {user.profile.bio && (
-                    <p className='profile-bio'>{user.profile.bio}</p>
+                    <p className='break-all'>{user.profile.bio}</p>
                 )}
 
                 <div className='flex gap-2'>

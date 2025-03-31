@@ -34,23 +34,23 @@ export default function SettingsDisplay() {
         <div className='flex flex-col gap-y-2'>
             <SettingsHeaderInfo header='Display' desc='Manage your primary color and background. These settings affect all the Tweetly accounts on this browser.' />
             <div className='feed-hr-line'></div>
-            <div className='profile-content-post !pb-3'>
-                <div className='profile-content-post-content'>
-                    <div className='feed-post-left-side'>
+            <div className='w-full flex flex-col gap-2 px-4 pt-3 hover:bg-post-hover cursor-pointer pb-3'>
+                <div className='w-full grid grid-cols-post-layout grid-rows-1 gap-2'>
+                    <div className='w-auto h-full'>
                         <Link href='/tweetly' className='flex group'>
                             <Image
                                 src={TweetlyLogo}
                                 alt='Post author profile pic' width={40} height={40} className='w-[40px] h-[40px] bg-contain rounded-full group-hover:outline group-hover:outline-primary/10' />
                         </Link>
                     </div>
-                    <div className='feed-post-right-side'>
+                    <div className='w-full flex flex-col min-w-0'>
                         <div className='flex gap-2 text-secondary-text'>
                             <Link href='/tweetly' className='text-primary-text w-fit whitespace-nowrap overflow-hidden font-bold hover:underline'>Tweetly</Link>
                             <p>@Tweetly</p>
                             <p>·</p>
                             <p className='whitespace-nowrap'>13m</p>
                         </div>
-                        <div className='post-content'>
+                        <div className='w-full min-w-[1%] flex break-words whitespace-normal'>
                             <PostText content={'At the heart of Tweetly are short messages called posts - just like this one - which can include photos, links, text, #hashtags and mentions like @Tweetly'} />
                         </div>
                     </div>

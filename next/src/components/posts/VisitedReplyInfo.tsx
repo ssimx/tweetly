@@ -154,7 +154,7 @@ export default function VisitedReplyInfo({ post, photoId }: { post: VisitedPostD
     return (
         <>
             <div className='flex flex-col'>
-                <div onClick={(e) => handleCardClick(e, post.replyTo!.author.username, post.replyTo!.id)} className='profile-content-post'>
+                <div onClick={(e) => handleCardClick(e, post.replyTo!.author.username, post.replyTo!.id)} className='w-full flex flex-col gap-2 px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'>
                     <BasicPostTemplate
                         post={post.replyTo as BasePostDataType}
                         userState={parentUserState}

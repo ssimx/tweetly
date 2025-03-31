@@ -195,16 +195,16 @@ export default function Search() {
 
             {isOutputVisible && queryWatch.length !== 0 && queryWatch !== searchQuery &&
                 (
-                    <div className='search-output-container relative z-50'>
+                <div className='mt-1 absolute w-full h-fit border border-primary-border rounded-[10px] bg-primary-foreground z-50 break-words whitespace-normal min-w-[1%] flex flex-col overflow-hidden shadow-menu'>
                         <div className='flex flex-col'>
-                            <Link href={`/search?q=${encodeURIComponent(`${queryWatch}`)}`} className='search-text-output'>
+                            <Link href={`/search?q=${encodeURIComponent(`${queryWatch}`)}`} className='px-4 py-3 flex items-center gap-4 text-primary-text hover:bg-card-hover hover:cursor-pointer'>
                                 <SearchIcon size={26} strokeWidth={3} className='min-w-[26px] text-primary-text' />
                                 <p>{queryWatch}</p>
                             </Link>
 
                             {/* Display matched hashtags */}
                             {matchedHashtags.map((hashtag, index) => (
-                                <Link key={index} href={`/search?q=${encodeURIComponent(`#${hashtag}`)}`} className='search-text-output'>
+                                <Link key={index} href={`/search?q=${encodeURIComponent(`#${hashtag}`)}`} className='px-4 py-3 flex items-center gap-4 text-primary-text hover:bg-card-hover hover:cursor-pointer'>
                                     <p>#{hashtag}</p>
                                 </Link>
                             ))}

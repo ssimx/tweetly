@@ -459,7 +459,7 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                     <p className="!mt-2 error-msg">Profile picture: {errors.profilePicture.message}</p>
                                 )}
                             </div>
-                            <div className="profile-bio-input">
+                            <div className="w-full flex flex-col border border-primary-border rounded-md px-2 py-1">
                                 <label className="flex justify-between text-14 text-secondary-text">
                                     <p>Name</p>
                                     <p className={`${name.length === maxNameChars ? "text-red-500" : null}`}>{`${name.length} / ${maxNameChars}`}</p>
@@ -468,7 +468,7 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                     suppressHydrationWarning
                                     maxLength={maxNameChars}
                                     {...register("name")}
-                                    className="profile-textarea"
+                                    className="h-[200px] sm:h-[175px] w-full resize-none mt-2 outline-none"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                 />
@@ -476,7 +476,7 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                     <p className="text-center text-red-600 font-bold text-xs">{`${errors.name.message}`}</p>
                                 )}
                             </div>
-                            <div className='profile-bio-input'>
+                            <div className='w-full flex flex-col border border-primary-border rounded-md px-2 py-1'>
                                 <label className='flex justify-between text-14 text-secondary-text'>
                                     <p>Bio</p>
                                     <p className={`${bio.length === maxBioChars ? 'text-red-500' : null}`}>{`${bio.length} / ${maxBioChars}`}</p>
@@ -484,14 +484,14 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                 <TextareaAutosize
                                     suppressHydrationWarning
                                     maxLength={maxBioChars}
-                                    className='profile-textarea'
+                                    className='h-[200px] sm:h-[175px] w-full resize-none mt-2 outline-none'
                                     placeholder='Your biography...'
                                     {...register("bio")}
                                     value={bio}
                                     onChange={(e) => setBio(e.target.value)}
                                 />
                             </div>
-                            <div className='profile-bio-input'>
+                            <div className='w-full flex flex-col border border-primary-border rounded-md px-2 py-1'>
                                 <label className='flex justify-between text-14 text-secondary-text'>
                                     <p>Location</p>
                                     <p className={`${location.length === maxLocationChars ? 'text-red-500' : null}`}>{`${location.length} / ${maxLocationChars}`}</p>
@@ -500,14 +500,14 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                     suppressHydrationWarning
                                     maxLength={maxLocationChars}
                                     {...register('location')}
-                                    className='profile-textarea'
+                                    className='h-[200px] sm:h-[175px] w-full resize-none mt-2 outline-none'
                                     value={location}
                                     onChange={(e) => setLocation(e.target.value)} />
                                 {errors.location && (
                                     <p className="text-center text-red-600 font-bold text-xs">{`${errors.location.message}`}</p>
                                 )}
                             </div>
-                            <div className='profile-bio-input'>
+                            <div className='w-full flex flex-col border border-primary-border rounded-md px-2 py-1'>
                                 <label className='flex justify-between text-14 text-secondary-text'>
                                     <p>Website</p>
                                     <p className={`${website.length === maxWebsiteChars ? 'text-red-500' : null}`}>{`${website.length} / ${maxWebsiteChars}`}</p>
@@ -516,7 +516,7 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                     suppressHydrationWarning
                                     maxLength={maxWebsiteChars}
                                     {...register('website')}
-                                    className='profile-textarea'
+                                    className='h-[200px] sm:h-[175px] w-full resize-none mt-2 outline-none'
                                     value={website}
                                     onChange={(e) => setWebsite(e.target.value)} />
                                 {errors.website && (

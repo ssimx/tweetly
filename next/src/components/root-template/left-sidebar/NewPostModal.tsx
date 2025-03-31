@@ -142,8 +142,8 @@ export default function NewPostModal() {
 
     return (
         <Dialog onOpenChange={handleOpenChange}>
-            <DialogTrigger className='post-btn'>
-                <Feather className='feather-icon' />
+            <DialogTrigger className='flex-center h-[50px] w-[50px] rounded-[50%] bg-primary text-white-1 font-bold xl:w-full xl:rounded-[30px]'>
+                <Feather className='xl:hidden' />
                 <p className='hidden xs:block'>Post</p>
             </DialogTrigger>
             <DialogContent className="min-h-[150px] h-auto w-[90%] sm:max-w-[550px]" onOpenAutoFocus={(e) => e.preventDefault()}>

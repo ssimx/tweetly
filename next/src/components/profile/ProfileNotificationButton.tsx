@@ -64,7 +64,7 @@ export default function ProfileNotificationButton({ user, userState, dispatch }:
                 notificationsEnabled
                     ? (
                         <button
-                            className="notifications-btn notifications-enabled group"
+                            className="w-fit hover:bg-secondary-foreground text-primary-text border border-primary-border font-bold rounded-full p-2 bg-transparent group"
                             onClick={handleNotificationsToggle}
                             ref={notificationBtn}
                         >
@@ -73,7 +73,7 @@ export default function ProfileNotificationButton({ user, userState, dispatch }:
                         </button>
                     )
                     : <button
-                        className='notifications-btn'
+                        className='w-fit hover:bg-secondary-foreground text-primary-text border border-primary-border font-bold rounded-full p-2'
                         onClick={handleNotificationsToggle}
                         ref={notificationBtn}>
                         <BellPlus size={20} className='text-primary-text' />

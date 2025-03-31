@@ -232,13 +232,13 @@ export default function PostButtons({ post, setPostIsVisible }: PostButtonsProps
 
             btn.disabled = false;
         }, [
-            loggedInUser.id,
-            setPostIsVisible,
-            updateInteractedPosts,
-            bookmarked,
-            likesCounter,
-            repostsCounter
-        ]
+        loggedInUser.id,
+        setPostIsVisible,
+        updateInteractedPosts,
+        bookmarked,
+        likesCounter,
+        repostsCounter
+    ]
     );
 
     // For syncing post's button's state if post was interacted with somewhere else (modal)
@@ -263,7 +263,7 @@ export default function PostButtons({ post, setPostIsVisible }: PostButtonsProps
         <>
             <div className="flex gap-2 justify-center items-end">
                 <div className='w-[60%] sm:w-[50%] flex gap-1 justify-between'>
-                    <Link href={`/${post.author.username}/status/${post.id}`} className='comment-btn group'>
+                    <Link href={`/${post.author.username}/status/${post.id}`} className='flex items-center hover:text-blue-1/70 group'>
                         <div className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-blue-1/10'>
                             <MessageCircle size={20}
                                 className='text-secondary-text group-hover:text-blue-1/70' />
@@ -273,7 +273,7 @@ export default function PostButtons({ post, setPostIsVisible }: PostButtonsProps
                         </div>
                     </Link>
                     <button
-                        className={`repost-btn group ${reposted ? 'reposted' : ''}`}
+                        className={`flex items-center hover:text-green-500/7 group ${reposted ? '[&_svg]:text-green-500/70 [&_p]:text-green-500/70' : ''}`}
                         data-type='repost'
                         data-status={`${reposted}`}
                         onClick={(e) => handlePostBtnsInteraction(e, post.id)}>
@@ -285,7 +285,7 @@ export default function PostButtons({ post, setPostIsVisible }: PostButtonsProps
                         </div>
                     </button>
                     <button
-                        className={`like-btn group ${liked ? 'liked' : ''}`}
+                        className={`flex items-center hover:text-pink-500 group ${liked ? '[&_svg]:text-pink-500 [&_svg]:fill-pink-500 [&_p]:text-pink-500' : ''}`}
                         data-type='like'
                         data-status={`${liked}`}
                         onClick={(e) => handlePostBtnsInteraction(e, post.id)}>
@@ -298,7 +298,7 @@ export default function PostButtons({ post, setPostIsVisible }: PostButtonsProps
                     </button>
                 </div>
                 <button
-                    className={`bookmark-btn group ${bookmarked ? 'bookmarked' : ''}`}
+                    className={`flex-center ml-auto h-[35px] w-[35px] rounded-full hover:bg-blue-1/10 group ${bookmarked ? '[&_svg]:text-primary [&_svg]:fill-primary' : ''}`}
                     data-type='bookmark'
                     data-status={`${bookmarked}`}
                     onClick={(e) => handlePostBtnsInteraction(e, post.id)}>
@@ -307,11 +307,6 @@ export default function PostButtons({ post, setPostIsVisible }: PostButtonsProps
                     </span>
                 </button>
                 <PostShareButton post={post} />
-            </div>
-
-            <div className='profile-copy-alert hidden'
-                ref={actionErrorRef} >
-                Something went wrong
             </div>
         </>
     )

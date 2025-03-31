@@ -42,7 +42,7 @@ export default function ProfileMessageBtn({ profileUser, conversationId }: { pro
     };
 
     return (
-        <button className={`message-btn ${loading ? 'disabled' : null}`}
+        <button className={`w-fit cursor-pointer hover:bg-secondary-foreground text-primary-text border border-primary-border font-bold rounded-full p-2 ${loading ? 'disabled' : null}`}
             onClick={handleConvoClick} >
             <Mail size={20} className='text-primary-text' />
         </button>

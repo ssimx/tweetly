@@ -23,12 +23,6 @@ const config: Config = {
                 'header': 'var(--header-size)'
             },
             gridTemplateRows: {
-                // main content
-                'main-content': 'auto 1fr',
-
-                // 3 row grid
-                'root-phone-layout': '10% 1fr 6%',
-
                 // 2 row grid for feed
                 'feed-desktop-xs': 'auto 1fr',
 
@@ -46,13 +40,6 @@ const config: Config = {
             gridTemplateColumns: {
                 'post': '10% auto',
 
-                'root-desktop-layout-xs': '15% 1fr',
-                // 3 col grid
-                'root-desktop-layout-lg': '10% 1fr',
-                'root-desktop-layout-xl': '20% 1fr',
-
-                // main content 2 col grid
-                'main-content-layout': '65% 1fr',
                 // Post modal columns
                 'post-layout': 'auto 1fr',
             },

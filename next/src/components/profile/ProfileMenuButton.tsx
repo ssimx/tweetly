@@ -199,7 +199,7 @@ export default function ProfileMenuButton({ user, userState, dispatch }: Profile
                 </>
             }
 
-            <button className='profile-menu-btn'
+            <button className='w-fit hover:bg-secondary-foreground text-primary-text border border-primary-border font-bold rounded-full p-2'
                 onClick={(e) => {
                     e.stopPropagation();
                     toggleMenu(e);

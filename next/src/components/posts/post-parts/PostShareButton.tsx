@@ -73,7 +73,7 @@ export default function PostShareButton({ post }: { post: BasePostDataType }) {
             }
 
             <button
-                className='share-btn group'
+                className='flex-center h-[35px] w-[35px] rounded-full hover:bg-blue-1/10 group'
                 onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
