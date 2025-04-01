@@ -13,6 +13,7 @@ export default function PhoneBottomNav({ sidebarOpen, messages, notifications }:
     const lastScrollY = useRef(0);
     const scrollingDown = useRef(true);
 
+    // Hide/show nav while scrolling
     useEffect(() => {
         // Initialize last scroll position
         lastScrollY.current = window.scrollY;
@@ -93,8 +94,9 @@ export default function PhoneBottomNav({ sidebarOpen, messages, notifications }:
                 ${savedTheme === 0 ? 'from-black-1/90 from-0% to-20% to-black-1' : 'from-white-1/90 from-0% to-20% to-white-1'}
                 ${isTransparent ? 'opacity-30' : 'opacity-100'}
                 transform transition-transform duration-300
-                ${sidebarOpen ? 'translate-y-[100%]' : 'translate-y-0'}`
+                ${sidebarOpen ? 'translate-y-[100%] opacity-30 pointer-events-none' : 'translate-y-0'}`
             }
+            onTouchEnd={() => setIsTransparent(false)}
         >
             {!pathName.startsWith('/settings') && (
                 <div className='relative'>

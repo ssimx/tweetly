@@ -211,7 +211,7 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
             {/* Mobile Sidebar - Only visible on small screens */}
             <div
                 ref={sidebarRef}
-                className={`fixed top-0 left-0 w-[75%] h-full bg-white z-[9999] border-r
+                className={`fixed top-0 left-0 w-[75%] h-full bg-white z-[10000] border-r
                         transform transition-transform duration-300 bg-primary-foreground xs:hidden
                         ${sidebarOpen ? '' : '-translate-x-full'}`}
             >
@@ -254,13 +254,13 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
                             e.stopPropagation();
                             setSidebarOpen(false);
                         }}
-                        className="fixed inset-0 bg-black-1/90 z-[9998] xs:hidden"
+                        className="fixed inset-0 bg-black-1/90 z-[9999] xs:hidden"
                     />
                 )}
             </main>
 
             {alertMessage !== null && (
-                <div className='fixed z-[500] bottom-10 left-[50%] translate-x-[-50%] bg-primary text-white-1 font-semibold px-4 py-2 rounded-md text-center'>
+                <div className='fixed z-[9997] bottom-10 left-[50%] translate-x-[-50%] bg-primary text-white-1 font-semibold px-4 py-2 rounded-md text-center'>
                     {alertMessage}
                 </div>
             )}
