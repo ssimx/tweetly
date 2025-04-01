@@ -106,6 +106,8 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
         });
 
         return () => {
+            console.log('cleanup effect')
+
             events.forEach(({ type, listener }) => {
                 window.removeEventListener(type, listener as EventListener);
             });
@@ -156,7 +158,6 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
         socket.emit('get_notifications', loggedInUser.id);
 
         const onNewNotification = () => {
-            console.log('test')
             setNotifications(true);
         };
 
@@ -165,7 +166,6 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
         };
 
         const initializeNotificationsStatus = (status: boolean) => {
-            console.log(status)
             setNotifications(status);
         };
 
@@ -209,23 +209,12 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
             </header>
 
             {/* Mobile Sidebar - Only visible on small screens */}
-            {sidebarOpen && (
-                <div
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setSidebarOpen(false);
-                    }}
-                    className="fixed inset-0 bg-black-1/90 z-[9998] xs:hidden"
-                />
-            )}
-
             <div
                 ref={sidebarRef}
                 className={`fixed top-0 left-0 w-[75%] h-full bg-white z-[9999] border-r
                         transform transition-transform duration-300 bg-primary-foreground xs:hidden
                         ${sidebarOpen ? '' : '-translate-x-full'}`}
             >
-
                 <MobileSidebar setSidebarOpen={setSidebarOpen} notifications={notifications} messages={messages} />
             </div>
 
@@ -255,12 +244,23 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
                     <aside className="hidden xl:flex justify-center h-fit w-[400px] pt-5 px-4">
                         <RightSidebar />
                     </aside>
-
+                    
                 </div>
+
+                {/* Mobile Sidebar overlay */}
+                {sidebarOpen && (
+                    <div
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setSidebarOpen(false);
+                        }}
+                        className="fixed inset-0 bg-black-1/90 z-[9998] xs:hidden"
+                    />
+                )}
             </main>
 
             {alertMessage !== null && (
-                <div className='fixed z-[500] bottom-10 left-[50%] translate-x-[-50%] bg-primary text-white-1 font-semibold px-4 py-2 rounded-md'>
+                <div className='fixed z-[500] bottom-10 left-[50%] translate-x-[-50%] bg-primary text-white-1 font-semibold px-4 py-2 rounded-md text-center'>
                     {alertMessage}
                 </div>
             )}

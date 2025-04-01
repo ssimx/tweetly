@@ -1,263 +1,52 @@
 'use client';
+
 import { Bookmark, Heart, MessageCircle, Repeat2 } from "lucide-react";
 import Link from "next/link";
-import { SetStateAction, useCallback, useEffect, useRef, useState } from "react";
-import { socket } from "@/lib/socket";
-import { useUserContext } from "@/context/UserContextProvider";
-import { bookmarkPost, likePost, removeBookmarkPost, removeLikePost, removeRepostPost, repostPost } from "@/actions/actions";
-import { usePostInteractionContext } from "@/context/PostInteractionContextProvider";
+import { useCallback, useEffect, useState } from "react";
+import { usePostInteraction } from "@/context/PostInteractionContextProvider";
 import { AnimatePresence, motion } from "framer-motion";
 import PostShareButton from './PostShareButton';
 import { BasePostDataType } from 'tweetly-shared';
+import { useAlertMessageContext } from '@/context/AlertMessageContextProvider';
 
-type PostButtonsProps = {
-    post: BasePostDataType
-    setPostIsVisible?: React.Dispatch<SetStateAction<boolean>>,
-};
-
-export default function PostButtons({ post, setPostIsVisible }: PostButtonsProps) {
-    const { interactedPosts, updateInteractedPosts } = usePostInteractionContext();
-    const { loggedInUser } = useUserContext();
-    const actionErrorRef = useRef<HTMLDivElement | null>(null);
-
-    const {
-        viewerHasLiked,
-        viewerHasReposted,
-        viewerHasBookmarked
-    } = post.relationship;
-
-    const {
-        likesCount,
-        repostsCount,
-        repliesCount,
-    } = post.stats;
-
-    const [reposted, setReposted] = useState(viewerHasReposted);
-    const [liked, setLiked] = useState(viewerHasLiked);
-    const [bookmarked, setBookmarked] = useState(viewerHasBookmarked);
-    const [repostsCounter, setRepostsCounter] = useState(repostsCount);
-    const [likesCounter, setLikesCounter] = useState(likesCount);
+export default function PostButtons({ post }: { post: BasePostDataType }) {
+    const { setAlertMessage } = useAlertMessageContext();
+    const { interaction, toggleRepost, toggleLike, toggleBookmark } = usePostInteraction(post);
 
     const handlePostBtnsInteraction = useCallback(
-        async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>, postId: number) => {
+        async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
             e.stopPropagation();
             e.preventDefault();
 
             const btn = e.currentTarget;
-            const type = btn.dataset.type as string;
-            const status = btn.dataset.status;
+            const type = btn.dataset.type as 'repost' | 'like' | 'bookmark';
 
             btn.disabled = true;
+            let success: boolean;
 
-            if (status === 'true') {
-                // REMOVE
-                try {
-                    let response: boolean;
-                    switch (type) {
-                        case 'repost':
-                            if (repostsCounter === 0) throw new Error(`Failed to remove the repost on the post`);
-
-                            updateInteractedPosts({
-                                postId: postId,
-                                repostsCount: (repostsCounter - 1),
-                                likesCount: likesCounter,
-                                bookmarked: bookmarked,
-                            });
-
-                            response = await removeRepostPost(postId);
-                            break;
-                        case 'like':
-                            if (likesCounter === 0) throw new Error(`Failed to remove the like on the post`);
-
-                            updateInteractedPosts({
-                                postId: postId,
-                                repostsCount: repostsCounter,
-                                likesCount: (likesCounter - 1),
-                                bookmarked: bookmarked,
-                            });
-                            response = await removeLikePost(postId);
-                            break;
-                        case 'bookmark':
-                            updateInteractedPosts({
-                                postId: postId,
-                                repostsCount: repostsCounter,
-                                likesCount: likesCounter,
-                                bookmarked: false,
-                            });
-
-                            response = await removeBookmarkPost(postId);
-                            break;
-                        default:
-                            response = false;
-                    };
-
-                    if (!response) {
-                        throw new Error(`Failed to remove the ${type} on the post`);
-                    }
-
-                    btn.dataset.status = 'false';
-
-                    // Call function to hide post on user's profile
-                    setPostIsVisible && setPostIsVisible(false);
-
-                    // Update notifications
-                    if (type !== 'bookmark') {
-                        socket.emit('new_user_notification', loggedInUser.id);
-                    }
-                } catch (error) {
-                    // revert the styling
-                    switch (type) {
-                        case 'repost':
-                            updateInteractedPosts({
-                                postId: postId,
-                                repostsCount: (repostsCounter + 1),
-                                likesCount: likesCounter,
-                                bookmarked: bookmarked,
-                            });
-
-                            break;
-                        case 'like':
-                            updateInteractedPosts({
-                                postId: postId,
-                                repostsCount: repostsCounter,
-                                likesCount: (likesCounter + 1),
-                                bookmarked: bookmarked,
-                            });
-
-                            break;
-                        case 'bookmark':
-                            updateInteractedPosts({
-                                postId: postId,
-                                repostsCount: repostsCounter,
-                                likesCount: likesCounter,
-                                bookmarked: true,
-                            });
-
-                            break;
-                        default:
-                            break;
-                    };
-
-                    actionErrorRef.current?.classList.toggle('hidden');
-                    setTimeout(() => {
-                        actionErrorRef.current?.classList.toggle('hidden');
-                    }, 3000);
-                }
-            } else {
-                // ADD
-                try {
-                    let response: boolean;
-                    switch (type) {
-                        case 'repost':
-                            updateInteractedPosts({
-                                postId: postId,
-                                repostsCount: (repostsCounter + 1),
-                                likesCount: likesCounter,
-                                bookmarked: bookmarked,
-                            });
-
-                            response = await repostPost(postId);
-                            break;
-                        case 'like':
-                            updateInteractedPosts({
-                                postId: postId,
-                                repostsCount: repostsCounter,
-                                likesCount: (likesCounter + 1),
-                                bookmarked: bookmarked,
-                            });
-
-                            response = await likePost(postId);
-                            break;
-                        case 'bookmark':
-                            updateInteractedPosts({
-                                postId: postId,
-                                repostsCount: repostsCounter,
-                                likesCount: likesCounter,
-                                bookmarked: true,
-                            });
-
-                            response = await bookmarkPost(postId);
-                            break;
-                        default:
-                            response = false;
-                    };
-
-                    if (!response) {
-                        throw new Error(`Failed to ${type} the post`);
-                    }
-
-                    btn.dataset.status = 'true';
-
-                    // Update notifications
-                    if (type !== 'bookmark') {
-                        socket.emit('new_user_notification', loggedInUser.id);
-                    }
-                } catch (error) {
-                    // revert the styling
-                    switch (type) {
-                        case 'repost':
-                            updateInteractedPosts({
-                                postId: postId,
-                                repostsCount: (repostsCounter - 1),
-                                likesCount: likesCounter,
-                                bookmarked: bookmarked,
-                            });
-                            break;
-                        case 'like':
-                            updateInteractedPosts({
-                                postId: postId,
-                                repostsCount: repostsCounter,
-                                likesCount: (likesCounter - 1),
-                                bookmarked: bookmarked,
-                            });
-                            break;
-                        case 'bookmark':
-                            updateInteractedPosts({
-                                postId: postId,
-                                repostsCount: repostsCounter,
-                                likesCount: likesCounter,
-                                bookmarked: false,
-                            });
-                            break;
-                        default:
-                            break;
-                    };
-
-                    actionErrorRef.current?.classList.toggle('hidden');
-                    setTimeout(() => {
-                        actionErrorRef.current?.classList.toggle('hidden');
-                    }, 3000);
-                }
+            switch (type) {
+                case 'repost':
+                    success = await toggleRepost();
+                    break;
+                case 'like':
+                    success = await toggleLike();
+                    break;
+                case 'bookmark':
+                    success = await toggleBookmark();
+                    break;
+                default:
+                    success = false;
             }
 
+            // Show error message if the interaction failed
+            if (!success) {
+                setAlertMessage(`Failed to interact with the post`);
+            }
+
+            // Re-enable the button
             btn.disabled = false;
-        }, [
-        loggedInUser.id,
-        setPostIsVisible,
-        updateInteractedPosts,
-        bookmarked,
-        likesCounter,
-        repostsCounter
-    ]
+        }, [setAlertMessage, toggleBookmark, toggleLike, toggleRepost]
     );
-
-    // For syncing post's button's state if post was interacted with somewhere else (modal)
-    useEffect(() => {
-        const interactedPost = interactedPosts.get(post.id);
-        if (interactedPost) {
-            if (interactedPost.repostsCount !== repostsCounter) {
-                setReposted(interactedPost.repostsCount > repostsCounter ? true : false)
-                setRepostsCounter(interactedPost.repostsCount)
-            }
-
-            if (interactedPost.likesCount !== likesCounter) {
-                setLiked(interactedPost.likesCount > likesCounter ? true : false)
-                setLikesCounter(interactedPost.likesCount)
-            }
-
-            setBookmarked(interactedPost.bookmarked);
-        }
-    }, [post, interactedPosts, likesCounter, repostsCounter]);
 
     return (
         <>
@@ -269,39 +58,41 @@ export default function PostButtons({ post, setPostIsVisible }: PostButtonsProps
                                 className='text-secondary-text group-hover:text-blue-1/70' />
                         </div>
                         <div className='min-w-[24px] text-start'>
-                            <p>{repliesCount}</p>
+                            <p>{post.stats.repliesCount}</p>
                         </div>
                     </Link>
+
                     <button
-                        className={`flex items-center hover:text-green-500/7 group ${reposted ? '[&_svg]:text-green-500/70 [&_p]:text-green-500/70' : ''}`}
+                        className={`flex items-center hover:text-green-500/7 group ${interaction.reposted ? '[&_svg]:text-green-500/70 [&_p]:text-green-500/70' : ''}`}
                         data-type='repost'
-                        data-status={`${reposted}`}
-                        onClick={(e) => handlePostBtnsInteraction(e, post.id)}>
+                        data-status={`${interaction.reposted.toString()}`}
+                        onClick={(e) => handlePostBtnsInteraction(e)}>
                         <span className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-green-500/10'>
                             <Repeat2 size={24} className='text-secondary-text group-hover:text-green-500/70' />
                         </span>
                         <div className='min-w-[24px] text-start'>
-                            <CounterAnimation value={repostsCounter} />
+                            <CounterAnimation value={interaction.repostsCount} />
                         </div>
                     </button>
+
                     <button
-                        className={`flex items-center hover:text-pink-500 group ${liked ? '[&_svg]:text-pink-500 [&_svg]:fill-pink-500 [&_p]:text-pink-500' : ''}`}
+                        className={`flex items-center hover:text-pink-500 group ${interaction.liked ? '[&_svg]:text-pink-500 [&_svg]:fill-pink-500 [&_p]:text-pink-500' : ''}`}
                         data-type='like'
-                        data-status={`${liked}`}
-                        onClick={(e) => handlePostBtnsInteraction(e, post.id)}>
+                        data-status={`${interaction.liked.toString()}`}
+                        onClick={(e) => handlePostBtnsInteraction(e)}>
                         <span className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-pink-500/10'>
                             <Heart size={20} className='text-secondary-text group-hover:text-pink-500' />
                         </span>
                         <div className='min-w-[24px] text-start'>
-                            <CounterAnimation value={likesCounter} key={post.id} />
+                            <CounterAnimation value={interaction.likesCount} key={post.id} />
                         </div>
                     </button>
                 </div>
                 <button
-                    className={`flex-center ml-auto h-[35px] w-[35px] rounded-full hover:bg-blue-1/10 group ${bookmarked ? '[&_svg]:text-primary [&_svg]:fill-primary' : ''}`}
+                    className={`flex-center ml-auto h-[35px] w-[35px] rounded-full hover:bg-blue-1/10 group ${interaction.bookmarked ? '[&_svg]:text-primary [&_svg]:fill-primary' : ''}`}
                     data-type='bookmark'
-                    data-status={`${bookmarked}`}
-                    onClick={(e) => handlePostBtnsInteraction(e, post.id)}>
+                    data-status={`${interaction.bookmarked.toString()}`}
+                    onClick={(e) => handlePostBtnsInteraction(e)}>
                     <span className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-pink-500/10'>
                         <Bookmark size={20} className='text-secondary-text group-hover:text-primary ml-[1px]' />
                     </span>

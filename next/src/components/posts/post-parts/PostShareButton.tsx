@@ -35,7 +35,6 @@ export default function PostShareButton({ post }: { post: BasePostDataType }) {
 
     // For tracking whether overlay is opened, to hide background scrollbar
     useEffect(() => {
-        console.log(pathName)
         if (pathName.includes('photo')) {
             setShowScrollbar(false);
         } else {
