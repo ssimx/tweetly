@@ -1,15 +1,17 @@
 'use client';
 
 import React, { createContext, useCallback, useContext, useState } from 'react';
-import { BasePostDataType } from 'tweetly-shared';
+import { ApiResponse, BasePostDataType } from 'tweetly-shared';
 import { useUserContext } from './UserContextProvider';
-import { bookmarkPost, likePost, removeBookmarkPost, removeLikePost, removeRepostPost, repostPost } from '@/actions/actions';
+import { bookmarkPost, likePost, pinPost, removeBookmarkPost, removeLikePost, removePost, removeRepostPost, repostPost, unpinPost } from '@/actions/actions';
 import { socket } from '@/lib/socket';
 
 type PostInteractionType = {
     reposted: boolean,
     liked: boolean,
     bookmarked: boolean,
+    pinned: boolean,
+    deleted: boolean,
     repostsCount: number,
     likesCount: number,
 };
@@ -46,6 +48,8 @@ export default function PostInteractionContextProvider({ children }: { children:
                 reposted: false,
                 liked: false,
                 bookmarked: false,
+                pinned: false,
+                deleted: false,
                 repostsCount: 0,
                 likesCount: 0
             };
@@ -72,10 +76,12 @@ export default function PostInteractionContextProvider({ children }: { children:
 
 // Type for the hook return value
 type PostInteractionHookResultType = {
-    interaction: PostInteractionType;
-    toggleRepost: () => Promise<boolean>;
-    toggleLike: () => Promise<boolean>;
-    toggleBookmark: () => Promise<boolean>;
+    interaction: PostInteractionType,
+    toggleRepost: () => Promise<boolean>,
+    toggleLike: () => Promise<boolean>,
+    toggleBookmark: () => Promise<boolean>,
+    togglePin: () => Promise<boolean>,
+    deletePost: () => Promise<boolean>,
 };
 
 // Custom hook to handle post interactions
@@ -91,7 +97,9 @@ export function usePostInteraction(post: BasePostDataType): PostInteractionHookR
         liked: storedInteraction?.liked ?? post.relationship.viewerHasLiked,
         bookmarked: storedInteraction?.bookmarked ?? post.relationship.viewerHasBookmarked,
         repostsCount: storedInteraction?.repostsCount ?? post.stats.repostsCount,
-        likesCount: storedInteraction?.likesCount ?? post.stats.likesCount
+        likesCount: storedInteraction?.likesCount ?? post.stats.likesCount,
+        pinned: storedInteraction?.pinned ?? post.pinnedOnProfile,
+        deleted: storedInteraction?.deleted ?? post.isDeleted,
     };
 
     /*
@@ -102,7 +110,7 @@ export function usePostInteraction(post: BasePostDataType): PostInteractionHookR
         * 3. If successful, keep the optimistic update
         * 4. If failed, revert to previous state
     */
-    const handleInteraction = async (type: 'repost' | 'like' | 'bookmark', isAdding: boolean): Promise<boolean> => {
+    const handleInteraction = async (type: 'repost' | 'like' | 'bookmark' | 'pin' | 'delete', isAdding: boolean): Promise<boolean> => {
         const currentState = getPostInteraction(post.id) || initialState;
 
         // Prepare update based on action type
@@ -116,6 +124,18 @@ export function usePostInteraction(post: BasePostDataType): PostInteractionHookR
             update.likesCount = isAdding ? currentState.likesCount + 1 : currentState.likesCount - 1;
         } else if (type === 'bookmark') {
             update.bookmarked = isAdding;
+        } else if (type === 'pin') {
+            if (post.author.username === loggedInUser.username) {
+                update.pinned = isAdding;
+            } else {
+                return false;
+            }
+        } else if (type === 'delete') {
+            if (post.author.username === loggedInUser.username) {
+                update.deleted = true;
+            } else {
+                return false;
+            }
         }
 
         // Optimistic update
@@ -123,23 +143,28 @@ export function usePostInteraction(post: BasePostDataType): PostInteractionHookR
 
         try {
             // API call based on action
-            let response: boolean;
+            let response: ApiResponse<undefined> = { success: false, error: { message: 'Internal Server Error', code: 'INTERNAL_ERROR' } };
 
             if (isAdding) {
                 switch (type) {
                     case 'repost': response = await repostPost(post.id); break;
                     case 'like': response = await likePost(post.id); break;
                     case 'bookmark': response = await bookmarkPost(post.id); break;
+                    case 'pin': response = await pinPost(post.id); break;
+                    case 'delete': response = await removePost(post.id); break;
+                    default: break;
                 }
             } else {
                 switch (type) {
                     case 'repost': response = await removeRepostPost(post.id); break;
                     case 'like': response = await removeLikePost(post.id); break;
                     case 'bookmark': response = await removeBookmarkPost(post.id); break;
+                    case 'pin': response = await unpinPost(post.id); break;
+                    default: break;
                 }
             }
 
-            if (!response) {
+            if (!response.success) {
                 throw new Error(`Failed to ${isAdding ? 'add' : 'remove'} ${type}`);
             }
 
@@ -162,6 +187,8 @@ export function usePostInteraction(post: BasePostDataType): PostInteractionHookR
         interaction: getPostInteraction(post.id) || initialState,
         toggleRepost: () => handleInteraction('repost', !initialState.reposted),
         toggleLike: () => handleInteraction('like', !initialState.liked),
-        toggleBookmark: () => handleInteraction('bookmark', !initialState.bookmarked)
+        toggleBookmark: () => handleInteraction('bookmark', !initialState.bookmarked),
+        togglePin: () => handleInteraction('pin', !initialState.pinned),
+        deletePost: () => handleInteraction('delete', !initialState.deleted),
     };
 }

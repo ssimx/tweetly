@@ -43,6 +43,12 @@ html body[data-scroll-locked] {
     margin-right: 0px !important;
 }
 
+html body[data-scroll-locked].alert-modal-hidden-y-scroll {
+    overflow-y: hidden !important;
+    overflow-x: hidden !important;
+    margin-right: 0px !important;
+}
+
 input,
 textarea {
   background-color: transparent;
@@ -284,7 +290,7 @@ input[type='search']::-webkit-search-results-decoration {
 
   /* Feed post */
   .feed-hr-line {
-    @apply w-full h-[1px] bg-primary-border;
+    @apply w-full h-[1px] bg-primary-border mb-[-1px];
   }
 
   /* Post */

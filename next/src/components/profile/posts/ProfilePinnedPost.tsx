@@ -1,43 +1,40 @@
 'use client';
+import { useEffect, useState } from 'react';
+import { Pin } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useReducer, useState } from 'react';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
-import BasicPostTemplate from './templates/BasicPostTemplate';
-import { BasePostDataType } from 'tweetly-shared';
-import { userInfoReducer, UserStateType } from '@/lib/userReducer';
+import BasicPostTemplate from '@/components/posts/templates/BasicPostTemplate';
+import { ProfilePostOrRepostDataType, UserAndViewerRelationshipType, UserStatsType } from 'tweetly-shared';
+import { UserActionType } from '@/lib/userReducer';
+import PostMenuButton from '@/components/posts/post-parts/PostMenuButton';
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
-import PostMenuButton from './post-parts/PostMenuButton';
 
-export default function PostCard({ post, searchSegments }: { post: BasePostDataType, searchSegments?: string[] }) {
+type ProfilePostProps = {
+    post: ProfilePostOrRepostDataType,
+    userState: {
+        relationship: UserAndViewerRelationshipType,
+        stats: UserStatsType,
+    },
+    dispatch: React.Dispatch<UserActionType>,
+};
+
+export default function ProfilePinnedPost({ post, userState, dispatch }: ProfilePostProps) {
     const { suggestions: userFollowSuggestions } = useFollowSuggestionContext();
     const { blockedUsers } = useBlockedUsersContext();
     const router = useRouter();
     const [postIsRemoved, setPostIsRemoved] = useState(false);
 
     // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    const userInitialState: UserStateType = {
-        relationship: {
-            isFollowingViewer: post.author.relationship.isFollowingViewer,
-            hasBlockedViewer: post.author.relationship.hasBlockedViewer,
-            isFollowedByViewer: post.author.relationship.isFollowedByViewer,
-            isBlockedByViewer: post.author.relationship.isBlockedByViewer,
-        },
-        stats: {
-            followersCount: post.author.stats.followersCount,
-            followingCount: post.author.stats.followingCount,
-            postsCount: post.author.stats.postsCount,
-        }
-    };
-    const [userState, dispatch] = useReducer(userInfoReducer, userInitialState);
+    // POST SHARES STATE WITH PROFILE USER
 
     useEffect(() => {
-        const suggestedUser = userFollowSuggestions?.find((suggestedUser) => suggestedUser.username === post.author.username);
+        const suggestedUser = userFollowSuggestions?.find((suggestedUser) => suggestedUser.username === post.author.username)
         if (suggestedUser) {
             dispatch({ type: suggestedUser.relationship.isFollowedByViewer ? 'FOLLOW' : 'UNFOLLOW' });
         }
     }, [userFollowSuggestions, dispatch, post.author.username]);
 
-    // - FUNCTIONS --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // - FUNCTIONS -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     const handleCardClick = (e: React.MouseEvent<HTMLDivElement>, authorUsername: string, postId: number) => {
         const targetElement = e.target as HTMLElement;
@@ -90,11 +87,16 @@ export default function PostCard({ post, searchSegments }: { post: BasePostDataT
 
     return (
         <div
-            className='px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'
+            className='w-full flex flex-col gap-2 px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'
             role="link"
             tabIndex={0}
             aria-label={`View post by ${post.author.username}`}
-            onMouseDown={(e) => handleCardClick(e, post.author.username, post.id)} >
+            onClick={(e) => handleCardClick(e, post.author.username, post.id)} >
+
+            <div className='flex items-center gap-1 text-14 font-bold text-secondary-text'>
+                <Pin size={16} className='text-primary' fill='hsl(var(--primary))' />
+                <p>Pinned</p>
+            </div>
 
             <BasicPostTemplate
                 post={post}
@@ -102,7 +104,6 @@ export default function PostCard({ post, searchSegments }: { post: BasePostDataT
                 dispatch={dispatch}
                 openPhoto={openPhoto}
                 setPostIsRemoved={setPostIsRemoved}
-                searchSegments={searchSegments}
             />
 
         </div>

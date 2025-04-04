@@ -80,13 +80,15 @@ export default function FollowButton({ user, userState, dispatch }: FollowButton
                 setIsSubmitting(false);
             }
         },
-        [isFollowedByViewer, dispatch, user, isSubmitting, updateFollowState, setFollowingCount, setNewFollowing],
+        [loggedInUser.id, isFollowedByViewer, dispatch, user, isSubmitting, updateFollowState, setFollowingCount, setNewFollowing],
     );
 
     return (
         <button
-            className={`min-w-[100px] bg-primary text-white-1 hover:bg-primary-dark border border-primary-border font-bold rounded-[25px] px-4 py-2
-                text-14 ${isFollowedByViewer ? "following before:content-['Following'] hover:before:content-['Unfollow']" : "before:content-['Follow']"}`}
+            className={`min-w-[100px] border border-primary-border font-bold rounded-[25px] px-4 py-2 text-14
+                ${isFollowedByViewer
+                    ? "text-primary-text bg-transparent hover:bg-red-500 before:content-['Following'] hover:before:content-['Unfollow']"
+                    : "text-white-1 bg-primary hover:bg-primary-dark before:content-['Follow']"}`}
             onClick={handleFollowToggle}
             disabled={isSubmitting}
         ></button>

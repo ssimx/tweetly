@@ -13,7 +13,7 @@ export default function PostButtons({ post }: { post: BasePostDataType }) {
     const { setAlertMessage } = useAlertMessageContext();
     const { interaction, toggleRepost, toggleLike, toggleBookmark } = usePostInteraction(post);
 
-    const handlePostBtnsInteraction = useCallback(
+    const handlePostInteraction = useCallback(
         async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
             e.stopPropagation();
             e.preventDefault();
@@ -27,25 +27,34 @@ export default function PostButtons({ post }: { post: BasePostDataType }) {
             switch (type) {
                 case 'repost':
                     success = await toggleRepost();
+                    if (!success) {
+                        setAlertMessage(`Failed to ${interaction.reposted ? 'unrepost' : 'repost'} the post`);
+                    }
+
                     break;
                 case 'like':
                     success = await toggleLike();
+                    if (!success) {
+                        setAlertMessage(`Failed to ${interaction.liked ? 'unlike' : 'like'} the post`);
+                    }
+
                     break;
                 case 'bookmark':
                     success = await toggleBookmark();
+                    if (!success) {
+                        setAlertMessage(`Failed to ${interaction.bookmarked ? 'unbookmark' : 'bookmark'} the post`);
+                    } else {
+                        setAlertMessage(`Post ${interaction.bookmarked ? 'unsaved' : 'saved'}`);
+                    }
+
                     break;
                 default:
                     success = false;
             }
 
-            // Show error message if the interaction failed
-            if (!success) {
-                setAlertMessage(`Failed to interact with the post`);
-            }
-
             // Re-enable the button
             btn.disabled = false;
-        }, [setAlertMessage, toggleBookmark, toggleLike, toggleRepost]
+        }, [setAlertMessage, toggleBookmark, toggleLike, toggleRepost, interaction]
     );
 
     return (
@@ -66,7 +75,7 @@ export default function PostButtons({ post }: { post: BasePostDataType }) {
                         className={`flex items-center hover:text-green-500/7 group ${interaction.reposted ? '[&_svg]:text-green-500/70 [&_p]:text-green-500/70' : ''}`}
                         data-type='repost'
                         data-status={`${interaction.reposted.toString()}`}
-                        onClick={(e) => handlePostBtnsInteraction(e)}>
+                        onClick={(e) => handlePostInteraction(e)}>
                         <span className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-green-500/10'>
                             <Repeat2 size={24} className='text-secondary-text group-hover:text-green-500/70' />
                         </span>
@@ -79,7 +88,7 @@ export default function PostButtons({ post }: { post: BasePostDataType }) {
                         className={`flex items-center hover:text-pink-500 group ${interaction.liked ? '[&_svg]:text-pink-500 [&_svg]:fill-pink-500 [&_p]:text-pink-500' : ''}`}
                         data-type='like'
                         data-status={`${interaction.liked.toString()}`}
-                        onClick={(e) => handlePostBtnsInteraction(e)}>
+                        onClick={(e) => handlePostInteraction(e)}>
                         <span className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-pink-500/10'>
                             <Heart size={20} className='text-secondary-text group-hover:text-pink-500' />
                         </span>
@@ -92,7 +101,7 @@ export default function PostButtons({ post }: { post: BasePostDataType }) {
                     className={`flex-center ml-auto h-[35px] w-[35px] rounded-full hover:bg-blue-1/10 group ${interaction.bookmarked ? '[&_svg]:text-primary [&_svg]:fill-primary' : ''}`}
                     data-type='bookmark'
                     data-status={`${interaction.bookmarked.toString()}`}
-                    onClick={(e) => handlePostBtnsInteraction(e)}>
+                    onClick={(e) => handlePostInteraction(e)}>
                     <span className='h-[35px] w-[35px] rounded-full flex-center group-hover:bg-pink-500/10'>
                         <Bookmark size={20} className='text-secondary-text group-hover:text-primary ml-[1px]' />
                     </span>

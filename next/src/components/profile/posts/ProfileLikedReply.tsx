@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useReducer } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 import { Reply } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
@@ -7,6 +7,8 @@ import BasicPostTemplate from '@/components/posts/templates/BasicPostTemplate';
 import UserHoverCard from '@/components/misc/UserHoverCard';
 import { UserActionType, userInfoReducer, UserStateType } from '@/lib/userReducer';
 import { BasePostDataType, UserAndViewerRelationshipType, UserStatsType } from 'tweetly-shared';
+import PostMenuButton from '@/components/posts/post-parts/PostMenuButton';
+import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
 
 type ProfileLikedReplyProps = {
     profileUsername: string,
@@ -20,7 +22,9 @@ type ProfileLikedReplyProps = {
 
 export default function ProfileLikedReply({ profileUsername, post, userState, dispatch }: ProfileLikedReplyProps) {
     const { suggestions: userFollowSuggestions } = useFollowSuggestionContext();
+    const { blockedUsers } = useBlockedUsersContext();
     const router = useRouter();
+    const [postIsRemoved, setPostIsRemoved] = useState(false);
 
     // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // PARENT POST IS NOT NECESSARILY PROFILE USER'S OWN POST SO IT NEEDS NEW STATE IF THAT'S THE CASE
@@ -109,6 +113,27 @@ export default function ProfileLikedReply({ profileUsername, post, userState, di
 
     // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+    if (blockedUsers.some((user) => user === post.author.username)) {
+        return (
+            <div className="w-full px-4 py-2 flex">
+                <p className="text-secondary-text">You&apos;ve blocked this user. <span>Unblock to see their posts.</span></p>
+                <PostMenuButton
+                    post={post}
+                    userState={userState}
+                    dispatch={dispatch}
+                />
+            </div>
+        )
+    }
+
+    if (postIsRemoved) {
+        return (
+            <div className="w-full px-4 py-2 flex">
+                <p className="text-secondary-text">You&apos;ve removed this post.</p>
+            </div>
+        )
+    }
+
     return (
         <div
             className='w-full flex flex-col gap-2 px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'
@@ -137,6 +162,7 @@ export default function ProfileLikedReply({ profileUsername, post, userState, di
                 userState={replyPostAuthorIsProfileUser ? userState : _replyUserState}
                 dispatch={replyPostAuthorIsProfileUser ? dispatch : _replyDispatch}
                 openPhoto={openPhoto}
+                setPostIsRemoved={setPostIsRemoved}
             />
 
         </div>

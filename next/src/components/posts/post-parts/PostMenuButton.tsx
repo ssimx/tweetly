@@ -9,31 +9,46 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { BasePostDataType, getErrorMessage, UserAndViewerRelationshipType, UserStatsType } from 'tweetly-shared';
 import { RemoveScroll } from 'react-remove-scroll';
 import { useAlertMessageContext } from '@/context/AlertMessageContextProvider';
-import { usePathname } from 'next/navigation';
+import { redirect, usePathname, useRouter } from 'next/navigation';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { usePostInteraction } from '@/context/PostInteractionContextProvider';
 
 type PostMenuProps = {
     post: BasePostDataType,
+    setPostIsRemoved?: React.Dispatch<React.SetStateAction<boolean>>,
     userState: {
         relationship: UserAndViewerRelationshipType,
         stats: UserStatsType,
     },
     dispatch: React.Dispatch<UserActionType>,
-}
+};
 
-export default function PostMenuButton({ post, userState, dispatch }: PostMenuProps) {
+export default function PostMenuButton({ post, setPostIsRemoved, userState, dispatch }: PostMenuProps) {
+    const { loggedInUser, setNewFollowing, setFollowersCount, setFollowingCount } = useUserContext();
+    const { updateFollowState: updateSuggestedUserFollowState } = useFollowSuggestionContext();
+    const { blockedUsers, addBlockedUser, removeBlockedUser } = useBlockedUsersContext();
     const { setAlertMessage } = useAlertMessageContext();
+    const { interaction, togglePin, deletePost } = usePostInteraction(post);
     const pathName = usePathname();
+    const router = useRouter();
 
     const [menuOpen, setMenuOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const menuBtn = useRef<HTMLDivElement | null>(null);
     const followBtn = useRef<HTMLButtonElement | null>(null);
     const blockBtn = useRef<HTMLButtonElement | null>(null);
+    const [userWasBlocked, setUserWasBlocked] = useState(false);
     const [showScrollbar, setShowScrollbar] = useState(true);
-
-    const { loggedInUser, setNewFollowing, setFollowersCount, setFollowingCount } = useUserContext();
-    const { updateFollowState: updateSuggestedUserFollowState } = useFollowSuggestionContext();
-    const { addBlockedUser, removeBlockedUser } = useBlockedUsersContext();
+    const [alertDialogOpen, setAlertDialogOpen] = useState(false);
 
     const {
         isBlockedByViewer,
@@ -134,6 +149,10 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
                         throw new Error(response.error.message);
                     }
 
+                    if (pathName.endsWith(post.author.username)) {
+                        router.refresh();
+                    }
+
                     setAlertMessage('User unblocked');
                 } else {
                     // Optimistically update UI
@@ -147,6 +166,10 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
 
                     if (!response.success) {
                         throw new Error(response.error.message);
+                    }
+
+                    if (pathName.endsWith(post.author.username)) {
+                        router.refresh();
                     }
 
                     setAlertMessage('User blocked');
@@ -186,21 +209,68 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
             isFollowingViewer,
             setFollowersCount,
             setFollowingCount,
-            setAlertMessage
+            setAlertMessage,
+            pathName,
+            router
         ],
     );
 
-    const pinPost = () => {
-        console.log('Pin post');
+    const removePostAlert = () => {
+        if (pathName.includes('photo')) document.body.classList.add('alert-modal-hidden-y-scroll');
+        setAlertDialogOpen(true);
     };
 
-    const removePost = () => {
-        console.log('Remove post');
-    };
+    const handlePostInteraction = useCallback(
+        async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+            e.stopPropagation();
+            e.preventDefault();
 
-    const reportPost = () => {
-        console.log('Report post');
-    };
+            const btn = e.currentTarget;
+            const type = btn.dataset.type as 'pin' | 'delete';
+
+            btn.disabled = true;
+            let success = true;
+
+            switch (type) {
+                case 'pin':
+                    success = await togglePin();
+                    if (!success) {
+                        setAlertMessage(`Failed to ${interaction.pinned ? 'unpin' : 'pin'} the post`);
+                        break;
+                    }
+
+                    setAlertMessage(interaction.pinned ? 'Post unpinned' : 'Post pinned');
+                    break;
+                case 'delete':
+                    success = await deletePost();
+                    if (!success) {
+                        setAlertMessage(`Failed to delete the post`);
+                        break;
+                    }
+
+                    setAlertMessage('Post deleted');
+
+                    // check if post is visited and redirect user to the home page
+                    // othwerise just hide the post from the feed
+                    if (pathName.includes(`${post.author.username}/status/${post.id}`)) {
+                        redirect('/');
+                    } else {
+                        setPostIsRemoved && setPostIsRemoved(true);
+                    }
+
+                    break;
+                default:
+                    setAlertMessage(`Something went wrong`);
+                    success = false;
+            }
+
+            setAlertDialogOpen(false);
+            document.body.classList.remove('alert-modal-hidden-y-scroll');
+
+            // Re-enable the button
+            btn.disabled = false;
+        }, [setAlertMessage, togglePin, deletePost, interaction, setPostIsRemoved, pathName, post.author.username, post.id]
+    );
 
     const toggleMenu = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -213,6 +283,17 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
             document.body.classList.remove('disable-interaction'); // Enable interaction again
         }
     };
+
+    // For tracking whether author was blocked on another post
+    useEffect(() => {
+        if (blockedUsers.some((user) => user === post.author.username) && !isBlockedByViewer) {
+            dispatch({ type: 'BLOCK' });
+            setUserWasBlocked(true);
+        } else if (isBlockedByViewer && userWasBlocked && !blockedUsers.some((user) => user === post.author.username)) {
+            dispatch({ type: 'UNBLOCK' });
+            setUserWasBlocked(false);
+        }
+    }, [post.author.username, blockedUsers, dispatch, isBlockedByViewer, userWasBlocked]);
 
     // For tracking whether overlay is opened, to hide background scrollbar
     useEffect(() => {
@@ -239,66 +320,117 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
     }, [menuOpen]);
 
     return (
-        <div className='ml-auto w-[30px] h-[25px] relative flex-center'>
-            {menuOpen &&
-                <>
-                    {showScrollbar === false
-                        ? (
-                            <button className='fixed top-0 left-0 w-full h-full z-40 pointer-events-auto bla' onClick={toggleMenu}></button>
-                        )
-                        : (
-                            <RemoveScroll>
-                                <button className='fixed top-0 left-0 w-full h-full z-40 pointer-events-auto' onClick={toggleMenu}></button>
-                            </RemoveScroll>
-                        )}
-
-                    <div
-                        ref={menuBtn}
-                        className='shadow-menu bg-primary-foreground text-primary-text border border-primary-border overflow-hidden absolute top-0 right-[0%] z-50 w-[200px] h-fit rounded-[20px] py-[10px] pointer-events-none [&>button]:pointer-events-auto'
-                    >
-                        {authorIsLoggedInUser
+        <>
+            <div className='ml-auto w-[30px] h-[25px] relative flex-center'>
+                {menuOpen &&
+                    <>
+                        {showScrollbar === false
                             ? (
-                                <>
-                                    <button onClick={pinPost}
-                                        className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[7px] hover:bg-card-hover'>
-                                        Pin post to profile
-                                    </button>
-
-                                    <button onClick={removePost}
-                                        className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[7px] text-red-600 hover:bg-card-hover'>
-                                        Delete post
-                                    </button>
-                                </>)
-                            : (
-                                <>
-                                    <button
-                                        onClick={handleFollowToggle}
-                                        className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[7px] hover:bg-card-hover'
-                                        ref={followBtn}>
-                                        {isFollowedByViewer ? `Unfollow ${post.author.username}` : `Follow ${post.author.username}`}
-                                    </button>
-
-                                    <button
-                                        onClick={handleBlockToggle}
-                                        className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[7px] hover:bg-card-hover'
-                                        ref={blockBtn}>
-                                        {isBlockedByViewer ? `Unblock ${post.author.username}` : `Block ${post.author.username}`}
-                                    </button>
-
-                                    <button onClick={reportPost}
-                                        className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[7px] hover:bg-card-hover'>
-                                        Report post
-                                    </button>
-                                </>
+                                <button className='fixed top-0 left-0 w-full h-full z-40 pointer-events-auto bla' onClick={toggleMenu}></button>
                             )
-                        }
-                    </div>
-                </>
-            }
+                            : (
+                                <RemoveScroll>
+                                    <button className='fixed top-0 left-0 w-full h-full z-40 pointer-events-auto' onClick={toggleMenu}></button>
+                                </RemoveScroll>
+                            )}
+                        <div
+                            ref={menuBtn}
+                            className='shadow-menu bg-primary-foreground text-primary-text border border-primary-border overflow-hidden absolute top-0 right-[0%] z-50 w-[200px] h-fit rounded-[20px] py-[10px] pointer-events-none [&>button]:pointer-events-auto'
+                        >
+                            {authorIsLoggedInUser
+                                ? (
+                                    <>
+                                        <button
+                                            className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[7px] hover:bg-card-hover'
+                                            data-type='pin'
+                                            disabled={isSubmitting}
+                                            onClick={(e) => handlePostInteraction(e)}
+                                        >
+                                            {`${interaction.pinned ? 'Unpin post from profile' : 'Pin post to profile'}`}
+                                        </button>
+                                        <button
+                                            className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[7px] text-red-600 hover:bg-card-hover'
+                                            disabled={isSubmitting}
+                                            onClick={removePostAlert}
+                                        >
+                                            Delete post
+                                        </button>
+                                    </>)
+                                : (
+                                    <>
+                                        {isBlockedByViewer
+                                            ? (
+                                                <>
+                                                    <button
+                                                        onClick={handleBlockToggle}
+                                                        className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[7px] hover:bg-card-hover'
+                                                        ref={blockBtn}
+                                                        disabled={isSubmitting}
+                                                    >
+                                                        {`Unblock ${post.author.username}`}
+                                                    </button>
+                                                </>
+                                            )
+                                            : (
+                                                <>
+                                                    <button
+                                                        onClick={handleFollowToggle}
+                                                        className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[7px] hover:bg-card-hover'
+                                                        ref={followBtn}
+                                                        disabled={isSubmitting}
+                                                    >
+                                                        {isFollowedByViewer ? `Unfollow ${post.author.username}` : `Follow ${post.author.username}`}
+                                                    </button>
+                                                    <button
+                                                        onClick={handleBlockToggle}
+                                                        className='w-full flex items-center gap-2 text-left font-bold px-[20px] py-[7px] hover:bg-card-hover'
+                                                        ref={blockBtn}
+                                                        disabled={isSubmitting}
+                                                    >
+                                                        {`Block ${post.author.username}`}
+                                                    </button>
+                                                </>
+                                            )
+                                        }
+                                    </>
+                                )
+                            }
+                        </div>
+                    </>
+                }
+                <button className='group' onClick={toggleMenu}>
+                    <Ellipsis size={20} className='group-hover:text-primary' />
+                </button>
+            </div>
 
-            <button className='group' onClick={toggleMenu}>
-                <Ellipsis size={20} className='group-hover:text-primary' />
-            </button>
-        </div>
+            <AlertDialog
+                open={alertDialogOpen}
+            >
+                <AlertDialogContent
+                    className='bg-primary-foreground'
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                    }}
+                >
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription className='text-secondary-text font-medium'>
+                            This action cannot be undone. This will permanently delete the post.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className='bg-primary-foreground' onClick={() => setAlertDialogOpen(false)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className='bg-primary text-white-1 font-bold'
+                            data-type='delete'
+                            onClick={(e) => handlePostInteraction(e)}
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     )
 }

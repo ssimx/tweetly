@@ -1,6 +1,6 @@
 'use client';
 import UserHoverCard from '../misc/UserHoverCard';
-import { useEffect, useReducer, useRef } from 'react';
+import { useEffect, useReducer, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserContext } from '@/context/UserContextProvider';
 import PostMenuButton from '../posts/post-parts/PostMenuButton';
@@ -21,6 +21,7 @@ export default function NotificationReply({ post, isRead }: { post: BasePostData
     const { blockedUsers } = useBlockedUsersContext();
     const { loggedInUser } = useUserContext();
     const router = useRouter();
+    const [postIsRemoved, setPostIsRemoved] = useState(false);
 
     const cardRef = useRef<HTMLDivElement>(null);
 
@@ -119,6 +120,14 @@ export default function NotificationReply({ post, isRead }: { post: BasePostData
         )
     }
 
+    if (postIsRemoved) {
+        return (
+            <div className="w-full px-4 py-2 flex">
+                <p className="text-secondary-text">You&apos;ve removed this post.</p>
+            </div>
+        )
+    }
+
     return (
         <div
             ref={cardRef}
@@ -146,6 +155,7 @@ export default function NotificationReply({ post, isRead }: { post: BasePostData
                 userState={replyUserState}
                 dispatch={replyDispatch}
                 openPhoto={openPhoto}
+                setPostIsRemoved={setPostIsRemoved}
             >
 
                 <div

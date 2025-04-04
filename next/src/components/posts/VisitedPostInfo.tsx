@@ -45,6 +45,7 @@ export default function VisitedPostInfo({ post, photoId }: { post: VisitedPostDa
     const [isOverlayVisible, setIsOverlayVisible] = useState(false);
     const [overlayCurrentImageIndex, setOverlayCurrentImageIndex] = useState<number | null>(null);
     const [isPostInfoVisible, setIsPostInfoVisible] = useState(true);
+    const imageRef = useRef(null);
 
     // For syncing author's state if they appear in different places at the same time
     useEffect(() => {
@@ -54,19 +55,14 @@ export default function VisitedPostInfo({ post, photoId }: { post: VisitedPostDa
         }
     }, [userFollowSuggestions, dispatch, post.author.username]);
 
-    // photoId validity checkup
+    // Handle body scroll
     useEffect(() => {
-        if (photoId) {
-            if (!post.images?.length || photoId < 1 || photoId > post.images.length) {
-                // If photoId is less than 1 and more than number of images in the post, revert to non-overlay
-                window.history.replaceState(null, '', `/${post.author.username}/status/${post.id}`);
-            } else {
-                document.body.style.overflow = "hidden";
-                setIsOverlayVisible(true);
-                setOverlayCurrentImageIndex(photoId - 1);
-            }
+        if (isOverlayVisible) {
+            document.body.style.overflowY = 'hidden';
+        } else {
+            document.body.style.overflowY = '';
         }
-    }, [post, photoId]);
+    }, [isOverlayVisible]);
 
     // If clicked url contains photo in url, auto open the overlay
     useEffect(() => {
@@ -77,17 +73,31 @@ export default function VisitedPostInfo({ post, photoId }: { post: VisitedPostDa
         }
     }, [post, pathname]);
 
+    // photoId validity checkup on url load
+    useEffect(() => {
+        if (photoId) {
+            if (!post.images?.length || photoId < 1 || photoId > post.images.length) {
+                // If photoId is less than 1 and more than number of images in the post, revert to non-overlay
+                setIsOverlayVisible(false);
+                window.history.replaceState(null, '', `/${post.author.username}/status/${post.id}`);
+            } else {
+                setIsOverlayVisible(true);
+                setOverlayCurrentImageIndex(photoId - 1);
+            }
+        }
+    }, [post, photoId]);
+
     // - FUNCTIONS --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     const openPhoto = (photoIndex: number, authorUsername: string, postId: number) => {
-        document.body.style.overflow = 'hidden';
         window.history.replaceState(null, '', `/${authorUsername}/status/${postId}/photo/${photoIndex + 1}`);
         setIsOverlayVisible(true);
         setOverlayCurrentImageIndex(photoIndex);
     };
 
-    const closePhoto = () => {
-        document.body.style.overflow = '';
+    const closePhoto = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+        if (e.target === imageRef.current) return;
+
         window.history.replaceState(null, '', `/${post.author.username}/status/${post.id}`);
         setIsOverlayVisible(false);
         setOverlayCurrentImageIndex(null);
@@ -117,14 +127,10 @@ export default function VisitedPostInfo({ post, photoId }: { post: VisitedPostDa
 
             {(isOverlayVisible && overlayCurrentImageIndex !== null) &&
                 createPortal(
-                    <div className={`overflow-y-scroll min-h-dvh h-auto fixed inset-0 z-[9999] bg-black-1/90 flex flex-col lg:overflow-y-hidden lg:grid lg:grid-rows-1 ${!isPostInfoVisible ? 'lg:grid-cols-[100%]' : 'lg:grid-cols-[65%,35%] xl:grid-cols-[1fr,minmax(25%,500px)]'}`} >
+                    <div className={`overflow-y-scroll overflow-x-hidden min-h-dvh h-auto fixed inset-0 z-[9999] bg-black-1/90 flex flex-col lg:overflow-y-hidden lg:grid lg:grid-rows-1 ${!isPostInfoVisible ? 'lg:grid-cols-[100%]' : 'lg:grid-cols-[65%,35%] xl:grid-cols-[1fr,minmax(25%,500px)]'}`} >
 
-                        <div className='relative h-[70vh] lg:h-[100vh] flex-center shrink-0' onClick={closePhoto}>
-                            <button className='absolute z-[100] inset-0 m-3 p-2 h-fit w-fit rounded-full opacity-90 bg-secondary-foreground hover:opacity-100 hover:cursor-pointer'
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    closePhoto();
-                                }}>
+                        <div className='relative h-[70vh] lg:h-[100vh] flex-center shrink-0' onClick={(e) => closePhoto(e)}>
+                            <button className='absolute z-[100] inset-0 m-3 p-2 h-fit w-fit rounded-full opacity-90 bg-secondary-foreground hover:opacity-100 hover:cursor-pointer'>
                                 <X size={24} className='color-white-1 ' />
                             </button>
                             <button className='hidden lg:block absolute z-[100] right-0 top-0 m-3 p-2 h-fit w-fit rounded-full opacity-90 bg-secondary-foreground hover:opacity-100 hover:cursor-pointer'
@@ -165,6 +171,7 @@ export default function VisitedPostInfo({ post, photoId }: { post: VisitedPostDa
 
                             <div className='w-auto max-w-[90%] h-[80%]'>
                                 <Image
+                                    ref={imageRef}
                                     src={post.images[overlayCurrentImageIndex]}
                                     alt={`Post image ${overlayCurrentImageIndex}`}
                                     height={1000}
@@ -176,7 +183,7 @@ export default function VisitedPostInfo({ post, photoId }: { post: VisitedPostDa
 
                         <div
                             ref={scrollElementRef}
-                            className={`w-full h-auto sm:flex sm:grow sm:justify-center lg:block bg-primary-foreground p-2 border-l-[1px] border-primary-border lg:max-h-[100vh] lg:overflow-y-auto ${!isPostInfoVisible ? 'translate-x-[100%]' : ''}`}
+                            className={`w-full h-auto sm:flex sm:grow sm:justify-center lg:block bg-primary-foreground p-2 border-l-[1px] border-primary-border lg:max-h-[100vh] lg:p-0 lg:py-4 lg:overflow-y-auto ${!isPostInfoVisible ? 'translate-x-[100%]' : ''}`}
                         >
 
                             <div className='h-fit sm:border-x sm:w-[80%] md:w-[70%] lg:border-x-0 lg:w-full'>
@@ -200,7 +207,8 @@ export default function VisitedPostInfo({ post, photoId }: { post: VisitedPostDa
                             </div>
 
                         </div>
-                    </div>,
+                    </div>
+                    ,
                     document.body // Append to <body>
                 )
             }

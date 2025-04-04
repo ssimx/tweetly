@@ -23,6 +23,8 @@ export type BasePostDataType = {
     images: string[],
     createdAt: Date,
     updatedAt: Date,
+    pinnedOnProfile: boolean,
+    isDeleted: boolean,
     author: UserDataType,
 
     // Optional replyTo property which has parent post information if the original post is reply
@@ -42,7 +44,7 @@ export type BasePostDataType = {
 // The posts tab on the profile is a collection of posts and reposts from users combined
 export type ProfilePostOrRepostDataType = BasePostDataType & {
     type: 'POST' | 'REPOST',
-    timeForSorting: number,
+    timeForSorting?: number,
 };
 
 export type VisitedPostDataType = BasePostDataType & {

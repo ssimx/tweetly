@@ -13,6 +13,7 @@ import ProfileNoContent from './ProfileNoContent';
 import { UserActionType } from '@/lib/userReducer';
 import ProfileRepost from './posts/ProfileRepost';
 import ClipLoader from 'react-spinners/ClipLoader';
+import ProfilePinnedPost from './posts/ProfilePinnedPost';
 
 type ProfileContentProps = {
     user: UserDataType,
@@ -28,6 +29,7 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
     const [activeTab, setActiveTab] = useState(0);
 
     // tab 0
+    const [pinnedPost, setPinnedPost] = useState<BasePostDataType | undefined | null>(undefined);
     const [postsReposts, setPostsReposts] = useState<ProfilePostOrRepostDataType[] | undefined | null>(undefined);
     // tab 1
     const [replies, setReplies] = useState<BasePostDataType[] | undefined | null>(undefined);
@@ -202,12 +204,14 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
 
                     const { data } = response;
                     if (!data) throw new Error('Data is missing in response');
+                    else if (data.pinnedPost === undefined) throw new Error('pinnedPost property is missing in data response');
                     else if (data.postsCursor === undefined) throw new Error('postsCursor property is missing in data response');
                     else if (data.postsEnd === undefined) throw new Error('postsEnd property is missing in data response');
                     else if (data.repostsCursor === undefined) throw new Error('repostsCursor property is missing in data response');
                     else if (data.repostsEnd === undefined) throw new Error('repostsEnd property is missing in data response');
                     else if (data.postsReposts === undefined) throw new Error('postsReposts property is missing in data response');
 
+                    setPinnedPost(data.pinnedPost);
                     setPostsCursor(data.postsCursor);
                     setPostsEndReached(data.postsEnd);
                     setRepostsCursor(data.repostsCursor);
@@ -216,16 +220,17 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                 } catch (error) {
                     console.error("Something went wrong:", error);
 
-                    setPostsReposts([]);
-
                     setPostsEndReached(true);
                     setRepostsEndReached(true);
 
                     setPostsCursor(null);
                     setRepostsCursor(null);
-                }
 
-                setScrollPosition(scrollPositionRef.current);
+                    setPostsReposts(null);
+                    setPinnedPost(null);
+                } finally {
+                    setScrollPosition(scrollPositionRef.current);
+                }
             }
 
             fetchPostsReposts();
@@ -252,7 +257,7 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
 
                     setRepliesEndReached(true);
                     setRepliesCursor(null);
-                    setReplies([]);
+                    setReplies(null);
                 } finally {
                     setScrollPosition(scrollPositionRef.current);
                 }
@@ -282,7 +287,7 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
 
                     setMediaEndReached(true);
                     setMediaCursor(null);
-                    setMedia([]);
+                    setMedia(null);
                 } finally {
                     setScrollPosition(scrollPositionRef.current);
                 }
@@ -312,7 +317,7 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
 
                     setLikesEndReached(true);
                     setLikesCursor(null);
-                    setLikedPosts([]);
+                    setLikedPosts(null);
                 } finally {
                     setScrollPosition(scrollPositionRef.current);
                 }
@@ -377,6 +382,13 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                         : postsReposts && postsReposts.length
                             ? (
                                 <section className='w-full flex flex-col h-fit'>
+                                    {pinnedPost && (
+                                        <ProfilePinnedPost
+                                            post={{ ...pinnedPost, type: 'POST' }}
+                                            userState={userState}
+                                            dispatch={dispatch}
+                                        />
+                                    )}
                                     {postsReposts.map((post, index) => {
                                         return (
                                             <div key={post.id}>
@@ -397,7 +409,7 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                                                         dispatch={dispatch}
                                                     />
                                                 )}
-                                                
+
                                                 {(index + 1) !== postsReposts.length && <div className='feed-hr-line'></div>}
                                             </div>
                                         )
@@ -416,7 +428,7 @@ export default function ProfileContent({ user, authorized, userState, dispatch }
                                     )}
                                 </section>
                             )
-                            : postsReposts && !postsReposts.length && (
+                            : postsReposts && !postsReposts.length && pinnedPost === null && (
                                 <ProfileNoContent type='POSTS' authorized={authorized} />
                             )
             )}

@@ -55,9 +55,31 @@ export default function VisitedPostTemplate({
     type = 'normal'
 }: VisitedPostTemplateType) {
 
+    if (post.isDeleted) {
+        return (
+            <div className='w-full mt-2 flex flex-col gap-2'>
+                <div className='w-[95%] mx-auto p-4 flex flex-col min-w-0 rounded-md bg-secondary-foreground'>
+                    This Post was deleted by the Post author.
+                </div>
+                <div className='feed-hr-line'></div>
+                <NewPost placeholder='Post your reply' reply={post.id} />
+                <PostReplies
+                    parentPostId={post.id}
+                    replies={replies}
+                    setReplies={setReplies}
+                    repliesCursor={repliesCursor}
+                    setRepliesCursor={setRepliesCursor}
+                    repliesEndReached={repliesEndReached}
+                    setRepliesEndReached={setRepliesEndReached}
+                    scrollElementRef={scrollRef}
+                />
+            </div>
+        )
+    }
+
     return (
         <>
-            <div className='w-full px-4 flex flex-col gap-2' ref={postRef}>
+            <div className='w-full px-4 flex flex-col gap-2 border-b' ref={postRef}>
                 <div className='w-full flex gap-2 items-center'>
                     <Link href={`/${post.author.username}`} className='group'>
                         <Image

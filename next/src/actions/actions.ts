@@ -1,6 +1,6 @@
 'use server';
 import { getCurrentTemporaryUserToken, getCurrentUserToken, verifyCurrentUserSettingsToken } from "@/data-acess-layer/auth";
-import { createSession, createSettingsSession, createTemporarySession, decryptSession, getUserSessionToken, removeSettingsToken, removeTemporarySession, updateSessionToken, verifySession } from '@/lib/session';
+import { createSession, createSettingsSession, createTemporarySession, decryptSession, getUserSessionToken, removeTemporarySession, updateSessionToken, verifySession } from '@/lib/session';
 import { revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import {
@@ -12,7 +12,7 @@ import {
     SuccessfulRegisterResponseType,
     SuccessResponse,
     userSettingsAccessSchema,
-    UserSettingsAccessType,
+    FormUserSettingsAccessType,
     userUpdateBirthdaySchema,
     UserUpdateBirthdayType,
     userUpdateEmailSchema,
@@ -30,7 +30,6 @@ import {
     temporaryUserUsernameSchema,
     FormTemporaryUserProfilePictureType,
     temporaryUserProfilePictureSchema,
-    getErrorMessage,
     logInUserSchema,
     FormLogInUserDataType,
     usernameSchema,
@@ -690,10 +689,53 @@ export async function createPost(formData: FormNewPostDataType): Promise<ApiResp
     }
 };
 
-export async function repostPost(postId: number) {
-    const token = await getCurrentUserToken();
-
+export async function removePost(postId: number): Promise<ApiResponse<undefined>> {
     try {
+        const token = await getCurrentUserToken();
+
+        const response = await fetch(`http://192.168.1.155:3000/api/posts/remove/${postId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+        }
+
+        return {
+            success: true,
+            data: undefined
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
+    }
+};
+
+export async function repostPost(postId: number): Promise<ApiResponse<undefined>> {
+    try {
+        const token = await getCurrentUserToken();
+
         const response = await fetch(`http://192.168.1.155:3000/api/posts/repost/${postId}`, {
             method: 'POST',
             headers: {
@@ -703,22 +745,41 @@ export async function repostPost(postId: number) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw errorData;
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        return true;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return false;
+        return {
+            success: true,
+            data: undefined
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function removeRepostPost(postId: number) {
-    const token = await getCurrentUserToken();
-
+export async function removeRepostPost(postId: number): Promise<ApiResponse<undefined>> {
     try {
+        const token = await getCurrentUserToken();
+
         const response = await fetch(`http://192.168.1.155:3000/api/posts/removeRepost/${postId}`, {
             method: 'DELETE',
             headers: {
@@ -728,22 +789,41 @@ export async function removeRepostPost(postId: number) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw errorData;
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        return true;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return false;
+        return {
+            success: true,
+            data: undefined
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function likePost(postId: number) {
-    const token = await getCurrentUserToken();
-
+export async function likePost(postId: number): Promise<ApiResponse<undefined>> {
     try {
+        const token = await getCurrentUserToken();
+
         const response = await fetch(`http://192.168.1.155:3000/api/posts/like/${postId}`, {
             method: 'POST',
             headers: {
@@ -753,22 +833,41 @@ export async function likePost(postId: number) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw errorData;
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        return true;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return false;
+        return {
+            success: true,
+            data: undefined
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function removeLikePost(postId: number) {
-    const token = await getCurrentUserToken();
-
+export async function removeLikePost(postId: number): Promise<ApiResponse<undefined>> {
     try {
+        const token = await getCurrentUserToken();
+
         const response = await fetch(`http://192.168.1.155:3000/api/posts/removeLike/${postId}`, {
             method: 'DELETE',
             headers: {
@@ -778,22 +877,41 @@ export async function removeLikePost(postId: number) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw errorData;
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        return true;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return false;
+        return {
+            success: true,
+            data: undefined
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function bookmarkPost(postId: number) {
-    const token = await getCurrentUserToken();
-
+export async function bookmarkPost(postId: number): Promise<ApiResponse<undefined>> {
     try {
+        const token = await getCurrentUserToken();
+
         const response = await fetch(`http://192.168.1.155:3000/api/posts/bookmark/${postId}`, {
             method: 'POST',
             headers: {
@@ -803,22 +921,41 @@ export async function bookmarkPost(postId: number) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw errorData;
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        return true;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return false;
+        return {
+            success: true,
+            data: undefined
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
-export async function removeBookmarkPost(postId: number) {
-    const token = await getCurrentUserToken();
-
+export async function removeBookmarkPost(postId: number): Promise<ApiResponse<undefined>> {
     try {
+        const token = await getCurrentUserToken();
+
         const response = await fetch(`http://192.168.1.155:3000/api/posts/removeBookmark/${postId}`, {
             method: 'DELETE',
             headers: {
@@ -828,21 +965,129 @@ export async function removeBookmarkPost(postId: number) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw errorData;
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        return true;
-    } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(errorMessage);
-        return false;
+        return {
+            success: true,
+            data: undefined
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
+    }
+};
+
+export async function pinPost(postId: number): Promise<ApiResponse<undefined>> {
+    try {
+        const token = await getCurrentUserToken();
+
+        const response = await fetch(`http://192.168.1.155:3000/api/posts/pin/${postId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+        }
+
+        return {
+            success: true,
+            data: undefined
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
+    }
+};
+
+export async function unpinPost(postId: number): Promise<ApiResponse<undefined>> {
+    try {
+        const token = await getCurrentUserToken();
+
+        const response = await fetch(`http://192.168.1.155:3000/api/posts/removePin/${postId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+        }
+
+        return {
+            success: true,
+            data: undefined
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
     }
 };
 
 export async function createNewConversationMessage(formData: FormNewConversationMessageDataType, tempId: string): Promise<ApiResponse<{ message: ConversationMessageType }>> {
     try {
         const token = await getCurrentUserToken();
+
         newMessageDataSchema.parse(formData);
 
         const newFormData = new FormData();
@@ -926,7 +1171,7 @@ export async function hardRedirect(uri: string) {
 //                                             ACCOUNT ACTIONS
 // ---------------------------------------------------------------------------------------------------------
 
-export async function verifyLoginPasswordForSettings(formData: UserSettingsAccessType): Promise<ApiResponse<undefined>> {
+export async function verifyLoginPasswordForSettings(formData: FormUserSettingsAccessType): Promise<ApiResponse<undefined>> {
     try {
         const sessionToken = await getCurrentUserToken();
 

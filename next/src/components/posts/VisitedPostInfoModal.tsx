@@ -101,7 +101,7 @@ export default function VisitedPostInfoModal({ post, photoId }: { post: VisitedP
         <>
             {isOverlayVisible &&
                 createPortal(
-                    <div className={`overflow-y-scroll min-h-dvh h-auto fixed inset-0 z-[9999] bg-black-1/90 flex flex-col lg:overflow-y-hidden lg:grid lg:grid-rows-1 ${!isPostInfoVisible ? 'lg:grid-cols-[100%]' : 'lg:grid-cols-[65%,35%] xl:grid-cols-[1fr,minmax(25%,500px)]'}`} >
+                    <div className={`overflow-y-scroll overflow-x-hidden min-h-dvh h-auto fixed inset-0 z-[9999] bg-black-1/90 flex flex-col lg:overflow-y-hidden lg:grid lg:grid-rows-1 ${!isPostInfoVisible ? 'lg:grid-cols-[100%]' : 'lg:grid-cols-[65%,35%] xl:grid-cols-[1fr,minmax(25%,500px)]'}`} >
 
                         <div className='relative h-[70vh] lg:h-[100vh] flex-center shrink-0' onClick={(e) => closePhoto(e)}>
                             <button className='absolute z-[100] inset-0 m-3 p-2 h-fit w-fit rounded-full opacity-90 bg-secondary-foreground hover:opacity-100 hover:cursor-pointer'>
@@ -157,7 +157,7 @@ export default function VisitedPostInfoModal({ post, photoId }: { post: VisitedP
 
                         <div
                             ref={scrollElementRef}
-                            className={`w-full h-auto sm:flex sm:grow sm:justify-center lg:block bg-primary-foreground p-2 lg:border-l-[1px] border-primary-border lg:max-h-[100vh] lg:overflow-y-auto ${!isPostInfoVisible ? 'translate-x-[100%]' : ''}`}
+                            className={`w-full h-auto sm:flex sm:grow sm:justify-center lg:block bg-primary-foreground p-2 lg:border-l-[1px] border-primary-border lg:max-h-[100vh] lg:p-0 lg:pt-4 lg:overflow-y-auto ${!isPostInfoVisible ? 'translate-x-[100%]' : ''}`}
                         >
 
                             <div className='h-fit sm:border-x sm:w-[80%] md:w-[70%] lg:border-x-0 lg:w-full'>

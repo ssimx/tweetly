@@ -1,5 +1,5 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import BasicPostTemplate from '@/components/posts/templates/BasicPostTemplate';
@@ -18,6 +18,7 @@ type ProfilePostProps = {
 export default function ProfilePost({ post, userState, dispatch }: ProfilePostProps) {
     const { suggestions: userFollowSuggestions } = useFollowSuggestionContext();
     const router = useRouter();
+    const [postIsRemoved, setPostIsRemoved] = useState(false);
 
     // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // POST SHARES STATE WITH PROFILE USER
@@ -59,6 +60,14 @@ export default function ProfilePost({ post, userState, dispatch }: ProfilePostPr
 
     // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+    if (postIsRemoved) {
+        return (
+            <div className="w-full px-4 py-2 flex">
+                <p className="text-secondary-text">You&apos;ve removed this post.</p>
+            </div>
+        )
+    }
+
     return (
         <div
             className='w-full flex flex-col gap-2 px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'
@@ -72,6 +81,7 @@ export default function ProfilePost({ post, userState, dispatch }: ProfilePostPr
                 userState={userState}
                 dispatch={dispatch}
                 openPhoto={openPhoto}
+                setPostIsRemoved={setPostIsRemoved}
             />
 
         </div>

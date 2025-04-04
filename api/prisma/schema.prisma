@@ -8,6 +8,20 @@ datasource db {
     url      = env("DEV_DATABASE_URL")
 }
 
+model TemporaryUser {
+    id                   Int      @id @default(autoincrement())
+    createdAt            DateTime @default(now())
+    updatedAt            DateTime @updatedAt
+    profileName          String   @db.VarChar(50)
+    email                String   @unique @db.VarChar(254)
+    emailVerified        Boolean  @default(false)
+    dateOfBirth          DateTime @db.Date
+    password             String
+    username             String?  @unique @db.VarChar(15)
+    profilePicture       String?  @db.VarChar(255)
+    registrationComplete Boolean  @default(false)
+}
+
 model User {
     id                       Int                       @id @default(autoincrement())
     createdAt                DateTime                  @default(now())
@@ -17,7 +31,8 @@ model User {
     password                 String
     dateOfBirth              DateTime                  @db.Date
     role                     UserRole                  @default(USER)
-    deactivatedAt            DateTime?
+    isDeleted                Boolean                   @default(false)
+    deletedAt                DateTime?
     emailVerified            Boolean                   @default(false)
     blockedBy                Block[]                   @relation("blocked")
     blockedUsers             Block[]                   @relation("blocker")
@@ -49,38 +64,29 @@ model Profile {
     bannerPicture  String   @db.VarChar(255)
     userId         Int      @unique
     user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model TemporaryUser {
-    id                   Int      @id @default(autoincrement())
-    createdAt            DateTime @default(now())
-    updatedAt            DateTime @updatedAt
-    profileName          String   @db.VarChar(50)
-    email                String   @unique @db.VarChar(254)
-    emailVerified        Boolean  @default(false)
-    dateOfBirth          DateTime @db.Date
-    password             String
-    username             String?  @unique @db.VarChar(15)
-    profilePicture       String?  @db.VarChar(255)
-    registrationComplete Boolean  @default(false)
+    pinnedPostId   Int?     @unique
+    pinnedPost     Post?    @relation("ProfilePinnedPost", fields: [pinnedPostId], references: [id], onDelete: SetNull)
 }
 
 model Post {
-    id            Int             @id @default(autoincrement())
-    content       String?         @db.VarChar(280)
-    createdAt     DateTime        @default(now())
-    updatedAt     DateTime        @updatedAt
-    authorId      Int
-    replyToId     Int?
-    images        String[]        @db.VarChar(280)
-    hashtags      HashtagOnPost[] @relation("PostHashtags")
-    notifications Notification[]
-    author        User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
-    replyTo       Post?           @relation("reply", fields: [replyToId], references: [id], onDelete: Cascade)
-    replies       Post[]          @relation("reply")
-    bookmarks     PostBookmark[]
-    likes         PostLike[]
-    reposts       PostRepost[]
+    id              Int             @id @default(autoincrement())
+    content         String?         @db.VarChar(280)
+    createdAt       DateTime        @default(now())
+    updatedAt       DateTime        @updatedAt
+    authorId        Int
+    replyToId       Int?
+    images          String[]        @db.VarChar(280)
+    isDeleted       Boolean         @default(false)
+    deletedAt       DateTime?
+    hashtags        HashtagOnPost[] @relation("PostHashtags")
+    notifications   Notification[]
+    author          User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+    replyTo         Post?           @relation("reply", fields: [replyToId], references: [id], onDelete: SetNull)
+    replies         Post[]          @relation("reply")
+    bookmarks       PostBookmark[]
+    likes           PostLike[]
+    reposts         PostRepost[]
+    pinnedOnProfile Profile?        @relation("ProfilePinnedPost")
 }
 
 model Hashtag {

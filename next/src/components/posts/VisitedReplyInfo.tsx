@@ -14,6 +14,7 @@ export default function VisitedReplyInfo({ post, photoId }: { post: VisitedPostD
     const { suggestions: userFollowSuggestions } = useFollowSuggestionContext();
     const router = useRouter();
     const pathname = usePathname();
+    const [parentPostIsRemoved, setParentPostIsRemoved] = useState(false);
 
     // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // PARENT POST IS NOT NECESSARILY PROFILE USER'S OWN POST SO IT NEEDS NEW STATE IF THAT'S THE CASE
@@ -65,8 +66,9 @@ export default function VisitedReplyInfo({ post, photoId }: { post: VisitedPostD
     const [isOverlayVisible, setIsOverlayVisible] = useState(false);
     const [overlayCurrentImageIndex, setOverlayCurrentImageIndex] = useState<number | null>(null);
     const [isPostInfoVisible, setIsPostInfoVisible] = useState(true);
+    const imageRef = useRef(null);
 
-    // For handling scroll on load
+    // For auto focusing replyTo scroll
     useEffect(() => {
         isOverlayVisible
             ? post.replyTo && scrollElementRef.current && overlayPostInfoRef.current && scrollElementRef.current.scrollTo(0, (overlayPostInfoRef.current.offsetTop - 50))
@@ -88,19 +90,14 @@ export default function VisitedReplyInfo({ post, photoId }: { post: VisitedPostD
         }
     }, [userFollowSuggestions, replyDispatch, post]);
 
-    // photoId validity checkup
+    // Handle body scroll
     useEffect(() => {
-        if (photoId) {
-            if (!post.images?.length || photoId < 1 || photoId > post.images.length) {
-                // If photoId is less than 1 and more than number of images in the post, revert to non-overlay
-                window.history.replaceState(null, '', `/${post.author.username}/status/${post.id}`);
-            } else {
-                document.body.style.overflow = "hidden";
-                setIsOverlayVisible(true);
-                setOverlayCurrentImageIndex(photoId - 1);
-            }
+        if (isOverlayVisible) {
+            document.body.style.overflowY = 'hidden';
+        } else {
+            document.body.style.overflowY = '';
         }
-    }, [post, photoId]);
+    }, [isOverlayVisible]);
 
     // If clicked url contains photo in url, auto open the overlay
     useEffect(() => {
@@ -110,6 +107,20 @@ export default function VisitedReplyInfo({ post, photoId }: { post: VisitedPostD
             setIsOverlayVisible(true);
         }
     }, [post, pathname]);
+
+    // photoId validity checkup on url load
+    useEffect(() => {
+        if (photoId) {
+            if (!post.images?.length || photoId < 1 || photoId > post.images.length) {
+                // If photoId is less than 1 and more than number of images in the post, revert to non-overlay
+                setIsOverlayVisible(false);
+                window.history.replaceState(null, '', `/${post.author.username}/status/${post.id}`);
+            } else {
+                setIsOverlayVisible(true);
+                setOverlayCurrentImageIndex(photoId - 1);
+            }
+        }
+    }, [post, photoId]);
 
     // - FUNCTIONS --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -136,14 +147,14 @@ export default function VisitedReplyInfo({ post, photoId }: { post: VisitedPostD
     };
 
     const openPhoto = (photoIndex: number, authorUsername: string, postId: number) => {
-        document.body.style.overflow = 'hidden';
         window.history.replaceState(null, '', `/${authorUsername}/status/${postId}/photo/${photoIndex + 1}`);
         setIsOverlayVisible(true);
         setOverlayCurrentImageIndex(photoIndex);
     };
 
-    const closePhoto = () => {
-        document.body.style.overflow = '';
+    const closePhoto = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+        if (e.target === imageRef.current) return;
+
         window.history.replaceState(null, '', `/${post.author.username}/status/${post.id}`);
         setIsOverlayVisible(false);
         setOverlayCurrentImageIndex(null);
@@ -154,15 +165,33 @@ export default function VisitedReplyInfo({ post, photoId }: { post: VisitedPostD
     return (
         <>
             <div className='flex flex-col'>
-                <div onClick={(e) => handleCardClick(e, post.replyTo!.author.username, post.replyTo!.id)} className='w-full flex flex-col gap-2 px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'>
-                    <BasicPostTemplate
-                        post={post.replyTo as BasePostDataType}
-                        userState={parentUserState}
-                        dispatch={parentDispatch}
-                        openPhoto={openPhoto}
-                        type='parent'
-                    />
-                </div>
+                {parentPostIsRemoved
+                    ? (
+                        <div onClick={(e) => handleCardClick(e, post.replyTo!.author.username, post.replyTo!.id)} className='w-full flex flex-col gap-2 px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'>
+                            <BasicPostTemplate
+                                post={post.replyTo as BasePostDataType}
+                                userState={parentUserState}
+                                dispatch={parentDispatch}
+                                openPhoto={openPhoto}
+                                postIsRemoved={parentPostIsRemoved}
+                                setPostIsRemoved={setParentPostIsRemoved}
+                                type='parent'
+                            />
+                        </div>
+                    )
+                    : (
+                        <div onClick={(e) => handleCardClick(e, post.replyTo!.author.username, post.replyTo!.id)} className='w-full flex flex-col gap-2 px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'>
+                            <BasicPostTemplate
+                                post={post.replyTo as BasePostDataType}
+                                userState={parentUserState}
+                                dispatch={parentDispatch}
+                                openPhoto={openPhoto}
+                                setPostIsRemoved={setParentPostIsRemoved}
+                                type='parent'
+                            />
+                        </div>
+                    )
+                }
 
                 <VisitedPostTemplate
                     post={post}
@@ -183,14 +212,10 @@ export default function VisitedReplyInfo({ post, photoId }: { post: VisitedPostD
 
             {(isOverlayVisible && overlayCurrentImageIndex !== null) &&
                 createPortal(
-                    <div className={`overflow-y-scroll min-h-dvh h-auto fixed inset-0 z-[9999] bg-black-1/90 flex flex-col lg:overflow-y-hidden lg:grid lg:grid-rows-1 ${!isPostInfoVisible ? 'lg:grid-cols-[100%]' : 'lg:grid-cols-[65%,35%] xl:grid-cols-[1fr,minmax(25%,500px)]'}`} >
+                    <div className={`overflow-y-scroll overflow-x-hidden min-h-dvh h-auto fixed inset-0 z-[9999] bg-black-1/90 flex flex-col lg:overflow-y-hidden lg:grid lg:grid-rows-1 ${!isPostInfoVisible ? 'lg:grid-cols-[100%]' : 'lg:grid-cols-[65%,35%] xl:grid-cols-[1fr,minmax(25%,500px)]'}`} >
 
-                        <div className='relative h-[70vh] lg:h-[100vh] flex-center shrink-0' onClick={closePhoto}>
-                            <button className='absolute z-[100] inset-0 m-3 p-2 h-fit w-fit rounded-full opacity-90 bg-secondary-foreground hover:opacity-100 hover:cursor-pointer'
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    closePhoto();
-                                }}>
+                        <div className='relative h-[70vh] lg:h-[100vh] flex-center shrink-0' onClick={(e) => closePhoto(e)}>
+                            <button className='absolute z-[100] inset-0 m-3 p-2 h-fit w-fit rounded-full opacity-90 bg-secondary-foreground hover:opacity-100 hover:cursor-pointer'>
                                 <X size={24} className='color-white-1 ' />
                             </button>
                             <button className='hidden lg:block absolute z-[100] right-0 top-0 m-3 p-2 h-fit w-fit rounded-full opacity-90 bg-secondary-foreground hover:opacity-100 hover:cursor-pointer'
@@ -231,6 +256,7 @@ export default function VisitedReplyInfo({ post, photoId }: { post: VisitedPostD
 
                             <div className='w-auto max-w-[90%] h-[80%]'>
                                 <Image
+                                    ref={imageRef}
                                     src={post.images[overlayCurrentImageIndex]}
                                     alt={`Post image ${overlayCurrentImageIndex}`}
                                     height={1000}
@@ -245,22 +271,31 @@ export default function VisitedReplyInfo({ post, photoId }: { post: VisitedPostD
                             className={`w-full h-auto sm:flex sm:grow sm:justify-center lg:block bg-primary-foreground p-2 border-l-[1px] border-primary-border lg:max-h-[100vh] lg:overflow-y-auto ${!isPostInfoVisible ? 'translate-x-[100%]' : ''}`}
                         >
 
-                            <div
-                                className='px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'
-                                role="link"
-                                tabIndex={0}
-                                aria-label={`View post by ${post.replyTo!.author.username} that was replied to`}
-                                onMouseDown={(e) => handleCardClick(e, post.replyTo!.author.username, post.replyTo!.id)} >
+                            {parentPostIsRemoved
+                                ? (
+                                    <div className="w-full px-4 py-2 flex">
+                                        <p className="text-secondary-text">You&apos;ve removed this post.</p>
+                                    </div>
+                                )
+                                : (
+                                    <div
+                                        className='px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'
+                                        role="link"
+                                        tabIndex={0}
+                                        aria-label={`View post by ${post.replyTo!.author.username} that was replied to`}
+                                        onMouseDown={(e) => handleCardClick(e, post.replyTo!.author.username, post.replyTo!.id)} >
 
-                                <BasicPostTemplate
-                                    post={post.replyTo as BasePostDataType}
-                                    userState={parentUserState}
-                                    dispatch={parentDispatch}
-                                    openPhoto={openPhoto}
-                                    type='parent'
-                                />
-
-                            </div>
+                                        <BasicPostTemplate
+                                            post={post.replyTo as BasePostDataType}
+                                            userState={parentUserState}
+                                            dispatch={parentDispatch}
+                                            openPhoto={openPhoto}
+                                            setPostIsRemoved={setParentPostIsRemoved}
+                                            type='parent'
+                                        />
+                                    </div>
+                                )
+                            }
 
                             <VisitedPostTemplate
                                 post={post}

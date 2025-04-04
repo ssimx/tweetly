@@ -18,6 +18,9 @@ import {
     trendingHashtags,
     exploreRandomPosts,
     getUserMedia,
+    addPin,
+    removePin,
+    removePost,
 } from "../controllers/postController";
 import express from 'express';
 import { newPostCheckup } from '../middleware/multer';
@@ -37,12 +40,15 @@ router.get('/postReplies/:id', postReplies);
 router.get('/feed/global', global30DayPosts);
 router.get('/feed/following', following30DayPosts);
 router.post('/create', newPostCheckup, uploadToCloudinary, newPost);
+router.delete('/remove/:id', removePost);
 router.post('/repost/:id', addRepost);
 router.delete('/removeRepost/:id', removeRepost);
 router.post('/like/:id', addLike);
 router.delete('/removeLike/:id', removeLike);
 router.post('/bookmark/:id', addBookmark);
 router.delete('/removeBookmark/:id', removeBookmark);
+router.post('/pin/:id', addPin);
+router.delete('/removePin/:id', removePin);
 router.get('/:username', getUserPosts);
 
 // router.post('/edit', newPost);

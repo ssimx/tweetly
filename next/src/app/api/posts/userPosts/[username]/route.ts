@@ -67,14 +67,15 @@ export async function GET(req: NextRequest, props: { params: Promise<{ username:
                     throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
                 }
 
-                const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }>;
+                const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], pinnedPost: BasePostDataType | null, cursor: number | null, end: boolean }>;
                 if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
                 else if (!data.posts) throw new AppError('User data is missing in data response', 404, 'MISSING_USER_DATA');
 
-                const successResponse: SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }> = {
+                const successResponse: SuccessResponse<{ posts: BasePostDataType[], pinnedPost: BasePostDataType | null, cursor: number | null, end: boolean }> = {
                     success: true,
                     data: {
                         posts: data.posts,
+                        pinnedPost: data.pinnedPost,
                         cursor: data.cursor ?? null,
                         end: data.end ?? true
                     }

@@ -26,11 +26,6 @@ const nextConfig: NextConfig = {
         },
     },
     outputFileTracingRoot: path.join(__dirname, "../"),
-    devIndicators: {
-        appIsrStatus: true,
-        buildActivity: true,
-        buildActivityPosition: 'bottom-left',
-    },
 };
 
 export default nextConfig;

@@ -8,6 +8,7 @@ import { getErrorMessage, UserAndViewerRelationshipType, UserStatsType } from 't
 import { useUserContext } from '@/context/UserContextProvider';
 import { RemoveScroll } from 'react-remove-scroll';
 import { useAlertMessageContext } from '@/context/AlertMessageContextProvider';
+import { usePathname, useRouter } from 'next/navigation';
 
 type ProfileMenuButtonProps = {
     user: string,
@@ -20,6 +21,8 @@ type ProfileMenuButtonProps = {
 
 export default function ProfileMenuButton({ user, userState, dispatch }: ProfileMenuButtonProps) {
     const { setAlertMessage } = useAlertMessageContext();
+    const pathName = usePathname();
+    const router = useRouter();
 
     const [menuOpen, setMenuOpen] = useState(false);
     const menuBtn = useRef<HTMLDivElement | null>(null);
@@ -62,6 +65,10 @@ export default function ProfileMenuButton({ user, userState, dispatch }: Profile
                         throw new Error(response.error.message);
                     }
 
+                    if (pathName.endsWith(user)) {
+                        router.refresh();
+                    }
+
                     setAlertMessage('User unblocked');
                 } else {
                     // Optimistically update UI
@@ -75,6 +82,10 @@ export default function ProfileMenuButton({ user, userState, dispatch }: Profile
 
                     if (!response.success) {
                         throw new Error(response.error.message);
+                    }
+
+                    if (pathName.endsWith(user)) {
+                        router.refresh();
                     }
 
                     setAlertMessage('User blocked');
@@ -115,6 +126,8 @@ export default function ProfileMenuButton({ user, userState, dispatch }: Profile
             setFollowersCount,
             setFollowingCount,
             setAlertMessage,
+            pathName,
+            router,
         ],
     );
 

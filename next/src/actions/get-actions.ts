@@ -1032,7 +1032,7 @@ export async function fetchLoggedInUser() {
 //                                             PROFILE ACTIONS
 // ---------------------------------------------------------------------------------------------------------
 
-export async function getPostsForProfile(profileUsername: string, postsCursor?: number): Promise<ApiResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }>> {
+export async function getPostsForProfile(profileUsername: string, postsCursor?: number): Promise<ApiResponse<{ posts: BasePostDataType[], pinnedPost: BasePostDataType | null, cursor: number | null, end: boolean }>> {
     try {
         const token = await getCurrentUserToken();
 
@@ -1049,7 +1049,7 @@ export async function getPostsForProfile(profileUsername: string, postsCursor?: 
             throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
         }
 
-        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }>;
+        const { data } = await response.json() as SuccessResponse<{ posts: BasePostDataType[], pinnedPost: BasePostDataType | null, cursor: number | null, end: boolean }>;
         if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
         else if (data.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
 
@@ -1057,6 +1057,7 @@ export async function getPostsForProfile(profileUsername: string, postsCursor?: 
             success: true,
             data: {
                 posts: data.posts,
+                pinnedPost: data.pinnedPost,
                 cursor: data.cursor ?? null,
                 end: data.end ?? true,
             },
@@ -1139,6 +1140,7 @@ export async function getRepostsForProfile(profileUsername: string, repostsCurso
 export async function getPostsAndRepostsForProfile(
     profileUsername: string
 ): Promise<ApiResponse<{
+    pinnedPost: BasePostDataType | null,
     postsCursor: number | null,
     postsEnd: boolean,
     repostsCursor: number | null,
@@ -1159,7 +1161,7 @@ export async function getPostsAndRepostsForProfile(
             throw new AppError(errorData.error.message, 400, errorData.error.code, errorData.error.details);
         }
 
-        const { data: postsData } = postsResponse as SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }>;
+        const { data: postsData } = postsResponse as SuccessResponse<{ posts: BasePostDataType[], pinnedPost: BasePostDataType | null, cursor: number | null, end: boolean }>;
         if (postsData === undefined) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
         else if (postsData.posts === undefined) throw new AppError('Posts property is missing in data response', 404, 'MISSING_PROPERTY');
 
@@ -1175,13 +1177,18 @@ export async function getPostsAndRepostsForProfile(
             return { ...repost, timeForSorting: new Date(repost.createdAt).getTime(), type: 'REPOST' };
         });
 
-        const mappedPostsReposts: ProfilePostOrRepostDataType[] = mappedPosts.concat(mappedReposts).sort((a, b) => {
-            return b.timeForSorting - a.timeForSorting
-        }) ?? [];
+        const mappedPostsReposts: ProfilePostOrRepostDataType[] = mappedPosts
+            .concat(mappedReposts)
+            .sort((a, b) => {
+                return b.timeForSorting! - a.timeForSorting!
+            })
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            .map(({ timeForSorting, ...rest }) => rest) ?? [];
 
         return {
             success: true,
             data: {
+                pinnedPost: postsData.pinnedPost,
                 postsCursor: postsData.cursor,
                 postsEnd: postsData.end,
                 repostsCursor: repostsData.cursor,

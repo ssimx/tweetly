@@ -1,14 +1,18 @@
 'use client';
-import { useEffect, useReducer, useRef } from 'react';
+import { useEffect, useReducer, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import BasicPostTemplate from '../posts/templates/BasicPostTemplate';
 import { BasePostDataType } from 'tweetly-shared';
 import { userInfoReducer, UserStateType } from '@/lib/userReducer';
+import PostMenuButton from '../posts/post-parts/PostMenuButton';
+import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
 
 export default function NotificationPost({ post, isRead }: { post: BasePostDataType, isRead: boolean }) {
     const { suggestions: userFollowSuggestions } = useFollowSuggestionContext();
+    const { blockedUsers } = useBlockedUsersContext();
     const router = useRouter();
+    const [postIsRemoved, setPostIsRemoved] = useState(false);
 
     const cardRef = useRef<HTMLDivElement>(null);
 
@@ -71,6 +75,27 @@ export default function NotificationPost({ post, isRead }: { post: BasePostDataT
 
     // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+    if (blockedUsers.some((user) => user === post.author.username)) {
+        return (
+            <div className="w-full px-4 py-2 flex">
+                <p className="text-secondary-text">You&apos;ve blocked this user. <span>Unblock to see their posts.</span></p>
+                <PostMenuButton
+                    post={post}
+                    userState={userState}
+                    dispatch={dispatch}
+                />
+            </div>
+        )
+    }
+
+    if (postIsRemoved) {
+        return (
+            <div className="w-full px-4 py-2 flex">
+                <p className="text-secondary-text">You&apos;ve removed this post.</p>
+            </div>
+        )
+    }
+
     return (
         <div
             ref={cardRef}
@@ -87,6 +112,7 @@ export default function NotificationPost({ post, isRead }: { post: BasePostDataT
                 userState={userState}
                 dispatch={dispatch}
                 openPhoto={openPhoto}
+                setPostIsRemoved={setPostIsRemoved}
             />
 
         </div>

@@ -220,7 +220,7 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
 
             <main
                 ref={mainRef}
-                className={`h-fit min-h-svh w-full pb-[50px] xs:pb-0 xs:col-start-2 xs:col-end-3
+                className={`h-fit min-h-svh w-full pb-[50px] xs:col-start-2 xs:col-end-3
                         flex overflow-x-clip overscroll-x-none xs:overflow-x-visible
                         transition-transform duration-300 relative
                         ${sidebarOpen ? 'translate-x-[250px]' : ''}`}

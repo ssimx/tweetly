@@ -77,6 +77,7 @@ export default function BookmarksContent({ initialBookmarks, cursor, end }: { in
             window.removeEventListener('scroll', handleScroll);
         };
     }, [scrollPositionRef]);
+    
     return (
         <section className='w-full h-fit'>
             <div className='feed-hr-line'></div>

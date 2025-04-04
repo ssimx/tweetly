@@ -33,11 +33,14 @@ import {
     getMedia,
     getGlobal30DayNewPosts,
     getFollowing30DayNewPosts,
+    getPinnedPost,
+    addPostPin,
+    removePostPin,
+    deletePost,
 } from '../services/postService';
 import { createNotificationsForNewLike, createNotificationsForNewPost, createNotificationsForNewReply, createNotificationsForNewRepost, removeNotificationsForLike, removeNotificationsForRepost } from '../services/notificationService';
-import { deleteImageFromCloudinary } from './uploadController';
 import { AppError, BasePostDataType, LoggedInUserDataType, SuccessResponse, TrendingHashtagType, VisitedPostDataType } from 'tweetly-shared';
-import { remapPostInformation, remapUserInformation, remapVisitedPostInformation } from '../lib/helpers';
+import { remapPostInformation, remapVisitedPostInformation } from '../lib/helpers';
 import { getProfile } from '../services/userService';
 
 // ---------------------------------------------------------------------------------------------------------
@@ -99,6 +102,32 @@ export const newPost = async (req: Request, res: Response, next: NextFunction) =
 
         return res.status(200).json(successResponse);
     } catch (error) {
+        next(error);
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const removePost = async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as UserProps;
+    const postId = Number(req.params.id);
+
+    try {
+        const postData = await getPostInfo(user.id, postId);
+        if (!postData) throw new AppError('Post not found', 404, 'NOT_FOUND');
+        if (postData.author.username !== user.username) throw new AppError('Unauthorized', 401, 'UNAUTHORIZED');
+
+        // Soft delete the post
+        const response = await deletePost(postId);
+        if (!response) throw new AppError('Something went wrong', 400, 'INTERNAL_SERVER_ERROR');
+
+        const successResponse: SuccessResponse<undefined> = {
+            success: true,
+            data: undefined
+        };
+
+        return res.status(200).json(successResponse);
+    } catch (error) { 
         next(error);
     }
 };
@@ -545,10 +574,10 @@ export const postReplies = async (req: Request, res: Response, next: NextFunctio
                 // check if current cursor equals last reply id
                 // if truthy, return empty array and set the end to true
                 if (cursor === oldestReplyLeastEnegagementId) {
-                    const successResponse: SuccessResponse<{ replies: BasePostDataType[], cursor: number | null, end: boolean }> = {
+                    const successResponse: SuccessResponse<{ replies: [], cursor: number | null, end: boolean }> = {
                         success: true,
                         data: {
-                            posts: [],
+                            replies: [],
                             cursor: null,
                             end: true,
                         },
@@ -649,16 +678,17 @@ export const getUserPosts = async (req: Request, res: Response, next: NextFuncti
                 }
             }
 
-            let postsData = await getPosts(user.id, username, Number(cursor));
+            let postsData = await getPosts(user.username, username, Number(cursor));
 
             const posts = postsData.map((post) => {
                 // skip if there's no information
                 if (!post) return;
                 if (!post.author) return;
                 if (!post.author.profile) return;
+                if (post.isDeleted) return;
 
                 return remapPostInformation(post);
-            }).filter((post): post is NonNullable<typeof post> => post !== undefined);
+            }).filter((post): post is NonNullable<typeof post> => post !== undefined && post.pinnedOnProfile === false);
 
             const postsEnd = posts.length === 0
                 ? true
@@ -678,16 +708,20 @@ export const getUserPosts = async (req: Request, res: Response, next: NextFuncti
             return res.status(200).json(successResponse);
         } else {
             const userOldestPostId = await getOldestPost(username, user.id).then(res => res?.id);
+            const pinnedPostData = await getPinnedPost(user.id, username);
             const postsData = await getPosts(user.id, username);
+
+            const pinnedPost = pinnedPostData.length ? remapPostInformation(pinnedPostData[0]) : null;
 
             const posts = postsData.map((post) => {
                 // skip if there's no information
                 if (!post) return;
                 if (!post.author) return;
                 if (!post.author.profile) return;
+                if (post.isDeleted) return;
 
                 return remapPostInformation(post);
-            }).filter((post): post is NonNullable<typeof post> => post !== undefined);
+            }).filter((post): post is NonNullable<typeof post> => post !== undefined && post.pinnedOnProfile === false);
 
             const postsEnd = posts.length === 0
                 ? true
@@ -695,10 +729,11 @@ export const getUserPosts = async (req: Request, res: Response, next: NextFuncti
                     ? true
                     : false
 
-            const successResponse: SuccessResponse<{ posts: BasePostDataType[], cursor: number | null, end: boolean }> = {
+            const successResponse: SuccessResponse<{ posts: BasePostDataType[], pinnedPost: BasePostDataType | null, cursor: number | null, end: boolean }> = {
                 success: true,
                 data: {
                     posts: posts ?? [],
+                    pinnedPost: pinnedPost,
                     cursor: posts.slice(-1)[0]?.id ?? null,
                     end: postsEnd
                 },
@@ -732,7 +767,7 @@ export const getUserReposts = async (req: Request, res: Response, next: NextFunc
                     const successResponse: SuccessResponse<{ reposts: BasePostDataType[], cursor: number | null, end: boolean }> = {
                         success: true,
                         data: {
-                            posts: [],
+                            reposts: [],
                             cursor: null,
                             end: true,
                         },
@@ -780,7 +815,7 @@ export const getUserReposts = async (req: Request, res: Response, next: NextFunc
                 if (!repost.author.profile) return;
 
                 return remapPostInformation(repost);
-            }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined);
+            }).filter((repost): repost is NonNullable<typeof repost> => repost !== undefined && repost.pinnedOnProfile === false);
 
             const repostsEnd = reposts.length === 0
                 ? true
@@ -825,7 +860,7 @@ export const getUserReplies = async (req: Request, res: Response, next: NextFunc
                     const successResponse: SuccessResponse<{ replies: BasePostDataType[], cursor: number | null, end: boolean }> = {
                         success: true,
                         data: {
-                            posts: [],
+                            replies: [],
                             cursor: null,
                             end: true,
                         },
@@ -918,7 +953,7 @@ export const getUserMedia = async (req: Request, res: Response, next: NextFuncti
                     const successResponse: SuccessResponse<{ media: BasePostDataType[], cursor: number | null, end: boolean }> = {
                         success: true,
                         data: {
-                            posts: [],
+                            media: [],
                             cursor: null,
                             end: true,
                         },
@@ -1094,7 +1129,7 @@ export const getUserBookmarks = async (req: Request, res: Response, next: NextFu
                     const successResponse: SuccessResponse<{ bookmarks: BasePostDataType[], cursor: number | null, end: boolean }> = {
                         success: true,
                         data: {
-                            posts: [],
+                            bookmarks: [],
                             cursor: null,
                             end: true,
                         },
@@ -1168,7 +1203,7 @@ export const getUserBookmarks = async (req: Request, res: Response, next: NextFu
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const addRepost = async (req: Request, res: Response) => {
+export const addRepost = async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as UserProps;
     const postId = Number(req.params.id);
 
@@ -1176,22 +1211,26 @@ export const addRepost = async (req: Request, res: Response) => {
         const response = await addPostRepost(user.id, postId);
 
         if ('error' in response) {
-            return res.status(400).json({ error: 'User has already reposted the post' });
+            throw new AppError('User has already reposted the post', 400, 'ALREADY_REPOSTED');
         } else {
             // handle notifications
             createNotificationsForNewRepost(response.postId, user.id);
 
-            return res.status(201).json({ response });
+            const successResponse: SuccessResponse<undefined> = {
+                success: true,
+                data: undefined
+            };
+
+            return res.status(200).json(successResponse);
         }
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to repost the post' });
+        next(error);
     }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const removeRepost = async (req: Request, res: Response) => {
+export const removeRepost = async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as UserProps;
     const postId = Number(req.params.id);
 
@@ -1199,22 +1238,26 @@ export const removeRepost = async (req: Request, res: Response) => {
         const response = await removePostRepost(user.id, postId);
 
         if (!response) {
-            return res.status(404).json({ message: "User has not reposted the post." });
+            throw new AppError("User hasn't reposted the post", 400, 'NOT_REPOSTED');
         } else {
             // handle notifications
             removeNotificationsForRepost(response.postId, user.id);
 
-            return res.status(201).json({ response });
+            const successResponse: SuccessResponse<undefined> = {
+                success: true,
+                data: undefined
+            };
+
+            return res.status(200).json(successResponse);
         }
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to remove repost from the post' });
+        next(error);
     }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const addLike = async (req: Request, res: Response) => {
+export const addLike = async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as UserProps;
     const postId = Number(req.params.id);
 
@@ -1222,22 +1265,26 @@ export const addLike = async (req: Request, res: Response) => {
         const response = await addPostLike(user.id, postId);
 
         if ('error' in response) {
-            return res.status(400).json({ error: 'User has already liked the post' });
+            throw new AppError("User has already liked the post", 400, 'ALREADY_LIKED');
         } else {
             // handle notifications
             createNotificationsForNewLike(response.postId, user.id);
 
-            return res.status(201).json({ response });
+            const successResponse: SuccessResponse<undefined> = {
+                success: true,
+                data: undefined
+            };
+
+            return res.status(200).json(successResponse);
         }
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to like the post' });
+        next(error);
     }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const removeLike = async (req: Request, res: Response) => {
+export const removeLike = async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as UserProps;
     const postId = Number(req.params.id);
 
@@ -1245,22 +1292,26 @@ export const removeLike = async (req: Request, res: Response) => {
         const response = await removePostLike(user.id, postId);
 
         if (!response) {
-            return res.status(404).json({ message: "User has not liked the post." });
+            throw new AppError("User hasn't liked the post", 400, 'NOT_LIKED');
         } else {
             // handle notifications
             removeNotificationsForLike(response.postId, user.id);
 
-            return res.status(201).json({ response });
+            const successResponse: SuccessResponse<undefined> = {
+                success: true,
+                data: undefined
+            };
+
+            return res.status(200).json(successResponse);
         }
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to remove like from the post' });
+        next(error);
     }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const addBookmark = async (req: Request, res: Response) => {
+export const addBookmark = async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.user as UserProps;
     const postId = Number(req.params.id);
 
@@ -1268,19 +1319,23 @@ export const addBookmark = async (req: Request, res: Response) => {
         const response = await addPostBookmark(id, postId);
 
         if ('error' in response) {
-            return res.status(400).json({ error: 'User has already bookmarked the post' });
+            throw new AppError("User has already bookmarked the post", 400, 'ALREADY_BOOKMARKED');
         }
 
-        return res.status(201).json({ response });
+        const successResponse: SuccessResponse<undefined> = {
+            success: true,
+            data: undefined
+        };
+
+        return res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to bookmark the post' });
+        next(error);
     }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const removeBookmark = async (req: Request, res: Response) => {
+export const removeBookmark = async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.user as UserProps;
     const postId = Number(req.params.id);
 
@@ -1288,13 +1343,65 @@ export const removeBookmark = async (req: Request, res: Response) => {
         const response = await removePostBookmark(id, postId);
 
         if (!response) {
-            return res.status(404).json({ message: "User has not bookmarked the post." });
+            throw new AppError("User hasn't bookmarked the post", 400, 'NOT_BOOKMARKED');
         }
 
-        return res.status(201).json({ response });
+        const successResponse: SuccessResponse<undefined> = {
+            success: true,
+            data: undefined
+        };
+
+        return res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to remove bookmark from the post' });
+        next(error);
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const addPin = async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as UserProps;
+    const postId = Number(req.params.id);
+
+    try {
+        const post = await getPostInfo(user.id, postId);
+        if (!post) throw new AppError("Post not found", 404, 'POST_NOT_FOUND');
+        if (post.author.username !== user.username) throw new AppError("Not authorized", 401, 'NOT_AUTHORIZED');
+        
+        await addPostPin(user.id, postId);
+
+        const successResponse: SuccessResponse<undefined> = {
+            success: true,
+            data: undefined
+        };
+
+        return res.status(200).json(successResponse);
+    } catch (error) {
+        next(error);
+    }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const removePin = async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as UserProps;
+    const postId = Number(req.params.id);
+
+    try {
+        const post = await getPostInfo(user.id, postId);
+        if (!post) throw new AppError("Post not found", 404, 'POST_NOT_FOUND');
+        if (post.author.username !== user.username) throw new AppError("Not authorized", 401, 'NOT_AUTHORIZED');
+
+        await removePostPin(user.id);
+
+        const successResponse: SuccessResponse<undefined> = {
+            success: true,
+            data: undefined
+        };
+
+        return res.status(200).json(successResponse);
+    } catch (error) {
+        next(error);
     }
 };
 

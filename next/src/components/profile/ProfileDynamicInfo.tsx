@@ -49,6 +49,8 @@ export default function ProfileDynamicInfo({ user, authorized }: { user: UserDat
     const createdAt = new Date(user.createdAt);
     const joined = `${createdAt.toLocaleDateString('default', { month: 'long' })} ${createdAt.getFullYear()}`;
 
+    console.log(canView, isBlockedByViewer, hasBlockedViewer,)
+
     return (
         <div className='h-full grid grid-rows-[auto,auto,1fr]'>
             {authorized

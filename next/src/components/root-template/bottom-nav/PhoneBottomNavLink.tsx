@@ -17,9 +17,8 @@ export default function PhoneBottomNavLink({ link, messages, notifications }: { 
 
     if (link.label === 'Notifications') {
         return (
-            <Link
-                href={link.route} >
-                <div className='relative flex items-center gap-4'>
+            <Link href={link.route} className='h-full w-full flex-center'>
+                <div className='relative flex items-center'>
                     {notifications === true && (
                         <div className='absolute right-0 top-0 translate-y-[-40%] translate-x-[50%] z-10 w-[12px] h-[12px] bg-primary rounded-full'></div>
                     )}
@@ -31,9 +30,8 @@ export default function PhoneBottomNavLink({ link, messages, notifications }: { 
 
     if (link.label === 'Messages') {
         return (
-            <Link
-                href={link.route}>
-                <div className='relative flex items-center gap-4'>
+            <Link href={link.route} className='h-full w-full flex-center'>
+                <div className='relative flex items-center'>
                     {messages === true && (
                         <div className='absolute right-0 top-0 translate-y-[-40%] translate-x-[50%] z-10 w-[12px] h-[12px] bg-primary rounded-full'></div>
                     )}
@@ -44,7 +42,7 @@ export default function PhoneBottomNavLink({ link, messages, notifications }: { 
     }
 
     return (
-        <Link href={link.route}>
+        <Link href={link.route} className='h-full w-full flex-center'>
             <Icon size={24} className={pathName === link.route ? 'text-primary' : 'text-secondary-foreground'} />
         </Link>
     )

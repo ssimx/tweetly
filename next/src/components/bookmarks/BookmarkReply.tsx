@@ -1,6 +1,6 @@
 'use client';
 import UserHoverCard from '../misc/UserHoverCard';
-import { useEffect, useReducer } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PostMenuButton from '../posts/post-parts/PostMenuButton';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
@@ -19,6 +19,7 @@ export default function BookmarkReply({ post }: { post: BasePostDataType }) {
     const { suggestions: userFollowSuggestions } = useFollowSuggestionContext();
     const { blockedUsers } = useBlockedUsersContext();
     const router = useRouter();
+    const [postIsRemoved, setPostIsRemoved] = useState(false);
 
     // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // PARENT POST
@@ -111,6 +112,14 @@ export default function BookmarkReply({ post }: { post: BasePostDataType }) {
         )
     }
 
+    if (postIsRemoved) {
+        return (
+            <div className="w-full px-4 py-2 flex">
+                <p className="text-secondary-text">You&apos;ve removed this post.</p>
+            </div>
+        )
+    }
+
     return (
         <div
             className='px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'
@@ -125,6 +134,7 @@ export default function BookmarkReply({ post }: { post: BasePostDataType }) {
                 userState={replyUserState}
                 dispatch={replyDispatch}
                 openPhoto={openPhoto}
+                setPostIsRemoved={setPostIsRemoved}
             >
 
                 <div

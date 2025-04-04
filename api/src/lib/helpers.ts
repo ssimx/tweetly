@@ -128,6 +128,10 @@ type RawPostDataType = {
     images: string[],
     createdAt: Date,
     updatedAt: Date,
+    isDeleted: Boolean,
+    pinnedOnProfile: {
+        pinnedPostId: number | null
+    } | null,
     author: RawUserDataType,
 
     replyTo?: Omit<RawPostDataType, 'replyTo'> | null | undefined,
@@ -161,6 +165,8 @@ export function remapPostInformation(post: RawPostDataType) {
         images: post.images,
         createdAt: post.createdAt,
         updatedAt: post.updatedAt,
+        isDeleted: post.isDeleted,
+        pinnedOnProfile: post.pinnedOnProfile === null ? false : post.pinnedOnProfile.pinnedPostId === null ? false : true,
         author: remapUserInformation(post.author),
 
         replyTo: post.replyTo ? {
@@ -169,6 +175,7 @@ export function remapPostInformation(post: RawPostDataType) {
             images: post.replyTo.images,
             createdAt: post.replyTo.createdAt,
             updatedAt: post.replyTo.updatedAt,
+            isDeleted: post.replyTo.isDeleted,
             author: remapUserInformation(post.replyTo.author),
 
             stats: {
@@ -204,6 +211,10 @@ type RawVisitedPostDataType = {
     images: string[],
     createdAt: Date,
     updatedAt: Date,
+    isDeleted: Boolean,
+    pinnedOnProfile: {
+        pinnedPostId: number | null
+    } | null,
     author: RawUserDataType,
 
     // If it's a reply, it has replyTo parent information which itself doesn't have replyTo information
@@ -241,6 +252,8 @@ export function remapVisitedPostInformation(post: RawVisitedPostDataType) {
         images: post.images,
         createdAt: post.createdAt,
         updatedAt: post.updatedAt,
+        isDeleted: post.isDeleted,
+        pinnedOnProfile: post.pinnedOnProfile === null ? false : post.pinnedOnProfile.pinnedPostId === null ? false : true,
         author: remapUserInformation(post.author),
 
         replyTo: post.replyTo ? {
@@ -249,6 +262,8 @@ export function remapVisitedPostInformation(post: RawVisitedPostDataType) {
             images: post.replyTo.images,
             createdAt: post.replyTo.createdAt,
             updatedAt: post.replyTo.updatedAt,
+            isDeleted: post.replyTo.isDeleted,
+            pinnedOnProfile: post.replyTo.pinnedOnProfile === null ? false : post.replyTo.pinnedOnProfile.pinnedPostId === null ? false : true,
             author: remapUserInformation(post.replyTo.author),
 
             stats: {
@@ -324,6 +339,8 @@ export function remapNotificationInformation(notification: RawNotificationDataTy
             images: notification.post.images,
             createdAt: notification.post.createdAt,
             updatedAt: notification.post.updatedAt,
+            isDeleted: notification.post.isDeleted,
+            pinnedOnProfile: notification.post.pinnedOnProfile === null ? false : notification.post.pinnedOnProfile.pinnedPostId === null ? false : true,
             author: remapUserInformation(notification.post.author),
 
             replyTo: notification.post.replyTo ? {
@@ -332,6 +349,8 @@ export function remapNotificationInformation(notification: RawNotificationDataTy
                 images: notification.post.replyTo.images,
                 createdAt: notification.post.replyTo.createdAt,
                 updatedAt: notification.post.replyTo.updatedAt,
+                isDeleted: notification.post.replyTo.isDeleted,
+                pinnedOnProfile: notification.post.replyTo.pinnedOnProfile === null ? false : notification.post.replyTo.pinnedOnProfile.pinnedPostId === null ? false : true,
                 author: remapUserInformation(notification.post.replyTo.author),
             } : undefined,
 

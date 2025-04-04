@@ -58,7 +58,7 @@ export default function FeedContent() {
         if (newPostsRef && newPostsRef.current && !newPostsContainerInView) {
             setIsNewPostsIndicatorVisible(true);
             return;
-        } 
+        }
 
         setIsNewPostsIndicatorVisible(false);
     }, [activeTab, newPostsRef, newPostsContainerInView]);
@@ -149,6 +149,8 @@ export default function FeedContent() {
                     const { data } = response as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
                     if (data === undefined) throw new Error('Data is missing in response');
                     else if (data.posts === undefined) throw new Error('Posts property is missing in data response');
+
+                    console.log(data.posts)
 
                     setGlobalFeedEndReached(data.end ?? true);
                     setGlobalFeedCursor(data.posts.length ? data.posts.slice(-1)[0].id : null);
@@ -327,7 +329,7 @@ export default function FeedContent() {
             {activeTab === 0
                 && newGlobalPostCount !== 0 && (
                     <>
-                    <button ref={setNewPostsRefs} onClick={() => showNewPosts('GLOBAL')} className='text-primary py-3 hover:bg-post-hover'>
+                        <button ref={setNewPostsRefs} onClick={() => showNewPosts('GLOBAL')} className='text-primary py-3 hover:bg-post-hover'>
                             {newGlobalPostCount > 1 ? `Show ${newGlobalPostCount} posts` : 'Show new post'}
                         </button>
                         <div className='feed-hr-line'></div>

@@ -1,11 +1,4 @@
-import { Post, Prisma, PrismaClient, Profile, User } from '@prisma/client';
-import { UserProps } from '../lib/types';
-import {
-    createNotificationsForNewLike,
-    createNotificationsForNewRepost,
-    removeNotificationsForLike,
-    removeNotificationsForRepost,
-} from './notificationService';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { NewPostType } from '../controllers/postController';
 import { AppError } from 'tweetly-shared';
 const prisma = new PrismaClient();
@@ -19,6 +12,9 @@ export const getGlobal30DayPosts = async (userId: number, cursor?: number) => {
     return await prisma.post.findMany({
         where: {
             AND: [
+                {
+                    isDeleted: false,
+                },
                 {
                     createdAt: {
                         gte: date,
@@ -60,6 +56,12 @@ export const getGlobal30DayPosts = async (userId: number, cursor?: number) => {
             images: true,
             createdAt: true,
             updatedAt: true,
+            isDeleted: true,
+            pinnedOnProfile: {
+                select: {
+                    pinnedPostId: true,
+                }
+            },
             author: {
                 select: {
                     username: true,
@@ -160,6 +162,9 @@ export const getOldestGlobal30DayPost = async (userId: number) => {
         where: {
             AND: [
                 {
+                    isDeleted: false,
+                },
+                {
                     createdAt: {
                         gte: date,
                     },
@@ -219,6 +224,9 @@ export const getGlobal30DayNewPosts = async (
         where: {
             AND: [
                 {
+                    isDeleted: false,
+                },
+                {
                     createdAt: {
                         gt: cursorDate,
                     },
@@ -257,6 +265,12 @@ export const getGlobal30DayNewPosts = async (
             images: true,
             createdAt: true,
             updatedAt: true,
+            isDeleted: true,
+            pinnedOnProfile: {
+                select: {
+                    pinnedPostId: true,
+                }
+            },
             author: {
                 select: {
                     username: true,
@@ -360,6 +374,9 @@ export const getFollowing30DayPosts = async (
         where: {
             AND: [
                 {
+                    isDeleted: false,
+                },
+                {
                     createdAt: {
                         gte: date,
                     },
@@ -403,6 +420,12 @@ export const getFollowing30DayPosts = async (
             images: true,
             createdAt: true,
             updatedAt: true,
+            isDeleted: true,
+            pinnedOnProfile: {
+                select: {
+                    pinnedPostId: true,
+                }
+            },
             author: {
                 select: {
                     username: true,
@@ -503,6 +526,9 @@ export const getOldestFollowing30DayPost = async (userId: number) => {
         where: {
             AND: [
                 {
+                    isDeleted: false,
+                },
+                {
                     createdAt: {
                         gte: date,
                     },
@@ -565,6 +591,9 @@ export const getFollowing30DayNewPosts = async (
         where: {
             AND: [
                 {
+                    isDeleted: false,
+                },
+                {
                     createdAt: {
                         gt: cursorDate,
                     },
@@ -606,6 +635,12 @@ export const getFollowing30DayNewPosts = async (
             images: true,
             createdAt: true,
             updatedAt: true,
+            isDeleted: true,
+            pinnedOnProfile: {
+                select: {
+                    pinnedPostId: true,
+                }
+            },
             author: {
                 select: {
                     username: true,
@@ -709,6 +744,12 @@ export const getPostInfo = async (userId: number, postId: number) => {
             images: true,
             createdAt: true,
             updatedAt: true,
+            isDeleted: true,
+            pinnedOnProfile: {
+                select: {
+                    pinnedPostId: true,
+                }
+            },
             author: {
                 select: {
                     username: true,
@@ -770,6 +811,12 @@ export const getPostInfo = async (userId: number, postId: number) => {
                     images: true,
                     createdAt: true,
                     updatedAt: true,
+                    isDeleted: true,
+                    pinnedOnProfile: {
+                        select: {
+                            pinnedPostId: true,
+                        }
+                    },
                     author: {
                         select: {
                             username: true,
@@ -888,6 +935,12 @@ export const getPostInfo = async (userId: number, postId: number) => {
                     images: true,
                     createdAt: true,
                     updatedAt: true,
+                    isDeleted: true,
+                    pinnedOnProfile: {
+                        select: {
+                            pinnedPostId: true,
+                        }
+                    },
                     author: {
                         select: {
                             username: true,
@@ -1064,6 +1117,12 @@ export const getPostReplies = async (
             images: true,
             createdAt: true,
             updatedAt: true,
+            isDeleted: true,
+            pinnedOnProfile: {
+                select: {
+                    pinnedPostId: true,
+                }
+            },
             author: {
                 select: {
                     username: true,
@@ -1221,6 +1280,9 @@ export const getPostsBySearch = async (
             OR: searchTerms.map((term) => ({
                 AND: [
                     {
+                        isDeleted: false
+                    },
+                    {
                         content: { contains: term, mode: 'insensitive' },
                     },
                     {
@@ -1272,6 +1334,11 @@ export const getPostsBySearch = async (
             images: true,
             createdAt: true,
             updatedAt: true,
+            pinnedOnProfile: {
+                select: {
+                    pinnedPostId: true,
+                }
+            },
             author: {
                 select: {
                     username: true,
@@ -1371,6 +1438,9 @@ export const getLastPostBySearch = async (
             OR: searchTerms.map((term) => ({
                 AND: [
                     {
+                        isDeleted: false
+                    },
+                    {
                         content: { contains: term, mode: 'insensitive' },
                     },
                     {
@@ -1433,6 +1503,9 @@ export const getMorePostsBySearch = async (
             OR: searchTerms.map((term) => ({
                 AND: [
                     {
+                        isDeleted: false
+                    },
+                    {
                         content: { contains: term, mode: 'insensitive' },
                     },
                     {
@@ -1485,6 +1558,11 @@ export const getMorePostsBySearch = async (
             images: true,
             createdAt: true,
             updatedAt: true,
+            pinnedOnProfile: {
+                select: {
+                    pinnedPostId: true,
+                }
+            },
             author: {
                 select: {
                     username: true,
@@ -1588,6 +1666,12 @@ export const getTopPosts = async (userId: number) => {
             images: true,
             createdAt: true,
             updatedAt: true,
+            isDeleted: true,
+            pinnedOnProfile: {
+                select: {
+                    pinnedPostId: true,
+                }
+            },
             author: {
                 select: {
                     username: true,
@@ -1684,6 +1768,9 @@ export const getTopPosts = async (userId: number) => {
             where: {
                 AND: [
                     {
+                        isDeleted: false
+                    },
+                    {
                         author: {
                             blockedUsers: {
                                 none: {
@@ -1737,6 +1824,12 @@ export const getTopPosts = async (userId: number) => {
                 images: true,
                 createdAt: true,
                 updatedAt: true,
+                isDeleted: true,
+                pinnedOnProfile: {
+                    select: {
+                        pinnedPostId: true,
+                    }
+                },
                 author: {
                     select: {
                         username: true,
@@ -1858,6 +1951,122 @@ export const getTrendingHastags = async () => {
 //                  |
 //                  V
 
+export const getPinnedPost = async (
+    userId: number,
+    username: string,
+) => {
+    return await prisma.post.findMany({
+        where: {
+            pinnedOnProfile: {
+                user: {
+                    username
+                }
+            }
+        },
+        select: {
+            id: true,
+            content: true,
+            images: true,
+            createdAt: true,
+            updatedAt: true,
+            isDeleted: true,
+            pinnedOnProfile: {
+                select: {
+                    pinnedPostId: true,
+                }
+            },
+            author: {
+                select: {
+                    username: true,
+                    createdAt: true,
+                    profile: {
+                        select: {
+                            name: true,
+                            bio: true,
+                            location: true,
+                            websiteUrl: true,
+                            profilePicture: true,
+                            bannerPicture: true,
+                        }
+                    },
+                    followers: {
+                        where: {
+                            followerId: userId
+                        },
+                        select: {
+                            followerId: true
+                        }
+                    },
+                    following: {
+                        where: {
+                            followeeId: userId
+                        },
+                        select: {
+                            followeeId: true
+                        }
+                    },
+                    blockedBy: {
+                        where: {
+                            blockerId: userId,
+                        },
+                        select: {
+                            blockerId: true,
+                        }
+                    },
+                    blockedUsers: {
+                        where: {
+                            blockedId: userId,
+                        },
+                        select: {
+                            blockedId: true,
+                        }
+                    },
+                    _count: {
+                        select: {
+                            followers: true,
+                            following: true,
+                        },
+                    },
+                },
+            },
+            reposts: {
+                where: {
+                    userId: userId
+                },
+                select: {
+                    userId: true,
+                    createdAt: true,
+                },
+            },
+            likes: {
+                where: {
+                    userId: userId
+                },
+                select: {
+                    userId: true,
+                },
+            },
+            bookmarks: {
+                where: {
+                    userId: userId
+                },
+                select: {
+                    userId: true,
+                },
+            },
+            _count: {
+                select: {
+                    replies: true,
+                    reposts: true,
+                    likes: true,
+                },
+            },
+        },
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
 export const getPosts = async (
     userId: number,
     username: string,
@@ -1867,16 +2076,14 @@ export const getPosts = async (
         where: {
             AND: [
                 {
+                    isDeleted: false
+                },
+                {
                     author: {
                         username,
                         blockedUsers: {
                             none: {
                                 blockedId: userId,
-                            },
-                        },
-                        blockedBy: {
-                            none: {
-                                blockerId: userId,
                             },
                         },
                     },
@@ -1913,6 +2120,12 @@ export const getPosts = async (
             images: true,
             createdAt: true,
             updatedAt: true,
+            isDeleted: true,
+            pinnedOnProfile: {
+                select: {
+                    pinnedPostId: true,
+                }
+            },
             author: {
                 select: {
                     username: true,
@@ -2010,16 +2223,14 @@ export const getOldestPost = async (username: string, userId: number) => {
         where: {
             AND: [
                 {
+                    isDeleted: false
+                },
+                {
                     author: {
                         username,
                         blockedUsers: {
                             none: {
                                 blockedId: userId,
-                            },
-                        },
-                        blockedBy: {
-                            none: {
-                                blockerId: userId,
                             },
                         },
                     },
@@ -2061,6 +2272,14 @@ export const getReposts = async (
 ) => {
     return await prisma.post.findMany({
         where: {
+            isDeleted: false,
+            author: {
+                blockedUsers: {
+                    none: {
+                        blockedId: userId,
+                    },
+                },
+            },
             reposts: {
                 some: {
                     user: {
@@ -2075,18 +2294,6 @@ export const getReposts = async (
                                 blockerId: userId,
                             },
                         },
-                    },
-                },
-            },
-            author: {
-                blockedUsers: {
-                    none: {
-                        blockedId: userId,
-                    },
-                },
-                blockedBy: {
-                    none: {
-                        blockerId: userId,
                     },
                 },
             },
@@ -2108,6 +2315,12 @@ export const getReposts = async (
             images: true,
             createdAt: true,
             updatedAt: true,
+            isDeleted: true,
+            pinnedOnProfile: {
+                select: {
+                    pinnedPostId: true,
+                }
+            },
             author: {
                 select: {
                     username: true,
@@ -2168,6 +2381,12 @@ export const getReposts = async (
                     images: true,
                     createdAt: true,
                     updatedAt: true,
+                    isDeleted: true,
+                    pinnedOnProfile: {
+                        select: {
+                            pinnedPostId: true,
+                        }
+                    },
                     author: {
                         select: {
                             username: true,
@@ -2294,22 +2513,28 @@ export const getReposts = async (
 export const getOldestRepost = async (username: string, userId: number) => {
     return await prisma.post.findFirst({
         where: {
-            reposts: {
-                some: {
-                    user: {
-                        username: username,
-                    },
-                },
-            },
+            isDeleted: false,
             author: {
                 blockedUsers: {
                     none: {
                         blockedId: userId,
                     },
                 },
-                blockedBy: {
-                    none: {
-                        blockerId: userId,
+            },
+            reposts: {
+                some: {
+                    user: {
+                        username: username,
+                        blockedUsers: {
+                            none: {
+                                blockedId: userId,
+                            },
+                        },
+                        blockedBy: {
+                            none: {
+                                blockerId: userId,
+                            },
+                        },
                     },
                 },
             },
@@ -2339,16 +2564,12 @@ export const getReplies = async (
         where: {
             AND: [
                 {
+                    isDeleted: false,
                     author: {
                         username,
                         blockedUsers: {
                             none: {
                                 blockedId: userId,
-                            },
-                        },
-                        blockedBy: {
-                            none: {
-                                blockerId: userId,
                             },
                         },
                     },
@@ -2397,6 +2618,12 @@ export const getReplies = async (
             images: true,
             createdAt: true,
             updatedAt: true,
+            isDeleted: true,
+            pinnedOnProfile: {
+                select: {
+                    pinnedPostId: true,
+                }
+            },
             author: {
                 select: {
                     username: true,
@@ -2457,6 +2684,12 @@ export const getReplies = async (
                     images: true,
                     createdAt: true,
                     updatedAt: true,
+                    isDeleted: true,
+                    pinnedOnProfile: {
+                        select: {
+                            pinnedPostId: true,
+                        }
+                    },
                     author: {
                         select: {
                             username: true,
@@ -2585,16 +2818,12 @@ export const getOldestReply = async (username: string, userId: number) => {
         where: {
             AND: [
                 {
+                    isDeleted: false,
                     author: {
                         username,
                         blockedUsers: {
                             none: {
                                 blockedId: userId,
-                            },
-                        },
-                        blockedBy: {
-                            none: {
-                                blockerId: userId,
                             },
                         },
                     },
@@ -2645,16 +2874,12 @@ export const getMedia = async (
         where: {
             AND: [
                 {
+                    isDeleted: false,
                     author: {
                         username,
                         blockedUsers: {
                             none: {
                                 blockedId: userId,
-                            },
-                        },
-                        blockedBy: {
-                            none: {
-                                blockerId: userId,
                             },
                         },
                     },
@@ -2683,6 +2908,12 @@ export const getMedia = async (
             images: true,
             createdAt: true,
             updatedAt: true,
+            isDeleted: true,
+            pinnedOnProfile: {
+                select: {
+                    pinnedPostId: true,
+                }
+            },
             author: {
                 select: {
                     username: true,
@@ -2743,6 +2974,12 @@ export const getMedia = async (
                     images: true,
                     createdAt: true,
                     updatedAt: true,
+                    isDeleted: true,
+                    pinnedOnProfile: {
+                        select: {
+                            pinnedPostId: true,
+                        }
+                    },
                     author: {
                         select: {
                             username: true,
@@ -2877,16 +3114,12 @@ export const getOldestMedia = async (username: string, userId: number) => {
         where: {
             AND: [
                 {
+                    isDeleted: false,
                     author: {
                         username,
                         blockedUsers: {
                             none: {
                                 blockedId: userId,
-                            },
-                        },
-                        blockedBy: {
-                            none: {
-                                blockerId: userId,
                             },
                         },
                     },
@@ -2922,6 +3155,7 @@ export const getLikes = async (
         where: {
             userId: userId,
             post: {
+                isDeleted: false,
                 author: {
                     blockedUsers: {
                         none: {
@@ -2960,6 +3194,12 @@ export const getLikes = async (
                     images: true,
                     createdAt: true,
                     updatedAt: true,
+                    isDeleted: true,
+                    pinnedOnProfile: {
+                        select: {
+                            pinnedPostId: true,
+                        }
+                    },
                     author: {
                         select: {
                             username: true,
@@ -3020,6 +3260,12 @@ export const getLikes = async (
                             images: true,
                             createdAt: true,
                             updatedAt: true,
+                            isDeleted: true,
+                            pinnedOnProfile: {
+                                select: {
+                                    pinnedPostId: true,
+                                }
+                            },
                             author: {
                                 select: {
                                     username: true,
@@ -3150,6 +3396,7 @@ export const getOldestLike = async (userId: number,) => {
         where: {
             userId: userId,
             post: {
+                isDeleted: false,
                 author: {
                     blockedUsers: {
                         none: {
@@ -3195,6 +3442,7 @@ export const getBookmarks = async (
         where: {
             userId: userId,
             post: {
+                isDeleted: false,
                 author: {
                     blockedUsers: {
                         none: {
@@ -3233,6 +3481,12 @@ export const getBookmarks = async (
                     images: true,
                     createdAt: true,
                     updatedAt: true,
+                    isDeleted: true,
+                    pinnedOnProfile: {
+                        select: {
+                            pinnedPostId: true,
+                        }
+                    },
                     author: {
                         select: {
                             username: true,
@@ -3293,6 +3547,12 @@ export const getBookmarks = async (
                             images: true,
                             createdAt: true,
                             updatedAt: true,
+                            isDeleted: true,
+                            pinnedOnProfile: {
+                                select: {
+                                    pinnedPostId: true,
+                                }
+                            },
                             author: {
                                 select: {
                                     username: true,
@@ -3423,6 +3683,7 @@ export const getOldestBookmark = async (userId: number) => {
         where: {
             userId: userId,
             post: {
+                isDeleted: false,
                 author: {
                     blockedUsers: {
                         none: {
@@ -3467,7 +3728,9 @@ export const getOldestBookmark = async (userId: number) => {
 
 export const postExists = async (id: number) => {
     return await prisma.post.findUnique({
-        where: { id },
+        where: {
+            id,
+        },
     });
 };
 
@@ -3523,6 +3786,12 @@ export const createPost = async (userId: number, postData: NewPostType) => {
                 images: true,
                 createdAt: true,
                 updatedAt: true,
+                isDeleted: true,
+                pinnedOnProfile: {
+                    select: {
+                        pinnedPostId: true,
+                    }
+                },
                 author: {
                     select: {
                         username: true,
@@ -3583,6 +3852,12 @@ export const createPost = async (userId: number, postData: NewPostType) => {
                         images: true,
                         createdAt: true,
                         updatedAt: true,
+                        isDeleted: true,
+                        pinnedOnProfile: {
+                            select: {
+                                pinnedPostId: true,
+                            }
+                        },
                         author: {
                             select: {
                                 username: true,
@@ -3715,8 +3990,44 @@ export const createPost = async (userId: number, postData: NewPostType) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
+export const deletePost = async (postId: number) => {
+    return await prisma.$transaction([
+        prisma.profile.updateMany({
+            where: {
+                pinnedPostId: postId,
+            },
+            data: {
+                pinnedPostId: null
+            }
+        }),
+
+        // Mark the post as deleted
+        prisma.post.update({
+            where: {
+                id: postId
+            },
+            data: {
+                isDeleted: true,
+                deletedAt: new Date(),
+                content: null,
+                images: [],
+            }
+        })
+    ]);
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
 export const addPostRepost = async (userId: number, postId: number) => {
     try {
+        const post = prisma.post.findUnique({
+            where: {
+                id: postId,
+                isDeleted: false,
+            }
+        });
+        if (!post) throw new AppError('Post not found', 404, 'NOT_FOUND');
+
         return await prisma.postRepost.create({
             data: {
                 postId,
@@ -3753,6 +4064,14 @@ export const removePostRepost = async (userId: number, postId: number) => {
 
 export const addPostLike = async (userId: number, postId: number) => {
     try {
+        const post = prisma.post.findUnique({
+            where: {
+                id: postId,
+                isDeleted: false,
+            }
+        });
+        if (!post) throw new AppError('Post not found', 404, 'NOT_FOUND');
+
         return await prisma.postLike.create({
             data: {
                 postId,
@@ -3788,6 +4107,14 @@ export const removePostLike = async (userId: number, postId: number) => {
 
 export const addPostBookmark = async (userId: number, postId: number) => {
     try {
+        const post = prisma.post.findUnique({
+            where: {
+                id: postId,
+                isDeleted: false,
+            }
+        });
+        if (!post) throw new AppError('Post not found', 404, 'NOT_FOUND');
+
         return await prisma.postBookmark.create({
             data: {
                 postId,
@@ -3816,5 +4143,39 @@ export const removePostBookmark = async (userId: number, postId: number) => {
         where: {
             postBookmarkId: { postId, userId },
         },
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const addPostPin = async (userId: number, postId: number) => {
+    const post = prisma.post.findUnique({
+        where: {
+            id: postId,
+            isDeleted: false,
+        }
+    });
+    if (!post) throw new AppError('Post not found', 404, 'NOT_FOUND');
+
+    return await prisma.profile.update({
+        where: {
+            userId
+        },
+        data: {
+            pinnedPostId: postId,
+        }
+    });
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
+export const removePostPin = async (userId: number) => {
+    return await prisma.profile.update({
+        where: {
+            userId
+        },
+        data: {
+            pinnedPostId: null,
+        }
     });
 };

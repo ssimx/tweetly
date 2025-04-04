@@ -90,7 +90,7 @@ export default function PhoneBottomNav({ sidebarOpen, messages, notifications }:
 
     return (
         <nav
-            className={`w-full h-[50px] fixed bottom-0 right-0 bg-gradient-to-b xs:hidden 
+            className={`w-full h-[50px] px-2 fixed bottom-0 right-0 bg-gradient-to-b xs:hidden 
                 ${savedTheme === 0 ? 'from-black-1/90 from-0% to-20% to-black-1' : 'from-white-1/90 from-0% to-20% to-white-1'}
                 ${isTransparent ? 'opacity-30' : 'opacity-100'}
                 transform transition-transform duration-300
@@ -106,7 +106,7 @@ export default function PhoneBottomNav({ sidebarOpen, messages, notifications }:
                 </div>
             )}
 
-            <div className='h-full flex gap-8 justify-evenly items-center'>
+            <div className='h-full flex gap-6 items-center'>
                 {bottomNavLinks.map((link) => (
                     <PhoneBottomNavLink
                         key={link.label}
