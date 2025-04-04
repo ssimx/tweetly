@@ -1,6 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { useEffect, useReducer, useState } from 'react';
+import { useEffect, useReducer } from 'react';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import { useBlockedUsersContext } from '@/context/BlockedUsersContextProvider';
 import PostMenuButton from '../post-parts/PostMenuButton';
@@ -12,7 +12,6 @@ export default function ReplyPost({ post }: { post: BasePostDataType }) {
     const { suggestions: userFollowSuggestions } = useFollowSuggestionContext();
     const { blockedUsers } = useBlockedUsersContext();
     const router = useRouter();
-    const [postIsRemoved, setPostIsRemoved] = useState(false);
 
     // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     const userInitialState: UserStateType = {
@@ -82,14 +81,6 @@ export default function ReplyPost({ post }: { post: BasePostDataType }) {
         )
     }
 
-    if (postIsRemoved) {
-        return (
-            <div className="w-full px-4 py-2 flex">
-                <p className="text-secondary-text">You&apos;ve removed this post.</p>
-            </div>
-        )
-    }
-
     return (
         <div
             className='px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'
@@ -103,7 +94,6 @@ export default function ReplyPost({ post }: { post: BasePostDataType }) {
                 userState={userState}
                 dispatch={dispatch}
                 openPhoto={openPhoto}
-                setPostIsRemoved={setPostIsRemoved}
             />
 
         </div>

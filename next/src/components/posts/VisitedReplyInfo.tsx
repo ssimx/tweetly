@@ -14,7 +14,6 @@ export default function VisitedReplyInfo({ post, photoId }: { post: VisitedPostD
     const { suggestions: userFollowSuggestions } = useFollowSuggestionContext();
     const router = useRouter();
     const pathname = usePathname();
-    const [parentPostIsRemoved, setParentPostIsRemoved] = useState(false);
 
     // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // PARENT POST IS NOT NECESSARILY PROFILE USER'S OWN POST SO IT NEEDS NEW STATE IF THAT'S THE CASE
@@ -165,33 +164,16 @@ export default function VisitedReplyInfo({ post, photoId }: { post: VisitedPostD
     return (
         <>
             <div className='flex flex-col'>
-                {parentPostIsRemoved
-                    ? (
-                        <div onClick={(e) => handleCardClick(e, post.replyTo!.author.username, post.replyTo!.id)} className='w-full flex flex-col gap-2 px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'>
-                            <BasicPostTemplate
-                                post={post.replyTo as BasePostDataType}
-                                userState={parentUserState}
-                                dispatch={parentDispatch}
-                                openPhoto={openPhoto}
-                                postIsRemoved={parentPostIsRemoved}
-                                setPostIsRemoved={setParentPostIsRemoved}
-                                type='parent'
-                            />
-                        </div>
-                    )
-                    : (
-                        <div onClick={(e) => handleCardClick(e, post.replyTo!.author.username, post.replyTo!.id)} className='w-full flex flex-col gap-2 px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'>
-                            <BasicPostTemplate
-                                post={post.replyTo as BasePostDataType}
-                                userState={parentUserState}
-                                dispatch={parentDispatch}
-                                openPhoto={openPhoto}
-                                setPostIsRemoved={setParentPostIsRemoved}
-                                type='parent'
-                            />
-                        </div>
-                    )
-                }
+
+                <div onClick={(e) => handleCardClick(e, post.replyTo!.author.username, post.replyTo!.id)} className='w-full flex flex-col gap-2 px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'>
+                    <BasicPostTemplate
+                        post={post.replyTo as BasePostDataType}
+                        userState={parentUserState}
+                        dispatch={parentDispatch}
+                        openPhoto={openPhoto}
+                        type='parent'
+                    />
+                </div>
 
                 <VisitedPostTemplate
                     post={post}
@@ -271,31 +253,21 @@ export default function VisitedReplyInfo({ post, photoId }: { post: VisitedPostD
                             className={`w-full h-auto sm:flex sm:grow sm:justify-center lg:block bg-primary-foreground p-2 border-l-[1px] border-primary-border lg:max-h-[100vh] lg:overflow-y-auto ${!isPostInfoVisible ? 'translate-x-[100%]' : ''}`}
                         >
 
-                            {parentPostIsRemoved
-                                ? (
-                                    <div className="w-full px-4 py-2 flex">
-                                        <p className="text-secondary-text">You&apos;ve removed this post.</p>
-                                    </div>
-                                )
-                                : (
-                                    <div
-                                        className='px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'
-                                        role="link"
-                                        tabIndex={0}
-                                        aria-label={`View post by ${post.replyTo!.author.username} that was replied to`}
-                                        onMouseDown={(e) => handleCardClick(e, post.replyTo!.author.username, post.replyTo!.id)} >
+                            <div
+                                className='px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'
+                                role="link"
+                                tabIndex={0}
+                                aria-label={`View post by ${post.replyTo!.author.username} that was replied to`}
+                                onMouseDown={(e) => handleCardClick(e, post.replyTo!.author.username, post.replyTo!.id)} >
 
-                                        <BasicPostTemplate
-                                            post={post.replyTo as BasePostDataType}
-                                            userState={parentUserState}
-                                            dispatch={parentDispatch}
-                                            openPhoto={openPhoto}
-                                            setPostIsRemoved={setParentPostIsRemoved}
-                                            type='parent'
-                                        />
-                                    </div>
-                                )
-                            }
+                                <BasicPostTemplate
+                                    post={post.replyTo as BasePostDataType}
+                                    userState={parentUserState}
+                                    dispatch={parentDispatch}
+                                    openPhoto={openPhoto}
+                                    type='parent'
+                                />
+                            </div>
 
                             <VisitedPostTemplate
                                 post={post}

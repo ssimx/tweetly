@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Pin } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
@@ -22,7 +22,6 @@ export default function ProfilePinnedPost({ post, userState, dispatch }: Profile
     const { suggestions: userFollowSuggestions } = useFollowSuggestionContext();
     const { blockedUsers } = useBlockedUsersContext();
     const router = useRouter();
-    const [postIsRemoved, setPostIsRemoved] = useState(false);
 
     // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // POST SHARES STATE WITH PROFILE USER
@@ -77,14 +76,6 @@ export default function ProfilePinnedPost({ post, userState, dispatch }: Profile
         )
     }
 
-    if (postIsRemoved) {
-        return (
-            <div className="w-full px-4 py-2 flex">
-                <p className="text-secondary-text">You&apos;ve removed this post.</p>
-            </div>
-        )
-    }
-
     return (
         <div
             className='w-full flex flex-col gap-2 px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'
@@ -103,7 +94,6 @@ export default function ProfilePinnedPost({ post, userState, dispatch }: Profile
                 userState={userState}
                 dispatch={dispatch}
                 openPhoto={openPhoto}
-                setPostIsRemoved={setPostIsRemoved}
             />
 
         </div>

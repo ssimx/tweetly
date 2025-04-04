@@ -10,6 +10,7 @@ import NewPost from '@/components/feed/NewPost';
 import PostReplies from '../post-replies/PostReplies';
 import { BasePostDataType, UserAndViewerRelationshipType, UserStatsType } from 'tweetly-shared';
 import { UserActionType } from '@/lib/userReducer';
+import { usePostInteraction } from '@/context/PostInteractionContextProvider';
 
 type VisitedPostTemplateType = {
     // POST INFO
@@ -54,12 +55,16 @@ export default function VisitedPostTemplate({
     openPhoto,
     type = 'normal'
 }: VisitedPostTemplateType) {
+    const { interaction } = usePostInteraction(post);
 
-    if (post.isDeleted) {
+    if (post.isDeleted || interaction.deleted) {
         return (
             <div className='w-full mt-2 flex flex-col gap-2'>
                 <div className='w-[95%] mx-auto p-4 flex flex-col min-w-0 rounded-md bg-secondary-foreground'>
-                    This Post was deleted by the Post author.
+                    {interaction.deleted
+                        ? 'You have removed this Post.'
+                        : 'This Post was deleted by the Post author.'
+                    }
                 </div>
                 <div className='feed-hr-line'></div>
                 <NewPost placeholder='Post your reply' reply={post.id} />

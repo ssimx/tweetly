@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useReducer, useState } from 'react';
+import { useEffect, useReducer } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFollowSuggestionContext } from '@/context/FollowSuggestionContextProvider';
 import BasicPostTemplate from '@/components/posts/templates/BasicPostTemplate';
@@ -22,8 +22,6 @@ export default function ProfileReply({ profileUsername, post, userState, dispatc
     const { suggestions: userFollowSuggestions } = useFollowSuggestionContext();
     const { blockedUsers } = useBlockedUsersContext();
     const router = useRouter();
-    const [parentPostIsRemoved, setParentPostIsRemoved] = useState(false);
-    const [replyPostIsRemoved, setReplyPostIsRemoved] = useState(false);
 
     // - STATES -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // PARENT POST IS NOT NECESSARILY PROFILE USER'S OWN POST SO IT NEEDS NEW STATE IF THAT'S THE CASE
@@ -95,48 +93,15 @@ export default function ProfileReply({ profileUsername, post, userState, dispatc
 
     return (
         <div className='w-full h-fit flex flex-col'>
-            {parentPostIsRemoved
+            {blockedUsers.some((user) => user === post.replyTo!.author.username)
                 ? (
                     <div className="w-full px-4 py-2 flex">
-                        <p className="text-secondary-text">You&apos;ve removed this post.</p>
-                    </div>
-                )
-                : blockedUsers.some((user) => user === post.replyTo!.author.username)
-                    ? (
-                        <div className="w-full px-4 py-2 flex">
-                            <p className="text-secondary-text">You&apos;ve blocked this user. <span>Unblock to see their posts.</span></p>
-                            <PostMenuButton
-                                post={post}
-                                userState={userState}
-                                dispatch={dispatch}
-                            />
-                        </div>
-                    )
-                    : (
-                        <div
-                            className='px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'
-                            role="link"
-                            tabIndex={0}
-                            aria-label={`View post by ${post.author.username} that was replied to`}
-                            onMouseDown={(e) => handleCardClick(e, post.replyTo!.author.username, post.replyTo!.id)} >
-
-                            <BasicPostTemplate
-                                post={post.replyTo!}
-                                userState={parentPostAuthorIsProfileUser ? userState : _parentUserState}
-                                dispatch={parentPostAuthorIsProfileUser ? dispatch : _parentDispatch}
-                                openPhoto={openPhoto}
-                                setPostIsRemoved={setParentPostIsRemoved}
-                                type={'parent'}
-                            />
-
-                        </div>
-                    )
-            }
-
-            {replyPostIsRemoved
-                ? (
-                    <div className="w-full px-4 py-2 flex">
-                        <p className="text-secondary-text">You&apos;ve removed this post.</p>
+                        <p className="text-secondary-text">You&apos;ve blocked this user. <span>Unblock to see their posts.</span></p>
+                        <PostMenuButton
+                            post={post}
+                            userState={userState}
+                            dispatch={dispatch}
+                        />
                     </div>
                 )
                 : (
@@ -144,20 +109,36 @@ export default function ProfileReply({ profileUsername, post, userState, dispatc
                         className='px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'
                         role="link"
                         tabIndex={0}
-                        aria-label={`View reply post by ${post.author.username}`}
-                        onMouseDown={(e) => handleCardClick(e, post.author.username, post.id)} >
+                        aria-label={`View post by ${post.author.username} that was replied to`}
+                        onMouseDown={(e) => handleCardClick(e, post.replyTo!.author.username, post.replyTo!.id)} >
 
                         <BasicPostTemplate
-                            post={post}
-                            userState={userState}
-                            dispatch={dispatch}
+                            post={post.replyTo!}
+                            userState={parentPostAuthorIsProfileUser ? userState : _parentUserState}
+                            dispatch={parentPostAuthorIsProfileUser ? dispatch : _parentDispatch}
                             openPhoto={openPhoto}
-                            setPostIsRemoved={setReplyPostIsRemoved}
+                            type={'parent'}
                         />
 
                     </div>
                 )
             }
+
+            <div
+                className='px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'
+                role="link"
+                tabIndex={0}
+                aria-label={`View reply post by ${post.author.username}`}
+                onMouseDown={(e) => handleCardClick(e, post.author.username, post.id)} >
+
+                <BasicPostTemplate
+                    post={post}
+                    userState={userState}
+                    dispatch={dispatch}
+                    openPhoto={openPhoto}
+                />
+
+            </div>
 
         </div>
     )

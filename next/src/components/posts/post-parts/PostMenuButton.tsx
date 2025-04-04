@@ -24,7 +24,6 @@ import { usePostInteraction } from '@/context/PostInteractionContextProvider';
 
 type PostMenuProps = {
     post: BasePostDataType,
-    setPostIsRemoved?: React.Dispatch<React.SetStateAction<boolean>>,
     userState: {
         relationship: UserAndViewerRelationshipType,
         stats: UserStatsType,
@@ -32,7 +31,7 @@ type PostMenuProps = {
     dispatch: React.Dispatch<UserActionType>,
 };
 
-export default function PostMenuButton({ post, setPostIsRemoved, userState, dispatch }: PostMenuProps) {
+export default function PostMenuButton({ post, userState, dispatch }: PostMenuProps) {
     const { loggedInUser, setNewFollowing, setFollowersCount, setFollowingCount } = useUserContext();
     const { updateFollowState: updateSuggestedUserFollowState } = useFollowSuggestionContext();
     const { blockedUsers, addBlockedUser, removeBlockedUser } = useBlockedUsersContext();
@@ -254,8 +253,6 @@ export default function PostMenuButton({ post, setPostIsRemoved, userState, disp
                     // othwerise just hide the post from the feed
                     if (pathName.includes(`${post.author.username}/status/${post.id}`)) {
                         redirect('/');
-                    } else {
-                        setPostIsRemoved && setPostIsRemoved(true);
                     }
 
                     break;
@@ -269,7 +266,7 @@ export default function PostMenuButton({ post, setPostIsRemoved, userState, disp
 
             // Re-enable the button
             btn.disabled = false;
-        }, [setAlertMessage, togglePin, deletePost, interaction, setPostIsRemoved, pathName, post.author.username, post.id]
+        }, [setAlertMessage, togglePin, deletePost, interaction, pathName, post.author.username, post.id]
     );
 
     const toggleMenu = (e: React.MouseEvent) => {

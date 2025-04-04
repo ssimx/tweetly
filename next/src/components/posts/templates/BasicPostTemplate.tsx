@@ -18,8 +18,6 @@ type BasicPostTemplateType = {
     },
     dispatch: React.Dispatch<UserActionType>,
     openPhoto: (photoIndex: number, authorUsername: string, postId: number) => void,
-    setPostIsRemoved: React.Dispatch<React.SetStateAction<boolean>>,
-    postIsRemoved?: boolean,
     type?: 'normal' | 'parent',
     searchSegments?: string[],
     children?: React.ReactNode;
@@ -30,15 +28,13 @@ export default function BasicPostTemplate({
     userState,
     dispatch,
     openPhoto,
-    setPostIsRemoved,
-    postIsRemoved = false,
     type = 'normal',
     searchSegments,
     children,
 }: BasicPostTemplateType) {
     const { interaction } = usePostInteraction(post);
 
-    if (post.isDeleted || interaction.deleted || postIsRemoved) {
+    if (post.isDeleted || interaction.deleted) {
         return (
             <div className='mb-2 p-2 w-full grid grid-cols-[auto,1fr] grid-rows-1 gap-2 border rounded-md bg-secondary-foreground'>
 
@@ -54,7 +50,7 @@ export default function BasicPostTemplate({
                 )}
 
                 <div className='w-full flex flex-col min-w-0'>
-                    {interaction.deleted || postIsRemoved
+                    {interaction.deleted
                         ? 'You have removed this Post.'
                         : 'This Post was deleted by the Post author.'
                     }
@@ -93,7 +89,6 @@ export default function BasicPostTemplate({
                     <PostDate createdAt={post.createdAt} />
                     <PostMenuButton
                         post={post}
-                        setPostIsRemoved={setPostIsRemoved}
                         userState={userState}
                         dispatch={dispatch}
                     />
