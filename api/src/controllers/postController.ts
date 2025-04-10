@@ -651,7 +651,7 @@ export const postReplies = async (req: Request, res: Response, next: NextFunctio
 
 export const getUserPosts = async (req: Request, res: Response, next: NextFunction) => {
     const username = req.params.username;
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
     const cursor = Number(req.query.cursor);
 
     try {
@@ -678,7 +678,7 @@ export const getUserPosts = async (req: Request, res: Response, next: NextFuncti
                 }
             }
 
-            let postsData = await getPosts(user.username, username, Number(cursor));
+            let postsData = await getPosts(user.id, username, Number(cursor));
 
             const posts = postsData.map((post) => {
                 // skip if there's no information
