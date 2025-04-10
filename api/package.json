@@ -7,7 +7,7 @@
         "dev": "dotenv -e .env tsx watch ./src/server.ts",
         "test": "dotenv -e .env ts-node ./src/server.ts",
         "copy-prisma-schema": "cp -r ./prisma ./dist/",
-        "build": "npm install && tsc && prisma generate && npm run copy-prisma-schema",
+        "build": "npm install && tsc && npm run copy-prisma-schema && prisma migrate deploy && prisma generate",
         "start": "node ./dist/server.js",
         "migrate-dev": "dotenv -e .env -- npx prisma migrate dev",
         "prisma-studio-dev": "dotenv -e .env -- npx prisma studio",
