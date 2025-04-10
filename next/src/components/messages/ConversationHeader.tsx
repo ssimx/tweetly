@@ -16,7 +16,7 @@ export default function ConversationHeader({ receiverInfo }: { receiverInfo: Pic
     };
 
     return (
-        <div className='h-header w-full flex items-center gap-6 px-2 fixed bg-primary-foreground z-[500]'>
+        <div className='h-header w-full flex items-center gap-6 px-2 absolute bg-primary-foreground z-[500]'>
             <button onClick={handleBackClick}>
                 <ArrowLeft size={22} />
             </button>

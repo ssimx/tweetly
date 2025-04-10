@@ -253,7 +253,7 @@ export default function ConversationContent({ conversation }: { conversation: Co
     }, [messages, messagesBottomReached, isVisible, conversation.id, loggedInUser.username]);
 
     return (
-        <div className='h-dvh max-h-dvh overflow-y-hidden'>
+        <div className='h-dvh max-h-dvh overflow-y-hidden relative'>
             <ConversationHeader receiverInfo={receiverInfo} />
             <div className="h-full grid grid-cols-1 grid-rows-[1fr,1px,auto]">
                 <ConversationMessages
