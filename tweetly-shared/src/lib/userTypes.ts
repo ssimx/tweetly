@@ -1,5 +1,3 @@
-import { BasePostDataType } from './postTypes';
-
 // Type for logged in user JWT payload
 export type TemporaryUserJwtPayload = {
     type: 'temporary',

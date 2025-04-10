@@ -1,6 +1,7 @@
 import { Prisma, PrismaClient } from '@prisma/client';
-import { NewPostType } from '../controllers/postController';
 import { AppError } from 'tweetly-shared';
+import { NewPostType } from '../controllers/postController.js';
+
 const prisma = new PrismaClient();
 
 // ---------------------------------------------------------------------------------------------------------

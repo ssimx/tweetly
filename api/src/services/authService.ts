@@ -1,7 +1,9 @@
 import { Prisma, PrismaClient } from '@prisma/client';
-import { UserProps } from '../lib/types';
-import { getErrorMessage } from '../utils/errorMessageHandler';
+import { getErrorMessage } from '../utils/errorMessageHandler.js';
+
 const prisma = new PrismaClient();
+
+// ---------------------------------------------------------------------------------------------------------
 
 export const checkUsernameAvailability = async (username: string) => {
     return prisma.user.findUnique({

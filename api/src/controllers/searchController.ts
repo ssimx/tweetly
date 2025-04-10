@@ -1,9 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
-import { getUserByEmail, getUserByUsername, getUsersBySearch } from '../services/userService';
-import { UserProps } from '../lib/types';
-import { getLastPostBySearch, getPostsBySearch } from '../services/postService';
 import { AppError, BasePostDataType, LoggedInUserDataType, searchQueryCleanup, SearchQuerySegmentsType, SuccessResponse, UserDataType, usernameOrEmailAvailibilitySchema } from 'tweetly-shared';
-import { remapPostInformation, remapUserInformation } from '../lib/helpers';
+import { getUserByEmail, getUserByUsername, getUsersBySearch } from '../services/userService.js';
+import { getLastPostBySearch, getPostsBySearch } from '../services/postService.js';
+import { remapPostInformation, remapUserInformation } from '../lib/helpers.js';
 
 // ---------------------------------------------------------------------------------------------------------
 

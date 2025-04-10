@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { searchSchema } from '../schemas/searchSchemas';
-import { SearchQuerySegmentsType } from './searchTypes';
+import { searchSchema } from '../schemas/searchSchemas.js';
+import { SearchQuerySegmentsType } from './searchTypes.js';
 
 export function getAge(date: string) {
     const birthDate = new Date(date);

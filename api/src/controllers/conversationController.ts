@@ -1,9 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
-import { UserProps } from '../lib/types';
-import { getUserId } from '../services/userService';
-import { createConversation, createMessage, getAllConversations, getConversation, getConversationParticipans, getFirstMessage, getFirstUnreadMessage, getLastMessage, getLatestMessages, getNewerMessages, getOlderMessages, getOldestConversation, updateConversationUpdatedAtTime, updateMessagesReadStatus } from '../services/conversationService';
 import { AppError, ConversationCardType, ConversationMessageType, SuccessResponse, ConversationType, LoggedInUserDataType } from 'tweetly-shared';
-import { io } from '../utils/sockets';
+import { getUserId } from '../services/userService.js';
+import { createConversation, createMessage, getAllConversations, getConversation, getConversationParticipans, getFirstMessage, getFirstUnreadMessage, getLastMessage, getNewerMessages, getOlderMessages, getOldestConversation, updateMessagesReadStatus } from '../services/conversationService.js';
+import { io } from '../utils/sockets.js';
 // ---------------------------------------------------------------------------------------------------------
 
 export const getUserConversations = async (req: Request, res: Response, next: NextFunction) => {

@@ -1,12 +1,13 @@
-import { Server, Socket } from 'socket.io';
+import { Server } from 'socket.io';
 import { PrismaClient } from "@prisma/client";
-import { Server as HttpServer } from 'http';
-import { getNotificationsReadStatus } from '../services/notificationService';
-import { updateMessageReadStatus, getMessagesReadStatus, updateMessagesReadStatus, updateConversationMessagesReadStatus } from '../services/conversationService';
 import { BasePostDataType,  } from 'tweetly-shared';
-import passport from 'passport';
+import { Server as HttpServer } from 'http';
+import { getNotificationsReadStatus } from '../services/notificationService.js';
+import { updateMessageReadStatus, getMessagesReadStatus, updateConversationMessagesReadStatus } from '../services/conversationService.js';
 
 const prisma = new PrismaClient();
+
+// ---------------------------------------------------------------------------------------------------------
 
 interface ServerToClientEvents {
     new_following_post: (newPost: BasePostDataType) => void;

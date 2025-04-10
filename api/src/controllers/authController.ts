@@ -1,9 +1,8 @@
-import { AppError, FormLogInUserDataType, FormTemporaryUserBasicDataType, FormTemporaryUserPasswordType, LoggedInTemporaryUserDataType, LoggedInUserDataType, LoggedInUserJwtPayload, logInUserSchema, SuccessfulLoginResponseType, SuccessfulRegisterResponseType, SuccessResponse, temporaryUserBasicDataSchema, temporaryUserPasswordSchema, temporaryUserProfilePictureSchema, temporaryUserUsernameSchema, userSettingsAccessSchema } from 'tweetly-shared';
 import { NextFunction, Request, Response } from 'express';
-import { checkEmailAvailability, createTemporaryUser, createUserAndProfile, getTemporaryUserLogin, getUserLogin, removeTemporaryUser, updateTemporaryUserProfilePicture, updateTemporaryUserUsername } from "../services/authService";
-import { generateUserSettingsToken, generateTemporaryUserToken, generateUserSessionToken } from '../utils/jwt';
-import { UserProps } from '../lib/types';
 import bcrypt from 'bcrypt';
+import { AppError, FormLogInUserDataType, FormTemporaryUserBasicDataType, FormTemporaryUserPasswordType, LoggedInTemporaryUserDataType, LoggedInUserDataType, LoggedInUserJwtPayload, logInUserSchema, SuccessfulLoginResponseType, SuccessfulRegisterResponseType, SuccessResponse, temporaryUserBasicDataSchema, temporaryUserPasswordSchema, temporaryUserUsernameSchema, userSettingsAccessSchema } from 'tweetly-shared';
+import { checkEmailAvailability, createTemporaryUser, createUserAndProfile, getTemporaryUserLogin, getUserLogin, removeTemporaryUser, updateTemporaryUserProfilePicture, updateTemporaryUserUsername } from "../services/authService.js";
+import { generateUserSettingsToken, generateTemporaryUserToken, generateUserSessionToken } from '../utils/jwt.js';
 
 // ---------------------------------------------------------------------------------------------------------
 // ----------------------------- TEMPORARY USER REGISTRATION PROCESS ---------------------------------------

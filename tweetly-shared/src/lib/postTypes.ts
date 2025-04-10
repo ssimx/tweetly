@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { newPostDataSchema } from '../schemas/postSchemas';
-import { UserDataType } from './userTypes';
+import { newPostDataSchema } from '../schemas/postSchemas.js';
+import { UserDataType } from './userTypes.js';
 
 // Type for new post data
 export type FormNewPostDataType = z.infer<typeof newPostDataSchema>;

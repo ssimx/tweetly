@@ -1,8 +1,7 @@
 import passport from "passport";
-import { PassportError } from "../lib/types";
-import express, { type Express, type Request, type Response, type NextFunction } from 'express';
-import { User } from "@prisma/client";
+import { type Request, type Response, type NextFunction } from 'express';
 import { AppError, LoggedInTemporaryUserDataType, LoggedInUserDataType } from 'tweetly-shared';
+import { PassportError } from "../lib/types.js";
 
 export function authenticateSessionJWT(req: Request, res: Response, next: NextFunction) {
     passport.authenticate('session-jwt', { session: false }, (err: PassportError, user: LoggedInTemporaryUserDataType | LoggedInUserDataType | false, info: { message: string | null | undefined }) => {

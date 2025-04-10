@@ -1,11 +1,11 @@
-import { createNotificationForNewFollow, removeNotificationForFollow } from './../services/notificationService';
 import { NextFunction, Request, Response } from 'express';
-import { addBlock, addFollow, addPushNotifications, getFollowers, getFollowing, getFollowSuggestions, getOldestFollower, getOldestFollowing, getProfile, getTemporaryUser, getUser, getUserPassword, removeBlock, removeFollow, removePushNotfications, updateProfile, updateUserBirthday, updateUserEmail, updateUserPassword, updateUserUsername } from '../services/userService';
-import { getNotifications, getOldestNotification, updateNotificationsToRead } from '../services/notificationService';
-import { generateUserSettingsToken, generateUserSessionToken } from '../utils/jwt';
 import bcrypt from 'bcrypt';
 import { AppError, LoggedInTemporaryUserDataType, LoggedInUserDataType, LoggedInUserJwtPayload, NotificationType, SuccessResponse, UserDataType, userUpdateBirthdaySchema, userUpdateEmailSchema, userUpdatePasswordSchema, userUpdateUsernameSchema } from 'tweetly-shared';
-import { RawNotificationDataType, remapNotificationInformation, remapUserInformation, remapUserProfileInformation } from '../lib/helpers';
+import { createNotificationForNewFollow, removeNotificationForFollow } from './../services/notificationService.js';
+import { addBlock, addFollow, addPushNotifications, getFollowers, getFollowing, getFollowSuggestions, getOldestFollower, getOldestFollowing, getProfile, getTemporaryUser, getUser, getUserPassword, removeBlock, removeFollow, removePushNotfications, updateProfile, updateUserBirthday, updateUserEmail, updateUserPassword, updateUserUsername } from '../services/userService.js';
+import { getNotifications, getOldestNotification, updateNotificationsToRead } from '../services/notificationService.js';
+import { generateUserSettingsToken, generateUserSessionToken } from '../utils/jwt.js';
+import { RawNotificationDataType, remapNotificationInformation, remapUserInformation, remapUserProfileInformation } from '../lib/helpers.js';
 
 // ---------------------------------------------------------------------------------------------------------
 

@@ -1,6 +1,6 @@
 import { Prisma, PrismaClient } from '@prisma/client';
-import { ProfileInfo } from '../lib/types';
-import { AppError, getErrorMessage, UserUpdateProfileType } from 'tweetly-shared';
+import { AppError, getErrorMessage } from 'tweetly-shared';
+
 const prisma = new PrismaClient();
 
 // ---------------------------------------------------------------------------------------------------------

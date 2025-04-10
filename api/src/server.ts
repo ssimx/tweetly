@@ -1,18 +1,18 @@
-import express, { type Express, type Request, type Response, type NextFunction } from 'express';
+import express, { type Express } from 'express';
 import { config } from 'dotenv';
-import authRouter from './routes/authRoutes';
-import postRouter from './routes/postRoutes';
-import userRouter from './routes/userRoutes';
-import searchRouter from './routes/searchRoutes';
-import conversationRouter from './routes/conversationRoutes';
-import { configurePassport, configureSettingsPassport } from './middleware/passport';
-import { authenticateSessionJWT } from './middleware/authenticateSessionJWT';
-import { errorHandler } from './middleware/errorHandler';
+import authRouter from './routes/authRoutes.js';
+import postRouter from './routes/postRoutes.js';
+import userRouter from './routes/userRoutes.js';
+import searchRouter from './routes/searchRoutes.js';
+import conversationRouter from './routes/conversationRoutes.js';
+import { configurePassport, configureSettingsPassport } from './middleware/passport.js';
+import { authenticateSessionJWT } from './middleware/authenticateSessionJWT.js';
+import { errorHandler } from './middleware/errorHandler.js';
 import passport from 'passport';
 import cors from 'cors';
-import { socketConnection } from './utils/sockets';
+import { socketConnection } from './utils/sockets.js';
 
-const envFile = process.env.NODE_ENV === 'development' ? '.env.development' : '.env.production';
+const envFile = process.env.NODE_ENV === 'development' ? '.env.development' : '.env';
 config({ path: envFile });
 
 const app: Express = express();

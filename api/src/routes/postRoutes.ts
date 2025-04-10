@@ -1,3 +1,4 @@
+import express from 'express';
 import {
     addBookmark,
     addLike,
@@ -21,10 +22,9 @@ import {
     addPin,
     removePin,
     removePost,
-} from "../controllers/postController";
-import express from 'express';
-import { newPostCheckup } from '../middleware/multer';
-import { uploadToCloudinary } from './../middleware/cloudinary';
+} from "../controllers/postController.js";
+import { newPostCheckup } from '../middleware/multer.js';
+import { uploadToCloudinary } from './../middleware/cloudinary.js';
 
 const router = express.Router();
 

@@ -1,8 +1,6 @@
-// AUTH
-
 import { z } from 'zod';
-import { getAge } from '../lib/utils';
-import { ALLOWED_IMAGE_TYPES } from '../constants';
+import { getAge } from '../lib/utils.js';
+import { ALLOWED_IMAGE_TYPES } from '../constants/index.js';
 
 export const temporaryUserBasicDataSchema = z.object({
     profileName: z

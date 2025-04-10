@@ -1,7 +1,7 @@
-import { loginUser, registerTempUser, registerUser, settingsAccess, updateTempUserProfilePicture, updateTempUserUsername } from "../controllers/authController";
-import { authenticateSessionJWT } from "../middleware/authenticateSessionJWT";
-import { uploadToCloudinary } from '../middleware/cloudinary';
-import { registerUserCheckup } from '../middleware/multer';
+import { loginUser, registerTempUser, registerUser, settingsAccess, updateTempUserProfilePicture, updateTempUserUsername } from "../controllers/authController.js";
+import { authenticateSessionJWT } from "../middleware/authenticateSessionJWT.js";
+import { uploadToCloudinary } from '../middleware/cloudinary.js';
+import { registerUserCheckup } from '../middleware/multer.js';
 import express from 'express';
 
 const router = express.Router();

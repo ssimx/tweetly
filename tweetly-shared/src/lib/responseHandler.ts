@@ -1,4 +1,4 @@
-import { ZodError, ZodIssue } from 'zod';
+import { ZodIssue } from 'zod';
 
 // Custom error class for error handling
 export class AppError extends Error {

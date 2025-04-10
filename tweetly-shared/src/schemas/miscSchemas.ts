@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ALLOWED_IMAGE_TYPES } from '../constants';
+import { ALLOWED_IMAGE_TYPES } from '../constants/index.js';
 
 export const newMessageDataSchema = z.object({
     text: z

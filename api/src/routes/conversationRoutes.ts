@@ -1,8 +1,7 @@
-import { uploadToCloudinary } from './../middleware/cloudinary';
-import { createConversationMessage, createEmptyConversation, getSpecificConversation, getUserConversations } from "../controllers/conversationController";
-
 import express from 'express';
-import { newMessageCheckup } from '../middleware/multer';
+import { uploadToCloudinary } from './../middleware/cloudinary.js';
+import { createConversationMessage, createEmptyConversation, getSpecificConversation, getUserConversations } from "../controllers/conversationController.js";
+import { newMessageCheckup } from '../middleware/multer.js';
 
 const router = express.Router();
 

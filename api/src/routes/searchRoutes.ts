@@ -1,7 +1,6 @@
-import { searchPostsWithCursor, usernameOrEmailLookup, searchUsers, searchUsersAndPosts } from "../controllers/searchController";
-
 import express from 'express';
-import { authenticateSessionJWT } from '../middleware/authenticateSessionJWT';
+import { searchPostsWithCursor, usernameOrEmailLookup, searchUsers, searchUsersAndPosts } from "../controllers/searchController.js";
+import { authenticateSessionJWT } from '../middleware/authenticateSessionJWT.js';
 
 const router = express.Router();
 

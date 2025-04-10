@@ -1,7 +1,7 @@
 import passport from "passport";
-import { PassportError } from "../lib/types";
 import { type Request, type Response, type NextFunction } from 'express';
 import { AppError, LoggedInTemporaryUserDataType, LoggedInUserDataType } from 'tweetly-shared';
+import { PassportError } from "../lib/types.js";
 
 export function authenticateSettingsJWT(req: Request, res: Response, next: NextFunction) {
     passport.authenticate('settings-jwt', { session: false }, (err: PassportError, user: LoggedInTemporaryUserDataType | LoggedInUserDataType | false, info: { message: string | null | undefined }) => {

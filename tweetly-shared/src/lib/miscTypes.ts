@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { newMessageDataSchema } from '../schemas/miscSchemas';
-import { BasePostDataType } from './postTypes';
-import { UserDataType } from './userTypes';
+import { newMessageDataSchema } from '../schemas/miscSchemas.js';
+import { BasePostDataType } from './postTypes.js';
+import { UserDataType } from './userTypes.js';
 
 export type NotificationType = {
     id: number;

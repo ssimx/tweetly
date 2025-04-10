@@ -13,5 +13,5 @@
   },
   "include": [
     "src/**/*.ts"  // Include all TypeScript files in the src folder
-  ]
+  ],
 }

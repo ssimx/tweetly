@@ -1,5 +1,3 @@
-// Helper fnction to remap user information (profile user / post author / follow suggestion...)
-
 import { BasePostDataType, NotificationType, UserDataType, VisitedPostDataType } from 'tweetly-shared'
 
 type RawUserDataType = {

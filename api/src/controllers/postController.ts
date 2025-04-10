@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { UserProps } from '../lib/types';
+import { AppError, BasePostDataType, LoggedInUserDataType, SuccessResponse, TrendingHashtagType, VisitedPostDataType } from 'tweetly-shared';
 import {
     addPostBookmark,
     addPostLike,
@@ -37,11 +37,10 @@ import {
     addPostPin,
     removePostPin,
     deletePost,
-} from '../services/postService';
-import { createNotificationsForNewLike, createNotificationsForNewPost, createNotificationsForNewReply, createNotificationsForNewRepost, removeNotificationsForLike, removeNotificationsForRepost } from '../services/notificationService';
-import { AppError, BasePostDataType, LoggedInUserDataType, SuccessResponse, TrendingHashtagType, VisitedPostDataType } from 'tweetly-shared';
-import { remapPostInformation, remapVisitedPostInformation } from '../lib/helpers';
-import { getProfile } from '../services/userService';
+} from '../services/postService.js';
+import { createNotificationsForNewLike, createNotificationsForNewPost, createNotificationsForNewReply, createNotificationsForNewRepost, removeNotificationsForLike, removeNotificationsForRepost } from '../services/notificationService.js';
+import { remapPostInformation, remapVisitedPostInformation } from '../lib/helpers.js';
+import { getProfile } from '../services/userService.js';
 
 // ---------------------------------------------------------------------------------------------------------
 

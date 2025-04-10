@@ -1,6 +1,9 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { AppError } from 'tweetly-shared';
+
 const prisma = new PrismaClient();
+
+// ---------------------------------------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------------------------------------
 //                                          GETTER SERVICES

@@ -1,9 +1,8 @@
-import { blockUser, changeBirthday, changeEmail, changePassword, changeUsername, disablePushNotifications, enablePushNotifications, followUser, getProfileFollowers, getProfileFollowing, getProfileInfo, getTemporaryUserInfo, getUserFollowSuggestions, getUserInfo, getUserNotifications, unblockUser, unfollowUser, updateProfileInfo } from "../controllers/userController";
-
 import express from 'express';
-import { authenticateSettingsJWT } from '../middleware/authenticateSettingsJWT';
-import { updateProfileCheckup } from '../middleware/multer';
-import { uploadToCloudinary } from '../middleware/cloudinary';
+import { blockUser, changeBirthday, changeEmail, changePassword, changeUsername, disablePushNotifications, enablePushNotifications, followUser, getProfileFollowers, getProfileFollowing, getProfileInfo, getTemporaryUserInfo, getUserFollowSuggestions, getUserInfo, getUserNotifications, unblockUser, unfollowUser, updateProfileInfo } from "../controllers/userController.js";
+import { authenticateSettingsJWT } from '../middleware/authenticateSettingsJWT.js';
+import { updateProfileCheckup } from '../middleware/multer.js';
+import { uploadToCloudinary } from '../middleware/cloudinary.js';
 
 const router = express.Router();
 

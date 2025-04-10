@@ -1,5 +1,3 @@
-
-
 export type SearchQuerySegmentsType = {
     raw: string;
     segments: string[];

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { logInUserSchema, temporaryUserBasicDataSchema, registerUserDataSchema, temporaryUserPasswordSchema, temporaryUserUsernameSchema, temporaryUserProfilePictureSchema, userSettingsAccessSchema } from '../schemas/authSchemas';
+import { logInUserSchema, temporaryUserBasicDataSchema, temporaryUserPasswordSchema, temporaryUserUsernameSchema, temporaryUserProfilePictureSchema, userSettingsAccessSchema } from '../schemas/authSchemas.js';
 
 // Type for temporary user basic data
 export type FormTemporaryUserBasicDataType = z.infer<typeof temporaryUserBasicDataSchema>;
