@@ -6,8 +6,9 @@
     "scripts": {
         "dev": "dotenv -e .env tsx watch ./src/server.ts",
         "test": "dotenv -e .env ts-node ./src/server.ts",
+        "copy-prisma-schema": "cp -r ./prisma ./dist/",
+        "build": "npm install && tsc && prisma generate && npm run copy-prisma-schema",
         "start": "node ./dist/server.js",
-        "build": "npm install && tsc",
         "migrate-dev": "dotenv -e .env -- npx prisma migrate dev",
         "prisma-studio-dev": "dotenv -e .env -- npx prisma studio",
         "migrate-prod": "dotenv -e .env.production -- npx prisma migrate deploy"
