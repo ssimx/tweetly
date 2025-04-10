@@ -33,7 +33,6 @@ import {
     logInUserSchema,
     FormLogInUserDataType,
     usernameSchema,
-    usernameOrEmailAvailibilitySchema,
     BasePostDataType,
     UserUpdateProfileType,
     LoggedInUserDataType,

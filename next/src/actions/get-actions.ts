@@ -3,7 +3,7 @@ import { getCurrentUserToken } from "@/data-acess-layer/auth";
 import { getLoggedInUser } from "@/data-acess-layer/user-dto";
 import { decryptSession } from '@/lib/session';
 import { cache } from 'react';
-import { ApiResponse, AppError, BasePostDataType, ConversationCardType, ConversationMessageType, ErrorResponse, getErrorMessage, LoggedInUserJwtPayload, NotificationType, ProfilePostOrRepostDataType, SearchQuerySegmentsType, SuccessResponse, TrendingHashtagType, UserDataType, VisitedPostDataType } from 'tweetly-shared';
+import { ApiResponse, AppError, BasePostDataType, ConversationCardType, ConversationMessageType, ErrorResponse, LoggedInUserJwtPayload, NotificationType, ProfilePostOrRepostDataType, SearchQuerySegmentsType, SuccessResponse, TrendingHashtagType, UserDataType, VisitedPostDataType } from 'tweetly-shared';
 
 // GET actions for client/dynamic components
 
@@ -1279,7 +1279,7 @@ export async function getMorePostsAndRepostsForProfile(
         });
 
         const mappedPostsReposts: ProfilePostOrRepostDataType[] = mappedPosts.concat(mappedReposts).sort((a, b) => {
-            return b.timeForSorting - a.timeForSorting
+            return b.timeForSorting! - a.timeForSorting!
         }) ?? [];
 
         return {
