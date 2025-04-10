@@ -4,12 +4,12 @@
     "main": "dist/server.js",
     "type": "module",
     "scripts": {
-        "dev": "dotenv -e .env.development tsx watch ./src/server.ts",
-        "test": "dotenv -e .env.development ts-node ./src/server.ts",
+        "dev": "dotenv -e .env tsx watch ./src/server.ts",
+        "test": "dotenv -e .env ts-node ./src/server.ts",
         "start": "node ./dist/server.js",
         "build": "npm install && tsc",
-        "migrate-dev": "dotenv -e .env.development -- npx prisma migrate dev",
-        "prisma-studio-dev": "dotenv -e .env.development -- npx prisma studio",
+        "migrate-dev": "dotenv -e .env -- npx prisma migrate dev",
+        "prisma-studio-dev": "dotenv -e .env -- npx prisma studio",
         "migrate-prod": "dotenv -e .env.production -- npx prisma migrate deploy"
     },
     "prisma": {

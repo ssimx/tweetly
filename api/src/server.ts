@@ -1,5 +1,5 @@
 import express, { type Express } from 'express';
-import { config } from 'dotenv';
+import dotenv from 'dotenv';
 import authRouter from './routes/authRoutes.js';
 import postRouter from './routes/postRoutes.js';
 import userRouter from './routes/userRoutes.js';
@@ -12,8 +12,7 @@ import passport from 'passport';
 import cors from 'cors';
 import { socketConnection } from './utils/sockets.js';
 
-const envFile = process.env.NODE_ENV === 'development' ? '.env.development' : '.env';
-config({ path: envFile });
+dotenv.config();
 
 const app: Express = express();
 const port = process.env.PORT || 3001;
@@ -42,7 +41,7 @@ app.use('/api/v1/conversations', conversationRouter);
 app.use(errorHandler);
 
 const server = app.listen(port, () => {
-    console.log(`[server]: Server is running at http://192.168.1.155:${port}`);
+    console.log(`[server]: Server is running`);
 });
 
 socketConnection(server);
