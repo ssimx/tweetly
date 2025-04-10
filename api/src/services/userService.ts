@@ -138,32 +138,6 @@ export const updateUserBirthday = async (id: number, newBirthday: Date) => {
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const isUserDeactivated = async (id: number) => {
-    return await prisma.user.findUnique({
-        where: { id },
-        select: {
-            deactivatedAt: true,
-        }
-    });
-};
-
-// ---------------------------------------------------------------------------------------------------------
-
-export const deactivateUser = async (id: number) => {
-    return await prisma.user.update({
-        where: { id },
-        data: {
-            deactivatedAt: new Date(Date.now()),
-        },
-        select: {
-            id: true,
-            deactivatedAt: true,
-        }
-    });
-};
-
-// ---------------------------------------------------------------------------------------------------------
-
 export const getProfile = async (userId: number, username: string) => {
     return await prisma.user.findUnique({
         where: {

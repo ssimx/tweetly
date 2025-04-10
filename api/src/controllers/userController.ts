@@ -1,10 +1,6 @@
-import { temporaryUserProfilePictureSchema } from './../../../tweetly-shared/src/schemas/authSchemas';
-import { NextResponse } from 'next/server';
 import { createNotificationForNewFollow, removeNotificationForFollow } from './../services/notificationService';
 import { NextFunction, Request, Response } from 'express';
-import { addBlock, addFollow, addPushNotifications, deactivateUser, getFollowers, getFollowing, getFollowSuggestions, getOldestFollower, getOldestFollowing, getProfile, getTemporaryUser, getUser, getUserByEmail, getUserByUsername, getUserPassword, isUserDeactivated, removeBlock, removeFollow, removePushNotfications, updateProfile, updateUserBirthday, updateUserEmail, updateUserPassword, updateUserUsername } from '../services/userService';
-import { ProfileInfo, UserProps } from '../lib/types';
-import { deleteImageFromCloudinary } from './uploadController';
+import { addBlock, addFollow, addPushNotifications, getFollowers, getFollowing, getFollowSuggestions, getOldestFollower, getOldestFollowing, getProfile, getTemporaryUser, getUser, getUserPassword, removeBlock, removeFollow, removePushNotfications, updateProfile, updateUserBirthday, updateUserEmail, updateUserPassword, updateUserUsername } from '../services/userService';
 import { getNotifications, getOldestNotification, updateNotificationsToRead } from '../services/notificationService';
 import { generateUserSettingsToken, generateUserSessionToken } from '../utils/jwt';
 import bcrypt from 'bcrypt';
@@ -14,7 +10,7 @@ import { RawNotificationDataType, remapNotificationInformation, remapUserInforma
 // ---------------------------------------------------------------------------------------------------------
 
 export const getUserInfo = async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.user as UserProps;
+    const { id } = req.user as LoggedInUserDataType;
 
     try {
         const userInfo = await getUser(id);
@@ -56,7 +52,7 @@ export const getUserInfo = async (req: Request, res: Response, next: NextFunctio
 // ---------------------------------------------------------------------------------------------------------
 
 export const getTemporaryUserInfo = async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.user as UserProps;
+    const { id } = req.user as LoggedInUserDataType;
 
     try {
         const userInfo = await getTemporaryUser(id);
@@ -95,7 +91,7 @@ export const getTemporaryUserInfo = async (req: Request, res: Response, next: Ne
 
 export const getProfileInfo = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = req.user as UserProps;
+        const user = req.user as LoggedInUserDataType;
         const username = req.params.username;
         if (!username) throw new AppError('Username parameter missing', 404, 'MISSING_PARAM');
 
@@ -121,7 +117,7 @@ export const getProfileInfo = async (req: Request, res: Response, next: NextFunc
 // ---------------------------------------------------------------------------------------------------------
 
 export const getUserFollowSuggestions = async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.user as UserProps;
+    const { id } = req.user as LoggedInUserDataType;
 
     try {
         const userData = await getUser(id);
@@ -201,7 +197,7 @@ export const updateProfileInfo = async (req: Request, res: Response, next: NextF
 
 export const getProfileFollowers = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = req.user as UserProps;
+        const user = req.user as LoggedInUserDataType;
         const username = req.params.username;
         const cursor = req.query.cursor;
         if (!username) throw new AppError('Username parameter missing', 404, 'MISSING_PARAM');
@@ -292,7 +288,7 @@ export const getProfileFollowers = async (req: Request, res: Response, next: Nex
 
 export const getProfileFollowing = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = req.user as UserProps;
+        const user = req.user as LoggedInUserDataType;
         const username = req.params.username;
         const cursor = req.query.cursor;
         if (!username) throw new AppError('Username parameter missing', 404, 'MISSING_PARAM');
@@ -383,7 +379,7 @@ export const getProfileFollowing = async (req: Request, res: Response, next: Nex
 
 export const followUser = async (req: Request, res: Response, next: NextFunction) => {
     const username = req.params.username;
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
 
     try {
         await addFollow(user.id, username);
@@ -404,7 +400,7 @@ export const followUser = async (req: Request, res: Response, next: NextFunction
 
 export const unfollowUser = async (req: Request, res: Response, next: NextFunction) => {
     const username = req.params.username;
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
 
     try {
         await removeFollow(user.id, username);
@@ -425,7 +421,7 @@ export const unfollowUser = async (req: Request, res: Response, next: NextFuncti
 
 export const blockUser = async (req: Request, res: Response) => {
     const username = req.params.username;
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
 
     try {
         const response = await addBlock(user.id, username);
@@ -443,7 +439,7 @@ export const blockUser = async (req: Request, res: Response) => {
 
 export const unblockUser = async (req: Request, res: Response) => {
     const username = req.params.username;
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
 
     try {
         const response = await removeBlock(user.id, username);
@@ -461,7 +457,7 @@ export const unblockUser = async (req: Request, res: Response) => {
 
 export const enablePushNotifications = async (req: Request, res: Response) => {
     const username = req.params.username;
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
 
     try {
         const response = await addPushNotifications(user.id, username);
@@ -479,7 +475,7 @@ export const enablePushNotifications = async (req: Request, res: Response) => {
 
 export const disablePushNotifications = async (req: Request, res: Response) => {
     const username = req.params.username;
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
 
     try {
         const response = await removePushNotfications(user.id, username);
@@ -496,7 +492,7 @@ export const disablePushNotifications = async (req: Request, res: Response) => {
 // ---------------------------------------------------------------------------------------------------------
 
 export const getUserNotifications = async (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
     const params = req.query;
     const cursor = params.cursor;
 
@@ -596,7 +592,7 @@ export const getUserNotifications = async (req: Request, res: Response, next: Ne
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const changeUsername = async (req: Request, res: Response, next: NextResponse) => {
+export const changeUsername = async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as LoggedInUserDataType;
     let body = req.body;
 
@@ -779,23 +775,5 @@ export const changePassword = async (req: Request, res: Response, next: NextFunc
         return res.status(200).json(successResponse);
     } catch (error) {
         next(error);
-    }
-};
-
-// ---------------------------------------------------------------------------------------------------------
-
-export const deactivateAccount = async (req: Request, res: Response) => {
-    const user = req.user as UserProps;
-
-    try {
-        const isAlreadyDeactivated = await isUserDeactivated(user.id).then(res => res?.deactivatedAt);
-        if (isAlreadyDeactivated !== null) return res.status(404).json({ error: 'User already deactivated' });
-
-        await deactivateUser(user.id);
-
-        return res.status(201).json('success');
-    } catch (error) {
-        console.error('Error deactivating user: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
     }
 };

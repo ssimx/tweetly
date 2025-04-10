@@ -53,7 +53,7 @@ export interface NewPostType {
 }
 
 export const newPost = async (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
     const text = req.body.text;
     const replyToId = req.body.replyToId;
     const images = req.body.cloudinaryUrls;
@@ -109,7 +109,7 @@ export const newPost = async (req: Request, res: Response, next: NextFunction) =
 // ---------------------------------------------------------------------------------------------------------
 
 export const removePost = async (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
     const postId = Number(req.params.id);
 
     try {
@@ -127,7 +127,7 @@ export const removePost = async (req: Request, res: Response, next: NextFunction
         };
 
         return res.status(200).json(successResponse);
-    } catch (error) { 
+    } catch (error) {
         next(error);
     }
 };
@@ -297,7 +297,7 @@ export const global30DayPosts = async (req: Request, res: Response, next: NextFu
 // ---------------------------------------------------------------------------------------------------------
 
 export const following30DayPosts = async (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
     const params = req.query;
     const cursor = params.cursor;
     const type = params.type?.toString().toUpperCase() as 'NEW' | 'OLD';
@@ -457,7 +457,7 @@ export const following30DayPosts = async (req: Request, res: Response, next: Nex
 // ---------------------------------------------------------------------------------------------------------
 
 export const exploreRandomPosts = async (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
 
     try {
         const postsData = await getTopPosts(user.id);
@@ -523,7 +523,7 @@ export const trendingHashtags = async (req: Request, res: Response, next: NextFu
 
 export const getPost = async (req: Request, res: Response, next: NextFunction) => {
     const postId = Number(req.params.id);
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
 
     try {
         if (!postId) throw new AppError('Missing postId search param', 404, 'MISSING_PARAM');
@@ -560,7 +560,7 @@ export const getPost = async (req: Request, res: Response, next: NextFunction) =
 
 export const postReplies = async (req: Request, res: Response, next: NextFunction) => {
     const postId = Number(req.params.id);
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
 
     const cursor = Number(req.query.cursor);
 
@@ -750,7 +750,7 @@ export const getUserPosts = async (req: Request, res: Response, next: NextFuncti
 
 export const getUserReposts = async (req: Request, res: Response, next: NextFunction) => {
     const username = req.params.username;
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
     const cursor = Number(req.query.cursor);
 
     try {
@@ -843,7 +843,7 @@ export const getUserReposts = async (req: Request, res: Response, next: NextFunc
 
 export const getUserReplies = async (req: Request, res: Response, next: NextFunction) => {
     const username = req.params.username;
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
     const cursor = Number(req.query.cursor);
 
     try {
@@ -936,7 +936,7 @@ export const getUserReplies = async (req: Request, res: Response, next: NextFunc
 
 export const getUserMedia = async (req: Request, res: Response, next: NextFunction) => {
     const username = req.params.username;
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
     const cursor = Number(req.query.cursor);
 
     try {
@@ -1028,7 +1028,7 @@ export const getUserMedia = async (req: Request, res: Response, next: NextFuncti
 // ---------------------------------------------------------------------------------------------------------
 
 export const getUserLikes = async (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
     const cursor = Number(req.query.cursor);
 
     try {
@@ -1204,7 +1204,7 @@ export const getUserBookmarks = async (req: Request, res: Response, next: NextFu
 // ---------------------------------------------------------------------------------------------------------
 
 export const addRepost = async (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
     const postId = Number(req.params.id);
 
     try {
@@ -1231,7 +1231,7 @@ export const addRepost = async (req: Request, res: Response, next: NextFunction)
 // ---------------------------------------------------------------------------------------------------------
 
 export const removeRepost = async (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
     const postId = Number(req.params.id);
 
     try {
@@ -1258,7 +1258,7 @@ export const removeRepost = async (req: Request, res: Response, next: NextFuncti
 // ---------------------------------------------------------------------------------------------------------
 
 export const addLike = async (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
     const postId = Number(req.params.id);
 
     try {
@@ -1285,7 +1285,7 @@ export const addLike = async (req: Request, res: Response, next: NextFunction) =
 // ---------------------------------------------------------------------------------------------------------
 
 export const removeLike = async (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
     const postId = Number(req.params.id);
 
     try {
@@ -1312,7 +1312,7 @@ export const removeLike = async (req: Request, res: Response, next: NextFunction
 // ---------------------------------------------------------------------------------------------------------
 
 export const addBookmark = async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.user as UserProps;
+    const { id } = req.user as LoggedInUserDataType;
     const postId = Number(req.params.id);
 
     try {
@@ -1336,7 +1336,7 @@ export const addBookmark = async (req: Request, res: Response, next: NextFunctio
 // ---------------------------------------------------------------------------------------------------------
 
 export const removeBookmark = async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.user as UserProps;
+    const { id } = req.user as LoggedInUserDataType;
     const postId = Number(req.params.id);
 
     try {
@@ -1360,14 +1360,14 @@ export const removeBookmark = async (req: Request, res: Response, next: NextFunc
 // ---------------------------------------------------------------------------------------------------------
 
 export const addPin = async (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
     const postId = Number(req.params.id);
 
     try {
         const post = await getPostInfo(user.id, postId);
         if (!post) throw new AppError("Post not found", 404, 'POST_NOT_FOUND');
         if (post.author.username !== user.username) throw new AppError("Not authorized", 401, 'NOT_AUTHORIZED');
-        
+
         await addPostPin(user.id, postId);
 
         const successResponse: SuccessResponse<undefined> = {
@@ -1384,7 +1384,7 @@ export const addPin = async (req: Request, res: Response, next: NextFunction) =>
 // ---------------------------------------------------------------------------------------------------------
 
 export const removePin = async (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
     const postId = Number(req.params.id);
 
     try {

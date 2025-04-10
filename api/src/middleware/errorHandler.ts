@@ -19,7 +19,7 @@ export const errorHandler = (err: Error | AppError | ZodError, req: Request, res
             },
         };
 
-        return res.status(400).json(errorResponse);
+        res.status(400).json(errorResponse);
     }
 
     // Default responses
@@ -35,5 +35,5 @@ export const errorHandler = (err: Error | AppError | ZodError, req: Request, res
         },
     };
 
-    return res.status(statusCode).json(errorResponse);
+    res.status(statusCode).json(errorResponse);
 };

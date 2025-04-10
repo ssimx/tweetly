@@ -319,7 +319,7 @@ export const getSpecificConversation = async (req: Request, res: Response, next:
                         status: 'sent'
                     }))
                     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) as ConversationMessageType[];
-                
+
                 const successResponse: SuccessResponse<{ conversation: ConversationType }> = {
                     success: true,
                     data: {
@@ -383,7 +383,7 @@ export const getSpecificConversation = async (req: Request, res: Response, next:
                 : oldestMessageId === allMsgsOrdered[0].id
                     ? true
                     : false
-            
+
             const messagesBottomReached = allMsgsOrdered.length === 0
                 ? true
                 : newestMessageId === allMsgsOrdered.slice(-1)[0].id
@@ -430,7 +430,7 @@ export const getSpecificConversation = async (req: Request, res: Response, next:
 // ---------------------------------------------------------------------------------------------------------
 
 export const createEmptyConversation = async (req: Request, res: Response) => {
-    const { id } = req.user as UserProps;
+    const { id } = req.user as LoggedInUserDataType;
     const { receiver } = req.body as { receiver: string };
     const senderId = id;
 

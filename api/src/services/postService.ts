@@ -1334,6 +1334,7 @@ export const getPostsBySearch = async (
             images: true,
             createdAt: true,
             updatedAt: true,
+            isDeleted: true,
             pinnedOnProfile: {
                 select: {
                     pinnedPostId: true,
@@ -1558,6 +1559,7 @@ export const getMorePostsBySearch = async (
             images: true,
             createdAt: true,
             updatedAt: true,
+            isDeleted: true,
             pinnedOnProfile: {
                 select: {
                     pinnedPostId: true,

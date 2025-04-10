@@ -111,7 +111,7 @@ export async function searchUsers(req: Request, res: Response, next: NextFunctio
 
 export async function searchUsersAndPosts(req: Request, res: Response, next: NextFunction) {
     const query = req.query.q as string;
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
 
     try {
         if (!query) throw new AppError('Search query is missing', 404, 'MISSING_QUERY');
@@ -225,7 +225,7 @@ export async function searchPostsWithCursor(req: Request, res: Response, next: N
     if (!cursor) return res.status(400).json({ error: "No cursor provided" });
     const queryParams = searchQueryCleanup(query);
 
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
 
     try {
         if (!query) throw new AppError('Query not found in search params', 404, 'MISSING_PARAM');

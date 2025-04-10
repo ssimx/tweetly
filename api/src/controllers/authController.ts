@@ -1,4 +1,4 @@
-import { AppError, FormLogInUserDataType, FormTemporaryUserBasicDataType, FormTemporaryUserPasswordType, LoggedInTemporaryUserDataType, LoggedInUserJwtPayload, logInUserSchema, SuccessfulLoginResponseType, SuccessfulRegisterResponseType, SuccessResponse, temporaryUserBasicDataSchema, temporaryUserPasswordSchema, temporaryUserProfilePictureSchema, temporaryUserUsernameSchema, userSettingsAccessSchema } from 'tweetly-shared';
+import { AppError, FormLogInUserDataType, FormTemporaryUserBasicDataType, FormTemporaryUserPasswordType, LoggedInTemporaryUserDataType, LoggedInUserDataType, LoggedInUserJwtPayload, logInUserSchema, SuccessfulLoginResponseType, SuccessfulRegisterResponseType, SuccessResponse, temporaryUserBasicDataSchema, temporaryUserPasswordSchema, temporaryUserProfilePictureSchema, temporaryUserUsernameSchema, userSettingsAccessSchema } from 'tweetly-shared';
 import { NextFunction, Request, Response } from 'express';
 import { checkEmailAvailability, createTemporaryUser, createUserAndProfile, getTemporaryUserLogin, getUserLogin, removeTemporaryUser, updateTemporaryUserProfilePicture, updateTemporaryUserUsername } from "../services/authService";
 import { generateUserSettingsToken, generateTemporaryUserToken, generateUserSessionToken } from '../utils/jwt';
@@ -214,7 +214,7 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
                 success: true,
                 data: { token },
             };
-           
+
             return res.status(200).json(successResponse);
         }
     } catch (error) {
@@ -292,7 +292,7 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
 
 export const settingsAccess = async (req: Request, res: Response, next: NextFunction) => {
     const { password } = req.body as { password: string };
-    const user = req.user as UserProps;
+    const user = req.user as LoggedInUserDataType;
 
     try {
         // Find user in database
