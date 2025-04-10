@@ -1,5 +1,5 @@
 import express, { type Express, type Request, type Response, type NextFunction } from 'express';
-import dotenv from 'dotenv';
+import { config } from 'dotenv';
 import authRouter from './routes/authRoutes';
 import postRouter from './routes/postRoutes';
 import userRouter from './routes/userRoutes';
@@ -12,7 +12,9 @@ import passport from 'passport';
 import cors from 'cors';
 import { socketConnection } from './utils/sockets';
 
-dotenv.config();
+const envFile = process.env.NODE_ENV === 'development' ? '.env.development' : '.env.production';
+config({ path: envFile });
+
 const app: Express = express();
 const port = process.env.PORT || 3001;
 
