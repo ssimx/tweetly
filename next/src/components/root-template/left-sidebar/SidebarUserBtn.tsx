@@ -4,7 +4,6 @@ import { Ellipsis } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { RemoveScroll } from 'react-remove-scroll';
 
 export default function SidebarUserBtn() {
     const { loggedInUser } = useUserContext();
@@ -46,14 +45,12 @@ export default function SidebarUserBtn() {
             document.body.classList.remove('overflow-y-none');
         };
     }, [menuOpen]);
-    
+
     return (
         <div className='w-full h-fit mt-auto relative [&_svg]:hidden xl:w-full xl:[&_svg]:block'>
             {menuOpen && (
                 <>
-                    <RemoveScroll>
-                        <button className='fixed top-0 left-0 w-full h-full z-40 pointer-events-auto' onClick={toggleMenu}></button>
-                    </RemoveScroll>
+                    <button className='fixed top-0 left-0 w-full h-full z-40 pointer-events-auto' onClick={toggleMenu}></button>
 
                     <div ref={menuBtn} className='shadow-menu bg-primary-foreground overflow-hidden absolute z-[5000] w-[200px] h-fit rounded-[20px] py-[10px] mb-2 translate-y-[-125%] xl:w-[110%] xl:translate-x-[-5%] pointer-events-none [&>button]:pointer-events-auto'>
                         <button
@@ -76,12 +73,18 @@ export default function SidebarUserBtn() {
                     toggleMenu(e);
                 }}
             >
-                <Image width={50} height={50} src={loggedInUser?.profile.profilePicture} alt='User profile' className='w-[40px] h-[40px] xl:w-[50px] xl:h-[50px] rounded-full bg-[hsl(var(--primary))]' />
-                    <div className='hidden w-full lg:flex flex-col items-start leading-tight truncate'>
-                        <p className='' title={loggedInUser.profile.name}>{loggedInUser.profile.name}</p>
-                        <p className='text-secondary-text font-medium'>@{loggedInUser.username}</p>
-                    </div>
-                    <Ellipsis size={30} strokeWidth={3} color={'#5B7083'} className='hidden lg:block ml-auto' />
+                <Image
+                    src={loggedInUser?.profile.profilePicture}
+                    alt='User profile'
+                    width={50}
+                    height={50}
+                    className='w-[40px] h-[40px] xl:w-[50px] xl:h-[50px] rounded-full bg-transparent'
+                />
+                <div className='hidden w-full lg:flex flex-col items-start leading-tight truncate'>
+                    <p className='' title={loggedInUser.profile.name}>{loggedInUser.profile.name}</p>
+                    <p className='text-secondary-text font-medium'>@{loggedInUser.username}</p>
+                </div>
+                <Ellipsis size={30} strokeWidth={3} color={'#5B7083'} className='hidden lg:block ml-auto' />
             </button>
         </div>
     )
