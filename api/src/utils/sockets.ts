@@ -3,8 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { Server as HttpServer } from 'http';
 import { getNotificationsReadStatus } from '../services/notificationService';
 import { updateMessageReadStatus, getMessagesReadStatus, updateMessagesReadStatus, updateConversationMessagesReadStatus } from '../services/conversationService';
-import express, { type Express, type Request, type Response, type NextFunction } from 'express';
-import { BasePostDataType, LoggedInUserDataType, LoggedInUserJwtPayload } from 'tweetly-shared';
+import { BasePostDataType,  } from 'tweetly-shared';
 import passport from 'passport';
 
 const prisma = new PrismaClient();

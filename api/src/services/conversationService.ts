@@ -461,6 +461,14 @@ export const updateMessagesReadStatus = async (conversationId: string, loggedInU
 // ---------------------------------------------------------------------------------------------------------
 
 export const updateMessageReadStatus = async (conversationId: string, messageId: string) => {
+    const messageExists = await prisma.message.findUnique({
+        where: {
+            id: messageId
+        }
+    });
+
+    if (!messageExists) return false;
+    
     return prisma.message.update({
         where: {
             id: messageId,

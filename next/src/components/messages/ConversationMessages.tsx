@@ -1,7 +1,7 @@
 'use client';
 import { formatMessageReceived, formatMessageSeen, formatMessageSent } from "@/lib/utils";
 import { CircleAlert } from 'lucide-react';
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ConversationUser from "./ConversationUser";
 import Link from "next/link";
 import MessageBubble from "./ConversationMessageBubble";
@@ -46,8 +46,11 @@ export default function ConversationMessages({
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const scrollContainerPreviousHeight = useRef<number | null>(null);
     const unreadMessageElementRef = useRef<HTMLDivElement>(null);
+    const [isSeenAtMessageVisible, setIsSeenAtMessageVisible] = useState(false);
     const previousTopMessageCursorRef = useRef(topCursor);
     const previousBottomMessageCursorRef = useRef(bottomCursor);
+    const isAtBottom = useRef(true);
+    const userScrolledUp = useRef(false);
 
     // Get the last message that was sent by the logged in user and seen by the receiver
     const lastSeenMessageId: string | null = messages
@@ -59,12 +62,43 @@ export default function ConversationMessages({
     const lastMessageIndex = lastMessage ? messages.length - 1 : 0;
 
     // Track scroll position on user scroll
-    function handleScroll(event: React.UIEvent<HTMLDivElement, UIEvent>) {
+    const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement, UIEvent>) => {
         const target = event.target as HTMLDivElement;
         scrollPositionRef.current = target.scrollTop;
-    }
 
-    // Handling scroll
+        // Check if user is at bottom of messages
+        const atBottom = Math.abs(target.scrollHeight - target.clientHeight - target.scrollTop) < 20; // 20px threshold
+        isAtBottom.current = atBottom;
+
+        // Track if user has manually scrolled up
+        if (!atBottom) {
+            userScrolledUp.current = true;
+        }
+    }, [scrollPositionRef]);
+
+    // Handle scroll for new messages
+    useEffect(() => {
+        if (scrollContainerRef.current && messages.length > 0) {
+            // If we're at the bottom or this is a new message from the current user, scroll to bottom
+            const container = scrollContainerRef.current;
+            const lastMsg = messages[messages.length - 1];
+
+            // Keep scroll sticky at the bottom of the conversation if:
+            // 1. User is already at bottom, OR
+            // 2. The new message is from the current user
+            if (isAtBottom.current || (lastMsg && lastMsg.sentBy === loggedInUser.username)) {
+                // Use a short timeout to ensure DOM has updated
+                setTimeout(() => {
+                    if (container) {
+                        container.scrollTop = container.scrollHeight;
+                        isAtBottom.current = true;
+                    }
+                }, 10);
+            }
+        }
+    }, [messages, loggedInUser.username]);
+
+    // Handling scroll for paging
     useEffect(() => {
         if (scrollContainerRef.current) {
             const container = scrollContainerRef.current;
@@ -72,6 +106,13 @@ export default function ConversationMessages({
                 // Initial load: scroll to the unread message
                 container.scrollTop = unreadMessageElementRef.current.offsetTop - 75;
                 hasMountedRef.current = true;
+
+                // Check if this position is at the bottom of the conversation
+                setTimeout(() => {
+                    if (container) {
+                        isAtBottom.current = Math.abs(container.scrollHeight - container.clientHeight - container.scrollTop) < 20;
+                    }
+                }, 100); // Small delay to ensure DOM has settled
             } else if (topCursor !== previousTopMessageCursorRef.current) {
                 // Restore scroll position when OLDER messages loaded
                 const previousScrollHeight = container.scrollHeight;
@@ -154,13 +195,21 @@ export default function ConversationMessages({
                                                 msg.status === 'sent' && bottomReached
                                                     ? msg.id === lastSeenMessageId
                                                         ? (
-                                                            <Image
-                                                                src={receiverInfo.profile.profilePicture}
-                                                                alt='Receiver profile picture'
-                                                                width={16} height={16}
-                                                                className='rounded-full ml-auto my-1'
-                                                                title={formatMessageSeen(msg.createdAt)}
-                                                            />
+                                                            <button
+                                                                className='size-fit min-w-full my-1 rounded-full ml-auto'
+                                                                onTouchEnd={() => setIsSeenAtMessageVisible((current) => !current)}
+                                                            >
+                                                                <Image
+                                                                    src={receiverInfo.profile.profilePicture}
+                                                                    alt='Receiver profile picture'
+                                                                    width={16} height={16}
+                                                                    className='ml-auto rounded-full'
+                                                                    title={formatMessageSeen(msg.createdAt)}
+                                                                />
+                                                                {isSeenAtMessageVisible && (
+                                                                    <p className='text-secondary-text text-[0.8rem]'>{formatMessageSeen(msg.createdAt)}</p>
+                                                                )}
+                                                            </button>
                                                             
                                                         )
                                                         : index === lastMessageIndex

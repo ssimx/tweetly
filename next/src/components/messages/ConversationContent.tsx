@@ -252,8 +252,6 @@ export default function ConversationContent({ conversation }: { conversation: Co
         }
     }, [messages, messagesBottomReached, isVisible, conversation.id, loggedInUser.username]);
 
-    console.log(scrollPosition)
-
     return (
         <div className='h-dvh max-h-dvh overflow-y-hidden'>
             <ConversationHeader receiverInfo={receiverInfo} />
