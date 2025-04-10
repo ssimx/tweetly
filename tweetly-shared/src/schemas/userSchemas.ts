@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { getAge } from '../lib/utils';
+import { ALLOWED_IMAGE_TYPES } from '../constants';
 
 // UPDATE USER INFO
 
@@ -146,10 +147,10 @@ export const userUpdateProfileSchema = z.object({
                 message: 'Max image size is 5MB',
                 path: ['image'],
             });
-        } else if (!(["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(data.bannerPicture.type))) {
+        } else if (!(ALLOWED_IMAGE_TYPES.includes(data.bannerPicture.type))) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: 'Only .jpg, .jpeg, .png and .webp formats are supported',
+                message: 'This image format is not supported',
                 path: ['image'],
             });
         }
@@ -168,10 +169,10 @@ export const userUpdateProfileSchema = z.object({
                 message: 'Max image size is 5MB',
                 path: ['image'],
             });
-        } else if (!(["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(data.profilePicture.type))) {
+        } else if (!(["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic"].includes(data.profilePicture.type))) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: 'Only .jpg, .jpeg, .png and .webp formats are supported',
+                message: 'Only .jpg, .jpeg, .png, .heic and .webp formats are supported',
                 path: ['image'],
             });
         }

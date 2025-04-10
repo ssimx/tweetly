@@ -24,6 +24,9 @@ const nextConfig: NextConfig = {
                 '@public/': ['./public/'],
             },
         },
+        serverActions: {
+            bodySizeLimit: '100mb',
+        },
     },
     outputFileTracingRoot: path.join(__dirname, "../"),
 };

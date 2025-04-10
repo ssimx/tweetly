@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ALLOWED_IMAGE_TYPES } from '../constants';
 
 export const newMessageDataSchema = z.object({
     text: z
@@ -19,5 +20,29 @@ export const newMessageDataSchema = z.object({
             message: "Please enter the post content",
             path: ['text'], // Path for error message
         });
+    }
+
+    if (data.images && data.images.length) {
+        data.images.forEach((image) => {
+            if (!(image instanceof File)) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: 'Input is not a file',
+                    path: ['image'],
+                });
+            } else if (image.size >= 5000000) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: 'Max image size is 5MB',
+                    path: ['image'],
+                });
+            } else if (!(ALLOWED_IMAGE_TYPES.includes(image.type))) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: 'This image format is not supported',
+                    path: ['image'],
+                });
+            }
+        })
     }
 });

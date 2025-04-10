@@ -39,7 +39,7 @@ export default function PostImages({ images, authorUsername, postId, openPhoto }
                         <Image
                             src={images[0]}
                             alt="Selected preview"
-                            className="max-h-[500px] w-fi max-w-full t mt-2 object-contain rounded-md hover:cursor-pointer hover:opacity-90"
+                            className="max-h-[500px] w-fit max-w-full mt-2 object-contain rounded-md hover:cursor-pointer hover:opacity-90"
                             width={400} height={400}
                         />
                     </Link>

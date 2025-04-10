@@ -6,7 +6,7 @@ export default function ConversationUser({ user }: { user: Pick<ConversationType
     const joined = `${createdAt.toLocaleDateString('default', { month: 'long' })} ${createdAt.getFullYear()}`;
 
     return (
-        <div className='flex-center p-8'>
+        <div className='flex-center p-8 mt-[50px]'>
             <div className='flex flex-col items-center'>
                 <div className='flex flex-col items-center leading-5'>
                     <Image

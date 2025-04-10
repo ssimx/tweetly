@@ -19,6 +19,9 @@ export interface NewMessageType {
 export default function ConversationContent({ conversation }: { conversation: ConversationType }) {
     const { loggedInUser } = useUserContext();
     const [messages, setMessages] = useState<ConversationMessageType[]>(conversation.messages);
+    const unreadMessageIdRef = useRef<string | null>(conversation.messages
+        .filter((msg) => msg.sentBy !== loggedInUser.username)
+        .find((msg) => msg.readAt === undefined)?.id ?? null);
 
     // receiver information
     // if both participants share username with logged in user, it's self-conversation, otherwise it's normal conversation
@@ -26,6 +29,10 @@ export default function ConversationContent({ conversation }: { conversation: Co
     const receiverInfo = receiver.length === 1 ? receiver[0] : conversation.participants[0];
     const [receiverIsTyping, setReceiverIsTyping] = useState(false);
 
+    // Page visibility state
+    const [isVisible, setIsVisible] = useState(true);
+
+    // Message pagination state
     const [isFetchingMoreMessages, setIsFetchingMoreMessages] = useState(false);
     const [messagesTopCursor, setMessagesTopCursor] = useState<string | null>(conversation.topCursor);
     const [messagesTopReached, setMessagesTopReached] = useState(conversation.topReached);
@@ -129,72 +136,131 @@ export default function ConversationContent({ conversation }: { conversation: Co
         isFetchingMoreMessages
     ]);
 
-    // Handle new messages via sockets
+    // Track page visibility
     useEffect(() => {
-        socket.on('message_received', (message: ConversationMessageType) => {
+        const handleVisibilityChange = () => {
+            setIsVisible(!document.hidden);
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, []);
+
+    // Get last seen message
+    useEffect(() => {
+        socket.connect();
+
+    }, []);
+
+    // Initialize socket connection
+    useEffect(() => {
+        socket.connect();
+
+        // Clean up socket connection when component unmounts
+        return () => {
+            socket.disconnect();
+        };
+    }, []);
+
+    // Join conversation room and handle socket events
+    useEffect(() => {
+        // Join the conversation room
+        socket.emit('join_conversation_room', conversation.id, loggedInUser.username);
+
+        // Handler for new messages
+        const handleMessageReceived = (message: ConversationMessageType) => {
             if (messagesBottomReached) {
-                setMessages((prevMessages) => [
-                    ...prevMessages,
-                    message,
-                ]);
+                setMessages(prevMessages => [...prevMessages, message]);
 
-                // If received message was sent by logged in user, do not update message to seen
-                if (message.sentBy === loggedInUser.username) return;
-                socket.emit('conversation_seen_status', conversation.id, message.id);
+                // If the message was sent by someone else and the page is visible, mark it as seen
+                if (message.sentBy !== loggedInUser.username && isVisible) {
+                    socket.emit('new_conversation_message_seen', conversation.id, message.id);
+                }
             }
-        });
+        };
 
-        socket.on('message_typing_status', (typingUser: null | string) => {
-            typingUser === loggedInUser.username || typingUser === null ? setReceiverIsTyping(false) : setReceiverIsTyping(true);
-        });
+        // Handler for typing status
+        const handleTypingStatus = (typingUser: null | string) => {
+            setReceiverIsTyping(typingUser !== null && typingUser !== loggedInUser.username);
+        };
 
-        socket.on('message_seen', (messageId) => {
-            console.log(messageId)
-            setMessages((prevMessages) =>
-                prevMessages.map((msg) =>
-                    (msg.id === messageId && !msg.readAt && msg.sentBy !== loggedInUser.username)
+        // Handler for seen messages
+        const handleMessageSeen = (messageId: string) => {
+            setMessages(prevMessages =>
+                prevMessages.map(msg =>
+                    (msg.id === messageId && !msg.readAt)
                         ? { ...msg, readAt: new Date() }
                         : msg
                 )
             );
-        });
-
-        return () => {
-            socket.off('message_received');
-            socket.off('message_typing_status');
-            socket.off('message_seen');
         };
-    }, [conversation, messagesBottomReached, loggedInUser]);
 
-    // Connect to conversation room
-    useEffect(() => {
-        socket.connect();
-        socket.emit('join_conversation_room', conversation.id, loggedInUser.username);
+        // Handler for when someone joins the conversation
+        const handleConversationSeen = (joinedUser: string) => {
+            if (joinedUser === loggedInUser.username) return;
 
-        socket.on('conversation_seen', (joinedUser) => {
-            if (loggedInUser.username === joinedUser) return;
-
-            setMessages((prevMessages) =>
-                prevMessages.map((msg) =>
+            // When other party joins, mark all messages as read
+            setMessages(prevMessages =>
+                prevMessages.map(msg =>
                     (msg.sentBy === loggedInUser.username && !msg.readAt)
                         ? { ...msg, readAt: new Date() }
                         : msg
                 )
             );
-        });
-
-        return () => {
-            socket.disconnect();
-            socket.off('conversation_seen');
         };
-    }, [conversation, loggedInUser]);
+
+        // Register event listeners
+        socket.on('message_received', handleMessageReceived);
+        socket.on('message_typing_status', handleTypingStatus);
+        socket.on('message_seen', handleMessageSeen);
+        socket.on('conversation_seen', handleConversationSeen);
+
+        // Clean up event listeners when component unmounts or conversation changes
+        return () => {
+            socket.off('message_received', handleMessageReceived);
+            socket.off('message_typing_status', handleTypingStatus);
+            socket.off('message_seen', handleMessageSeen);
+            socket.off('conversation_seen', handleConversationSeen);
+        };
+    }, [conversation.id, loggedInUser.username, messagesBottomReached, isVisible]);
+
+    // Mark unread messages as read when user is active and viewing messages
+    useEffect(() => {
+        if (!isVisible || messages.length === 0 || !messagesBottomReached) return;
+
+        // Find all unread messages from other users
+        const unreadMessages = messages.filter(msg =>
+            msg.sentBy !== loggedInUser.username && !msg.readAt
+        );
+
+        if (unreadMessages.length > 0) {
+            const latestUnreadMessage = unreadMessages[unreadMessages.length - 1];
+
+            // Send seen status for the latest message (which implies all previous messages are seen too)
+            socket.emit('conversation_seen_status', conversation.id, latestUnreadMessage.id);
+
+            setMessages(prevMessages =>
+                prevMessages.map(msg =>
+                    (unreadMessages.some(unread => unread.id === msg.id))
+                        ? { ...msg, readAt: new Date() }
+                        : msg
+                )
+            );
+        }
+    }, [messages, messagesBottomReached, isVisible, conversation.id, loggedInUser.username]);
+
+    console.log(scrollPosition)
 
     return (
-        <div className='' style={{ height: 'calc(100vh - var(--header-size))' }}>
+        <div className='h-dvh max-h-dvh overflow-y-hidden'>
             <ConversationHeader receiverInfo={receiverInfo} />
             <div className="h-full grid grid-cols-1 grid-rows-[1fr,1px,auto]">
                 <ConversationMessages
                     messages={messages}
+                    unreadMessageId={unreadMessageIdRef.current}
                     receiverInfo={receiverInfo}
                     topCursor={messagesTopCursor}
                     topRef={topRef}

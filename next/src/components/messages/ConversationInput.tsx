@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { socket } from '@/lib/socket';
 import { v4 as uuidv4 } from 'uuid';
 import { useUserContext } from '@/context/UserContextProvider';
-import { ConversationMessageType, ErrorResponse, FormNewConversationMessageDataType, newMessageDataSchema } from 'tweetly-shared';
+import { ALLOWED_IMAGE_TYPES, ConversationMessageType, ErrorResponse, FormNewConversationMessageDataType, newMessageDataSchema } from 'tweetly-shared';
 import Image from 'next/image';
 import { createNewConversationMessage } from '@/actions/actions';
 import BarLoader from 'react-spinners/BarLoader';
@@ -41,6 +41,7 @@ export default function ConversationInput({ conversationId, setMessages, message
         setError,
         clearErrors,
         setValue,
+        setFocus,
     } = useForm<FormNewConversationMessageDataType>({
         resolver: zodResolver(newMessageDataSchema),
         defaultValues: { conversationId: conversationId }
@@ -76,26 +77,35 @@ export default function ConversationInput({ conversationId, setMessages, message
         }
 
         clearErrors('images');
-        const allowedFileTypes = ['image/jpg', 'image/jpeg', 'image/png'];
-        const selectedFiles = Array.from(files);
-        const validFiles: File[] = [];
+        const selectedImages = Array.from(files);
+        const validImages: File[] = [];
 
-        selectedFiles.forEach((file) => {
-            if (!allowedFileTypes.includes(file.type)) {
+        selectedImages.forEach((image) => {
+            if (!(image instanceof File)) {
                 setError('images', {
                     type: 'manual',
-                    message: 'File types allowed: png, jpg, jpeg',
+                    message: 'Input is not a file',
                 });
-                return;
+            } else if (image.size >= 5000000) {
+                setError('images', {
+                    type: 'manual',
+                    message: 'Max image size is 5MB',
+                });
+            } else if (!(ALLOWED_IMAGE_TYPES.includes(image.type))) {
+                setError('images', {
+                    type: 'manual',
+                    message: 'This image format is not supported',
+                });
             }
-            validFiles.push(file);
+
+            validImages.push(image);
         });
 
-        setSelectedImagesFiles((current) => [...current, ...validFiles]); // Array of file objects
-        setSelectedImagesPreview((current) => [...current, ...validFiles.map((file) => URL.createObjectURL(file))]); // Array of image previews
+        setSelectedImagesFiles((current) => [...current, ...validImages]); // Array of file objects
+        setSelectedImagesPreview((current) => [...current, ...validImages.map((image) => URL.createObjectURL(image))]); // Array of image previews
         setValue('images', [
             ...selectedImagesFiles,
-            ...validFiles
+            ...validImages
         ]);
     };
 
@@ -109,9 +119,11 @@ export default function ConversationInput({ conversationId, setMessages, message
         if (typingTimeoutRef.current) {
             clearTimeout(typingTimeoutRef.current);
         }
-
+        
         // Optimistically add the temporary message if there's no images being uploaded
         if (formData.images === undefined || !formData.images.length) {
+            setFocus("text");
+
             const tempMessage: ConversationMessageType = {
                 id: msgTempId,
                 tempId: msgTempId,

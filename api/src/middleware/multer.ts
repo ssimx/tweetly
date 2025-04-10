@@ -1,4 +1,4 @@
-import { AppError, userUpdateProfileSchema } from 'tweetly-shared';
+import { ALLOWED_IMAGE_TYPES, AppError, userUpdateProfileSchema } from 'tweetly-shared';
 import multer from "multer";
 import { Request, Response, NextFunction } from "express";
 
@@ -10,7 +10,7 @@ const registerUserUpload = multer({
     storage: storage,
     limits: { fileSize: 5 * 1024 * 1024, files: 1 }, // 5MB file size limit
     fileFilter: (req: Request, file, cb) => {
-        const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+        const allowedTypes = ALLOWED_IMAGE_TYPES;
         if (allowedTypes.includes(file.mimetype)) {
             cb(null, true); // accept file
         } else {
@@ -48,7 +48,7 @@ const newPostUpload = multer({
     storage: storage,
     limits: { fileSize: 5 * 1024 * 1024, files: 4 }, // 5MB file size limit
     fileFilter: (req: Request, file, cb) => {
-        const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+        const allowedTypes = ALLOWED_IMAGE_TYPES;
         if (allowedTypes.includes(file.mimetype)) {
             cb(null, true); // accept file
         } else {
@@ -94,7 +94,7 @@ const updateProfileUpload = multer({
     storage: storage,
     limits: { fileSize: 5 * 1024 * 1024, files: 2 }, // 5MB file size limit
     fileFilter: (req: Request, file, cb) => {
-        const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+        const allowedTypes = ALLOWED_IMAGE_TYPES;
         if (allowedTypes.includes(file.mimetype)) {
             cb(null, true); // accept file
         } else {
@@ -156,7 +156,7 @@ const newMessageUpload = multer({
     storage: storage,
     limits: { fileSize: 5 * 1024 * 1024, files: 4 }, // 5MB file size limit
     fileFilter: (req: Request, file, cb) => {
-        const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+        const allowedTypes = ALLOWED_IMAGE_TYPES;
         if (allowedTypes.includes(file.mimetype)) {
             cb(null, true); // accept file
         } else {

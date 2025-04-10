@@ -16,7 +16,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Croppie, { CropType } from "croppie";
 import "croppie/croppie.css";
-import { getErrorMessage, isZodError, UserDataType, userUpdateProfileSchema, UserUpdateProfileType } from 'tweetly-shared';
+import { ALLOWED_IMAGE_TYPES, getErrorMessage, isZodError, UserDataType, userUpdateProfileSchema, UserUpdateProfileType } from 'tweetly-shared';
 import { updateProfile } from '@/actions/actions';
 import { z } from 'zod';
 import { useUserContext } from '@/context/UserContextProvider';
@@ -265,12 +265,11 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
 
     const handleSelectedImage = async (file: File, type: 'banner' | 'profile') => {
         const fileType = file.type;
-        const allowedFileTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/webp'];
 
-        if (!allowedFileTypes.includes(fileType)) {
+        if (!ALLOWED_IMAGE_TYPES.includes(fileType)) {
             setError('bannerPicture', {
                 type: 'manual',
-                message: 'Only .jpg, .jpeg, .png and .webp formats are supported'
+                message: 'This image format is not supported',
             });
             return;
         }

@@ -395,6 +395,50 @@ export const createMessage = async (senderId: number, receiverId: number, conten
 
 // ---------------------------------------------------------------------------------------------------------
 
+export const updateConversationMessagesReadStatus = async (conversationId: string, joinedUser: string) => {
+    const firstUnreadMessageTimestamp = await prisma.message.findFirst({
+        where: {
+            conversationId,
+            // update status for messages of the other party
+            sender: {
+                username: {
+                    not: joinedUser
+                }
+            },
+            readAt: null,
+        },
+        orderBy: {
+            createdAt: 'desc'
+        },
+        select: {
+            createdAt: true,
+        }
+    });
+
+    if (!firstUnreadMessageTimestamp || firstUnreadMessageTimestamp.createdAt) return;
+
+    return prisma.message.updateMany({
+        where: {
+            conversationId,
+            // update status for messages of the other party
+            sender: {
+                username: {
+                    not: joinedUser
+                }
+            },
+            createdAt: {
+                gte: firstUnreadMessageTimestamp?.createdAt,
+            },
+            readAt: null,
+        },
+        data: {
+            readAt: new Date(),
+        }
+    })
+};
+
+// ---------------------------------------------------------------------------------------------------------
+
 export const updateMessagesReadStatus = async (conversationId: string, loggedInUserId: number, firstUnreadMessageTimestamp: Date) => {
     return prisma.message.updateMany({
         where: {

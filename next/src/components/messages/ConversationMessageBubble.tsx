@@ -30,7 +30,7 @@ export default function MessageBubble({ msg, index, messages }: MessageBubbleTyp
                 )}
 
                 <PhotoProvider>
-                    <div className="">
+                    <div className="justify-start bg-black-1 rounded-xl">
                         {msg.images.map((item, index) => (
                             <PhotoView
                                 key={index}
@@ -38,9 +38,9 @@ export default function MessageBubble({ msg, index, messages }: MessageBubbleTyp
                             >
                                 <Image
                                     src={item}
-                                    alt=""
-                                    width={350} height={350}
-                                    className='mt-1 rounded-xl hover:cursor-pointer'
+                                    alt="Selected preview"
+                                    className="max-h-[500px] max-w-[70vw] w-fit mt-2 object-contain rounded-md hover:cursor-pointer hover:opacity-90"
+                                    width={400} height={400}
                                 />
                             </PhotoView>
                         ))}

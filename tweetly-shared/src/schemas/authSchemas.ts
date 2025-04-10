@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import { getAge } from '../lib/utils';
+import { ALLOWED_IMAGE_TYPES } from '../constants';
 
 export const temporaryUserBasicDataSchema = z.object({
     profileName: z
@@ -89,10 +90,10 @@ export const temporaryUserProfilePictureSchema = z.object({
                 message: 'Max image size is 5MB',
                 path: ['profilePicture'],
             });
-        } else if (!(["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(data.profilePicture.type))) {
+        } else if (!(ALLOWED_IMAGE_TYPES.includes(data.profilePicture.type))) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: 'Only .jpg, .jpeg, .png and .webp formats are supported',
+                message: 'This image format is not supported',
                 path: ['profilePicture'],
             });
         }

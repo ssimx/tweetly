@@ -86,7 +86,6 @@ export default function ConversationsList({ initialConversations, cursor, end }:
         };
     }, [scrollPositionRef]);
 
-
     useEffect(() => {
         // there are issues with CommandEmpty being visible on component mount for quick second
         // so the only solution is to hide the div and unhide after mount

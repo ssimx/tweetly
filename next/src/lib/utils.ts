@@ -43,3 +43,57 @@ export function getAge(date: string | Date) {
 
     return age;
 }
+
+export function formatMessageSent(date: string | number | Date) {
+    const messageDate = new Date(date);
+    const now = new Date();
+    const hoursDiff = Math.abs(now.getTime() - messageDate.getTime()) / (1000 * 60 * 60);
+
+    if (hoursDiff < 1) {
+        const min = Math.floor(Math.abs(now.getTime() - messageDate.getTime()) / (1000 * 60));
+        if (min === 0) return 'Sent';
+        return `Sent ${min}m ago`
+    }
+    if (hoursDiff < 24) {
+        return `Sent ${Math.floor(hoursDiff)}h ago`;
+    } else {
+        const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+        return `Sent ${messageDate.toLocaleDateString('en-US', options)}`;
+    }
+};
+
+export function formatMessageReceived(date: string | number | Date) {
+    const messageDate = new Date(date);
+    const now = new Date();
+    const hoursDiff = Math.abs(now.getTime() - messageDate.getTime()) / (1000 * 60 * 60);
+
+    if (hoursDiff < 1) {
+        const min = Math.floor(Math.abs(now.getTime() - messageDate.getTime()) / (1000 * 60));
+        if (min === 0) return '';
+        return `${min}m ago`
+    }
+    if (hoursDiff < 24) {
+        return `${Math.floor(hoursDiff)}h ago`;
+    } else {
+        const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+        return `Received ${messageDate.toLocaleDateString('en-US', options)}`;
+    }
+};
+
+export function formatMessageSeen(date: string | number | Date) {
+    const seenDate = new Date(date);
+    const now = new Date();
+    const hoursDiff = Math.abs(now.getTime() - seenDate.getTime()) / (1000 * 60 * 60);
+
+    if (hoursDiff < 1) {
+        const min = Math.floor(Math.abs(now.getTime() - seenDate.getTime()) / (1000 * 60));
+        if (min === 0) return 'Seen';
+        return `Seen ${min}m ago`
+    }
+    if (hoursDiff < 24) {
+        return `Seen ${Math.floor(hoursDiff)}h ago`;
+    } else {
+        const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+        return `Seen ${seenDate.toLocaleDateString('en-US', options)}`;
+    }
+};

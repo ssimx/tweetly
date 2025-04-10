@@ -87,6 +87,9 @@ export default function PhoneBottomNav({ sidebarOpen, messages, notifications }:
             window.removeEventListener('scroll', scrollListener);
         };
     }, []);
+    
+    // don't include in conversation
+    if (/^\/conversation\/.+/.test(pathName)) return <></>;
 
     return (
         <nav

@@ -220,7 +220,7 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
 
             <main
                 ref={mainRef}
-                className={`h-fit min-h-svh w-full pb-[50px] xs:col-start-2 xs:col-end-3
+                className={`h-fit min-h-svh w-full xs:col-start-2 xs:col-end-3
                         flex overflow-x-clip overscroll-x-none xs:overflow-x-visible
                         transition-transform duration-300 relative
                         ${sidebarOpen ? 'translate-x-[250px]' : ''}`}
@@ -232,7 +232,7 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
                 >
 
                     {/* Middle Content */}
-                    <div className="h-fit min-h-screen border-x border-b border-primary-border
+                    <div className="h-dvh min-h-dvh border-x border-b border-primary-border
                             w-full max-w-[600px] mx-auto xl:mx-0"
                     >
                         <TemplateHeader setSidebarOpen={setSidebarOpen} />

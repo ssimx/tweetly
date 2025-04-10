@@ -23,8 +23,8 @@ export default function TemplateHeader({ setSidebarOpen }: { setSidebarOpen: Rea
         }
     };
 
-    // don't include in messages, has it's own implementation
-    if (/^\/messages\/.+/.test(path)) return <></>;
+    // don't include in conversation, has it's own implementation
+    if (/^\/conversation\/.+/.test(path)) return <></>;
 
     // PATHS WITH PROFILE PICTURE ICON
 

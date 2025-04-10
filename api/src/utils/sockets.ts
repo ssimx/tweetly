@@ -2,7 +2,7 @@ import { Server, Socket } from 'socket.io';
 import { PrismaClient } from "@prisma/client";
 import { Server as HttpServer } from 'http';
 import { getNotificationsReadStatus } from '../services/notificationService';
-import { updateMessageReadStatus, getMessagesReadStatus } from '../services/conversationService';
+import { updateMessageReadStatus, getMessagesReadStatus, updateMessagesReadStatus, updateConversationMessagesReadStatus } from '../services/conversationService';
 import express, { type Express, type Request, type Response, type NextFunction } from 'express';
 import { BasePostDataType, LoggedInUserDataType, LoggedInUserJwtPayload } from 'tweetly-shared';
 import passport from 'passport';
@@ -131,6 +131,7 @@ const socketConnection = (server: HttpServer) => {
         socket.on('join_conversation_room', async (conversationId, joinedUser) => {
             socket.join(`${conversationId}`);
             socket.to(`${conversationId}`).emit('conversation_seen', joinedUser);
+            updateConversationMessagesReadStatus(conversationId, joinedUser);
         });
 
         socket.on('conversation_typing_status', async (conversationId, typingUser) => {
@@ -141,15 +142,15 @@ const socketConnection = (server: HttpServer) => {
             socket.to(`${conversationId}`).emit('message_received', message);
         });
 
-        socket.on('conversation_seen_status', async (conversationId, messageId) => {
-            // Update message read status to read
-            updateMessageReadStatus(conversationId, messageId);
+        socket.on('new_conversation_message_seen', async (conversationId, messageId) => {
             socket.to(`${conversationId}`).emit('message_seen', messageId);
+            updateMessageReadStatus(conversationId, messageId);
         });
 
         socket.on('new_user_message', async (receiverId) => {
             socket.to(`user_${receiverId}_messages`).emit('new_message');
         });
+
     })
 };
 

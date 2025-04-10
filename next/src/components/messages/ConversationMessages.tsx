@@ -1,5 +1,5 @@
 'use client';
-import { formatPostDate } from "@/lib/utils";
+import { formatMessageReceived, formatMessageSeen, formatMessageSent } from "@/lib/utils";
 import { CircleAlert } from 'lucide-react';
 import { useEffect, useRef, useState } from "react";
 import ConversationUser from "./ConversationUser";
@@ -9,9 +9,11 @@ import TypingIndicator from "./ConversationTypingIndicator";
 import { ConversationMessageType, ConversationType } from 'tweetly-shared';
 import { useUserContext } from '@/context/UserContextProvider';
 import ClipLoader from "react-spinners/ClipLoader";
+import Image from 'next/image';
 
 type ConversationMessagesProps = {
     messages: ConversationMessageType[],
+    unreadMessageId: string | null,
     receiverInfo: Pick<ConversationType, 'participants'>['participants'][0],
     topCursor: string | null,
     topRef: (node?: Element | null) => void,
@@ -26,6 +28,7 @@ type ConversationMessagesProps = {
 
 export default function ConversationMessages({
     messages,
+    unreadMessageId,
     receiverInfo,
     topCursor,
     topRef,
@@ -41,10 +44,15 @@ export default function ConversationMessages({
     const [, setLastMessageTimeRefreshTrigger] = useState(false);
     const hasMountedRef = useRef(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const scrollContainerPreviousHeight = useRef<number | null>(null)
-    const unreadMessageRef = useRef<HTMLDivElement>(null);
+    const scrollContainerPreviousHeight = useRef<number | null>(null);
+    const unreadMessageElementRef = useRef<HTMLDivElement>(null);
     const previousTopMessageCursorRef = useRef(topCursor);
     const previousBottomMessageCursorRef = useRef(bottomCursor);
+
+    // Get the last message that was sent by the logged in user and seen by the receiver
+    const lastSeenMessageId: string | null = messages
+        .filter((msg) => msg.sentBy === loggedInUser.username)
+        .findLast((msg) => msg.readAt)?.id ?? null;
 
     // Get the last message and check whether sender is logged in user, check for read status, save message index for rendering
     const lastMessage = messages.slice(-1)[0];
@@ -60,9 +68,9 @@ export default function ConversationMessages({
     useEffect(() => {
         if (scrollContainerRef.current) {
             const container = scrollContainerRef.current;
-            if (unreadMessageRef.current && !hasMountedRef.current) {
+            if (unreadMessageElementRef.current && !hasMountedRef.current) {
                 // Initial load: scroll to the unread message
-                container.scrollTop = unreadMessageRef.current.offsetTop - 75;
+                container.scrollTop = unreadMessageElementRef.current.offsetTop - 75;
                 hasMountedRef.current = true;
             } else if (topCursor !== previousTopMessageCursorRef.current) {
                 // Restore scroll position when OLDER messages loaded
@@ -92,11 +100,6 @@ export default function ConversationMessages({
         return () => clearInterval(intervalId);
     }, []);
 
-    // Get the last read message from receiver, to set the scroll to that message when logged in users opens the DMs
-    const firstUnreadMessage = messages
-        .filter((msg) => msg.sentBy !== loggedInUser.username)
-        .find((msg) => msg.readAt === undefined);
-
     return (
         <div
             className='overflow-y-auto flex flex-col-reverse custom-scrollbar'
@@ -114,9 +117,9 @@ export default function ConversationMessages({
 
                 <div className='flex flex-col px-3 py-4 gap-1 min-w-[1%]'>
                     {!topReached && (
-                        <div ref={topRef} className='w-full flex-center mb-6 mt-2'>
+                        <div ref={topRef} className='w-full flex-center mb-6 mt-[50px]'>
                             <ClipLoader
-                                color={''}
+                                className='loading-spinner'
                                 loading={true}
                                 size={25}
                                 aria-label="Loading Spinner"
@@ -127,8 +130,8 @@ export default function ConversationMessages({
 
                     {messages.map((msg, index) => (
                         <div key={msg.id}
-                            className={`min-w-[1%] break-words whitespace-normal max-w-[90%] ${msg.sentBy === loggedInUser.username ? 'self-end' : 'self-start'} ${firstUnreadMessage?.id === msg.id ? 'w-full' : ''}`}
-                            ref={firstUnreadMessage?.id === msg.id ? unreadMessageRef : null}
+                            className={`min-w-[1%] break-words whitespace-normal max-w-[90%] ${msg.sentBy === loggedInUser.username ? 'self-end' : 'self-start'} ${unreadMessageId === msg.id ? 'w-full' : ''}`}
+                            ref={unreadMessageId === msg.id ? unreadMessageElementRef : null}
                         >
 
                             {msg.sentBy === loggedInUser.username
@@ -148,22 +151,27 @@ export default function ConversationMessages({
                                             }
 
                                             {
-                                                msg.status === 'sent' && index === lastMessageIndex && bottomReached
-                                                    ? msg.readAt !== undefined
+                                                msg.status === 'sent' && bottomReached
+                                                    ? msg.id === lastSeenMessageId
                                                         ? (
-                                                            <p className='mt-1 mr-3 text-end text-secondary-text text-14'>
-                                                                {
-                                                                    formatPostDate(msg.readAt) === 'now' ? 'Seen' : `Seen ${formatPostDate(msg.readAt)} ago`
-                                                                }
-                                                            </p>
+                                                            <Image
+                                                                src={receiverInfo.profile.profilePicture}
+                                                                alt='Receiver profile picture'
+                                                                width={16} height={16}
+                                                                className='rounded-full ml-auto my-1'
+                                                                title={formatMessageSeen(msg.createdAt)}
+                                                            />
+                                                            
                                                         )
-                                                        : (
-                                                            <p className='mt-1 mr-3 text-end text-secondary-text text-14'>
-                                                                {
-                                                                    formatPostDate(msg.createdAt) === 'now' ? 'Sent' : `Sent ${formatPostDate(msg.createdAt)} ago`
-                                                                }
-                                                            </p>
-                                                        )
+                                                        : index === lastMessageIndex
+                                                            ?    (
+                                                                <p className='mt-1 mr-3 text-end text-secondary-text text-14'>
+                                                                    {
+                                                                        formatMessageSent(msg.createdAt)
+                                                                    }
+                                                                </p>
+                                                            )
+                                                            : null
                                                     : null
                                             }
                                         </div>
@@ -171,7 +179,7 @@ export default function ConversationMessages({
                                 )
                                 : (
                                     <>
-                                        {firstUnreadMessage?.id === msg.id
+                                        {unreadMessageId === msg.id
                                             && (
                                                 <div
                                                     className={`unread-message w-full ${messages[index === 0 ? 0 : index - 1].sentBy === loggedInUser.username ? 'mt-4' : ''}`}
@@ -191,7 +199,7 @@ export default function ConversationMessages({
                                                     index === lastMessageIndex && bottomReached && (
                                                         <p className='mt-1 ml-3 text-start text-secondary-text text-14'>
                                                             {
-                                                                formatPostDate(msg.createdAt) === 'now' ? '' : `Received ${formatPostDate(msg.createdAt)} ago`
+                                                                formatMessageReceived(msg.createdAt)
                                                             }
                                                         </p>
                                                     )

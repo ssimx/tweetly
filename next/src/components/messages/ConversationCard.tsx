@@ -22,7 +22,7 @@ export default function ConversationCard({ conversation }: { conversation: Conve
             : conversation.lastMessage.receiver; // sender is logged in user, show receiver info
 
     return (
-        <Link href={`/messages/${conversation.id}`}>
+        <Link href={`/conversation/${conversation.id}`}>
             <div
                 className={`w-full min-w-0 h-full px-4 py-4 flex gap-2 hover:bg-card-hover hover:cursor-pointer ${conversation.lastMessage.sender.username !== loggedInUser.username && conversation.lastMessage.readAt === undefined ? 'bg-post-hover group' : null}`}
             >
