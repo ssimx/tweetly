@@ -17,7 +17,7 @@ const prisma = new PrismaClient({
         temporaryUser: {
             password: true
         }
-    }
+    },
 });
 
 const SECRET_KEY = process.env.JWT_SECRET || 'tweetly';

@@ -9,7 +9,8 @@
     "outDir": "./dist",  // Output directory for compiled JS
     "strict": true,  // Enable strict mode for TypeScript
     "lib": ["esnext"],  // Include latest JavaScript features
-    "allowJs": true
+    "allowJs": true,
+    "importModuleSpecifierEnding": "js"
   },
   "include": [
     "src/**/*.ts"  // Include all TypeScript files in the src folder

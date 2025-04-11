@@ -11,7 +11,7 @@ export function authenticateSessionJWT(req: Request, res: Response, next: NextFu
         }
 
         if (!user) {
-            next(new AppError('Invalid settings token', 401, 'UNAUTHORIZED'));
+            next(new AppError('Invalid session token', 401, 'UNAUTHORIZED'));
         }
 
         req.user = user;

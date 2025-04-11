@@ -6,7 +6,7 @@ import { newMessageCheckup } from '../middleware/multer.js';
 const router = express.Router();
 
 router.get('/', getUserConversations);
-router.post('/create', createEmptyConversation);
+router.post('/create/:username', createEmptyConversation);
 router.post('/messages/create', newMessageCheckup, uploadToCloudinary, createConversationMessage);
 router.get('/:id', getSpecificConversation);
 

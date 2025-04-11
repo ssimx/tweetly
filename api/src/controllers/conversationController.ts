@@ -428,22 +428,27 @@ export const getSpecificConversation = async (req: Request, res: Response, next:
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const createEmptyConversation = async (req: Request, res: Response) => {
-    const { id } = req.user as LoggedInUserDataType;
-    const { receiver } = req.body as { receiver: string };
-    const senderId = id;
-
-    const receiverId = await getUserId(receiver).then(res => res?.id);
-    if (!receiverId) return res.status(404).json({ error: 'User does not exist' });
+export const createEmptyConversation = async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as LoggedInUserDataType;
+    const username = req.params.username;
 
     try {
-        const emptyConversationId = await createConversation(senderId, receiverId).then(res => res.id);
-        if (!emptyConversationId) return res.status(404).json({ error: "Couldn't create new conversation" });
+        const receiver = await getUserId(username);
+        if (!receiver) throw new AppError('User not found', 404, 'USER_NOT_FOUND');
 
-        return res.status(201).json({ emptyConversationId });
+        const emptyConversationId = await createConversation(user.id, receiver.id).then(res => res.id);
+        if (!emptyConversationId) throw new AppError('Failed to create a new conversation', 404, 'FAILED_NEW_CONVERSATION');
+
+        const successResponse: SuccessResponse<{ conversationId: string }> = {
+            success: true,
+            data: {
+                conversationId: emptyConversationId
+            }
+        };
+
+        return res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error getting user: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        next(error);
     }
 };
 
