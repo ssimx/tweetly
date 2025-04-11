@@ -77,25 +77,25 @@ export default function ProfilePinnedPost({ post, userState, dispatch }: Profile
     }
 
     return (
-        <div
-            className='w-full flex flex-col gap-2 px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'
-            role="link"
-            tabIndex={0}
-            aria-label={`View post by ${post.author.username}`}
-            onClick={(e) => handleCardClick(e, post.author.username, post.id)} >
-
-            <div className='flex items-center gap-1 text-14 font-bold text-secondary-text'>
-                <Pin size={16} className='text-primary' fill='hsl(var(--primary))' />
-                <p>Pinned</p>
+        <div>
+            <div
+                className='w-full flex flex-col gap-2 px-4 pt-3 pb-1 hover:bg-post-hover cursor-pointer'
+                role="link"
+                tabIndex={0}
+                aria-label={`View post by ${post.author.username}`}
+                onClick={(e) => handleCardClick(e, post.author.username, post.id)} >
+                <div className='flex items-center gap-1 text-14 font-bold text-secondary-text'>
+                    <Pin size={16} className='text-primary' fill='hsl(var(--primary))' />
+                    <p>Pinned</p>
+                </div>
+                <BasicPostTemplate
+                    post={post}
+                    userState={userState}
+                    dispatch={dispatch}
+                    openPhoto={openPhoto}
+                />
             </div>
-
-            <BasicPostTemplate
-                post={post}
-                userState={userState}
-                dispatch={dispatch}
-                openPhoto={openPhoto}
-            />
-
+            <div className='feed-hr-line'></div>
         </div>
     )
 }
