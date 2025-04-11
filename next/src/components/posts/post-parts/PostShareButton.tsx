@@ -15,7 +15,7 @@ export default function PostShareButton({ post }: { post: BasePostDataType }) {
     const menuBtn = useRef<HTMLDivElement | null>(null);
 
     const handleCopyLink = () => {
-        const postUrl = `http://192.168.1.155:3000/${post.author.username}/status/${post.id}`;
+        const postUrl = `${window.location.origin}/${post.author.username}/status/${post.id}`;
         navigator.clipboard.writeText(postUrl);
         setMenuOpen((prev) => !prev);
         setAlertMessage('Copied to clipboard');

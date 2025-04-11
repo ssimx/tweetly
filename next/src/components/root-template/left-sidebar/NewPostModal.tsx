@@ -116,7 +116,7 @@ export default function NewPostModal() {
             socket.emit('new_user_notification', loggedInUser.id);
 
             // hard redirect server action does not work, modal stays mounted / open
-            const postUrl = `http://192.168.1.155:3000/${data.post.author.username}/status/${data.post.id}`;
+            const postUrl = `${window.location.origin}/${data.post.author.username}/status/${data.post.id}`;
             reset();
             return window.location.href = postUrl;
         } catch (error: unknown) {

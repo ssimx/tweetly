@@ -41,7 +41,7 @@ export default function Search() {
     // Infinite scroll - fetch older messages when inView is true
     useEffect(() => {
         if (inView && !postsEndReached && postsCursor && scrollPositionRef.current !== scrollPosition) {
-            if (!searchQuery) return router.push('http://192.168.1.155:3000/explore');
+            if (!searchQuery) return router.push(`${window.location.origin}/explore`);
 
             const fetchMorePosts = async () => {
                 try {
@@ -79,7 +79,7 @@ export default function Search() {
 
     // Initial data fetch, save cursor
     useEffect(() => {
-        if (!searchQuery) return router.push('http://192.168.1.155:3000/explore');
+        if (!searchQuery) return router.push(`${window.location.origin}/explore`);
 
         const fetchData = async () => {
             try {

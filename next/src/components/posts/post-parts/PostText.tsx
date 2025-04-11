@@ -28,7 +28,7 @@ export default function PostText({ content, searchSegments }: { content: string 
                 // If the part is a hashtag, render as a clickable link
                 const hashtag = part.slice(1); // Remove '#' for the URL
                 return (
-                    <Link key={index} href={`http://192.168.1.155:3000/search?q=${encodeURIComponent(`#${hashtag}`)}`}
+                    <Link key={index} href={`${window.location.origin}/search?q=${encodeURIComponent(`#${hashtag}`)}`}
                         className={`text-primary hover:underline ${searchSegments && searchSegments.some((word) => word.toLowerCase() === part.toLowerCase()) ? 'font-bold' : ''}`}
                         onClick={(e) => e.stopPropagation()}
                     >
@@ -39,7 +39,7 @@ export default function PostText({ content, searchSegments }: { content: string 
                 // If the part is a tag, render as a clickable link
                 const tag = part.slice(1).toLowerCase(); // Remove '@' for the URL
                 return (
-                    <Link key={index} href={`http://192.168.1.155:3000/${tag}`}
+                    <Link key={index} href={`${window.location.origin}/${tag}`}
                         className='text-primary hover:underline'
                         onClick={(e) => e.stopPropagation()}
                     >

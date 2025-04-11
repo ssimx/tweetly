@@ -80,7 +80,7 @@ export default function VisitedPostInfoModal({ post, photoId }: { post: VisitedP
 
     const openPhoto = (photoIndex: number, authorUsername: string, postId: number) => {
         document.body.style.overflow = '';
-        router.push(`http://192.168.1.155:3000/${authorUsername}/status/${postId}/photo/${photoIndex + 1}`, { scroll: false });
+        router.push(`${window.location.origin}/${authorUsername}/status/${postId}/photo/${photoIndex + 1}`, { scroll: false });
     };
 
     const closePhoto = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {

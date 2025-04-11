@@ -31,7 +31,7 @@ export default function PostImages({ images, authorUsername, postId, openPhoto }
                         onAuxClick={(e) => {
                             if (e.button === 1) {
                                 e.preventDefault(); // Prevent default middle-click behavior
-                                const newTabUrl = `http://192.168.1.155:3000/${authorUsername}/status/${postId}/photo/1`;
+                                const newTabUrl = `${window.location.origin}/${authorUsername}/status/${postId}/photo/1`;
                                 window.open(newTabUrl, '_blank'); // Opens in new tab
                             }
                         }}

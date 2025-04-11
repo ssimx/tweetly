@@ -9,7 +9,7 @@ export default function ProfileMediaPost({ post }: { post: BasePostDataType }) {
     const router = useRouter();
 
     const openPhoto = () => {
-        router.push(`http://192.168.1.155:3000/${post.author.username}/status/${post.id}/photo/1`, { scroll: false });
+        router.push(`${window.location.origin}/${post.author.username}/status/${post.id}/photo/1`, { scroll: false });
     };
 
     if (post.images === undefined || post.images.length === 0) return <></>;
