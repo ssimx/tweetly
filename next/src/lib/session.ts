@@ -1,9 +1,8 @@
-import { TemporaryUserJwtPayload } from './../../../tweetly-shared/dist/types/lib/userTypes.d';
 import { JwtPayload } from './types';
 import 'server-only';
 import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
-import { LoggedInUserJwtPayload } from 'tweetly-shared';
+import { LoggedInUserJwtPayload, TemporaryUserJwtPayload } from 'tweetly-shared';
 
 const secretKey = process.env.JWT_SECRET;
 const encodedKey = new TextEncoder().encode(secretKey);
