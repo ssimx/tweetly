@@ -71,7 +71,7 @@ export default function MobileSidebar({ setSidebarOpen, notifications, messages 
                                         color={pathName === link.route ? 'hsl(var(--primary))' : 'hsl(var(--primary-text-color))'}
                                         strokeWidth={3}
                                     />
-                                    <p className={`${pathName === link.route && 'font-bold'} text-20`} >{link.label}</p>
+                                    <p className={`font-bold text-20`} >{link.label}</p>
                                 </div>
                             </Link>
                         )
@@ -94,7 +94,7 @@ export default function MobileSidebar({ setSidebarOpen, notifications, messages 
                                         color={pathName === link.route ? 'hsl(var(--primary))' : 'hsl(var(--primary-text-color))'}
                                         strokeWidth={3}
                                     />
-                                    <p className={`${pathName === link.route && 'font-bold'} text-20`} >{link.label}</p>
+                                    <p className={`font-bold text-20`} >{link.label}</p>
                                 </div>
                             </Link>
                         )
