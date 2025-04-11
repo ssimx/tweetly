@@ -200,9 +200,9 @@ textarea {
   stroke: hsl(var(--primary)) !important;
 }
 
-/* .lds-ellipsis {
+.lds-ellipsis {
     display: none !important;
-} */
+}
 
 input[type='search']::-webkit-search-decoration,
 input[type='search']::-webkit-search-cancel-button,
