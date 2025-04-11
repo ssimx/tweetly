@@ -806,6 +806,11 @@ export const getFollowSuggestions = async (userId: number) => {
         // If user doesn't follow anyone or there's just not enough suggestions,
         //      fetch 20 most relevant users
         const suggestions = await prisma.user.findMany({
+            where: {
+                id: {
+                    not: userId
+                }
+            },
             orderBy: {
                 followers: {
                     _count: 'desc'
