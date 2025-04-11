@@ -232,7 +232,7 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
                 >
 
                     {/* Middle Content */}
-                    <div className={`${(pathName.startsWith('/conversation/') || pathName.startsWith('/settings')) ? 'h-dvh' : 'h-fit mb-[20px]'} min-h-dvh border-x border-b border-primary-border
+                    <div className={`${(pathName.startsWith('/conversation/') || pathName.startsWith('/settings')) ? 'h-dvh' : 'h-fit mb-[50px]'} min-h-dvh border-x border-b border-primary-border
                             w-full max-w-[600px] mx-auto xl:mx-0`}
                     >
                         <TemplateHeader setSidebarOpen={setSidebarOpen} />
