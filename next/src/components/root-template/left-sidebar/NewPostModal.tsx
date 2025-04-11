@@ -55,6 +55,7 @@ export default function NewPostModal() {
             setSelectedImagesFiles([]);
             setValue('images', []);
             reset();
+            clearErrors();
         }
     };
 
