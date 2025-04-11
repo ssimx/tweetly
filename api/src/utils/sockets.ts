@@ -54,6 +54,10 @@ interface SocketData {
 let io: Server;
 
 const socketConnection = (server: HttpServer) => {
+    const allowedOrigins = process.env.NODE_ENV === 'production'
+        ? ['https://tweetly-ten.vercel.app']
+        : ['http://192.168.1.155:3000', 'http://localhost:3000'];
+
     io = new Server<
         ClientToServerEvents,
         ServerToClientEvents,
@@ -61,7 +65,8 @@ const socketConnection = (server: HttpServer) => {
         SocketData
     >(server, {
         cors: {
-            origin: "http://192.168.1.155:3000",
+            origin: allowedOrigins,
+            methods: ["GET", "POST"],
         }
     });
 
