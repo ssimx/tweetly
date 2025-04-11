@@ -35,16 +35,16 @@ export default function RightSidebarFollowSuggestions() {
                                 />
                             </div>
                         )
-                        : suggestions.length !== 0
-                            ? suggestions.slice(0, 4).map((user) => (
+                        : suggestions.length === 0
+                            ? 'There is currently no recommendations'
+                            : suggestions.slice(0, 4).map((user) => (
                                 <SuggestionCard key={user.username} user={user} />
                             ))
-                            : null
                 }
             </div>
             <Dialog>
                 <DialogTrigger asChild>
-                    <button className='w-full text-primary text-start hover:font-semibold disabled:hidden' disabled={suggestions === undefined}>Show more</button>
+                    <button className='w-full text-primary text-start hover:font-semibold disabled:hidden' disabled={suggestions === undefined || suggestions.length === 0}>Show more</button>
                 </DialogTrigger>
                 {
                     suggestions !== undefined && suggestions.length !== 0 && (
