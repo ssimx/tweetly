@@ -232,8 +232,8 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
                 >
 
                     {/* Middle Content */}
-                    <div className="h-dvh min-h-dvh border-x border-b border-primary-border
-                            w-full max-w-[600px] mx-auto xl:mx-0"
+                    <div className={`${(pathName.startsWith('/conversation/') || pathName.startsWith('/settings/')) ? 'h-dvh' : 'h-fit mb-[20px]'} min-h-dvh border-x border-b border-primary-border
+                            w-full max-w-[600px] mx-auto xl:mx-0`}
                     >
                         <TemplateHeader setSidebarOpen={setSidebarOpen} />
                         {children}
@@ -244,7 +244,7 @@ export default function MainContent({ children, modals }: Readonly<{ children: R
                     <aside className="hidden xl:flex justify-center h-fit w-[400px] pt-5 px-4">
                         <RightSidebar />
                     </aside>
-                    
+
                 </div>
 
                 {/* Mobile Sidebar overlay */}
