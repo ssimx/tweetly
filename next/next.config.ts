@@ -4,6 +4,7 @@ import path from 'path';
 
 const nextConfig: NextConfig = {
     // reactStrictMode: false,
+    distDir: "build",
     images: {
         remotePatterns: [
             {

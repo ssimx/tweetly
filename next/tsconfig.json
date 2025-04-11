@@ -31,15 +31,16 @@
     "jsxImportSource": "react",
     "forceConsistentCasingInFileNames": true,
     "allowImportingTsExtensions": true,
-    "allowArbitraryExtensions": true,
+    "allowArbitraryExtensions": true
   },
   "include": [
+    ".next/types/**/*.ts",
     "next-env.d.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
-    ".next/types/**/*.ts",
+    "src/app/(root)/@modals/default.tsx",
     "src/app/actions.js",
-    "src/app/(root)/@modals/default.tsx"
+    "build/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
