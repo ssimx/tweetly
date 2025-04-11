@@ -40,7 +40,7 @@ export default function Trending() {
             </div>
             <Dialog>
                 <DialogTrigger asChild>
-                    <button className='w-full text-primary text-start hover:font-semibold disabled:hidden' disabled={hashtags === undefined || hashtags.length === 0}>Show more</button>
+                    <button className='w-full text-primary text-start hover:font-semibold disabled:hidden' disabled={hashtags === undefined || hashtags.length < 8}>Show more</button>
                 </DialogTrigger>
                 {
                     hashtags !== undefined && hashtags.length !== 0 && (

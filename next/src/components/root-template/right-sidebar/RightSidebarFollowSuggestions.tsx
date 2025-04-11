@@ -44,7 +44,7 @@ export default function RightSidebarFollowSuggestions() {
             </div>
             <Dialog>
                 <DialogTrigger asChild>
-                    <button className='w-full text-primary text-start hover:font-semibold disabled:hidden' disabled={suggestions === undefined || suggestions.length === 0}>Show more</button>
+                    <button className='w-full text-primary text-start hover:font-semibold disabled:hidden' disabled={suggestions === undefined || suggestions.length < 4}>Show more</button>
                 </DialogTrigger>
                 {
                     suggestions !== undefined && suggestions.length !== 0 && (

@@ -13,7 +13,6 @@ export default async function Explore() {
         )
     }
 
-
     // fetch trending and random posts
     return (
         <section className='feed-desktop'>
