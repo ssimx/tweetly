@@ -1,6 +1,13 @@
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+    errorFormat: 'minimal',
+    datasources: {
+        db: {
+            url: process.env.DATABASE_URL,
+        },
+    },
+});
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -469,7 +476,7 @@ export const updateMessageReadStatus = async (conversationId: string, messageId:
     });
 
     if (!messageExists) return false;
-    
+
     return prisma.message.update({
         where: {
             id: messageId,

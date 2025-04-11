@@ -1,11 +1,18 @@
 import { Server } from 'socket.io';
 import { PrismaClient } from "@prisma/client";
-import { BasePostDataType,  } from 'tweetly-shared';
+import { BasePostDataType, } from 'tweetly-shared';
 import { Server as HttpServer } from 'http';
 import { getNotificationsReadStatus } from '../services/notificationService.js';
 import { updateMessageReadStatus, getMessagesReadStatus, updateConversationMessagesReadStatus } from '../services/conversationService.js';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+    errorFormat: 'minimal',
+    datasources: {
+        db: {
+            url: process.env.DATABASE_URL,
+        },
+    },
+});
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -60,7 +67,7 @@ const socketConnection = (server: HttpServer) => {
 
     io.on("connection", (socket) => {
         console.log('connected');
-        
+
         // Fetch the list of users the connected user is following
         socket.on('get_following', async (userId) => {
             // Fetch the list of users that user follows

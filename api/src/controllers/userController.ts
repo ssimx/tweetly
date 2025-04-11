@@ -383,6 +383,7 @@ export const followUser = async (req: Request, res: Response, next: NextFunction
 
     try {
         await addFollow(user.id, username);
+        // service handles errors
         createNotificationForNewFollow(user.id, username);
 
         const successResponse: SuccessResponse<undefined> = {
@@ -404,6 +405,7 @@ export const unfollowUser = async (req: Request, res: Response, next: NextFuncti
 
     try {
         await removeFollow(user.id, username);
+        // service handles errors
         removeNotificationForFollow(user.id, username);
 
         const successResponse: SuccessResponse<undefined> = {
@@ -419,73 +421,85 @@ export const unfollowUser = async (req: Request, res: Response, next: NextFuncti
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const blockUser = async (req: Request, res: Response) => {
+export const blockUser = async (req: Request, res: Response, next: NextFunction) => {
     const username = req.params.username;
     const user = req.user as LoggedInUserDataType;
 
     try {
-        const response = await addBlock(user.id, username);
+        await addBlock(user.id, username);
+        // service handles errors
 
-        if (!response) return res.status(404).json({ error: 'User not found or already blocked' })
+        const successResponse: SuccessResponse<undefined> = {
+            success: true,
+            data: undefined
+        };
 
-        return res.status(201).json('success');
+        return res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        next(error);
     };
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const unblockUser = async (req: Request, res: Response) => {
+export const unblockUser = async (req: Request, res: Response, next: NextFunction) => {
     const username = req.params.username;
     const user = req.user as LoggedInUserDataType;
 
     try {
-        const response = await removeBlock(user.id, username);
+        await removeBlock(user.id, username);
+        // service handles errors
 
-        if (!response) return res.status(404).json({ error: 'User not found or not blocked' })
+        const successResponse: SuccessResponse<undefined> = {
+            success: true,
+            data: undefined
+        };
 
-        return res.status(201).json('success');
+        return res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        next(error);
     };
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const enablePushNotifications = async (req: Request, res: Response) => {
+export const enablePushNotifications = async (req: Request, res: Response, next: NextFunction) => {
     const username = req.params.username;
     const user = req.user as LoggedInUserDataType;
 
     try {
-        const response = await addPushNotifications(user.id, username);
+        await addPushNotifications(user.id, username);
+        // service handles errors
 
-        if (!response) return res.status(404).json({ error: 'failure' })
+        const successResponse: SuccessResponse<undefined> = {
+            success: true,
+            data: undefined
+        };
 
-        return res.status(201).json('success');
+        return res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        next(error);
     };
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
-export const disablePushNotifications = async (req: Request, res: Response) => {
+export const disablePushNotifications = async (req: Request, res: Response, next: NextFunction) => {
     const username = req.params.username;
     const user = req.user as LoggedInUserDataType;
 
     try {
-        const response = await removePushNotfications(user.id, username);
+        await removePushNotfications(user.id, username);
+        // service handles errors
 
-        if (!response) return res.status(404).json({ error: 'failure' })
+        const successResponse: SuccessResponse<undefined> = {
+            success: true,
+            data: undefined
+        };
 
-        return res.status(201).json('success');
+        return res.status(200).json(successResponse);
     } catch (error) {
-        console.error('Error: ', error);
-        return res.status(500).json({ error: 'Failed to process the request' });
+        next(error);
     };
 };
 

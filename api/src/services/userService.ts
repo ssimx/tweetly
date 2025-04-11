@@ -1,7 +1,14 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { AppError, getErrorMessage } from 'tweetly-shared';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+    errorFormat: 'minimal',
+    datasources: {
+        db: {
+            url: process.env.DATABASE_URL,
+        },
+    },
+});
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -902,65 +909,68 @@ export const getUserId = async (username: string) => {
 // ---------------------------------------------------------------------------------------------------------
 
 export const addPushNotifications = async (userId: number, username: string) => {
-    const followee = await prisma.user.findUnique({
-        where: {
-            username,
-        },
-        select: {
-            id: true,
-            followers: {
-                where: {
-                    followerId: userId
+    try {
+        const followee = await prisma.user.findUnique({
+            where: {
+                username,
+            },
+            select: {
+                id: true,
+                followers: {
+                    where: {
+                        followerId: userId
+                    }
                 }
             }
-        }
-    });
+        });
+        if (!followee) throw new AppError('User not found', 404, 'USER_NOT_FOUND');
+        else if (followee.followers.length === 0) throw new AppError('User is not followed', 400, 'USER_NOT_FOLLOWED');
 
-    if (!followee) {
-        throw new Error("User not found");
-    } else if (followee.followers.length === 0) {
-        throw new Error("Logged in user doesn't follow the user");
-    }
-
-    try {
-        return await prisma.pushNotification.create({
+        await prisma.pushNotification.create({
             data: {
                 receiverId: userId,
                 notifierId: followee.id
             }
         })
+
+        return true;
     } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            if (error.code === 'P2002') {
-                throw { error: 'Unique constraint violation' };
-            }
+            if (error.code === 'P2002') throw new AppError('Notifications already enabled', 400, 'NOTIFICATIONS_ALREADY_ENABLED');
         }
 
-        throw error;
+        if (error instanceof AppError) throw error;
+
+        throw new AppError('Internal server error', 500, 'INTERNAL_SERVER_ERROR');
     }
 };
 
 // ---------------------------------------------------------------------------------------------------------
 
 export const removePushNotfications = async (userId: number, username: string) => {
-    const notifier = await prisma.user.findUnique({
-        where: {
-            username,
-        },
-        select: {
-            id: true
-        }
-    });
+    try {
+        const notifier = await prisma.user.findUnique({
+            where: {
+                username,
+            },
+            select: {
+                id: true
+            }
+        });
+        if (!notifier) throw new AppError('User not found', 404, 'USER_NOT_FOUND');
 
-    if (!notifier) {
-        throw new Error("User not found");
+        await prisma.pushNotification.delete({
+            where: {
+                pushNotificationId: { receiverId: userId, notifierId: notifier.id },
+            }
+        })
+
+        return true;
+    } catch (error) {
+        if (error instanceof AppError) throw error;
+
+        throw new AppError('Internal server error', 500, 'INTERNAL_SERVER_ERROR');
     }
-
-    return await prisma.pushNotification.delete({
-        where: {
-            pushNotificationId: { receiverId: userId, notifierId: notifier.id },
-        }
-    })
 };
 
 // ---------------------------------------------------------------------------------------------------------
@@ -1024,59 +1034,75 @@ export const removeFollow = async (followerId: number, username: string) => {
 // ---------------------------------------------------------------------------------------------------------
 
 export const addBlock = async (userId: number, username: string) => {
-    const blocked = await prisma.user.findUnique({
-        where: { username },
-        select: {
-            id: true
-        }
-    });
+    try {
+        const blockedUser = await prisma.user.findUnique({
+            where: { username },
+            select: {
+                id: true
+            }
+        });
+        if (!blockedUser) throw new AppError('User not found', 404, 'USER_NOT_FOUND');
 
-    if (!blocked) {
-        throw new Error('User not found');
+        // remove follow
+        await prisma.follow.deleteMany({
+            where: {
+                OR: [
+                    {
+                        followeeId: userId,
+                        followerId: blockedUser.id
+                    },
+                    {
+                        followeeId: blockedUser.id,
+                        followerId: userId
+                    },
+                ]
+            }
+        })
+
+        await prisma.block.create({
+            data: {
+                blockerId: userId,
+                blockedId: blockedUser.id
+            }
+        })
+
+        return true;
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === 'P2002') throw new AppError('User is already blocked', 400, 'USER_ALREADY_BLOCKED');
+        }
+
+        if (error instanceof AppError) throw error;
+
+        throw new AppError('Internal server error', 500, 'INTERNAL_SERVER_ERROR');
     }
-
-    await prisma.follow.deleteMany({
-        where: {
-            OR: [
-                {
-                    followeeId: userId,
-                    followerId: blocked.id
-                },
-                {
-                    followeeId: blocked.id,
-                    followerId: userId
-                },
-            ]
-        }
-    })
-
-    return await prisma.block.create({
-        data: {
-            blockerId: userId,
-            blockedId: blocked.id
-        }
-    })
 }
 
 // ---------------------------------------------------------------------------------------------------------
 
 export const removeBlock = async (blockerId: number, username: string) => {
-    const blockedId = await prisma.user.findUnique({
-        where: { username },
-        select: {
-            id: true
-        }
-    }).then(res => res?.id);
+    try {
+        const blockedId = await prisma.user.findUnique({
+            where: { username },
+            select: {
+                id: true
+            }
+        }).then(res => res?.id);
+        if (!blockedId) throw new AppError('User not found', 404, 'USER_NOT_FOUND');
 
-    if (!blockedId) {
-        throw new Error('User not found');
+        const unblocked = await prisma.block.delete({
+            where: {
+                blockId: { blockerId, blockedId }
+            }
+        })
+        if (!unblocked) throw new AppError('User is not blocked', 404, 'USER_NOT_BLOCKED');
+
+        return true;
+    } catch (error) {
+        if (error instanceof AppError) throw error;
+
+        throw new AppError('Internal server error', 500, 'INTERNAL_SERVER_ERROR');
     }
-
-    return await prisma.block.delete({
-        where: {
-            blockId: { blockerId, blockedId }
-        }
-    })
 }
 
 // ---------------------------------------------------------------------------------------------------------

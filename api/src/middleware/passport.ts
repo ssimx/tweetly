@@ -4,6 +4,12 @@ import { PassportStatic } from 'passport';
 import { Request } from 'express';
 
 const prisma = new PrismaClient({
+    errorFormat: 'minimal',
+    datasources: {
+        db: {
+            url: process.env.DATABASE_URL,
+        }
+    },
     omit: {
         user: {
             password: true

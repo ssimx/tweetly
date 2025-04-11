@@ -2,7 +2,14 @@ import { Prisma, PrismaClient } from '@prisma/client';
 import { AppError } from 'tweetly-shared';
 import { NewPostType } from '../controllers/postController.js';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+    errorFormat: 'minimal',
+    datasources: {
+        db: {
+            url: process.env.DATABASE_URL,
+        },
+    },
+});
 
 // ---------------------------------------------------------------------------------------------------------
 
