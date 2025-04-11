@@ -281,12 +281,6 @@ export async function getConversations(): Promise<ApiResponse<{ conversations: C
     }
 };
 
-async function authorizedToViewConversation(username: string) {
-    const response = await getLoggedInUser();
-    if (!response.success) return false;
-    return response.data?.user.username === username;
-};
-
 export async function getConversationById(id: string) {
     try {
         const token = await getCurrentUserToken();

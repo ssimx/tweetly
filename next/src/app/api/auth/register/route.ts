@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { getErrorMessage, ApiResponse, AppError, ErrorResponse, SuccessResponse, SuccessfulRegisterResponseType, isZodError, temporaryUserBasicDataSchema, FormTemporaryUserBasicDataType, FormTemporaryUserPasswordType, temporaryUserPasswordSchema } from 'tweetly-shared';
 
 export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<SuccessfulRegisterResponseType>>> {

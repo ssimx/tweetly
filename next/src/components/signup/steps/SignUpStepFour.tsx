@@ -1,7 +1,7 @@
 'use client';
 import { Button } from "@/components/ui/button";
-import TweetlyLogoWhite from '@public/white.png';
-import TweetlyLogoBlack from '@public/black.png';
+import TweetlyLogoWhite from '@/assets/white.png';
+import TweetlyLogoBlack from '@/assets/black.png';
 import {
     Dialog,
     DialogContent,
@@ -326,7 +326,7 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
                             </button>
                             <h1 className='text-20 font-bold'>Edit media</h1>
                         </div>
-                        
+
                         <div className='w-[85vw] h-[85vw] sm:w-[500px] sm:h-[500px] md:w-[550px] md:h-[550px]'>
                             <div ref={croppieContainerRef}></div>
                         </div>

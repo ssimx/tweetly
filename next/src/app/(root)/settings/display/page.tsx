@@ -1,7 +1,7 @@
 'use client';
 import SettingsHeaderInfo from '@/components/settings/SettingsHeaderInfo';
 import React, { useState } from 'react';
-import TweetlyLogo from '@public/blackWhiteLogo.png';
+import TweetlyLogo from '@/assets/blackWhiteLogo.png';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Check } from 'lucide-react';

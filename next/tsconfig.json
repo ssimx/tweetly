@@ -21,20 +21,30 @@
         "name": "next"
       }
     ],
+    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./src/*"
       ]
     },
-    "target": "ES2017"
+    "target": "ES2017",
+    "jsxImportSource": "react",
+    "forceConsistentCasingInFileNames": true,
+    "allowImportingTsExtensions": true,
+    "allowArbitraryExtensions": true,
   },
   "include": [
     "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
-, "src/app/actions.js", "src/app/(root)/@modals/default.tsx"  ],
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    ".next/types/**/*.ts",
+    "src/app/actions.js",
+    "src/app/(root)/@modals/default.tsx"
+  ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    ".next",
+    "src/app/api/conversations/check/route.ts",
+    "src/app/api/users/deactivate/route.ts"
   ]
 }

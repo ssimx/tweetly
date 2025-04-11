@@ -18,10 +18,11 @@ const nextConfig: NextConfig = {
             fullUrl: true,
         }
     },
+
     experimental: {
         turbo: {
             resolveAlias: {
-                '@public/': ['./public/'],
+                '@public': ['./public/'],
             },
         },
         serverActions: {

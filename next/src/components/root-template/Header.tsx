@@ -6,8 +6,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useUserContext } from '@/context/UserContextProvider';
 import { useDisplayContext } from '@/context/DisplayContextProvider';
-import TweetlyLogoWhite from '@public/white.png';
-import TweetlyLogoBlack from '@public/black.png';
+import TweetlyLogoWhite from '@/assets/white.png';
+import TweetlyLogoBlack from '@/assets/black.png';
 
 export default function TemplateHeader({ setSidebarOpen }: { setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
     const path = usePathname();

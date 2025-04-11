@@ -8,7 +8,7 @@ import { redirect } from 'next/navigation';
 import MainContent from '@/components/root-template/MainContent';
 import AlertMessageContextProvider from '@/context/AlertMessageContextProvider';
 
-export default async function AuthorizedLayout({ children, modals }: Readonly<{ children: React.ReactNode, modals: React.ReactNode }>) {
+export default async function AuthorizedLayout({ children, modals }: { children: React.ReactNode, modals: React.ReactNode }) {
     const userResponse = await getLoggedInUser();
 
     if (!userResponse.success || userResponse.data === undefined || userResponse.data.user === undefined) {
@@ -22,23 +22,25 @@ export default async function AuthorizedLayout({ children, modals }: Readonly<{ 
                 <FollowSuggestionContextProvider>
                     <BlockedUsersContextProvider>
                         <PostInteractionContextProvider>
-                            <body
-                                className={`h-dvh w-screen
+                            <AlertMessageContextProvider>
+
+                                <body
+                                    className={`h-dvh w-screen
                                     xs:mx-auto xs:justify-center xs:content-center
                                     xs:min-h-screen xs:w-[99%]
                                     xs:grid xs:grid-cols-[auto,1fr]
                                     sm:max-w-[680px]
                                     xl:max-w-[1300px]`
-                                }
-                            >
+                                    }
+                                >
 
-                                <AlertMessageContextProvider>
                                     <MainContent modals={modals}>
                                         {children}
                                     </MainContent>
-                                </AlertMessageContextProvider>
 
-                            </body>
+                                </body>
+
+                            </AlertMessageContextProvider>
                         </PostInteractionContextProvider>
                     </BlockedUsersContextProvider>
                 </FollowSuggestionContextProvider>

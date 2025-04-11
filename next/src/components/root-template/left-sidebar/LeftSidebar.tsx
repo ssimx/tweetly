@@ -5,11 +5,11 @@ import Image from 'next/image';
 import SidebarUserBtn from './SidebarUserBtn';
 import NewPostModal from './NewPostModal';
 import LeftSidebarLink from './LeftSidebarLink';
-import TweetlyLogoWhite from '@public/white.png';
-import TweetlyLogoBlack from '@public/black.png';
+import TweetlyLogoWhite from '@/assets/white.png';
+import TweetlyLogoBlack from '@/assets/black.png';
 import { useDisplayContext } from '@/context/DisplayContextProvider';
 
-export default function LeftSidebar({ messages, notifications }: { messages: boolean,  notifications: boolean }) {
+export default function LeftSidebar({ messages, notifications }: { messages: boolean, notifications: boolean }) {
     const { savedTheme } = useDisplayContext();
 
     return (

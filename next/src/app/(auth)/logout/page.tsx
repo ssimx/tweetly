@@ -1,5 +1,6 @@
 'use client';
 import { useRouter } from "next/navigation";
+import { getErrorMessage } from 'tweetly-shared';
 
 export default function LogoutPage() {
     const router = useRouter();
@@ -15,7 +16,8 @@ export default function LogoutPage() {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error);
+                const errorMessage = getErrorMessage(errorData);
+                throw new Error(getErrorMessage(errorMessage));
             }
 
             router.push('/login');

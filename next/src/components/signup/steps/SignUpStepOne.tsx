@@ -1,7 +1,7 @@
 'use client';
 import { Button } from "@/components/ui/button";
-import TweetlyLogoWhite from '@public/white.png';
-import TweetlyLogoBlack from '@public/black.png';
+import TweetlyLogoWhite from '@/assets/white.png';
+import TweetlyLogoBlack from '@/assets/black.png';
 import {
     Dialog,
     DialogContent,

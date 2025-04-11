@@ -1,7 +1,7 @@
 'use client';
 import { Button } from "@/components/ui/button";
-import TweetlyLogoWhite from '@public/white.png';
-import TweetlyLogoBlack from '@public/black.png';
+import TweetlyLogoWhite from '@/assets/white.png';
+import TweetlyLogoBlack from '@/assets/black.png';
 import {
     Dialog,
     DialogContent,
@@ -197,17 +197,17 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
                             />
 
                             {isAvailable === true && (
-                                    <div title='Username is available'>
-                                        <CircleCheck size={18} className="absolute right-0 mr-3 top-1/2 transform -translate-y-1/2 text-green-400 z-10" />
-                                    </div>
-                                )
+                                <div title='Username is available'>
+                                    <CircleCheck size={18} className="absolute right-0 mr-3 top-1/2 transform -translate-y-1/2 text-green-400 z-10" />
+                                </div>
+                            )
                             }
 
                             {isAvailable === false && (
-                                    <div title='Username is not available'>
-                                        <CircleX size={18} className="absolute right-0 mr-3 top-1/2 transform -translate-y-1/2 text-red-600 z-10" />
-                                    </div>
-                                )
+                                <div title='Username is not available'>
+                                    <CircleX size={18} className="absolute right-0 mr-3 top-1/2 transform -translate-y-1/2 text-red-600 z-10" />
+                                </div>
+                            )
                             }
                         </div>
                         {errors.username && (

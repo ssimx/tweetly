@@ -13,13 +13,7 @@ export const metadata: Metadata = {
     description: "Tweetly is a modern social media platform for everyone.",
 };
 
-export default async function Layout({
-    children,
-    modals
-}: Readonly<{
-    children: React.ReactNode;
-    modals: React.ReactNode;
-}>) {
+export default async function Layout({ children }: { children: React.ReactNode }) {
     // Read theme and color from cookies
     const savedTheme = Number((await cookies()).get("theme")?.value) || 0;
     const savedColor = Number((await cookies()).get("color")?.value) || 0;
@@ -34,7 +28,6 @@ export default async function Layout({
         >
             <DisplayContextProvider savedTheme={savedTheme} savedColor={savedColor}>
                 {children}
-                {modals}
             </DisplayContextProvider>
         </html>
     );

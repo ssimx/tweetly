@@ -1,9 +1,9 @@
 import Image from "next/image";
-import TweetlyLogoWhite from '@public/white.png';
-import TweetlyLogoBlack from '@public/black.png';
+import TweetlyLogoWhite from '@/assets/white.png';
+import TweetlyLogoBlack from '@/assets/black.png';
 import { cookies } from 'next/headers';
 
-export default async function AuthLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function AuthLayout({ children }: { children: React.ReactNode }) {
     const savedTheme = Number((await cookies()).get("theme")?.value) || 0;
 
     return (

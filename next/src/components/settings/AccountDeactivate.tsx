@@ -1,5 +1,7 @@
 'use client';
+
 import { useUserContext } from '@/context/UserContextProvider';
+import { useAlertMessageContext } from '@/context/AlertMessageContextProvider';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import SettingsHeaderInfo from './SettingsHeaderInfo';
@@ -17,36 +19,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from '../ui/button';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function AccountDeactivate() {
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const { loggedInUser } = useUserContext();
-    const router = useRouter();
+    const { setAlertMessage } = useAlertMessageContext();
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        setIsSubmitting(true);
         e.preventDefault();
-        if (isSubmitting) return;
-        setIsSubmitting(() => true);
-
-        try {
-            const response = await fetch('/api/users/deactivate', {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            })
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                setIsSubmitting(() => false);
-                throw new Error(errorData.error);
-            }
-
-            router.push('/logout');
-        } catch (error) {
-            console.error(error);
-        }
+        setAlertMessage('Coming soon');
+        setIsSubmitting(false);
     };
 
     return (

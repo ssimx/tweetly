@@ -1083,6 +1083,55 @@ export async function unpinPost(postId: number): Promise<ApiResponse<undefined>>
     }
 };
 
+export async function createNewConversation(profileUser: string): Promise<ApiResponse<{ conversationId: string }>> {
+    try {
+        const token = await getCurrentUserToken();
+
+        const response = await fetch(`http://192.168.1.155:3000/api/conversations/create/${profileUser}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json() as ErrorResponse;
+            throw new AppError(errorData.error.message, response.status, errorData.error.code, errorData.error.details);
+        }
+
+        const { data } = await response.json() as SuccessResponse<{ conversationId: string }>;
+        if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
+        else if (!data.conversationId) throw new AppError('ConversationId is missing in data response', 404, 'MISSING_CONVERSATION_ID');
+
+        return {
+            success: true,
+            data: {
+                conversationId: data.conversationId,
+            }
+        }
+    } catch (error: unknown) {
+        if (error instanceof AppError) {
+            return {
+                success: false,
+                error: {
+                    message: error.message || 'Internal Server Error',
+                    code: error.code || 'INTERNAL_ERROR',
+                    details: error.details,
+                }
+            } as ErrorResponse;
+        }
+
+        // Handle other errors
+        return {
+            success: false,
+            error: {
+                message: 'Internal Server Error',
+                code: 'INTERNAL_ERROR',
+            },
+        };
+    }
+};
+
 export async function createNewConversationMessage(formData: FormNewConversationMessageDataType, tempId: string): Promise<ApiResponse<{ message: ConversationMessageType }>> {
     try {
         const token = await getCurrentUserToken();
