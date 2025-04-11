@@ -5,6 +5,10 @@ import { cache } from 'react';
 import { getErrorMessage, ApiResponse, AppError, ErrorResponse, LoggedInTemporaryUserDataType, LoggedInUserDataType, SuccessResponse, UserDataType, BasePostDataType, NotificationType, ConversationCardType, ConversationType, LoggedInUserJwtPayload, } from 'tweetly-shared';
 import { decryptSession, getUserSessionToken, verifySession } from '@/lib/session';
 
+const apiRouteUrl = process.env.API_ROUTE_URL;
+
+// ---------------------------------------------------------------------------------------------------------
+
 export const getTemporaryUser = async (): Promise<ApiResponse<{ user: LoggedInTemporaryUserDataType | null }>> => {
     const sessionToken = await getUserSessionToken();
     if ((await verifySession(sessionToken)).isAuth) redirect('/');
@@ -20,7 +24,7 @@ export const getTemporaryUser = async (): Promise<ApiResponse<{ user: LoggedInTe
     };
 
     try {
-        const response = await fetch('http://192.168.1.155:3000/api/users/temporary', {
+        const response = await fetch(`${apiRouteUrl}/users/temporary`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -67,13 +71,11 @@ export const getTemporaryUser = async (): Promise<ApiResponse<{ user: LoggedInTe
     }
 };
 
-// ---------------------------------------------------------------------------------------------------------
-
 export const getLoggedInUser = cache(async (): Promise<ApiResponse<{ user: LoggedInUserDataType }>> => {
     const token = await getCurrentUserToken();
 
     try {
-        const response = await fetch('http://192.168.1.155:3000/api/users', {
+        const response = await fetch(`${apiRouteUrl}/users`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -126,7 +128,7 @@ export async function getNotifications(): Promise<ApiResponse<{ notifications: N
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch('http://192.168.1.155:3000/api/users/notifications', {
+        const response = await fetch(`${apiRouteUrl}/users/notifications`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -179,7 +181,7 @@ export async function getBookmarks(): Promise<ApiResponse<{ bookmarks: BasePostD
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch('http://192.168.1.155:3000/api/posts/bookmarks', {
+        const response = await fetch(`${apiRouteUrl}/posts/bookmarks`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -232,7 +234,7 @@ export async function getConversations(): Promise<ApiResponse<{ conversations: C
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch('http://192.168.1.155:3000/api/conversations', {
+        const response = await fetch(`${apiRouteUrl}/conversations`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -285,7 +287,7 @@ export async function getConversationById(id: string) {
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://192.168.1.155:3000/api/conversations/${id}`, {
+        const response = await fetch(`${apiRouteUrl}/conversations/${id}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -385,7 +387,7 @@ async function authorizedToEditProfile(username: string): Promise<ApiResponse<{ 
 export async function getUserProfile(username: string) {
     try {
         const token = await getCurrentUserToken();
-        const userProfileResponse = await fetch(`http://192.168.1.155:3000/api/users/${username}`, {
+        const userProfileResponse = await fetch(`${apiRouteUrl}/users/${username}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

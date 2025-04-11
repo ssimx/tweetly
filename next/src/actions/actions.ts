@@ -43,11 +43,14 @@ import {
     newMessageDataSchema,
 } from 'tweetly-shared';
 
+const apiRouteUrl = process.env.API_ROUTE_URL;
+
 // ---------------------------------------------------------------------------------------------------------
 // AUTH
 
 // -> registration
 // First step of the registration process, registers new temporary user with basic information
+
 export async function registerTemporaryUser(
     basicDataForm: FormTemporaryUserBasicDataType,
     passwordDataForm: FormTemporaryUserPasswordType,
@@ -56,7 +59,7 @@ export async function registerTemporaryUser(
         const validatedBasicData = temporaryUserBasicDataSchema.parse(basicDataForm);
         const validatedPassword = temporaryUserPasswordSchema.parse(passwordDataForm);
 
-        const response = await fetch(`http://192.168.1.155:3000/api/auth/register`, {
+        const response = await fetch(`${apiRouteUrl}/auth/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -128,7 +131,7 @@ export async function updateTemporaryUserUsername(
 
         const validatedUsername = temporaryUserUsernameSchema.parse(formData);
 
-        const response = await fetch(`http://192.168.1.155:3000/api/auth/temporary/username`, {
+        const response = await fetch(`${apiRouteUrl}/auth/temporary/username`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -199,7 +202,7 @@ export async function updateTemporaryUserProfilePicture(
             newFormData.append('profilePicture', formData.profilePicture);
         }
 
-        const response = await fetch(`http://192.168.1.155:3000/api/auth/temporary/profilePicture`, {
+        const response = await fetch(`${apiRouteUrl}/auth/temporary/profilePicture`, {
             method: 'PATCH',
             headers: {
                 'Authorization': `Bearer ${temporaryToken}`,
@@ -267,7 +270,7 @@ export async function loginUser(
 
         const validatedData = logInUserSchema.parse(formData);
 
-        const response = await fetch(`http://192.168.1.155:3000/api/auth/login`, {
+        const response = await fetch(`${apiRouteUrl}/auth/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -341,7 +344,7 @@ export async function followUser(username: string): Promise<ApiResponse<undefine
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://192.168.1.155:3000/api/users/follow/${username}`, {
+        const response = await fetch(`${apiRouteUrl}/users/follow/${username}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -387,7 +390,7 @@ export async function unfollowUser(username: string): Promise<ApiResponse<undefi
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://192.168.1.155:3000/api/users/removeFollow/${username}`, {
+        const response = await fetch(`${apiRouteUrl}/users/removeFollow/${username}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -433,7 +436,7 @@ export async function blockUser(username: string): Promise<ApiResponse<undefined
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://192.168.1.155:3000/api/users/block/${username}`, {
+        const response = await fetch(`${apiRouteUrl}/users/block/${username}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -479,7 +482,7 @@ export async function unblockUser(username: string): Promise<ApiResponse<undefin
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://192.168.1.155:3000/api/users/removeBlock/${username}`, {
+        const response = await fetch(`${apiRouteUrl}/users/removeBlock/${username}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -525,7 +528,7 @@ export async function enableNotificationsForUser(username: string): Promise<ApiR
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://192.168.1.155:3000/api/users/enableNotifications/${username}`, {
+        const response = await fetch(`${apiRouteUrl}/users/enableNotifications/${username}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -569,7 +572,7 @@ export async function disableNotificationsForUser(username: string): Promise<Api
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://192.168.1.155:3000/api/users/disableNotifications/${username}`, {
+        const response = await fetch(`${apiRouteUrl}/users/disableNotifications/${username}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -632,7 +635,7 @@ export async function createPost(formData: FormNewPostDataType): Promise<ApiResp
             newFormData.append('replyToId', String(formData.replyToId));
         }
 
-        const response = await fetch(`http://192.168.1.155:3000/api/posts/create`, {
+        const response = await fetch(`${apiRouteUrl}/posts/create`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -692,7 +695,7 @@ export async function removePost(postId: number): Promise<ApiResponse<undefined>
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://192.168.1.155:3000/api/posts/remove/${postId}`, {
+        const response = await fetch(`${apiRouteUrl}/posts/remove/${postId}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -735,7 +738,7 @@ export async function repostPost(postId: number): Promise<ApiResponse<undefined>
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://192.168.1.155:3000/api/posts/repost/${postId}`, {
+        const response = await fetch(`${apiRouteUrl}/posts/repost/${postId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -779,7 +782,7 @@ export async function removeRepostPost(postId: number): Promise<ApiResponse<unde
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://192.168.1.155:3000/api/posts/removeRepost/${postId}`, {
+        const response = await fetch(`${apiRouteUrl}/posts/removeRepost/${postId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -823,7 +826,7 @@ export async function likePost(postId: number): Promise<ApiResponse<undefined>> 
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://192.168.1.155:3000/api/posts/like/${postId}`, {
+        const response = await fetch(`${apiRouteUrl}/posts/like/${postId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -867,7 +870,7 @@ export async function removeLikePost(postId: number): Promise<ApiResponse<undefi
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://192.168.1.155:3000/api/posts/removeLike/${postId}`, {
+        const response = await fetch(`${apiRouteUrl}/posts/removeLike/${postId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -911,7 +914,7 @@ export async function bookmarkPost(postId: number): Promise<ApiResponse<undefine
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://192.168.1.155:3000/api/posts/bookmark/${postId}`, {
+        const response = await fetch(`${apiRouteUrl}/posts/bookmark/${postId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -955,7 +958,7 @@ export async function removeBookmarkPost(postId: number): Promise<ApiResponse<un
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://192.168.1.155:3000/api/posts/removeBookmark/${postId}`, {
+        const response = await fetch(`${apiRouteUrl}/posts/removeBookmark/${postId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -999,7 +1002,7 @@ export async function pinPost(postId: number): Promise<ApiResponse<undefined>> {
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://192.168.1.155:3000/api/posts/pin/${postId}`, {
+        const response = await fetch(`${apiRouteUrl}/posts/pin/${postId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1043,7 +1046,7 @@ export async function unpinPost(postId: number): Promise<ApiResponse<undefined>>
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://192.168.1.155:3000/api/posts/removePin/${postId}`, {
+        const response = await fetch(`${apiRouteUrl}/posts/removePin/${postId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -1087,7 +1090,7 @@ export async function createNewConversation(profileUser: string): Promise<ApiRes
     try {
         const token = await getCurrentUserToken();
 
-        const response = await fetch(`http://192.168.1.155:3000/api/conversations/create/${profileUser}`, {
+        const response = await fetch(`${apiRouteUrl}/conversations/create/${profileUser}`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -1155,7 +1158,7 @@ export async function createNewConversationMessage(formData: FormNewConversation
         newFormData.append('conversationId', String(formData.conversationId));
         newFormData.append('tempId', String(tempId));
 
-        const response = await fetch(`http://192.168.1.155:3000/api/conversations/messages/create`, {
+        const response = await fetch(`${apiRouteUrl}/conversations/messages/create`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -1230,7 +1233,7 @@ export async function verifyLoginPasswordForSettings(formData: FormUserSettingsA
 
         const validatedData = userSettingsAccessSchema.parse(formData);
 
-        const response = await fetch('http://192.168.1.155:3000/api/auth/settings', {
+        const response = await fetch(`${apiRouteUrl}/auth/settings`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1291,7 +1294,7 @@ export async function checkIfUsernameIsAvailable(formData: { username: string })
     try {
         const validatedData = usernameSchema.parse(formData);
 
-        const response = await fetch(`http://192.168.1.155:3000/api/search/user?type=username&data=${validatedData.username}`, {
+        const response = await fetch(`${apiRouteUrl}/search/user?type=username&data=${validatedData.username}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -1357,7 +1360,7 @@ export async function changeUsername(formData: UserUpdateUsernameType): Promise<
 
         const validatedData = userUpdateUsernameSchema.parse(formData);
 
-        const response = await fetch(`http://192.168.1.155:3000/api/users/username`, {
+        const response = await fetch(`${apiRouteUrl}/users/username`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -1421,7 +1424,7 @@ export async function checkIfEmailIsAvailable(formData: { email: string }): Prom
     try {
         const validatedData = emailSchema.parse(formData);
 
-        const response = await fetch(`http://192.168.1.155:3000/api/search/user?type=email&data=${validatedData.email}`, {
+        const response = await fetch(`${apiRouteUrl}/search/user?type=email&data=${validatedData.email}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -1487,7 +1490,7 @@ export async function changeEmail(formData: UserUpdateEmailType): Promise<ApiRes
 
         const validatedData = userUpdateEmailSchema.parse(formData);
 
-        const response = await fetch(`http://192.168.1.155:3000/api/users/email`, {
+        const response = await fetch(`${apiRouteUrl}/users/email`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -1558,7 +1561,7 @@ export async function changeBirthday(formData: UserUpdateBirthdayType): Promise<
 
         const validatedData = userUpdateBirthdaySchema.parse(formData);
 
-        const response = await fetch(`http://192.168.1.155:3000/api/users/birthday`, {
+        const response = await fetch(`${apiRouteUrl}/users/birthday`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -1623,7 +1626,7 @@ export async function changePassword(formData: UserUpdatePasswordType): Promise<
 
         const validatedData = userUpdatePasswordSchema.parse(formData);
 
-        const response = await fetch(`http://192.168.1.155:3000/api/users/password`, {
+        const response = await fetch(`${apiRouteUrl}/users/password`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -1710,7 +1713,7 @@ export async function updateProfile(formData: UserUpdateProfileType): Promise<Ap
         newFormData.append('removeProfilePicture', String(formData.removeProfilePicture));
         newFormData.append('removeBannerPicture', String(formData.removeBannerPicture));
 
-        const response = await fetch(`http://192.168.1.155:3000/api/users/updateProfile`, {
+        const response = await fetch(`${apiRouteUrl}/users/updateProfile`, {
             method: 'PATCH',
             headers: {
                 'Authorization': `Bearer ${token}`,
