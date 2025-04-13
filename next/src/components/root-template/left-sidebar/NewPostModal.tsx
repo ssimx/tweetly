@@ -147,7 +147,7 @@ export default function NewPostModal() {
                 <Feather className='xl:hidden' />
                 <p className='hidden xs:block'>Post</p>
             </DialogTrigger>
-            <DialogContent className="min-h-[150px] h-auto w-[90%] sm:max-w-[550px]" onOpenAutoFocus={(e) => e.preventDefault()}>
+            <DialogContent className="min-h-[150px] h-auto w-[90%] overflow-y-auto sm:max-w-[550px]" onOpenAutoFocus={(e) => e.preventDefault()}>
                 <VisuallyHidden.Root><DialogTitle>New Post</DialogTitle></VisuallyHidden.Root>
                 <div className="grid grid-cols-post-layout gap-2 mt-4 min-h-[60px] sm:min-h-[80px]">
                     <Image
@@ -174,7 +174,7 @@ export default function NewPostModal() {
                             selectedImagesPreview.length === 1
                                 ? (
                                     <div className="mt-2 relative inline-block w-fit max-h-[500px]">
-                                        <Image src={selectedImagesPreview[0]} alt="Selected preview" className="max-h-[500px] w-auto object-contain rounded-md" width={400} height={400} />
+                                        <Image src={selectedImagesPreview[0]} alt="Selected preview" className="max-h-[50dvh] w-auto object-contain rounded-md" width={400} height={400} />
                                         <button type='button' className='absolute top-2 right-2 group rounded-full bg-black-1/40 p-1 flex-center'
                                             onClick={() => {
                                                 setSelectedImagesPreview([]);
