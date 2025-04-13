@@ -177,8 +177,14 @@ async function main() {
   const hashedPassword = await bcrypt.hash('tweetly1', 10);
 
   // Create 100 users with profiles
+  const profileImagesResponse = await fetch(
+    'https://picsum.photos/v2/list?page=1&limit=100'
+  );
+
+  const profileImages = await profileImagesResponse.json();
+
   const users = await Promise.all(
-    Array.from({ length: 100 }).map(async () => {
+    Array.from({ length: 100 }).map(async (v, index) => {
       const userCreatedAt = faker.date.recent({
         days: 90,
         refDate: date30daysAgo,
@@ -223,9 +229,8 @@ async function main() {
           bio: faker.lorem.sentence().slice(0, 160),
           location: faker.location.city().slice(0, 30),
           websiteUrl: faker.internet.url().slice(0, 100),
-          profilePicture:
-            'https://res.cloudinary.com/ddj6z1ptr/image/upload/v1728503826/profilePictures/ynh7bq3eynvkv5xhivaf.png',
-          bannerPicture: '',
+          profilePicture: `https://picsum.photos/id/${profileImages[index].id}/400/400`,
+          bannerPicture: `https://picsum.photos/id/${profileImages[index].id}/1500/500`,
           userId: user.id, // Link profile to user
         },
         update: {
@@ -233,9 +238,8 @@ async function main() {
           bio: faker.lorem.sentence().slice(0, 160),
           location: faker.location.city().slice(0, 30),
           websiteUrl: faker.internet.url().slice(0, 100),
-          profilePicture:
-            'https://res.cloudinary.com/ddj6z1ptr/image/upload/v1728503826/profilePictures/ynh7bq3eynvkv5xhivaf.png',
-          bannerPicture: '',
+          profilePicture: `https://picsum.photos/id/${profileImages[index].id}/400/400`,
+          bannerPicture: `https://picsum.photos/id/${profileImages[index].id}/1500/500`,
         },
       });
 
@@ -317,6 +321,12 @@ async function main() {
   console.log('push notifications done');
 
   // Create posts and store them for replies
+  const postImagesResponse = await fetch(
+    'https://picsum.photos/v2/list?page=2&limit=100'
+  );
+
+  const postImages = await postImagesResponse.json();
+
   const createdPosts = [];
   for (let i = 0; i < 500; i++) {
     const randomUser = faker.helpers.arrayElement(users);
@@ -334,6 +344,52 @@ async function main() {
 
     const hashtagRegex = /#(\w+)/g;
     const shouldIncludeHashtags = Math.random() < 0.25;
+    const shouldIncludeImage = Math.random() < 0.1;
+    const imagesNumber = shouldIncludeImage
+      ? Math.floor(Math.random() * 4) + 1
+      : 0;
+
+    let imagesArray = [];
+    if (shouldIncludeImage) {
+      for (let i = 0; i < imagesNumber; i++) {
+        const randomImageId = Math.floor(Math.random() * 100);
+
+        const getRandomImageSize = () => {
+          // Randomly choose between square, portrait, or landscape
+          const aspectRatioType = Math.floor(Math.random() * 3); // 0: square, 1: portrait, 2: landscape
+
+          // Base size (not too big)
+          const baseSize = Math.floor(Math.random() * 200) + 300; // Between 300-500px base dimension
+
+          let width, height;
+
+          switch (aspectRatioType) {
+            case 0: // Square
+              width = baseSize;
+              height = baseSize;
+              break;
+            case 1: // Portrait (vertical)
+              width = baseSize;
+              height = Math.floor(baseSize * (Math.random() * 0.5 + 1.2)); // 1.2-1.7x taller
+              break;
+            case 2: // Landscape (horizontal)
+              width = Math.floor(baseSize * (Math.random() * 0.5 + 1.2)); // 1.2-1.7x wider
+              height = baseSize;
+              break;
+          }
+
+          return { width, height };
+        };
+
+        // Example usage:
+        const imageSize = getRandomImageSize();
+
+        imagesArray.push(
+          `https://picsum.photos/id/${postImages[randomImageId].id}/${imageSize.width}/${imageSize.width}`
+        );
+      }
+    }
+
     let postContent = '';
     if (shouldIncludeHashtags) {
       postContent = `${faker.lorem.sentence()} ${getRandomHashtags()}`;
@@ -347,6 +403,7 @@ async function main() {
     const post = await prisma.post.create({
       data: {
         content: postContent,
+        images: imagesArray,
         authorId: randomUser.id,
         createdAt: postCreatedAt,
       },
@@ -714,7 +771,6 @@ async function main() {
             conversationId: conversationId,
             createdAt: newMessageTime,
             updatedAt: newMessageTime,
-            readStatus: true,
           },
         });
 
@@ -777,7 +833,7 @@ async function main() {
             conversationId,
           },
           data: {
-            readStatus: false,
+            readAt: undefined,
           },
         });
       } else {
@@ -791,7 +847,7 @@ async function main() {
             },
           },
           data: {
-            readStatus: false,
+            readAt: undefined,
           },
         });
       }

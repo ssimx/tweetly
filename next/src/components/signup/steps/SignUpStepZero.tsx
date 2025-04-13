@@ -146,6 +146,7 @@ export default function SignUpStepZero({ dialogOpen, setDialogOpen, setRegistrat
                             {...register('profileName')}
                             placeholder="Name"
                             maxLength={50}
+                            autoFocus={true}
                         />
                         {errors.profileName && (
                             <p className="error-msg">{`${errors.profileName.message}`}</p>

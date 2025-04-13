@@ -194,6 +194,7 @@ export default function SignUpStepThree({ dialogOpen, setDialogOpen, setRegistra
                                 maxLength={15}
                                 type='username'
                                 className="pl-8 pr-3 py-2 text-md w-full rounded shadow-sm"
+                                autoFocus={true}
                             />
 
                             {isAvailable === true && (

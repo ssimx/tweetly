@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
                 hostname: 'res.cloudinary.com',
                 pathname: '/ddj6z1ptr/**',
             },
+            {
+                protocol: 'https',
+                hostname: 'picsum.photos',
+            },
         ],
     },
     logging: {

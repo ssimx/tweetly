@@ -73,6 +73,7 @@ export const getTemporaryUser = async (): Promise<ApiResponse<{ user: LoggedInTe
 
 export const getLoggedInUser = cache(async (): Promise<ApiResponse<{ user: LoggedInUserDataType }>> => {
     const token = await getCurrentUserToken();
+    const payload = await decryptSession(token) as LoggedInUserJwtPayload;
 
     try {
         const response = await fetch(`${apiRouteUrl}/users`, {
@@ -92,6 +93,8 @@ export const getLoggedInUser = cache(async (): Promise<ApiResponse<{ user: Logge
         const { data } = await response.json() as SuccessResponse<{ user: LoggedInUserDataType }>;
         if (!data) throw new AppError('Data is missing in response', 404, 'MISSING_DATA');
         else if (!data.user) throw new AppError('User data is missing in data response', 404, 'MISSING_USER_DATA');
+
+        if (data.user.username !== payload?.username) redirect('/logout');
 
         return {
             success: true,
