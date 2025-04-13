@@ -53,13 +53,16 @@ export default function ConversationMessages({
     const userScrolledUp = useRef(false);
 
     // Get the last message that was sent by the logged in user and seen by the receiver
-    const lastSeenMessageId: string | null = messages
+    const lastSeenMessage: ConversationMessageType | null = messages
         .filter((msg) => msg.sentBy === loggedInUser.username)
-        .findLast((msg) => msg.readAt)?.id ?? null;
+        .findLast((msg) => msg.readAt) ?? null;
+    
+    // Get last message sent by other party
+    const lastReceivedMessage: ConversationMessageType | null = messages
+        .findLast((msg) => msg.sentBy !== loggedInUser.username) ?? null;
 
-    // Get the last message and check whether sender is logged in user, check for read status, save message index for rendering
-    const lastMessage = messages.slice(-1)[0];
-    const lastMessageIndex = lastMessage ? messages.length - 1 : 0;
+    // Get the last message for random functionalities
+    const lastMessage = messages.filter(msg => msg.status === 'sent').slice(-1)[0];
 
     // Track scroll position on user scroll
     const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement, UIEvent>) => {
@@ -170,14 +173,14 @@ export default function ConversationMessages({
                     )}
 
                     {messages.map((msg, index) => (
-                        <div key={msg.id}
-                            className={`min-w-[1%] break-words whitespace-normal max-w-[90%] ${msg.sentBy === loggedInUser.username ? 'self-end' : 'self-start'} ${unreadMessageId === msg.id ? 'w-full' : ''}`}
+                        <div
+                            key={msg.id}
+                            className={`w-[100%] flex items-center ${msg.sentBy === loggedInUser.username ? 'justify-end' : 'justify-start'}`}
                             ref={unreadMessageId === msg.id ? unreadMessageElementRef : null}
                         >
-
                             {msg.sentBy === loggedInUser.username
                                 ? (
-                                    <div className='flex flex-col'>
+                                    <div className='flex flex-col w-[80%] h-fit self-end'>
                                         <div className='flex items-center gap-2'>
                                             {msg.status === 'failed' && <div title='Message failed to send'>
                                                 <CircleAlert size={20} className='text-red-400' />
@@ -190,10 +193,9 @@ export default function ConversationMessages({
                                                     <p className='mt-1 mr-3 text-end text-secondary-text text-14'>Sending</p>
                                                 )
                                             }
-
                                             {
                                                 msg.status === 'sent' && bottomReached
-                                                    ? msg.id === lastSeenMessageId
+                                                    ? lastSeenMessage && lastReceivedMessage && (msg.id === lastSeenMessage.id) && (lastReceivedMessage && (msg.createdAt > lastReceivedMessage.createdAt))
                                                         ? (
                                                             <button
                                                                 className='size-fit min-w-full my-1 rounded-full ml-auto'
@@ -203,17 +205,17 @@ export default function ConversationMessages({
                                                                     src={receiverInfo.profile.profilePicture}
                                                                     alt='Receiver profile picture'
                                                                     width={16} height={16}
-                                                                    className='ml-auto rounded-full'
+                                                                    className='animate-in ml-auto rounded-full border border-secondary-text'
                                                                     title={formatMessageSeen(msg.createdAt)}
                                                                 />
                                                                 {isSeenAtMessageVisible && (
                                                                     <p className='text-secondary-text text-[0.8rem]'>{formatMessageSeen(msg.createdAt)}</p>
                                                                 )}
                                                             </button>
-                                                            
+
                                                         )
-                                                        : index === lastMessageIndex
-                                                            ?    (
+                                                        : msg.id === lastMessage.id
+                                                            ? (
                                                                 <p className='mt-1 mr-3 text-end text-secondary-text text-14'>
                                                                     {
                                                                         formatMessageSent(msg.createdAt)
@@ -227,8 +229,8 @@ export default function ConversationMessages({
                                     </div>
                                 )
                                 : (
-                                    <>
-                                        {unreadMessageId === msg.id
+                                    <div className='w-full'>
+                                        {msg.id === unreadMessageId
                                             && (
                                                 <div
                                                     className={`unread-message w-full ${messages[index === 0 ? 0 : index - 1].sentBy === loggedInUser.username ? 'mt-4' : ''}`}
@@ -237,25 +239,33 @@ export default function ConversationMessages({
                                                 </div>
                                             )
                                         }
-
-                                        <div className='flex flex-col'>
+                                        <div className={`flex flex-col ${msg.id === lastMessage.id ? 'w-[100%]' : 'w-[80%]'}`}>
                                             <div className='flex items-center gap-2'>
-                                                {msg.status === 'failed' && <CircleAlert size={20} className='text-red-400' />}
-                                                <MessageBubble msg={msg} index={index} messages={messages} />
+                                                <div className='w-[80%]'>
+                                                    {msg.status === 'failed' && <CircleAlert size={20} className='text-red-400' />}
+                                                    <MessageBubble msg={msg} index={index} messages={messages} />
+                                                </div>
+                                                {msg.id === lastMessage.id && bottomReached && (
+                                                    <Image
+                                                        src={receiverInfo.profile.profilePicture}
+                                                        alt='Receiver profile picture'
+                                                        width={16} height={16}
+                                                        className='animate-in ml-auto self-end my-1 rounded-full border border-secondary-text'
+                                                        title={formatMessageReceived(msg.createdAt)}
+                                                    />
+                                                )}
                                             </div>
-                                            <div>
-                                                {
-                                                    index === lastMessageIndex && bottomReached && (
-                                                        <p className='mt-1 ml-3 text-start text-secondary-text text-14'>
-                                                            {
-                                                                formatMessageReceived(msg.createdAt)
-                                                            }
-                                                        </p>
-                                                    )
-                                                }
-                                            </div>
+                                            {
+                                                msg.id === lastMessage.id && bottomReached && (
+                                                    <p className='mt-1 ml-3 text-start text-secondary-text text-14'>
+                                                        {
+                                                            formatMessageReceived(msg.createdAt)
+                                                        }
+                                                    </p>
+                                                )
+                                            }
                                         </div>
-                                    </>
+                                    </div>
                                 )
                             }
                         </div>

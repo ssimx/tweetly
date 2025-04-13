@@ -16,7 +16,7 @@ export default function RightSidebarFollowSuggestions() {
     const { suggestions } = useFollowSuggestionContext();
     const pathname = usePathname();
     
-    if (pathname.startsWith('/messages/')) return <></>
+    if (pathname.startsWith('/conversation/')) return <></>
 
     return (
         <div className='w-full h-fit rounded-[15px] border p-3 flex flex-col gap-2'>
