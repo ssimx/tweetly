@@ -46,7 +46,7 @@ export default function PostImages({ images, authorUsername, postId, openPhoto }
                 )
                 : (images.length > 1 && images.length < 5)
                     ? (
-                        <div className={`mt-2 grid gap-1 w-full max-w-full h-[300px] ${images.length === 2 ? 'grid-cols-2 grid-rows-1' : 'grid-cols-2 grid-rows-2'}`}>
+                        <div className={`mt-2 grid gap-1 w-full max-w-full h-fit ${images.length === 2 ? 'grid-cols-2 grid-rows-1' : 'grid-cols-2 grid-rows-2'}`}>
                             {images.map((image, index) => (
                                 <Link
                                     key={index}
