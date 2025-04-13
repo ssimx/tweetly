@@ -184,7 +184,7 @@ async function main() {
   const profileImages = await profileImagesResponse.json();
 
   const users = await Promise.all(
-    Array.from({ length: 100 }).map(async (v, index) => {
+    Array.from({ length: 50 }).map(async (v, index) => {
       const userCreatedAt = faker.date.recent({
         days: 90,
         refDate: date30daysAgo,
@@ -251,7 +251,7 @@ async function main() {
 
   // Create random follows
   for (const user of users) {
-    const followCount = faker.number.int({ min: 0, max: 100 });
+    const followCount = faker.number.int({ min: 0, max: 50 });
     const followees = faker.helpers.arrayElements(users, followCount);
 
     for (const followee of followees) {
@@ -328,7 +328,7 @@ async function main() {
   const postImages = await postImagesResponse.json();
 
   const createdPosts = [];
-  for (let i = 0; i < 500; i++) {
+  for (let i = 0; i < 200; i++) {
     const randomUser = faker.helpers.arrayElement(users);
 
     const notificationReceiversForRandomUser =
@@ -452,7 +452,7 @@ async function main() {
 
   // Create replies for the created posts
   const createdReplies = [];
-  for (let i = 0; i < 1000; i++) {
+  for (let i = 0; i < 100; i++) {
     // Select a random post / reply
     const randomPost = faker.helpers.arrayElement(
       createdPosts.concat(createdReplies)
@@ -561,12 +561,12 @@ async function main() {
   // Create random reposts and likes and bookmarks
   const allPosts = await prisma.post.findMany();
   const randomPosts = faker.helpers.arrayElements(allPosts, {
-    min: 75,
-    max: 150,
+    min: 20,
+    max: 50,
   });
   for (const post of randomPosts) {
     // Create random reposts
-    const randomUsers = faker.helpers.arrayElements(users, { min: 0, max: 75 });
+    const randomUsers = faker.helpers.arrayElements(users, { min: 0, max: 50 });
     for (const user of randomUsers) {
       const shouldRepost = Math.random() < 0.1; // 10% chance to repost
       if (shouldRepost) {
@@ -745,7 +745,7 @@ async function main() {
         })
         .then((res) => res.id);
 
-      const messageCount = faker.number.int({ min: 0, max: 100 });
+      const messageCount = faker.number.int({ min: 0, max: 20 });
       let lastMessageTime = conversationCreatedAt;
       let newMessageTime;
       // Randomly choose the initial sender between `user.id` and `receiver.id`
