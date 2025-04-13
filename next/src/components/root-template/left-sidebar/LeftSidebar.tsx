@@ -20,7 +20,7 @@ export default function LeftSidebar({ messages, notifications }: { messages: boo
             <Link href='/'>
                 <Image src={savedTheme === 0 ? TweetlyLogoBlack : TweetlyLogoWhite} alt='Tweetly logo' width='30' height='30' className='mx-auto' />
             </Link>
-            <div className='flex flex-col mx-auto'>
+            <div className='w-full flex flex-col mx-auto'>
                 {leftSidebarLinks.map((link) => (
                     <LeftSidebarLink
                         key={link.label}
