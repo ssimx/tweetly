@@ -134,7 +134,7 @@ export default function FeedContent() {
         }
     }, [infiniteScrollInView, activeTab, isFetchingNew, setIsFetchingNew, globalFeedCursor, followingFeedCursor, globalFeedEndReached, followingFeedEndReached, scrollPosition]);
 
-    // For fetching following tab, check for active tab AND whether followingPosts has yet been fetched OR logged in user has followed new user
+    // For fetching initial posts, check for active tab
     useEffect(() => {
         if (activeTab === 0 && !globalPosts) {
             const fetchGlobalPosts = async () => {
@@ -149,8 +149,6 @@ export default function FeedContent() {
                     const { data } = response as SuccessResponse<{ posts: BasePostDataType[], end: boolean }>;
                     if (data === undefined) throw new Error('Data is missing in response');
                     else if (data.posts === undefined) throw new Error('Posts property is missing in data response');
-
-                    console.log(data.posts)
 
                     setGlobalFeedEndReached(data.end ?? true);
                     setGlobalFeedCursor(data.posts.length ? data.posts.slice(-1)[0].id : null);
