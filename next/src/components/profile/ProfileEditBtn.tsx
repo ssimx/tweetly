@@ -158,27 +158,27 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
         mouseWheelZoom: true,
         viewport: {
             width: mdViewport === true || smViewport === true
-                    ? 500 * 0.8
-                    : phoneBiggerViewport === true
-                        ? 450 * 0.8
-                        : phoneBigViewport === true
-                            ? 400 * 0.8
-                            : phoneSmallViewport === true
-                                ? 390 * 0.8
-                                : phoneSmallestViewport === true
-                                    ? 375 * 0.8
-                                    : 300,
+                ? 500 * 0.8
+                : phoneBiggerViewport === true
+                    ? 450 * 0.8
+                    : phoneBigViewport === true
+                        ? 400 * 0.8
+                        : phoneSmallViewport === true
+                            ? 390 * 0.8
+                            : phoneSmallestViewport === true
+                                ? 375 * 0.8
+                                : 300,
             height: mdViewport === true || smViewport === true
-                    ? 500 * 0.8
-                    : phoneBiggerViewport === true
-                        ? 450 * 0.8
-                        : phoneBigViewport === true
-                            ? 400 * 0.8
-                            : phoneSmallViewport === true
-                                ? 390 * 0.8
-                                : phoneSmallestViewport === true
-                                    ? 375 * 0.8
-                                    : 300,
+                ? 500 * 0.8
+                : phoneBiggerViewport === true
+                    ? 450 * 0.8
+                    : phoneBigViewport === true
+                        ? 400 * 0.8
+                        : phoneSmallViewport === true
+                            ? 390 * 0.8
+                            : phoneSmallestViewport === true
+                                ? 375 * 0.8
+                                : 300,
             type: "circle" as CropType
         },
     };
@@ -189,27 +189,27 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
         mouseWheelZoom: true,
         viewport: {
             width: mdViewport === true || smViewport === true
-                    ? 500 * 0.8
-                    : phoneBiggerViewport === true
-                        ? 450 * 0.8
-                        : phoneBigViewport === true
-                            ? 400 * 0.8
-                            : phoneSmallViewport === true
-                                ? 390 * 0.8
-                                : phoneSmallestViewport === true
-                                    ? 375 * 0.8
-                                    : 300,
+                ? 500 * 0.8
+                : phoneBiggerViewport === true
+                    ? 450 * 0.8
+                    : phoneBigViewport === true
+                        ? 400 * 0.8
+                        : phoneSmallViewport === true
+                            ? 390 * 0.8
+                            : phoneSmallestViewport === true
+                                ? 375 * 0.8
+                                : 300,
             height: mdViewport === true || smViewport === true
-                    ? 225 * 0.8
-                    : phoneBiggerViewport === true
-                        ? 200 * 0.8
-                        : phoneBigViewport === true
-                            ? 175 * 0.8
-                            : phoneSmallViewport === true
-                                ? 170 * 0.8
-                                : phoneSmallestViewport === true
-                                    ? 165 * 0.8
-                                    : 150,
+                ? 225 * 0.8
+                : phoneBiggerViewport === true
+                    ? 200 * 0.8
+                    : phoneBigViewport === true
+                        ? 175 * 0.8
+                        : phoneSmallViewport === true
+                            ? 170 * 0.8
+                            : phoneSmallestViewport === true
+                                ? 165 * 0.8
+                                : 150,
             type: "square" as CropType
         },
     };
@@ -293,6 +293,12 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
     }, [isFileUploaded]);
 
     useEffect(() => {
+        setUploadedBannerPictureData(null);
+        setUploadedProfilePictureData(null);
+        setIsFileUploaded(false);
+    }, [dialogOpen]);
+
+    useEffect(() => {
         // Cleanup Croppie instance on component unmount
         return () => {
             if (croppieRef.current) {
@@ -338,7 +344,7 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                                                 style={{ objectFit: "cover" }}
                                             />
                                             <button
-                                                className="z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30 border"
+                                                className="z-10 bg-black-1/50 p-3 rounded-full hover:bg-black-1/30"
                                                 onClick={() => bannerPictureInputRef.current?.click()}
                                             >
                                                 <ImagePlus size={20} className="text-primary-text-color-white" />
@@ -549,9 +555,9 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                 )
                 : (
                     <DialogContent
-                        className='w-[90%] min-h-[500px] h-[80svh] max-h-[900px] z-[9999]
+                        className='w-[90%] min-h-[500px] h-[60dvh] max-h-[800px] z-[9999] !px-4
                             flex flex-col justify-between items-center bg-primary-foreground 
-                            sm:w-[550px] sm:px-[2em]
+                            sm:w-[550px] sm:h-[75vh] sm:px-[2em]
                             md:w-[700px]'
                         hideClose
                     >
@@ -586,7 +592,7 @@ export default function ProfileEditBtn({ profileInfo }: { profileInfo: Pick<User
                         <div className='w-[85vw] h-[85vw] sm:w-[500px] sm:h-[500px]'>
                             <div ref={croppieContainerRef}></div>
                         </div>
-                        
+
                         <Button type="button"
                             className='ml-auto mr-auto font-bold w-fit rounded-3xl text-white-1'
                             onClick={onResult}

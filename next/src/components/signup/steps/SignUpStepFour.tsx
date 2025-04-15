@@ -314,17 +314,22 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
                 )
                 : (
                     <DialogContent
-                        className='w-[90%] min-h-[500px] h-[60svh] max-h-[700px] flex flex-col justify-center items-center bg-primary-foreground sm:w-[550px] sm:h-[700px] sm:px-[5em] md:w-[700px] md:h-[750px]'
+                        className='w-[90%] min-h-[500px] h-[80dvh] max-h-[800px] z-[9999] !px-4
+                            flex flex-col justify-between items-center bg-primary-foreground 
+                            sm:w-[550px] sm:px-[2em]
+                            md:w-[700px]'
                         hideClose
                     >
-                        <div className='h-fit flex gap-6 px-2 mr-auto mb-auto'>
-                            <button type='button' onClick={() => {
-                                setUploadedPictureData(null);
-                                setIsFileUploaded(false)
-                            }}>
-                                <ArrowLeft size={22} />
-                            </button>
-                            <h1 className='text-20 font-bold'>Edit media</h1>
+                        <div className='w-full'>
+                            <div className='h-fit flex gap-6 px-2 mr-auto mb-auto'>
+                                <button type='button' onClick={() => {
+                                    setUploadedPictureData(null);
+                                    setIsFileUploaded(false)
+                                }}>
+                                    <ArrowLeft size={22} />
+                                </button>
+                                <DialogTitle className='text-20 font-bold'>Edit media</DialogTitle>
+                            </div>
                         </div>
 
                         <div className='w-[85vw] h-[85vw] sm:w-[500px] sm:h-[500px] md:w-[550px] md:h-[550px]'>
