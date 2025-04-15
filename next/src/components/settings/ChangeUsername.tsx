@@ -178,6 +178,7 @@ export default function ChangeUsername() {
                             Saving
                         </Button>
                         : <Button
+                            className='text-white'
                             disabled={!isAvailable || usernameWatch.toLowerCase() === loggedInUser.username.toLowerCase() || isSubmitting}
                         >
                             Save
