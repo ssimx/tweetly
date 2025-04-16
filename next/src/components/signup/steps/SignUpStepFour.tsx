@@ -332,7 +332,7 @@ export default function SignUpStepFour({ dialogOpen, setDialogOpen, setRegistrat
                             </div>
                         </div>
 
-                        <div className='w-[85vw] h-[85vw] sm:w-[500px] sm:h-[500px] md:w-[550px] md:h-[550px]'>
+                        <div className='w-[85vw] h-[85vw] sm:w-[500px] sm:h-[500px] md:w-[550px] md:h-[550px] my-auto'>
                             <div ref={croppieContainerRef}></div>
                         </div>
 
