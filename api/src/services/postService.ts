@@ -2299,11 +2299,6 @@ export const getReposts = async (
                                 blockedId: userId,
                             },
                         },
-                        blockedBy: {
-                            none: {
-                                blockerId: userId,
-                            },
-                        },
                     },
                 },
             },

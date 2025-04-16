@@ -4,6 +4,7 @@ import { BellPlus, BellOff, BellRing } from "lucide-react";
 import { getErrorMessage, UserDataType } from 'tweetly-shared';
 import { UserActionType } from '@/lib/userReducer';
 import { disableNotificationsForUser, enableNotificationsForUser } from '@/actions/actions';
+import { useAlertMessageContext } from '@/context/AlertMessageContextProvider';
 
 type ProfileNotificationButtonProps = {
     user: string,
@@ -14,6 +15,7 @@ type ProfileNotificationButtonProps = {
 };
 
 export default function ProfileNotificationButton({ user, userState, dispatch }: ProfileNotificationButtonProps) {
+    const { setAlertMessage } = useAlertMessageContext();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const notificationBtn = useRef<HTMLButtonElement>(null);
 
@@ -35,6 +37,8 @@ export default function ProfileNotificationButton({ user, userState, dispatch }:
                     if (!response.success) {
                         throw new Error(response.error.message);
                     }
+
+                    setAlertMessage('Notifications disabled');
                 } else {
                     // Optimistically update UI
                     dispatch({ type: 'TOGGLE_NOTIFICATIONS' });
@@ -44,17 +48,20 @@ export default function ProfileNotificationButton({ user, userState, dispatch }:
                     if (!response.success) {
                         throw new Error(response.error.message);
                     }
+
+                    setAlertMessage('Notifications enabled');
                 }
             } catch (error: unknown) {
                 const errorMessage = getErrorMessage(error);
                 // Revert state if exception occurs
                 console.error(`Error toggling notifications for the user:`, errorMessage);
                 dispatch({ type: 'TOGGLE_NOTIFICATIONS' });
+                setAlertMessage('Failed to toggle notifications for this user');
             } finally {
                 setIsSubmitting(false);
             }
         },
-        [notificationsEnabled, dispatch, user, isSubmitting],
+        [notificationsEnabled, dispatch, user, isSubmitting, setAlertMessage],
     );
 
     return (
