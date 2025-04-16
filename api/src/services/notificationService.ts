@@ -96,6 +96,12 @@ export const getNotifications = async (userId: number, cursor?: number) => {
                     images: true,
                     createdAt: true,
                     updatedAt: true,
+                    isDeleted: true,
+                    pinnedOnProfile: {
+                        select: {
+                            pinnedPostId: true,
+                        }
+                    },
                     author: {
                         select: {
                             username: true,
@@ -156,6 +162,12 @@ export const getNotifications = async (userId: number, cursor?: number) => {
                             images: true,
                             createdAt: true,
                             updatedAt: true,
+                            isDeleted: true,
+                            pinnedOnProfile: {
+                                select: {
+                                    pinnedPostId: true,
+                                }
+                            },
                             author: {
                                 select: {
                                     username: true,
