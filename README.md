@@ -1,5 +1,6 @@
 # tweetly
-### Video Demo:  <URL HERE>
+### Video Demo:  https://www.youtube.com/watch?v=_dxXBpd0kWc
+### Website: https://tweetly-ten.vercel.app/ (takes a minute to wake up from inactivity)
 
 ### Description:
 Tweetly is a modern social media application that replicates X's (formerly known as Twitter) core functionality while showcasing advanced web development techniques. Built with a full stack tech, this application delivers a responsive, real-time social experience across all devices.
