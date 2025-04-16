@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useCallback, useContext, useState } from 'react';
-import { ApiResponse, BasePostDataType } from 'tweetly-shared';
+import { ApiResponse, AppError, BasePostDataType, ErrorResponse } from 'tweetly-shared';
 import { useUserContext } from './UserContextProvider';
 import { bookmarkPost, likePost, pinPost, removeBookmarkPost, removeLikePost, removePost, removeRepostPost, repostPost, unpinPost } from '@/actions/actions';
 import { socket } from '@/lib/socket';
@@ -77,11 +77,11 @@ export default function PostInteractionContextProvider({ children }: { children:
 // Type for the hook return value
 type PostInteractionHookResultType = {
     interaction: PostInteractionType,
-    toggleRepost: () => Promise<boolean>,
-    toggleLike: () => Promise<boolean>,
-    toggleBookmark: () => Promise<boolean>,
-    togglePin: () => Promise<boolean>,
-    deletePost: () => Promise<boolean>,
+    toggleRepost: () => Promise<ApiResponse<undefined>>,
+    toggleLike: () => Promise<ApiResponse<undefined>>,
+    toggleBookmark: () => Promise<ApiResponse<undefined>>,
+    togglePin: () => Promise<ApiResponse<undefined>>,
+    deletePost: () => Promise<ApiResponse<undefined>>,
 };
 
 // Custom hook to handle post interactions
@@ -110,7 +110,7 @@ export function usePostInteraction(post: BasePostDataType): PostInteractionHookR
         * 3. If successful, keep the optimistic update
         * 4. If failed, revert to previous state
     */
-    const handleInteraction = async (type: 'repost' | 'like' | 'bookmark' | 'pin' | 'delete', isAdding: boolean): Promise<boolean> => {
+    const handleInteraction = async (type: 'repost' | 'like' | 'bookmark' | 'pin' | 'delete', isAdding: boolean): Promise<ApiResponse<undefined>> => {
         const currentState = getPostInteraction(post.id) || initialState;
 
         // Prepare update based on action type
@@ -128,13 +128,25 @@ export function usePostInteraction(post: BasePostDataType): PostInteractionHookR
             if (post.author.username === loggedInUser.username) {
                 update.pinned = isAdding;
             } else {
-                return false;
+                return {
+                    success: false,
+                    error: {
+                        message: 'Unauthorized',
+                        code: 'ANAUTHORIZED',
+                    },
+                };
             }
         } else if (type === 'delete') {
             if (post.author.username === loggedInUser.username) {
                 update.deleted = true;
             } else {
-                return false;
+                return {
+                    success: false,
+                    error: {
+                        message: 'Unauthorized',
+                        code: 'ANAUTHORIZED',
+                    },
+                };
             }
         }
 
@@ -165,7 +177,7 @@ export function usePostInteraction(post: BasePostDataType): PostInteractionHookR
             }
 
             if (!response.success) {
-                throw new Error(`Failed to ${isAdding ? 'add' : 'remove'} ${type}`);
+                throw new AppError(response.error.message, 400, response.error.code);
             }
 
             // Update notifications if needed
@@ -173,13 +185,34 @@ export function usePostInteraction(post: BasePostDataType): PostInteractionHookR
                 socket.emit('new_user_notification', loggedInUser.id);
             }
 
-            return true;
+            return {
+                success: true,
+                data: undefined
+            }
         } catch (error) {
             // Revert optimistic update on error
             const revertUpdate = { ...currentState };
             updatePostInteraction(post.id, revertUpdate);
 
-            return false;
+            if (error instanceof AppError) {
+                return {
+                    success: false,
+                    error: {
+                        message: error.message || 'Internal Server Error',
+                        code: error.code || 'INTERNAL_ERROR',
+                        details: error.details,
+                    }
+                } as ErrorResponse;
+            }
+
+            // Handle other errors
+            return {
+                success: false,
+                error: {
+                    message: 'Internal Server Error',
+                    code: 'INTERNAL_ERROR',
+                },
+            };
         }
     };
 

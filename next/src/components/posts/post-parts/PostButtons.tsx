@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { usePostInteraction } from "@/context/PostInteractionContextProvider";
 import { AnimatePresence, motion } from "framer-motion";
 import PostShareButton from './PostShareButton';
-import { BasePostDataType } from 'tweetly-shared';
+import { ApiResponse, BasePostDataType } from 'tweetly-shared';
 import { useAlertMessageContext } from '@/context/AlertMessageContextProvider';
 
 export default function PostButtons({ post }: { post: BasePostDataType }) {
@@ -22,26 +22,39 @@ export default function PostButtons({ post }: { post: BasePostDataType }) {
             const type = btn.dataset.type as 'repost' | 'like' | 'bookmark';
 
             btn.disabled = true;
-            let success: boolean;
+            let response: ApiResponse<undefined>;
 
             switch (type) {
                 case 'repost':
-                    success = await toggleRepost();
-                    if (!success) {
+                    response = await toggleRepost();
+                    if (!response.success) {
+                        if (response.error.code === 'NOT_FOUND' || response.error.code === 'USER_BLOCKED') {
+                            setAlertMessage(response.error.message);
+                            break;
+                        }
                         setAlertMessage(`Failed to ${interaction.reposted ? 'unrepost' : 'repost'} the post`);
                     }
 
                     break;
                 case 'like':
-                    success = await toggleLike();
-                    if (!success) {
+                    response = await toggleLike();
+                    console.log(response)
+                    if (!response.success) {
+                        if (response.error.code === 'NOT_FOUND' || response.error.code === 'USER_BLOCKED') {
+                            setAlertMessage(response.error.message);
+                            break;
+                        }
                         setAlertMessage(`Failed to ${interaction.liked ? 'unlike' : 'like'} the post`);
                     }
 
                     break;
                 case 'bookmark':
-                    success = await toggleBookmark();
-                    if (!success) {
+                    response = await toggleBookmark();
+                    if (!response.success) {
+                        if (response.error.code === 'NOT_FOUND' || response.error.code === 'USER_BLOCKED') {
+                            setAlertMessage(response.error.message);
+                            break;
+                        }
                         setAlertMessage(`Failed to ${interaction.bookmarked ? 'unbookmark' : 'bookmark'} the post`);
                     } else {
                         setAlertMessage(`Post ${interaction.bookmarked ? 'unsaved' : 'saved'}`);
@@ -49,7 +62,13 @@ export default function PostButtons({ post }: { post: BasePostDataType }) {
 
                     break;
                 default:
-                    success = false;
+                    response = {
+                        success: false,
+                        error: {
+                            message: 'Internal Server Error',
+                            code: 'INTERNAL_ERROR',
+                        }
+                    };
             }
 
             // Re-enable the button
