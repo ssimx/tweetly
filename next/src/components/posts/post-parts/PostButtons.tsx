@@ -38,7 +38,6 @@ export default function PostButtons({ post }: { post: BasePostDataType }) {
                     break;
                 case 'like':
                     response = await toggleLike();
-                    console.log(response)
                     if (!response.success) {
                         if (response.error.code === 'NOT_FOUND' || response.error.code === 'USER_BLOCKED') {
                             setAlertMessage(response.error.message);
@@ -62,6 +61,7 @@ export default function PostButtons({ post }: { post: BasePostDataType }) {
 
                     break;
                 default:
+                    setAlertMessage(`Something went wrong`);
                     response = {
                         success: false,
                         error: {

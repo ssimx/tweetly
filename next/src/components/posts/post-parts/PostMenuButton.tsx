@@ -6,7 +6,7 @@ import { useUserContext } from '@/context/UserContextProvider';
 import { UserActionType } from '@/lib/userReducer';
 import { Ellipsis } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { BasePostDataType, getErrorMessage, UserAndViewerRelationshipType, UserStatsType } from 'tweetly-shared';
+import { ApiResponse, BasePostDataType, getErrorMessage, UserAndViewerRelationshipType, UserStatsType } from 'tweetly-shared';
 import { RemoveScroll } from 'react-remove-scroll';
 import { useAlertMessageContext } from '@/context/AlertMessageContextProvider';
 import { redirect, usePathname, useRouter } from 'next/navigation';
@@ -228,12 +228,16 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
             const type = btn.dataset.type as 'pin' | 'delete';
 
             btn.disabled = true;
-            let success = true;
+            let response: ApiResponse<undefined>;
 
             switch (type) {
                 case 'pin':
-                    success = await togglePin();
-                    if (!success) {
+                    response = await togglePin();
+                    if (!response.success) {
+                        if (response.error.code === 'ANAUTHORIZED') {
+                            setAlertMessage(response.error.message);
+                            break;
+                        }
                         setAlertMessage(`Failed to ${interaction.pinned ? 'unpin' : 'pin'} the post`);
                         break;
                     }
@@ -241,8 +245,12 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
                     setAlertMessage(interaction.pinned ? 'Post unpinned' : 'Post pinned');
                     break;
                 case 'delete':
-                    success = await deletePost();
-                    if (!success) {
+                    response = await deletePost();
+                    if (!response.success) {
+                        if (response.error.code === 'ANAUTHORIZED') {
+                            setAlertMessage(response.error.message);
+                            break;
+                        }
                         setAlertMessage(`Failed to delete the post`);
                         break;
                     }
@@ -258,7 +266,13 @@ export default function PostMenuButton({ post, userState, dispatch }: PostMenuPr
                     break;
                 default:
                     setAlertMessage(`Something went wrong`);
-                    success = false;
+                    response = {
+                        success: false,
+                        error: {
+                            message: 'Internal Server Error',
+                            code: 'INTERNAL_ERROR',
+                        }
+                    };
             }
 
             setAlertDialogOpen(false);
