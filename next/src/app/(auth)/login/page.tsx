@@ -92,7 +92,7 @@ export default function LogIn() {
                         <p className="error-msg">{`${errors.usernameOrEmail.message}`}</p>
                     )}
 
-                    <Input {...register("password")} type="password" placeholder="password" />
+                    <Input {...register("password")} type="password" placeholder="Password" />
                     {errors.password && (
                         <p className="error-msg">{`${errors.password.message}`}</p>
                     )}
