@@ -1,5 +1,6 @@
 'use client';
-import React, { useState } from 'react'
+
+import { useState } from 'react'
 import SettingsHeaderInfo from './SettingsHeaderInfo'
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -36,6 +37,10 @@ export default function ChangeBirthday() {
     const currentYear = watch('year');
     const currentMonth = watch('month');
     const currentDay = watch('day');
+
+    const buttonEnabled = !(new Date(loggedInUser.dateOfBirth).getFullYear() === currentYear
+        && new Date(loggedInUser.dateOfBirth).getMonth() + 1 === currentMonth
+        && new Date(loggedInUser.dateOfBirth).getDate() === currentDay);
 
     const onSubmit = async (formData: UserUpdateBirthdayType) => {
         if (isSubmitting) return;
@@ -86,18 +91,20 @@ export default function ChangeBirthday() {
                         <div className='text-green-400 text-14'>Birthday successfully changed</div>
                     )}
 
-                    {isSubmitting
-                        ? <Button disabled>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Saving
-                        </Button>
-                        : <Button className='bg-primary font-bold'
-                            disabled={
-                                new Date(loggedInUser.dateOfBirth).getFullYear() === currentYear
-                                && new Date(loggedInUser.dateOfBirth).getMonth() + 1 === currentMonth
-                                && new Date(loggedInUser.dateOfBirth).getDate() === currentDay
-                            }>Save</Button>
-                    }
+                    <Button
+                        className='text-primary-text-color-white'
+                        disabled={isSubmitting || !buttonEnabled}
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Saving...
+                            </>
+                        ) : (
+                            'Save'
+                        )}
+                    </Button>
+
                 </form>
             </div>
         </div>

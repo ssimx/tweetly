@@ -1201,7 +1201,7 @@ export const getUserByUsername = async (username: string) => {
     const user = await prisma.user.findFirst({
         where: {
             username: {
-                contains: username,
+                equals: username,
                 mode: 'insensitive',
             },
         },
@@ -1215,7 +1215,7 @@ export const getUserByUsername = async (username: string) => {
     const temporaryUser = await prisma.temporaryUser.findFirst({
         where: {
             username: {
-                contains: username,
+                equals: username,
                 mode: 'insensitive',
             },
         },
@@ -1233,7 +1233,7 @@ export const getUserByEmail = async (email: string) => {
     const user = await prisma.user.findFirst({
         where: {
             email: {
-                contains: email,
+                equals: email,
                 mode: 'insensitive',
             },
         },
@@ -1247,7 +1247,7 @@ export const getUserByEmail = async (email: string) => {
     const temporaryUser = await prisma.temporaryUser.findFirst({
         where: {
             email: {
-                contains: email,
+                equals: email,
                 mode: 'insensitive',
             },
         },

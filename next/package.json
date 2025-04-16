@@ -41,7 +41,7 @@
         "socket.io-client": "^4.8.0",
         "tailwind-merge": "^2.5.2",
         "tailwindcss-animate": "^1.0.7",
-        "tweetly-shared": "^2.0.1",
+        "tweetly-shared": "^2.0.4",
         "usehooks-ts": "^3.1.1",
         "uuid": "^10.0.0",
         "web-push": "^3.6.7",

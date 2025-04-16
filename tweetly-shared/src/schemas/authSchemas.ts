@@ -23,7 +23,7 @@ export const temporaryUserBasicDataSchema = z.object({
         .number()
         .int()
         .nonnegative("Month can't be negative number")
-        .lte(11, "Month does not exist"),
+        .lte(12, "Month does not exist"),
     day: z
         .number()
         .int()

@@ -138,14 +138,20 @@ export default function ChangePassword() {
                         <div className='text-green-400 text-14'>Password successfully changed</div>
                     )}
 
-                    {/* Submit Button */}
-                    {isSubmitting
-                        ? <Button className='bg-primary text-white-1 font-bold' disabled>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Saving
-                        </Button>
-                        : <Button className='bg-primary text-white-1 font-bold' tabIndex={7}>Save</Button>
-                    }
+                    <Button
+                        className='text-primary-text-color-white'
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Saving...
+                            </>
+                        ) : (
+                            'Save'
+                        )}
+                    </Button>
+
                 </form>
             </div>
         </div>

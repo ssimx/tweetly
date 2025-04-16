@@ -138,7 +138,6 @@ export function DateOfBirthSelect({ signUpRegister, signUpSetValues, settingsReg
 
                 {/* Day Select */}
                 <div className='flex flex-col gap-2 w-full'>
-                    {/* {onValueChange = {(value) => setValue("day", value)} } */}
                     <Select
                         {...dayRegister}
                         onValueChange={(value) => handleFieldChange(value, 'day')}

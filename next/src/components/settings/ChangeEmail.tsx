@@ -29,6 +29,8 @@ export default function ChangeEmail() {
 
     const emailWatch = watch("newEmail");
 
+    const buttonEnabled = !(emailWatch.toLowerCase() === loggedInUser.email.toLowerCase());
+
     const onSubmit = async (formData: UserUpdateEmailType) => {
         if (isSubmitting) return;
         setCustomError(null);
@@ -89,15 +91,20 @@ export default function ChangeEmail() {
                         <div className='text-green-400 text-14'>Email successfully changed</div>
                     )}
 
-                    {isSubmitting
-                        ? <Button disabled>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Saving
-                        </Button>
-                        : <Button
-                            disabled={(isSubmitting || emailWatch.toLowerCase() === loggedInUser.email.toLowerCase()) && true}
-                            className='bg-primary font-bold'>Save</Button>
-                    }
+                    <Button
+                        className='text-primary-text-color-white'
+                        disabled={isSubmitting || !buttonEnabled}
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Saving...
+                            </>
+                        ) : (
+                            'Save'
+                        )}
+                    </Button>
+
                 </form>
             </div>
         </div>

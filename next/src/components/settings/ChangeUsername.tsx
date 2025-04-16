@@ -32,6 +32,8 @@ export default function ChangeUsername() {
 
     const usernameWatch = watch("newUsername");
 
+    const buttonEnabled = !(usernameWatch.toLowerCase() === loggedInUser.username.toLowerCase());
+
     // Create a debounced function for checking username availability
     const checkUsernameAvailability = useCallback(
         (username: string) => {
@@ -48,6 +50,7 @@ export default function ChangeUsername() {
                     usernameSchema.parse({ username: usernameToCheck.trim() });
                     const encodedUsername = encodeURIComponent(usernameToCheck.trim());
                     const response = await checkIfUsernameIsAvailable({ username: encodedUsername });
+                    console.log(response)
 
                     if (!response.success) {
                         if (response.error.details) throw new z.ZodError(response.error.details);
@@ -172,18 +175,20 @@ export default function ChangeUsername() {
                         </p>
                     )}
 
-                    {isSubmitting
-                        ? <Button disabled>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Saving
-                        </Button>
-                        : <Button
-                            className='text-white'
-                            disabled={!isAvailable || usernameWatch.toLowerCase() === loggedInUser.username.toLowerCase() || isSubmitting}
-                        >
-                            Save
-                        </Button>
-                    }
+                    <Button
+                        className='text-primary-text-color-white'
+                        disabled={isSubmitting || !isAvailable || !buttonEnabled}
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Saving...
+                            </>
+                        ) : (
+                            'Save'
+                        )}
+                    </Button>
+
                 </form>
             </div>
         </div>
