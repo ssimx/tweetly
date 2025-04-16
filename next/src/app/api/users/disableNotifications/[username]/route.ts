@@ -2,8 +2,8 @@ import { extractToken, removeSession, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 import { ErrorResponse, AppError, SuccessResponse, getErrorMessage } from 'tweetly-shared';
 
-export async function DELETE(req: NextRequest, props: { params: Promise<{ username: string }> }) {
-    if (req.method === 'DELETE') {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ username: string }> }) {
+    if (req.method === 'PATCH') {
         const authHeader = req.headers.get('Authorization');
         const token = await extractToken(authHeader);
         if (token) {
@@ -20,7 +20,7 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ userna
             const params = await props.params;
             const apiUrl = process.env.EXPRESS_API_URL;
             const response = await fetch(`${apiUrl}/users/disableNotifications/${params.username}`, {
-                method: 'DELETE',
+                method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,

@@ -14,7 +14,6 @@ type ProfileNotificationButtonProps = {
 };
 
 export default function ProfileNotificationButton({ user, userState, dispatch }: ProfileNotificationButtonProps) {
-
     const [isSubmitting, setIsSubmitting] = useState(false);
     const notificationBtn = useRef<HTMLButtonElement>(null);
 
