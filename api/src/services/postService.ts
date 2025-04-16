@@ -2535,11 +2535,6 @@ export const getOldestRepost = async (username: string, userId: number) => {
                                 blockedId: userId,
                             },
                         },
-                        blockedBy: {
-                            none: {
-                                blockerId: userId,
-                            },
-                        },
                     },
                 },
             },
@@ -4025,13 +4020,27 @@ export const deletePost = async (postId: number) => {
 
 export const addPostRepost = async (userId: number, postId: number) => {
     try {
-        const post = prisma.post.findUnique({
+        const post = await prisma.post.findUnique({
             where: {
                 id: postId,
                 isDeleted: false,
+            },
+            select: {
+                id: true,
+                authorId: true
             }
         });
         if (!post) throw new AppError('Post not found', 404, 'NOT_FOUND');
+
+        const isAuthorBlocked = await prisma.block.findUnique({
+            where: {
+                blockId: { blockerId: userId, blockedId: post.authorId }
+            },
+            select: {
+                createdAt: true,
+            }
+        });
+        if (isAuthorBlocked !== null) throw new AppError('Author is blocked', 404, 'USER_BLOCKED');
 
         return await prisma.postRepost.create({
             data: {
@@ -4069,13 +4078,23 @@ export const removePostRepost = async (userId: number, postId: number) => {
 
 export const addPostLike = async (userId: number, postId: number) => {
     try {
-        const post = prisma.post.findUnique({
+        const post = await prisma.post.findUnique({
             where: {
                 id: postId,
                 isDeleted: false,
             }
         });
         if (!post) throw new AppError('Post not found', 404, 'NOT_FOUND');
+
+        const isAuthorBlocked = await prisma.block.findUnique({
+            where: {
+                blockId: { blockerId: userId, blockedId: post.authorId }
+            },
+            select: {
+                createdAt: true,
+            }
+        });
+        if (isAuthorBlocked !== null) throw new AppError('Author is blocked', 404, 'USER_BLOCKED');
 
         return await prisma.postLike.create({
             data: {
@@ -4112,13 +4131,23 @@ export const removePostLike = async (userId: number, postId: number) => {
 
 export const addPostBookmark = async (userId: number, postId: number) => {
     try {
-        const post = prisma.post.findUnique({
+        const post = await prisma.post.findUnique({
             where: {
                 id: postId,
                 isDeleted: false,
             }
         });
         if (!post) throw new AppError('Post not found', 404, 'NOT_FOUND');
+
+        const isAuthorBlocked = await prisma.block.findUnique({
+            where: {
+                blockId: { blockerId: userId, blockedId: post.authorId }
+            },
+            select: {
+                createdAt: true,
+            }
+        });
+        if (isAuthorBlocked !== null) throw new AppError('Author is blocked', 404, 'USER_BLOCKED');
 
         return await prisma.postBookmark.create({
             data: {
