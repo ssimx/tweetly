@@ -1,5 +1,6 @@
 # tweetly
-### Video Demo:  https://www.youtube.com/watch?v=_dxXBpd0kWc
+### Video Demo: https://youtu.be/qUnlPEq49bY
+### Images: https://imgur.com/a/zHOiyAa
 ### Website: https://tweetly-ten.vercel.app/ (takes a minute to wake up from inactivity)
 
 ### Description:
