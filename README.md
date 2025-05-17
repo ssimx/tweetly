@@ -62,7 +62,7 @@ The backend implements a structured, layered architecture with several key compo
 * Consistent error handling
 * Centralized validation
 * Efficient resource management
-* DRY (Don't Repeat Yourself) principles through shared code
+* "Don't repeat yourself" principles
 
 **Database Design - models**
 * TemporaryUser: *Stores information for users that haven't finished the multi-step registration process*
@@ -94,7 +94,6 @@ The schema includes proper relationships between entities and appropriate indexe
 * Callback API for optimized re-rendering
 * Server actions & api route handler for fetching backend data
 * Middleware for /login and /signup pages to redirect if already signed in
-* 99 components
 * Socket.io for real-time interactions
     - new feed post
     - new notification
